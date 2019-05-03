@@ -4,6 +4,8 @@ import memoizeOne from "memoize-one";
 import * as d3 from "d3";
 import { GenomicBin, GenomicBinHelpers } from "../GenomicBin";
 
+import "./Scatterplot.css";
+
 const PADDING = { // For the SVG
     left: 70,
     right: 20,
@@ -13,22 +15,29 @@ const PADDING = { // For the SVG
 const SCALES_CLASS_NAME = "scatterplot-scale";
 
 interface ScatterplotProps {
-    data: GenomicBin[];
+    dataBySample: {[sample: string]: GenomicBin[]};
     width: number;
     height: number;
 }
+interface ScatterplotState {
+    selectedSample: string;
+}
 
-export class Scatterplot extends React.Component<ScatterplotProps> {
+export class Scatterplot extends React.Component<ScatterplotProps, ScatterplotState> {
     static defaultProps = {
         width: 600,
-        height: 600
+        height: 500
     };
 
     private svgElement: SVGElement | null;
 
     constructor(props: ScatterplotProps) {
         super(props);
+        this.state = {
+            selectedSample: Object.keys(props.dataBySample)[0]
+        }
         this.svgElement = null;
+        this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.getScales = memoizeOne(this.getScales);
     }
 
@@ -37,9 +46,13 @@ export class Scatterplot extends React.Component<ScatterplotProps> {
     }
 
     componentDidUpdate(prevProps: ScatterplotProps) {
-        if (this.props.data !== prevProps.data) {
+        if (this.props.dataBySample !== prevProps.dataBySample) {
             this.drawScales();
         }
+    }
+
+    handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.setState({selectedSample: event.target.value});
     }
 
     getScales(data: GenomicBin[], width: number, height: number) {
@@ -63,7 +76,8 @@ export class Scatterplot extends React.Component<ScatterplotProps> {
         if (!this.svgElement) {
             return;
         }
-        const {data, width, height} = this.props;
+        const {dataBySample, width, height} = this.props;
+        const data = dataBySample[this.state.selectedSample];
         const {bafScale, rdrScale} = this.getScales(data, width, height);
 
         const svg = d3.select(this.svgElement);
@@ -94,7 +108,13 @@ export class Scatterplot extends React.Component<ScatterplotProps> {
     }
 
     render() {
-        const {data, width, height} = this.props;
+        const {dataBySample, width, height} = this.props;
+        const selectedSample = this.state.selectedSample;
+        const sampleOptions = Object.keys(dataBySample).map(sampleName =>
+            <option key={sampleName} value={sampleName}>{sampleName}</option>
+        );
+
+        const data = dataBySample[selectedSample];
         const {rdrScale, bafScale} = this.getScales(data, width, height);
         const colorScale = d3.scaleOrdinal(d3.schemeDark2);
         const circles = data.map(d => 
@@ -106,8 +126,15 @@ export class Scatterplot extends React.Component<ScatterplotProps> {
                 fill={colorScale(String(d.CLUSTER))}
             />
         );
-        return <svg ref={node => this.svgElement = node} width={width} height={height} >
-            {circles}
-        </svg>;
+        return <div className="Scatterplot-container">
+            <div>
+                Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
+                    {sampleOptions}
+                </select>
+            </div>
+            <svg ref={node => this.svgElement = node} width={width} height={height} >
+                {circles}
+            </svg>
+        </div>;
     }
 }
