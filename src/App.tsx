@@ -1,8 +1,8 @@
 import React from "react";
-import _ from "lodash";
-import parseCsv from "csv-parse";
-import { Scatterplot } from "./components/Scatterplot";
-import { GenomicBin } from "./GenomicBin";
+import parse from "csv-parse";
+import { ChromosomeInterval } from "./ChromosomeInterval";
+import { ScatterplotContainer } from "./components/ScatterplotContainer";
+import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./GenomicBin";
 
 import "./App.css";
 
@@ -14,8 +14,9 @@ enum ProcessingStatus {
 }
 
 interface AppState {
-    dataBySample: {[sample: string]: GenomicBin[]};
-    processingStatus: ProcessingStatus
+    processingStatus: ProcessingStatus;
+    indexedData: IndexedGenomicBins;
+    hoveredLocation: ChromosomeInterval | null;
 }
 
 function getFileContentsAsString(file: File) {
@@ -30,14 +31,33 @@ function getFileContentsAsString(file: File) {
     });
 }
 
+function parseGenomicBins(data: string): Promise<GenomicBin[]> {
+    return new Promise((resolve, reject) => {
+        parse(data, {
+            cast: true,
+            columns: true,
+            delimiter: "\t",
+            skip_empty_lines: true,
+        }, (error, parsed) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(parsed);
+        });
+    })
+}
+
 export class App extends React.Component<{}, AppState> {
     constructor(props: {}) {
         super(props);
         this.state = {
-            dataBySample: {},
-            processingStatus: ProcessingStatus.none
+            processingStatus: ProcessingStatus.none,
+            indexedData: {},
+            hoveredLocation: null
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
+        this.handleRecordHovered = this.handleRecordHovered.bind(this);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -47,25 +67,42 @@ export class App extends React.Component<{}, AppState> {
         }
 
         this.setState({processingStatus: ProcessingStatus.readingFile});
-        const contents = await getFileContentsAsString(files[0]);
+        let contents = "";
+        try {
+            contents = await getFileContentsAsString(files[0]);
+        } catch (error) {
+            console.error(error);
+            this.setState({processingStatus: ProcessingStatus.error});
+            return;
+        }
 
         this.setState({processingStatus: ProcessingStatus.processing});
-        parseCsv(contents, {
-            cast: true,
-            columns: true,
-            delimiter: "\t",
-            skip_empty_lines: true,
-        }, (err, parsed) => {
-            if (err) {
-                this.setState({processingStatus: ProcessingStatus.error});
-                return;
-            }
+        let parsed = [];
+        try {
+            parsed = await parseGenomicBins(contents);
+        } catch (error) {
+            console.error(error);
+            this.setState({processingStatus: ProcessingStatus.error});
+            return;
+        }
 
-            const groupedBySample = _.groupBy(parsed as GenomicBin[], "SAMPLE");
-            this.setState({
-                dataBySample: groupedBySample,
-                processingStatus: ProcessingStatus.none
-            });
+        this.setState({
+            indexedData: GenomicBinHelpers.indexBins(parsed),
+            processingStatus: ProcessingStatus.none
+        });
+    }
+
+    handleRecordHovered(record: GenomicBin | null) {
+        if (!record) {
+            this.setState({hoveredLocation: null});
+            return;
+        }
+        this.setState({
+            hoveredLocation: {
+                chr: record["#CHR"],
+                start: record.START,
+                end: record.END
+            }
         });
     }
 
@@ -76,6 +113,7 @@ export class App extends React.Component<{}, AppState> {
             case ProcessingStatus.processing:
                 return "Processing data...";
             case ProcessingStatus.error:
+                return "ERROR";
             case ProcessingStatus.none:
             default:
                 return "";
@@ -83,16 +121,20 @@ export class App extends React.Component<{}, AppState> {
     }
 
     render() {
-        const data = this.state.dataBySample;
+        const {indexedData, hoveredLocation} = this.state;
         return <div>
             <h1>CNA-Viz</h1>
             <div>
                 Choose .bbc file: <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
             </div>
-            <div>
-                {this.getStatusCaption()}
-            </div>
-            {Object.keys(data).length > 0 && <Scatterplot dataBySample={data} />}
+            <div>{this.getStatusCaption()}</div>
+            {
+            Object.keys(indexedData).length > 0 && <ScatterplotContainer
+                indexedData={indexedData}
+                hoveredLocation={hoveredLocation || undefined}
+                onRecordHovered={this.handleRecordHovered}
+            />
+            }
         </div>;
     }
 }

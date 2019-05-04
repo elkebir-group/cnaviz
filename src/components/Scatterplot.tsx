@@ -1,10 +1,9 @@
 import React from "react";
+import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import * as d3 from "d3";
-import { GenomicBin, GenomicBinHelpers } from "../GenomicBin";
-
-import "./Scatterplot.css";
+import { GenomicBin } from "../GenomicBin";
+import { ChromosomeInterval } from "../ChromosomeInterval";
 
 const PADDING = { // For the SVG
     left: 70,
@@ -13,49 +12,56 @@ const PADDING = { // For the SVG
     bottom: 60,
 };
 const SCALES_CLASS_NAME = "scatterplot-scale";
+const CIRCLE_GROUP_CLASSNAME = "circles";
+const CIRCLE_R = 2.5;
 
-interface ScatterplotProps {
-    dataBySample: {[sample: string]: GenomicBin[]};
+interface Props {
+    data: GenomicBin[];
+    hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
-}
-interface ScatterplotState {
-    selectedSample: string;
+    onRecordHovered: (record: GenomicBin | null) => void;
 }
 
-export class Scatterplot extends React.Component<ScatterplotProps, ScatterplotState> {
+export class Scatterplot extends React.Component<Props> {
     static defaultProps = {
         width: 600,
-        height: 500
+        height: 500,
+        onRecordHovered: _.noop
     };
 
-    private svgElement: SVGElement | null;
-
-    constructor(props: ScatterplotProps) {
+    private _svg: SVGElement | null;
+    constructor(props: Props) {
         super(props);
-        this.state = {
-            selectedSample: Object.keys(props.dataBySample)[0]
-        }
-        this.svgElement = null;
-        this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
-        this.getScales = memoizeOne(this.getScales);
+        this._svg = null;
+        this.computeScales = memoizeOne(this.computeScales);
+    }
+
+    render() {
+        const {width, height} = this.props;
+        return <svg ref={node => this._svg = node} width={width} height={height} />
     }
 
     componentDidMount() {
-        this.drawScales();
+        this.redraw();
+        this.forceHover(this.props.hoveredLocation);
     }
 
-    componentDidUpdate(prevProps: ScatterplotProps) {
-        if (this.props.dataBySample !== prevProps.dataBySample) {
-            this.drawScales();
+    propsDidChange(prevProps: Props, keys: (keyof Props)[]) {
+        return keys.some(key => this.props[key] !== prevProps[key]);
+    }
+
+    componentDidUpdate(prevProps: Props) {
+        if (this.propsDidChange(prevProps, ["data", "width", "height"])) {
+            this.redraw();
+            this.forceHover(this.props.hoveredLocation);
+        } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
+            this.forceHover(this.props.hoveredLocation);
+            this.forceUnhover(prevProps.hoveredLocation);
         }
     }
 
-    handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({selectedSample: event.target.value});
-    }
-
-    getScales(data: GenomicBin[], width: number, height: number) {
+    computeScales(data: GenomicBin[], width: number, height: number) {
         let min = 0, max = 0;
         if (data.length !== 0) {
             min = (_.minBy(data, "RD") as GenomicBin).RD;
@@ -72,16 +78,20 @@ export class Scatterplot extends React.Component<ScatterplotProps, ScatterplotSt
         };
     }
 
-    drawScales() {
-        if (!this.svgElement) {
+    redraw() {
+        if (!this._svg) {
             return;
         }
-        const {dataBySample, width, height} = this.props;
-        const data = dataBySample[this.state.selectedSample];
-        const {bafScale, rdrScale} = this.getScales(data, width, height);
 
-        const svg = d3.select(this.svgElement);
-        svg.selectAll(SCALES_CLASS_NAME).remove();
+        const {data, onRecordHovered} = this.props;
+        const svg = d3.select(this._svg);
+        const width = Number(svg.attr("width"));
+        const height = Number(svg.attr("height"));
+        const {bafScale, rdrScale} = this.computeScales(data, width, height);
+        const colorScale = d3.scaleOrdinal(d3.schemeDark2);
+
+        // Remove any previous scales
+        svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
         // X scale stuff
         svg.append("g")
@@ -105,36 +115,61 @@ export class Scatterplot extends React.Component<ScatterplotProps, ScatterplotSt
             .attr("transform", `rotate(90, ${PADDING.left - 60}, ${_.mean(bafScale.range())})`)
             .text("0.5 - BAF")
             .attr("y", _.mean(bafScale.range()));
+
+        // Circles: remove any previous
+        svg.select("." + CIRCLE_GROUP_CLASSNAME).remove();
+
+        // Add circles
+        svg.append("g")
+            .classed(CIRCLE_GROUP_CLASSNAME, true)
+            .selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                    .attr("cx", d => rdrScale(d.RD))
+                    .attr("cy", d => bafScale(0.5 - d.BAF))
+                    .attr("r", CIRCLE_R)
+                    .attr("fill", d => colorScale(String(d.CLUSTER)))
+                    .on("mouseenter", onRecordHovered)
+                    .on("mouseleave", () => onRecordHovered(null))
     }
 
-    render() {
-        const {dataBySample, width, height} = this.props;
-        const selectedSample = this.state.selectedSample;
-        const sampleOptions = Object.keys(dataBySample).map(sampleName =>
-            <option key={sampleName} value={sampleName}>{sampleName}</option>
-        );
+    getCircleForGenomeLocation(hoveredLocation?: ChromosomeInterval): SVGCircleElement | null {
+        if (!this._svg || !hoveredLocation) {
+            return null;
+        }
+        const circleGroup = this._svg.querySelector("." + CIRCLE_GROUP_CLASSNAME);
+        if (!circleGroup) {
+            return null;
+        }
 
-        const data = dataBySample[selectedSample];
-        const {rdrScale, bafScale} = this.getScales(data, width, height);
-        const colorScale = d3.scaleOrdinal(d3.schemeDark2);
-        const circles = data.map(d => 
-            <circle
-                key={GenomicBinHelpers.getCoordinates(d)}
-                cx={rdrScale(d.RD)}
-                cy={bafScale(0.5 - d.BAF)}
-                r={3}
-                fill={colorScale(String(d.CLUSTER))}
-            />
+        const index = this.props.data.findIndex(d => 
+            d["#CHR"] === hoveredLocation.chr &&
+            d.START === hoveredLocation.start &&
+            d.END === hoveredLocation.end
         );
-        return <div className="Scatterplot-container">
-            <div>
-                Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
-                    {sampleOptions}
-                </select>
-            </div>
-            <svg ref={node => this.svgElement = node} width={width} height={height} >
-                {circles}
-            </svg>
-        </div>;
+        if (index === -1) {
+            return null;
+        }
+
+        return circleGroup.children[index] as SVGCircleElement;
+    }
+
+    forceHover(genomeLocation?: ChromosomeInterval) {
+        const circle = this.getCircleForGenomeLocation(genomeLocation);
+        if (!circle) {
+            return;
+        }
+        circle.setAttribute("r", String(CIRCLE_R + 1));
+        circle.setAttribute("stroke", "black");
+    }
+
+    forceUnhover(genomeLocation?: ChromosomeInterval) {
+        const circle = this.getCircleForGenomeLocation(genomeLocation);
+        if (!circle) {
+            return;
+        }
+        circle.setAttribute("r", String(CIRCLE_R));
+        circle.removeAttribute("stroke");
     }
 }
