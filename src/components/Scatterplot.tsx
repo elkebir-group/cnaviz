@@ -2,7 +2,7 @@ import React from "react";
 import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { GenomicBin } from "../GenomicBin";
+import { GenomicBin, ChrIndexedGenomicBins, GenomicBinHelpers } from "../GenomicBin";
 import { ChromosomeInterval } from "../ChromosomeInterval";
 
 const PADDING = { // For the SVG
@@ -13,10 +13,11 @@ const PADDING = { // For the SVG
 };
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASSNAME = "circles";
-const CIRCLE_R = 2.5;
+const CIRCLE_R = 3;
+let nextCircleIdPrefix = 0;
 
 interface Props {
-    data: GenomicBin[];
+    data: ChrIndexedGenomicBins;
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
@@ -30,10 +31,13 @@ export class Scatterplot extends React.Component<Props> {
         onRecordHovered: _.noop
     };
 
-    private _svg: SVGElement | null;
+    private _svg: SVGSVGElement | null;
+    private _circleIdPrefix: number;
     constructor(props: Props) {
         super(props);
         this._svg = null;
+        this._circleIdPrefix = nextCircleIdPrefix;
+        nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
     }
 
@@ -83,7 +87,8 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
 
-        const {data, onRecordHovered} = this.props;
+        const data = this.props.data.getAllRecords();
+        const onRecordHovered = this.props.onRecordHovered;
         const svg = d3.select(this._svg);
         const width = Number(svg.attr("width"));
         const height = Number(svg.attr("height"));
@@ -126,6 +131,7 @@ export class Scatterplot extends React.Component<Props> {
                 .data(data)
                 .enter()
                 .append("circle")
+                    .attr("id", d => this._circleIdPrefix + GenomicBinHelpers.toChromosomeInterval(d).toString())
                     .attr("cx", d => rdrScale(d.RD))
                     .attr("cy", d => bafScale(0.5 - d.BAF))
                     .attr("r", CIRCLE_R)
@@ -138,21 +144,8 @@ export class Scatterplot extends React.Component<Props> {
         if (!this._svg || !hoveredLocation) {
             return null;
         }
-        const circleGroup = this._svg.querySelector("." + CIRCLE_GROUP_CLASSNAME);
-        if (!circleGroup) {
-            return null;
-        }
-
-        const index = this.props.data.findIndex(d => 
-            d["#CHR"] === hoveredLocation.chr &&
-            d.START === hoveredLocation.start &&
-            d.END === hoveredLocation.end
-        );
-        if (index === -1) {
-            return null;
-        }
-
-        return circleGroup.children[index] as SVGCircleElement;
+        const circle = this._svg.getElementById(this._circleIdPrefix + hoveredLocation.toString());
+        return circle ? circle as unknown as SVGCircleElement : circle; // Yea, this cast is ugly.  Thanks TypeScript.
     }
 
     forceHover(genomeLocation?: ChromosomeInterval) {
@@ -160,8 +153,11 @@ export class Scatterplot extends React.Component<Props> {
         if (!circle) {
             return;
         }
+        const parent = circle.parentElement!;
+        circle.remove();
         circle.setAttribute("r", String(CIRCLE_R + 1));
         circle.setAttribute("stroke", "black");
+        parent.appendChild(circle); // Readd the circle, which moves it to the top.
     }
 
     forceUnhover(genomeLocation?: ChromosomeInterval) {

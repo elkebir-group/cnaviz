@@ -43,7 +43,7 @@ export class ScatterplotContainer extends React.Component<Props, State> {
                 </select>
             </div>
             <Scatterplot
-                data={indexedData[selectedSample].getAllRecords()}
+                data={indexedData[selectedSample]}
                 width={width}
                 height={height}
                 hoveredLocation={hoveredLocation}

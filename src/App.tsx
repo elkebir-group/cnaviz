@@ -97,13 +97,7 @@ export class App extends React.Component<{}, AppState> {
             this.setState({hoveredLocation: null});
             return;
         }
-        this.setState({
-            hoveredLocation: {
-                chr: record["#CHR"],
-                start: record.START,
-                end: record.END
-            }
-        });
+        this.setState({hoveredLocation: GenomicBinHelpers.toChromosomeInterval(record)});
     }
 
     getStatusCaption() {

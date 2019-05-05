@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { ChromosomeInterval } from "./ChromosomeInterval";
 
 export interface GenomicBin {
     readonly "#CHR": string;
@@ -27,8 +28,12 @@ export class ChrIndexedGenomicBins {
         return this._original;
     }
 
-    getRecordsForChromosome(chr: string): GenomicBin[] {
-        return this._grouped[chr] || [];
+    findIndex(genomicLocation: ChromosomeInterval) {
+        const recordsForChr = this._grouped[genomicLocation.chr] || [];
+        const index = recordsForChr.findIndex(record =>
+            record.START === genomicLocation.start && record.END === genomicLocation.end
+        );
+        return index;
     }
 }
 
@@ -37,8 +42,8 @@ export type IndexedGenomicBins = {
 }
 
 export const GenomicBinHelpers = {
-    getCoordinates: function(bin: GenomicBin): string {
-        return `${bin["#CHR"]}:${bin.START}-${bin.END}}`;
+    toChromosomeInterval: function(bin: GenomicBin): ChromosomeInterval {
+        return new ChromosomeInterval(bin["#CHR"], bin.START, bin.END);
     },
 
     indexBins: function(bins: GenomicBin[]): IndexedGenomicBins {
