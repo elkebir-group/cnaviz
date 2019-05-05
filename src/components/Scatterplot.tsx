@@ -5,6 +5,8 @@ import memoizeOne from "memoize-one";
 import { GenomicBin, ChrIndexedGenomicBins, GenomicBinHelpers } from "../GenomicBin";
 import { ChromosomeInterval } from "../ChromosomeInterval";
 
+import "./Scatterplot.css";
+
 const PADDING = { // For the SVG
     left: 70,
     right: 20,
@@ -14,6 +16,7 @@ const PADDING = { // For the SVG
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASSNAME = "circles";
 const CIRCLE_R = 3;
+const TOOLTIP_OFFSET = 30; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
@@ -43,7 +46,34 @@ export class Scatterplot extends React.Component<Props> {
 
     render() {
         const {width, height} = this.props;
-        return <svg ref={node => this._svg = node} width={width} height={height} />
+        return <div style={{position: "relative"}}>
+            <svg ref={node => this._svg = node} width={width} height={height} />
+            {this.renderTooltip()}
+        </div>;
+    }
+
+    renderTooltip() {
+        const {data, width, height, hoveredLocation} = this.props;
+        if (!hoveredLocation) {
+            return null;
+        }
+        const record = data.findRecord(hoveredLocation);
+        if (!record) {
+            return null;
+        }
+
+        const {bafScale, rdrScale} = this.computeScales(data.getAllRecords(), width, height);
+        return <div
+            className="Scatterplot-tooltip"
+            style={{
+                position: "absolute",
+                top: bafScale(0.5 - record.BAF) + TOOLTIP_OFFSET,
+                left: rdrScale(record.RD) + TOOLTIP_OFFSET
+            }}>
+                <p><b>{hoveredLocation.toString()}</b></p>
+                <div>RDR: {record.RD.toFixed(2)}</div>
+                <div>BAF: {record.BAF.toFixed(2)}</div>
+        </div>;
     }
 
     componentDidMount() {

@@ -28,12 +28,11 @@ export class ChrIndexedGenomicBins {
         return this._original;
     }
 
-    findIndex(genomicLocation: ChromosomeInterval) {
+    findRecord(genomicLocation: ChromosomeInterval): GenomicBin | null {
         const recordsForChr = this._grouped[genomicLocation.chr] || [];
-        const index = recordsForChr.findIndex(record =>
+        return recordsForChr.find(record =>
             record.START === genomicLocation.start && record.END === genomicLocation.end
-        );
-        return index;
+        ) || null;
     }
 }
 
