@@ -7,6 +7,7 @@ import "./ScatterplotContainer.css";
 
 interface Props {
     indexedData: IndexedGenomicBins;
+    initialSelectedSample?: string;
     hoveredLocation?: ChromosomeInterval;
     width?: number;
     height?: number;
@@ -20,7 +21,7 @@ export class ScatterplotContainer extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: Object.keys(props.indexedData)[0]
+            selectedSample: props.initialSelectedSample || Object.keys(props.indexedData)[0]
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
     }

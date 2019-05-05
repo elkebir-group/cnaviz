@@ -116,19 +116,30 @@ export class App extends React.Component<{}, AppState> {
 
     render() {
         const {indexedData, hoveredLocation} = this.state;
-        return <div>
+        const samples = Object.keys(indexedData);
+        const scatterplotProps = {
+            indexedData,
+            hoveredLocation: hoveredLocation || undefined,
+            onRecordHovered: this.handleRecordHovered
+        };
+        return <div className="container-fluid">
             <h1>CNA-Viz</h1>
             <div>
                 Choose .bbc file: <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
             </div>
             <div>{this.getStatusCaption()}</div>
-            {
-            Object.keys(indexedData).length > 0 && <ScatterplotContainer
-                indexedData={indexedData}
-                hoveredLocation={hoveredLocation || undefined}
-                onRecordHovered={this.handleRecordHovered}
-            />
-            }
+            <div className="row">
+                {
+                samples.length > 0 && <div className="col">
+                    <ScatterplotContainer {...scatterplotProps} initialSelectedSample={samples[0]} />
+                </div>
+                }
+                {
+                samples.length > 1 && <div className="col">
+                    <ScatterplotContainer {...scatterplotProps} initialSelectedSample={samples[1]} />
+                </div>
+                }
+            </div>
         </div>;
     }
 }

@@ -16,6 +16,7 @@ const PADDING = { // For the SVG
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASSNAME = "circles";
 const CIRCLE_R = 3;
+const SELECTED_CIRCLE_R = 4;
 const TOOLTIP_OFFSET = 30; // Pixels
 let nextCircleIdPrefix = 0;
 
@@ -185,7 +186,7 @@ export class Scatterplot extends React.Component<Props> {
         }
         const parent = circle.parentElement!;
         circle.remove();
-        circle.setAttribute("r", String(CIRCLE_R + 1));
+        circle.setAttribute("r", String(SELECTED_CIRCLE_R));
         circle.setAttribute("stroke", "black");
         parent.appendChild(circle); // Readd the circle, which moves it to the top.
     }
