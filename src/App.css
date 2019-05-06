@@ -3,16 +3,3 @@ body {
     padding-left: 10px;
     padding-right: 10px;
 }
-
-svg {
-    border: 1px solid grey;
-    margin: 20px;
-}
-
-#tooltip {
-    position: fixed;
-    background-color: lightblue;
-    z-index: 1;
-    padding: 10px;
-    border-radius: 3px;
-}

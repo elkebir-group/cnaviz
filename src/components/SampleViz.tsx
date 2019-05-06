@@ -1,9 +1,11 @@
 import React from "react";
-import { GenomicBin, IndexedGenomicBins } from "../GenomicBin";
-import { ChromosomeInterval } from "../ChromosomeInterval";
+import { GenomicBin, IndexedGenomicBins } from "../model/GenomicBin";
+import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { Scatterplot } from "./Scatterplot";
+import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
+import { DivWithBullseye } from "./DivWithBullseye";
 
-import "./ScatterplotContainer.css";
+import "./SampleViz.css";
 
 interface Props {
     indexedData: IndexedGenomicBins;
@@ -17,7 +19,7 @@ interface State {
     selectedSample: string;
 }
 
-export class ScatterplotContainer extends React.Component<Props, State> {
+export class SampleViz extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
@@ -36,19 +38,27 @@ export class ScatterplotContainer extends React.Component<Props, State> {
         const sampleOptions = Object.keys(indexedData).map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
+        const selectedData = indexedData[selectedSample];
 
-        return <div className="ScatterplotContainer">
-            <div>
+        return <div className="SampleViz">
+            <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
             </div>
-            <Scatterplot
-                data={indexedData[selectedSample]}
-                width={width}
-                height={height}
-                hoveredLocation={hoveredLocation}
-                onRecordHovered={onRecordHovered} />
+            <DivWithBullseye className="SampleViz-pane">
+                <Scatterplot
+                    data={selectedData}
+                    width={width}
+                    height={height}
+                    hoveredLocation={hoveredLocation}
+                    onRecordHovered={onRecordHovered} />
+            </DivWithBullseye>
+            <DivWithBullseye className="SampleViz-pane">
+                <RDLinearPlot data={selectedData} hoveredLocation={hoveredLocation} />
+                <div className="SampleViz-separator" />
+                <BAFLinearPlot data={selectedData} hoveredLocation={hoveredLocation} />
+            </DivWithBullseye>
         </div>;
     }
 }

@@ -2,8 +2,8 @@ import React from "react";
 import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { GenomicBin, ChrIndexedGenomicBins, GenomicBinHelpers } from "../GenomicBin";
-import { ChromosomeInterval } from "../ChromosomeInterval";
+import { GenomicBin, ChrIndexedGenomicBins, GenomicBinHelpers } from "../model/GenomicBin";
+import { ChromosomeInterval } from "../model/ChromosomeInterval";
 
 import "./Scatterplot.css";
 
@@ -14,10 +14,10 @@ const PADDING = { // For the SVG
     bottom: 60,
 };
 const SCALES_CLASS_NAME = "scatterplot-scale";
-const CIRCLE_GROUP_CLASSNAME = "circles";
+const CIRCLE_GROUP_CLASS_NAME = "circles";
 const CIRCLE_R = 3;
 const SELECTED_CIRCLE_R = 4;
-const TOOLTIP_OFFSET = 30; // Pixels
+const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
@@ -47,7 +47,7 @@ export class Scatterplot extends React.Component<Props> {
 
     render() {
         const {width, height} = this.props;
-        return <div style={{position: "relative"}}>
+        return <div className="Scatterplot" style={{position: "relative"}}>
             <svg ref={node => this._svg = node} width={width} height={height} />
             {this.renderTooltip()}
         </div>;
@@ -120,12 +120,11 @@ export class Scatterplot extends React.Component<Props> {
 
         const data = this.props.data.getAllRecords();
         const onRecordHovered = this.props.onRecordHovered;
-        const svg = d3.select(this._svg);
-        const width = Number(svg.attr("width"));
-        const height = Number(svg.attr("height"));
+        const {width, height} = this.props;
         const {bafScale, rdrScale} = this.computeScales(data, width, height);
         const colorScale = d3.scaleOrdinal(d3.schemeDark2);
 
+        const svg = d3.select(this._svg);
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
@@ -153,11 +152,11 @@ export class Scatterplot extends React.Component<Props> {
             .attr("y", _.mean(bafScale.range()));
 
         // Circles: remove any previous
-        svg.select("." + CIRCLE_GROUP_CLASSNAME).remove();
+        svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
 
         // Add circles
         svg.append("g")
-            .classed(CIRCLE_GROUP_CLASSNAME, true)
+            .classed(CIRCLE_GROUP_CLASS_NAME, true)
             .selectAll("circle")
                 .data(data)
                 .enter()

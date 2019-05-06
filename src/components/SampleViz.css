@@ -1,0 +1,16 @@
+.SampleViz {
+    margin: 20px;
+}
+
+.SampleViz-select {
+    margin-bottom: 10px;
+}
+
+.SampleViz-pane {
+    display: inline-block;
+    border: 1px solid lightgray;
+}
+
+.SampleViz-separator {
+    border: 1px solid lightgrey;
+}

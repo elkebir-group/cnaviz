@@ -1,8 +1,8 @@
 import React from "react";
 import parse from "csv-parse";
-import { ChromosomeInterval } from "./ChromosomeInterval";
-import { ScatterplotContainer } from "./components/ScatterplotContainer";
-import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./GenomicBin";
+import { ChromosomeInterval } from "./model/ChromosomeInterval";
+import { SampleViz } from "./components/SampleViz";
+import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./model/GenomicBin";
 
 import "./App.css";
 
@@ -131,12 +131,12 @@ export class App extends React.Component<{}, AppState> {
             <div className="row">
                 {
                 samples.length > 0 && <div className="col">
-                    <ScatterplotContainer {...scatterplotProps} initialSelectedSample={samples[0]} />
+                    <SampleViz {...scatterplotProps} initialSelectedSample={samples[0]} />
                 </div>
                 }
                 {
                 samples.length > 1 && <div className="col">
-                    <ScatterplotContainer {...scatterplotProps} initialSelectedSample={samples[1]} />
+                    <SampleViz {...scatterplotProps} initialSelectedSample={samples[1]} />
                 </div>
                 }
             </div>
