@@ -13,6 +13,40 @@ const PADDING = { // For the SVG
     bottom: 30,
 };
 
+/**
+ * Gets the device's pixel ratio.  Guaranteed to be a number greater than 0.
+ * 
+ * @return {number} this device's pixel ratio
+ */
+function getPixelRatioSafely(): number {
+    const pixelRatio = window.devicePixelRatio;
+    if (Number.isFinite(pixelRatio) && pixelRatio > 0) {
+        return pixelRatio;
+    } else {
+        return 1;
+    }
+}
+
+/**
+ * Applies a fix for Retina (i.e. high pixel density) displays, to prevent a canvas from being blurry.
+ * 
+ * @param {HTMLCanvasElement} canvas - canvas to modify
+ */
+function applyRetinaFix(canvas: HTMLCanvasElement) {
+    const pixelRatio = getPixelRatioSafely();
+    if (pixelRatio !== 1) {
+        const width = canvas.width;
+        const height = canvas.height;
+
+        canvas.width = width * pixelRatio;
+        canvas.height = height * pixelRatio;
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        const ctx = canvas.getContext('2d')!;
+        ctx.scale(pixelRatio, pixelRatio);
+    }
+}
+
 interface Props {
     data: ChrIndexedGenomicBins;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "BAF">;
@@ -99,32 +133,52 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._canvas) {
             return;
         }
+        applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
         ctx.fillStyle = color;
         for (const d of data) {
             const location = GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);
-            const x = 2 * xScale(range.getCenter());
-            const y = 2 * yScale(d[dataKeyToPlot]);
-            ctx.fillRect(x - 1, y - 2, 3, 5);
+            const x = xScale(range.getCenter());
+            const y = yScale(d[dataKeyToPlot]);
+            ctx.fillRect(x, y - 1, 2, 3);
         }
     }
 
-    renderTooltip() {
-        return null;
+    renderHighlight() {
+        const {genome, width, hoveredLocation} = this.props;
+        if (!hoveredLocation) {
+            return null;
+        }
+
+        const xScale = d3.scaleLinear()
+            .domain([0, genome.getLength()])
+            .range([PADDING.left, width - PADDING.right]);
+        const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
+        const start = xScale(implicitCoords.start);
+        const boxWidth = Math.ceil(xScale(implicitCoords.end) - start);
+        return <div style={{
+            position: "absolute",
+            left: start,
+            width: boxWidth,
+            height: "100%",
+            backgroundColor: "rgba(255,255,0,0.2)",
+            border: "1px solid rgba(255,255,0,0.7)",
+            zIndex: 1
+        }} />
     }
 
     render() {
         const {width, height} = this.props;
         return <div className="LinearPlot" style={{position: "relative"}}>
+            {this.renderHighlight()}
             <canvas
                 ref={node => this._canvas = node}
-                width={2 * width}
-                height={2 * height}
-                style={{position: "absolute", width, height, zIndex: -1}} />
+                width={width}
+                height={height}
+                style={{position: "absolute", zIndex: -1}} />
             <svg ref={node => this._svg = node} width={width} height={height} />
-            {this.renderTooltip()}
         </div>;
     }
 }

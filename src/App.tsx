@@ -4,6 +4,7 @@ import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { SampleViz } from "./components/SampleViz";
 import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./model/GenomicBin";
 
+import spinner from "./loading-small.gif";
 import "./App.css";
 
 enum ProcessingStatus {
@@ -103,9 +104,9 @@ export class App extends React.Component<{}, AppState> {
     getStatusCaption() {
         switch (this.state.processingStatus) {
             case ProcessingStatus.readingFile:
-                return "Reading file...";
+                return <div>Reading file... <img src={spinner} alt="Loading" /></div>;
             case ProcessingStatus.processing:
-                return "Processing data...";
+                return <div>Processing data... <img src={spinner} alt="Loading" /></div>;
             case ProcessingStatus.error:
                 return "ERROR";
             case ProcessingStatus.none:
