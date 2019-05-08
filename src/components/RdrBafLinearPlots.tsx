@@ -9,6 +9,7 @@ import { hg38 } from "../model/Genome";
 interface Props {
     data: ChrIndexedGenomicBins;
     hoveredLocation?: ChromosomeInterval;
+    onLocationHovered?: (location: ChromosomeInterval | null) => void
 }
 
 export class RDLinearPlot extends React.Component<Props> {
@@ -27,7 +28,7 @@ export class RDLinearPlot extends React.Component<Props> {
     }
 
     render() {
-        const {data, hoveredLocation} = this.props;
+        const {data, hoveredLocation, onLocationHovered} = this.props;
         const {min, max} = this.findMinMaxRd(data.getAllRecords());
 
         return <LinearPlot
@@ -35,6 +36,7 @@ export class RDLinearPlot extends React.Component<Props> {
             dataKeyToPlot="RD"
             genome={hg38}
             hoveredLocation={hoveredLocation}
+            onLocationHovered={onLocationHovered}
             yMin={min - 0.5}
             yMax={max + 0.5}
             color="blue" />;
@@ -42,12 +44,13 @@ export class RDLinearPlot extends React.Component<Props> {
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, hoveredLocation} = props;
+    const {data, hoveredLocation, onLocationHovered} = props;
     return <LinearPlot
         data={data}
         dataKeyToPlot="BAF"
         genome={hg38}
         hoveredLocation={hoveredLocation}
+        onLocationHovered={onLocationHovered}
         yMin={0}
         yMax={0.5}
         color="red" />;

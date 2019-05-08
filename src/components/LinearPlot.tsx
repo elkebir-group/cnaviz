@@ -1,9 +1,11 @@
 import React from "react";
 import * as d3 from "d3";
 import _ from "lodash";
+import memoizeOne from "memoize-one";
 import { ChrIndexedGenomicBins, GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
+import { getRelativeCoordinates, applyRetinaFix } from "../util";
 
 const SCALES_CLASS_NAME = "linearplot-scale";
 const PADDING = { // For the SVG
@@ -13,46 +15,13 @@ const PADDING = { // For the SVG
     bottom: 30,
 };
 
-/**
- * Gets the device's pixel ratio.  Guaranteed to be a number greater than 0.
- * 
- * @return {number} this device's pixel ratio
- */
-function getPixelRatioSafely(): number {
-    const pixelRatio = window.devicePixelRatio;
-    if (Number.isFinite(pixelRatio) && pixelRatio > 0) {
-        return pixelRatio;
-    } else {
-        return 1;
-    }
-}
-
-/**
- * Applies a fix for Retina (i.e. high pixel density) displays, to prevent a canvas from being blurry.
- * 
- * @param {HTMLCanvasElement} canvas - canvas to modify
- */
-function applyRetinaFix(canvas: HTMLCanvasElement) {
-    const pixelRatio = getPixelRatioSafely();
-    if (pixelRatio !== 1) {
-        const width = canvas.width;
-        const height = canvas.height;
-
-        canvas.width = width * pixelRatio;
-        canvas.height = height * pixelRatio;
-        canvas.style.width = width + "px";
-        canvas.style.height = height + "px";
-        const ctx = canvas.getContext('2d')!;
-        ctx.scale(pixelRatio, pixelRatio);
-    }
-}
-
 interface Props {
     data: ChrIndexedGenomicBins;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "BAF">;
-    hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
+    hoveredLocation?: ChromosomeInterval;
+    onLocationHovered: (location: ChromosomeInterval | null) => void
 
     genome: Genome;
     yLabel?: string;
@@ -65,7 +34,8 @@ export class LinearPlot extends React.PureComponent<Props> {
     static defaultProps = {
         width: 600,
         height: 100,
-        color: "blue"
+        color: "blue",
+        onLocationHovered: _.noop
     };
 
     private _svg: SVGSVGElement | null;
@@ -74,6 +44,9 @@ export class LinearPlot extends React.PureComponent<Props> {
         super(props);
         this._svg = null;
         this._canvas = null;
+        this.getXScale = memoizeOne(this.getXScale);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleMouseLeave = this.handleMouseLeave.bind(this);
     }
 
     componentDidMount() {
@@ -90,6 +63,12 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
     }
 
+    getXScale(width: number, genome: Genome) {
+        return d3.scaleLinear()
+            .domain([0, genome.getLength()])
+            .range([PADDING.left, width - PADDING.right]);
+    }
+
     redraw() {
         if (!this._svg) {
             return;
@@ -102,9 +81,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
-        const xScale = d3.scaleLinear()
-            .domain([0, genome.getLength()])
-            .range([PADDING.left, width - PADDING.right]);
+        const xScale = this.getXScale(width, genome);
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
@@ -147,14 +124,12 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     renderHighlight() {
-        const {genome, width, hoveredLocation} = this.props;
+        const {width, genome, hoveredLocation} = this.props;
         if (!hoveredLocation) {
             return null;
         }
 
-        const xScale = d3.scaleLinear()
-            .domain([0, genome.getLength()])
-            .range([PADDING.left, width - PADDING.right]);
+        const xScale = this.getXScale(width, genome);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil(xScale(implicitCoords.end) - start);
@@ -169,9 +144,32 @@ export class LinearPlot extends React.PureComponent<Props> {
         }} />
     }
 
+    handleMouseMove(event: React.MouseEvent) {
+        const {width, genome, onLocationHovered} = this.props;
+        const xScale = this.getXScale(width, genome);
+        const range = xScale.range();
+        const mouseX = getRelativeCoordinates(event).x;
+        if (mouseX < range[0] || mouseX > range[1]) { // Count mouse events outside the range as mouseleaves
+            this.handleMouseLeave();
+            return;
+        }
+
+        const implicitLocation = xScale.invert(mouseX);
+        onLocationHovered(genome.getGenomicCoordinates(implicitLocation));
+    }
+
+    handleMouseLeave() {
+        this.props.onLocationHovered(null);
+    }
+
     render() {
         const {width, height} = this.props;
-        return <div className="LinearPlot" style={{position: "relative"}}>
+        return <div
+            className="LinearPlot"
+            style={{position: "relative"}}
+            onMouseMove={this.handleMouseMove}
+            onMouseLeave={this.handleMouseLeave}
+        >
             {this.renderHighlight()}
             <canvas
                 ref={node => this._canvas = node}

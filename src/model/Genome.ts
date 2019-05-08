@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { ChromosomeInterval } from "./ChromosomeInterval";
 import OpenInterval from "./OpenInterval";
 
@@ -14,7 +15,6 @@ interface Chromosome {
 export class Genome {
     private _name: string;
     private _chromosomes: Chromosome[];
-    private _chrLengths: {[chrName: string]: number};
     private _chrStarts: {[chrName: string]: number};
     private _length: number;
 
@@ -27,15 +27,13 @@ export class Genome {
     constructor(name: string, chromosomes: Chromosome[]) {
         this._name = name;
         this._chromosomes = chromosomes;
-        this._chrLengths = {};
         this._chrStarts = {};
         this._length = 0;
         for (const chromosome of chromosomes) {
             const chrName = chromosome.name;
-            if (this._chrLengths[chrName] !== undefined) {
+            if (this._chrStarts[chrName] !== undefined) {
                 throw new Error(`Duplicate chromosome name "${chrName}" in genome "${name}"`);
             }
-            this._chrLengths[chrName] = chromosome.length;
             this._chrStarts[chrName] = this._length;
             this._length += chromosome.length;
         }
@@ -56,19 +54,6 @@ export class Genome {
         return this._chromosomes.map(chr => this._chrStarts[chr.name]);
     }
 
-    /**
-     * Gets the length of the chromosome with the specified name.  Returns -1 if there is no such chromosome.
-     * 
-     * @param {string} chr - chromosome name to look up
-     * @return {Chromosome} chromosome with the query name, or null if not found
-     */
-    getChromosomeLength(chr: string): number {
-        if ( !(chr in this._chrLengths) ) {
-            return -1;
-        }
-        return this._chrLengths[chr];
-    }
-
     getLength(): number {
         return this._length;
     }
@@ -80,6 +65,21 @@ export class Genome {
         }
         const chrStart = this._chrStarts[chr];
         return new OpenInterval(chrStart + start, chrStart + end);
+    }
+
+    getGenomicCoordinates(implicit: number, ensureInGenome=true) {
+        if (ensureInGenome) {
+            if (implicit < 0) {
+                implicit = 0;
+            } else if (implicit >= this.getLength()) {
+                implicit = this.getLength() - 1;
+            }
+        }
+
+        const sortedChrStarts = Object.values(this._chrStarts).sort((a, b) => a - b); // Sorted smallest to largest
+        const index = _.sortedLastIndex(sortedChrStarts, implicit) - 1;
+        const chrCoordinate = implicit - sortedChrStarts[index];
+        return new ChromosomeInterval(this._chromosomes[index].name, chrCoordinate, chrCoordinate + 1);
     }
 }
 

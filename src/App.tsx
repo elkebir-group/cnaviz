@@ -1,5 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
+import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { SampleViz } from "./components/SampleViz";
 import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./model/GenomicBin";
@@ -58,7 +59,7 @@ export class App extends React.Component<{}, AppState> {
             hoveredLocation: null
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
-        this.handleRecordHovered = this.handleRecordHovered.bind(this);
+        this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -93,12 +94,15 @@ export class App extends React.Component<{}, AppState> {
         });
     }
 
-    handleRecordHovered(record: GenomicBin | null) {
-        if (!record) {
+    handleLocationHovered(location: ChromosomeInterval | null) {
+        if (!location) {
             this.setState({hoveredLocation: null});
             return;
         }
-        this.setState({hoveredLocation: GenomicBinHelpers.toChromosomeInterval(record)});
+        const sampleDatas = Object.values(this.state.indexedData);
+        const binSize = sampleDatas.length > 0 ?
+            GenomicBinHelpers.estimateBinSize(sampleDatas[0].getAllRecords()) : 50000;
+        this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
     }
 
     getStatusCaption() {
@@ -121,7 +125,7 @@ export class App extends React.Component<{}, AppState> {
         const scatterplotProps = {
             indexedData,
             hoveredLocation: hoveredLocation || undefined,
-            onRecordHovered: this.handleRecordHovered
+            onLocationHovered: this.handleLocationHovered
         };
         return <div className="container-fluid">
             <h1>CNA-Viz</h1>

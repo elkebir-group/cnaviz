@@ -53,5 +53,12 @@ export const GenomicBinHelpers = {
             result[sample] = new ChrIndexedGenomicBins(binsForSample);
         }
         return result;
+    },
+
+    estimateBinSize: function(bins: GenomicBin[]): number {
+        if (bins.length === 0) {
+            return 0;
+        }
+        return bins[0].END - bins[0].START;
     }
 }
