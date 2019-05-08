@@ -88,18 +88,20 @@ export class LinearPlot extends React.PureComponent<Props> {
         const xAxis = d3.axisBottom(xScale)
             .tickValues(genome.getChromosomeStarts())
             .tickFormat((unused, i) => chromosomes[i].name.substr(3));
+        const yAxis = d3.axisLeft(yScale)
+            .ticks((yScale.range()[0] - yScale.range()[1]) / 15); // Every ~10 pixels
 
-        // X scale stuff
+        // X axis stuff
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(xAxis);
 
-        // Y scale stuff
+        // Y axis stuff
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(${PADDING.left}, 0)`)
-            .call(d3.axisLeft(yScale));
+            .call(yAxis);
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `rotate(90, ${PADDING.left - 40}, ${_.mean(yScale.range())})`)

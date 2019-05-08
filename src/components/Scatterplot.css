@@ -1,5 +1,6 @@
 .Scatterplot-tooltip {
     padding: 10px;
-    background-color: rgba(224,255,255,0.8);
+    background-color: rgba(224,255,255,0.9);
     border-radius: 5px;
+    z-index: 2;
 }

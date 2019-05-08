@@ -37,8 +37,8 @@ export class RDLinearPlot extends React.Component<Props> {
             genome={hg38}
             hoveredLocation={hoveredLocation}
             onLocationHovered={onLocationHovered}
-            yMin={min - 0.5}
-            yMax={max + 0.5}
+            yMin={min}
+            yMax={max}
             color="blue" />;
     }
 }

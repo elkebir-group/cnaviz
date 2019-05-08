@@ -2,8 +2,9 @@ import React from "react";
 import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { GenomicBin, ChrIndexedGenomicBins, GenomicBinHelpers } from "../model/GenomicBin";
+import { GenomicBin, ChrIndexedGenomicBins, MergedGenomicBin } from "../model/GenomicBin";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
+import { niceBpCount } from "../util";
 
 import "./Scatterplot.css";
 
@@ -15,8 +16,8 @@ const PADDING = { // For the SVG
 };
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASS_NAME = "circles";
-const CIRCLE_R = 3;
-const SELECTED_CIRCLE_R = 4;
+const CIRCLE_R = 1;
+const SELECTED_CIRCLE_R_INCREASE = 2;
 const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
@@ -25,7 +26,7 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
-    onRecordHovered: (record: GenomicBin | null) => void;
+    onRecordsHovered: (record: MergedGenomicBin | null) => void;
 }
 
 export class Scatterplot extends React.Component<Props> {
@@ -58,23 +59,47 @@ export class Scatterplot extends React.Component<Props> {
         if (!hoveredLocation) {
             return null;
         }
-        const record = data.findRecord(hoveredLocation);
-        if (!record) {
-            return null;
+        const records = data.findOverlappingRecords(hoveredLocation);
+        const {bafScale, rdrScale} = this.computeScales(data.getAllRecords(), width, height);
+        if (records.length === 1) {
+            const record = records[0];
+            return <div
+                className="Scatterplot-tooltip"
+                style={{
+                    position: "absolute",
+                    top: bafScale(0.5 - record.averageBaf) + TOOLTIP_OFFSET,
+                    left: rdrScale(record.averageRd) + TOOLTIP_OFFSET
+                }}>
+                    <p>
+                        <b>{record.location.toString()}</b><br/>
+                        ({niceBpCount(record.location.getLength())})
+                    </p>
+                    <div>Average RDR: {record.averageRd.toFixed(2)}</div>
+                    <div>Average BAF: {record.averageBaf.toFixed(2)}</div>
+            </div>;
+        } else if (records.length > 1) {
+            const minBaf = _.minBy(records, "averageBaf")!.averageBaf;
+            const maxBaf = _.maxBy(records, "averageBaf")!.averageBaf;
+            const meanBaf = _.meanBy(records, "averageBaf");
+            const minRd = _.minBy(records, "averageRd")!.averageRd;
+            const maxRd = _.maxBy(records, "averageRd")!.averageRd;
+            const meanRd = _.meanBy(records, "averageRd");
+            return <div
+                className="Scatterplot-tooltip"
+                style={{
+                    position: "absolute",
+                    top: bafScale(0.5 - maxBaf) + TOOLTIP_OFFSET,
+                    left: rdrScale(maxRd) + TOOLTIP_OFFSET
+                }}>
+                    <p><b>{records.length} corresponding regions</b></p>
+                    <div>Average RDR: {meanRd.toFixed(2)}</div>
+                    <div>Average BAF: {meanBaf.toFixed(2)}</div>
+                    <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
+                    <div>BAF range: [{minBaf.toFixed(2)}, {maxBaf.toFixed(2)}]</div>
+            </div>;
         }
 
-        const {bafScale, rdrScale} = this.computeScales(data.getAllRecords(), width, height);
-        return <div
-            className="Scatterplot-tooltip"
-            style={{
-                position: "absolute",
-                top: bafScale(0.5 - record.BAF) + TOOLTIP_OFFSET,
-                left: rdrScale(record.RD) + TOOLTIP_OFFSET
-            }}>
-                <p><b>{hoveredLocation.toString()}</b></p>
-                <div>RDR: {record.RD.toFixed(2)}</div>
-                <div>BAF: {record.BAF.toFixed(2)}</div>
-        </div>;
+        return null;
     }
 
     componentDidMount() {
@@ -118,17 +143,17 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
 
-        const data = this.props.data.getAllRecords();
-        const onRecordHovered = this.props.onRecordHovered;
+        const data = this.props.data.getMergedRecords();
+        const onRecordsHovered = this.props.onRecordsHovered;
         const {width, height} = this.props;
-        const {bafScale, rdrScale} = this.computeScales(data, width, height);
+        const {bafScale, rdrScale} = this.computeScales(this.props.data.getAllRecords(), width, height);
         const colorScale = d3.scaleOrdinal(d3.schemeDark2);
 
         const svg = d3.select(this._svg);
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
-        // X scale stuff
+        // X axis stuff
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
@@ -140,7 +165,7 @@ export class Scatterplot extends React.Component<Props> {
             .attr("y", height - PADDING.bottom + 40)
             .text("Read depth ratio");
 
-        // Y scale stuff
+        // Y axis stuff
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(${PADDING.left}, 0)`)
@@ -161,41 +186,52 @@ export class Scatterplot extends React.Component<Props> {
                 .data(data)
                 .enter()
                 .append("circle")
-                    .attr("id", d => this._circleIdPrefix + GenomicBinHelpers.toChromosomeInterval(d).toString())
-                    .attr("cx", d => rdrScale(d.RD))
-                    .attr("cy", d => bafScale(0.5 - d.BAF))
-                    .attr("r", CIRCLE_R)
-                    .attr("fill", d => colorScale(String(d.CLUSTER)))
-                    .on("mouseenter", onRecordHovered)
-                    .on("mouseleave", () => onRecordHovered(null))
+                    .attr("id", d => this._circleIdPrefix + d.location.toString())
+                    .attr("cx", d => rdrScale(d.averageRd))
+                    .attr("cy", d => bafScale(0.5 - d.averageBaf))
+                    .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
+                    .attr("fill", d => colorScale(String(d.bins[0].CLUSTER)))
+                    .on("mouseenter", onRecordsHovered)
+                    .on("mouseleave", () => onRecordsHovered(null))
     }
 
-    getCircleForGenomeLocation(hoveredLocation?: ChromosomeInterval): SVGCircleElement | null {
+    getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
         if (!this._svg || !hoveredLocation) {
-            return null;
+            return [];
         }
-        const circle = this._svg.getElementById(this._circleIdPrefix + hoveredLocation.toString());
-        return circle ? circle as unknown as SVGCircleElement : circle; // Yea, this cast is ugly.  Thanks TypeScript.
+        const records = this.props.data.findOverlappingRecords(hoveredLocation);
+        const results: Element[] = [];
+        for (const record of records) {
+            const id = this._circleIdPrefix + record.location.toString();
+            results.push(this._svg.getElementById(id));
+        }
+        return results;
     }
 
     forceHover(genomeLocation?: ChromosomeInterval) {
-        const circle = this.getCircleForGenomeLocation(genomeLocation);
-        if (!circle) {
+        const elements = this.getElementsForGenomeLocation(genomeLocation);
+        if (elements.length === 0) {
             return;
         }
-        const parent = circle.parentElement!;
-        circle.remove();
-        circle.setAttribute("r", String(SELECTED_CIRCLE_R));
-        circle.setAttribute("stroke", "black");
-        parent.appendChild(circle); // Readd the circle, which moves it to the top.
+        for (const element of elements) {
+            const parent = element.parentElement!;
+            const r = Number(element.getAttribute("r"));
+            element.remove();
+            element.setAttribute("r", String(r + SELECTED_CIRCLE_R_INCREASE));
+            element.setAttribute("stroke", "black");
+            parent.appendChild(element); // Re-add the circle, which moves it to the top.
+        }
     }
 
     forceUnhover(genomeLocation?: ChromosomeInterval) {
-        const circle = this.getCircleForGenomeLocation(genomeLocation);
-        if (!circle) {
+        const elements = this.getElementsForGenomeLocation(genomeLocation);
+        if (elements.length === 0) {
             return;
         }
-        circle.setAttribute("r", String(CIRCLE_R));
-        circle.removeAttribute("stroke");
+        for (const element of elements) {
+            const r = Number(element.getAttribute("r"));
+            element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
+            element.removeAttribute("stroke");
+        }
     }
 }

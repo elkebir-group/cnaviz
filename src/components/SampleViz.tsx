@@ -1,6 +1,6 @@
 import React from "react";
 import _ from "lodash";
-import { GenomicBin, IndexedGenomicBins, GenomicBinHelpers } from "../model/GenomicBin";
+import { IndexedGenomicBins, MergedGenomicBin } from "../model/GenomicBin";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { Scatterplot } from "./Scatterplot";
 import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
@@ -31,15 +31,15 @@ export class SampleViz extends React.Component<Props, State> {
             selectedSample: props.initialSelectedSample || Object.keys(props.indexedData)[0]
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
-        this.handleRecordHovered = this.handleRecordHovered.bind(this);
+        this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedSample: event.target.value});
     }
 
-    handleRecordHovered(record: GenomicBin | null) {
-        const location = record ? GenomicBinHelpers.toChromosomeInterval(record) : null;
+    handleRecordsHovered(record: MergedGenomicBin | null) {
+        const location = record ? record.location : null;
         this.props.onLocationHovered(location);
     }
 
@@ -63,7 +63,7 @@ export class SampleViz extends React.Component<Props, State> {
                     width={width}
                     height={height}
                     hoveredLocation={hoveredLocation}
-                    onRecordHovered={this.handleRecordHovered} />
+                    onRecordsHovered={this.handleRecordsHovered} />
             </DivWithBullseye>
             <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot

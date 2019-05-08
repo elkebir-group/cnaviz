@@ -58,3 +58,18 @@ export function applyRetinaFix(canvas: HTMLCanvasElement) {
         ctx.scale(pixelRatio, pixelRatio);
     }
 }
+
+/**
+ * @param {number} bases - number of bases
+ * @return {string} human-readable string representing that number of bases
+ */
+export function niceBpCount(bases: number) {
+    const rounded = Math.floor(bases);
+    if (rounded >= 750000) {
+        return `${(rounded/1000000).toFixed(1)} Mb`;
+    } else if (rounded >= 10000) {
+        return `${(rounded/1000).toFixed(1)} kb`;
+    } else {
+        return `${rounded} bp`;
+    }
+}

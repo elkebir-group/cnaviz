@@ -1,19 +1,42 @@
 import OpenInterval from "./OpenInterval";
 
-export class ChromosomeInterval extends OpenInterval {
+export class ChromosomeInterval {
     public readonly chr: string;
+    private readonly _interval: OpenInterval
 
     constructor(chr: string, start: number, end: number) {
         if (start < 0) {
             throw new RangeError("Start cannot be negative");
         }
-        super(start, end);
         this.chr = chr;
+        this._interval = new OpenInterval(start, end);
+    }
+
+    get start() {
+        return this._interval.start;
+    }
+
+    get end() {
+        return this._interval.end;
+    }
+
+    getLength() {
+        return this._interval.getLength();
+    }
+
+    getCenter() {
+        return this._interval.getCenter();
     }
 
     /**
-     * @override
-     * @return {string} human-readable representation of this interval
+     * 
+     */
+    hasOverlap(other: ChromosomeInterval) {
+        return this.chr === other.chr && this._interval.hasOverlap(other._interval);
+    }
+
+    /**
+     * @return {string} human-readable representation of this instance
      */
     toString(): string {
         return `${this.chr}:${this.start}-${this.end}`;
