@@ -63,6 +63,7 @@ export class SampleViz extends React.Component<Props, State> {
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     data={selectedData}
+                    rdRange={indexedData.rdRange}
                     width={width}
                     height={height}
                     hoveredLocation={hoveredLocation}
@@ -70,7 +71,10 @@ export class SampleViz extends React.Component<Props, State> {
             </DivWithBullseye>
             <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot
-                    data={selectedData} hoveredLocation={hoveredLocation} onLocationHovered={onLocationHovered} />
+                    data={selectedData}
+                    rdRange={indexedData.rdRange}
+                    hoveredLocation={hoveredLocation}
+                    onLocationHovered={onLocationHovered} />
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
                     data={selectedData} hoveredLocation={hoveredLocation} onLocationHovered={onLocationHovered} />

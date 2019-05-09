@@ -5,7 +5,6 @@ import memoizeOne from "memoize-one";
 
 import { ChrIndexedBins } from "../model/BinIndex";
 import { MergedGenomicBin } from "../model/BinMerger";
-import { GenomicBin } from "../model/GenomicBin";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { niceBpCount } from "../util";
 
@@ -26,6 +25,7 @@ let nextCircleIdPrefix = 0;
 
 interface Props {
     data: ChrIndexedBins;
+    rdRange: [number, number];
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
@@ -58,12 +58,12 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     renderTooltip() {
-        const {data, width, height, hoveredLocation} = this.props;
+        const {data, rdRange, width, height, hoveredLocation} = this.props;
         if (!hoveredLocation) {
             return null;
         }
         const records = data.findOverlappingRecords(hoveredLocation);
-        const {bafScale, rdrScale} = this.computeScales(data.getAllRecords(), width, height);
+        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         if (records.length === 1) {
             const record = records[0];
             return <div
@@ -124,19 +124,13 @@ export class Scatterplot extends React.Component<Props> {
         }
     }
 
-    computeScales(data: GenomicBin[], width: number, height: number) {
-        let min = 0, max = 0;
-        if (data.length !== 0) {
-            min = (_.minBy(data, "RD") as GenomicBin).RD;
-            max = (_.maxBy(data, "RD") as GenomicBin).RD;
-        }
-
+    computeScales(rdRange: [number, number], width: number, height: number) {
         return {
             bafScale: d3.scaleLinear() // Note that the raw data is BAF.  We want to plot 0.5 - BAF.
                 .domain([0, 0.5])
                 .range([height - PADDING.bottom, PADDING.top]),
             rdrScale: d3.scaleLinear()
-                .domain([min - 0.5, max + 0.5])
+                .domain(rdRange)
                 .range([PADDING.left, width - PADDING.right])
         };
     }
@@ -149,7 +143,7 @@ export class Scatterplot extends React.Component<Props> {
         const data = this.props.data.getMergedRecords();
         const onRecordsHovered = this.props.onRecordsHovered;
         const {width, height} = this.props;
-        const {bafScale, rdrScale} = this.computeScales(this.props.data.getAllRecords(), width, height);
+        const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(d3.schemeDark2);
 
         const svg = d3.select(this._svg);

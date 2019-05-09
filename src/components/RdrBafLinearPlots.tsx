@@ -1,9 +1,6 @@
 import React from "react";
-import _ from "lodash";
-import memoizeOne from "memoize-one";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { GenomicBin } from "../model/GenomicBin";
 import { hg38 } from "../model/Genome";
 import { ChrIndexedBins } from "../model/BinIndex";
 import { LinearPlot } from "./LinearPlot";
@@ -14,35 +11,18 @@ interface Props {
     onLocationHovered?: (location: ChromosomeInterval | null) => void
 }
 
-export class RDLinearPlot extends React.Component<Props> {
-    constructor(props: Props) {
-        super(props);
-        this.findMinMaxRd = memoizeOne(this.findMinMaxRd);
-    }
+export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
+    const {data, rdRange, hoveredLocation, onLocationHovered} = props;
 
-    findMinMaxRd(data: GenomicBin[]) {
-        let min = 0, max = 0;
-        if (data.length !== 0) {
-            min = (_.minBy(data, "RD") as GenomicBin).RD;
-            max = (_.maxBy(data, "RD") as GenomicBin).RD;
-        }
-        return {min, max};
-    }
-
-    render() {
-        const {data, hoveredLocation, onLocationHovered} = this.props;
-        const {min, max} = this.findMinMaxRd(data.getAllRecords());
-
-        return <LinearPlot
-            data={data}
-            dataKeyToPlot="RD"
-            genome={hg38}
-            hoveredLocation={hoveredLocation}
-            onLocationHovered={onLocationHovered}
-            yMin={min}
-            yMax={max}
-            color="blue" />;
-    }
+    return <LinearPlot
+        data={data}
+        dataKeyToPlot="RD"
+        genome={hg38}
+        hoveredLocation={hoveredLocation}
+        onLocationHovered={onLocationHovered}
+        yMin={rdRange[0]}
+        yMax={rdRange[1]}
+        color="blue" />;
 }
 
 export function BAFLinearPlot(props: Props) {
