@@ -1,26 +1,13 @@
 import React from "react";
 import parse from "csv-parse";
 import _ from "lodash";
-import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { SampleViz } from "./components/SampleViz";
+import { GenomicLocationInput } from "./components/GenomicLocationInput";
+import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./model/GenomicBin";
 
 import spinner from "./loading-small.gif";
 import "./App.css";
-
-enum ProcessingStatus {
-    none,
-    readingFile,
-    processing,
-    done,
-    error
-}
-
-interface AppState {
-    processingStatus: ProcessingStatus;
-    indexedData: IndexedGenomicBins;
-    hoveredLocation: ChromosomeInterval | null;
-}
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -51,7 +38,21 @@ function parseGenomicBins(data: string): Promise<GenomicBin[]> {
     })
 }
 
-export class App extends React.Component<{}, AppState> {
+enum ProcessingStatus {
+    none,
+    readingFile,
+    processing,
+    done,
+    error
+}
+
+interface State {
+    processingStatus: ProcessingStatus;
+    indexedData: IndexedGenomicBins;
+    hoveredLocation: ChromosomeInterval | null;
+}
+
+export class App extends React.Component<{}, State> {
     constructor(props: {}) {
         super(props);
         this.state = {
@@ -131,12 +132,10 @@ export class App extends React.Component<{}, AppState> {
                 hoveredLocation: hoveredLocation || undefined,
                 onLocationHovered: this.handleLocationHovered
             };
-            const stringRegion = hoveredLocation ? hoveredLocation.toString() : "";
+
             mainUI = <div>
                 <div className="App-global-controls">
-                    <div>
-                        Highlight region: <input type="text" size={30} value={stringRegion} /><button>Set</button>
-                    </div>
+                    <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
                 </div>
                 <div className="row">
                     {

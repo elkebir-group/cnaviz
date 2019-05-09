@@ -2,7 +2,27 @@ import OpenInterval from "./OpenInterval";
 
 export class ChromosomeInterval {
     public readonly chr: string;
-    private readonly _interval: OpenInterval
+    private readonly _interval: OpenInterval;
+
+    /**
+     * Parses a string representing a ChromosomeInterval, such as those produced by the toString() method.  Throws an
+     * error if parsing fails.
+     * 
+     * @param {string} str - interval to parse
+     * @return {ChromosomeInterval} parsed instance
+     * @throws {RangeError} if parsing fails
+     */
+    static parse(str: string): ChromosomeInterval {
+        const regexMatch = str.match(/([\w:]+)\W+(\d+)\W+(\d+)/);
+        if (regexMatch) {
+            const chr = regexMatch[1];
+            const start = Number.parseInt(regexMatch[2], 10);
+            const end = Number.parseInt(regexMatch[3], 10);
+            return new ChromosomeInterval(chr, start, end);
+        } else {
+            throw new RangeError("Could not parse interval");
+        }
+    }
 
     constructor(chr: string, start: number, end: number) {
         if (start < 0) {
