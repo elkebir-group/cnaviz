@@ -1,7 +1,10 @@
 import React from "react";
 import _ from "lodash";
-import { IndexedGenomicBins, MergedGenomicBin } from "../model/GenomicBin";
+
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
+import { SampleIndexedBins } from "../model/BinIndex";
+import { MergedGenomicBin } from "../model/BinMerger";
+
 import { Scatterplot } from "./Scatterplot";
 import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 import { DivWithBullseye } from "./DivWithBullseye";
@@ -9,7 +12,7 @@ import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
 
 interface Props {
-    indexedData: IndexedGenomicBins;
+    indexedData: SampleIndexedBins;
     initialSelectedSample?: string;
     width?: number;
     height?: number;
@@ -46,10 +49,10 @@ export class SampleViz extends React.Component<Props, State> {
     render() {
         const {indexedData, width, height, hoveredLocation, onLocationHovered} = this.props;
         const selectedSample = this.state.selectedSample;
-        const sampleOptions = Object.keys(indexedData).map(sampleName =>
+        const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        const selectedData = indexedData[selectedSample];
+        const selectedData = indexedData.getDataForSample(selectedSample)
 
         return <div className="SampleViz">
             <div className="SampleViz-select">

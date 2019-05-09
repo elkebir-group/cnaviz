@@ -2,7 +2,10 @@ import React from "react";
 import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { GenomicBin, ChrIndexedGenomicBins, MergedGenomicBin } from "../model/GenomicBin";
+
+import { ChrIndexedBins } from "../model/BinIndex";
+import { MergedGenomicBin } from "../model/BinMerger";
+import { GenomicBin } from "../model/GenomicBin";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { niceBpCount } from "../util";
 
@@ -22,7 +25,7 @@ const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
-    data: ChrIndexedGenomicBins;
+    data: ChrIndexedBins;
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;

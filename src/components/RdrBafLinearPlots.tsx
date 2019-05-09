@@ -1,13 +1,15 @@
 import React from "react";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { LinearPlot } from "./LinearPlot";
+
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { ChrIndexedGenomicBins, GenomicBin } from "../model/GenomicBin";
+import { GenomicBin } from "../model/GenomicBin";
 import { hg38 } from "../model/Genome";
+import { ChrIndexedBins } from "../model/BinIndex";
+import { LinearPlot } from "./LinearPlot";
 
 interface Props {
-    data: ChrIndexedGenomicBins;
+    data: ChrIndexedBins;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered?: (location: ChromosomeInterval | null) => void
 }

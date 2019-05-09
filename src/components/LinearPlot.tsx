@@ -2,7 +2,9 @@ import React from "react";
 import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { ChrIndexedGenomicBins, GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
+
+import { ChrIndexedBins } from "../model/BinIndex";
+import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { getRelativeCoordinates, applyRetinaFix } from "../util";
@@ -16,7 +18,7 @@ const PADDING = { // For the SVG
 };
 
 interface Props {
-    data: ChrIndexedGenomicBins;
+    data: ChrIndexedBins;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "BAF">;
     width: number;
     height: number;

@@ -1,10 +1,13 @@
 import React from "react";
 import parse from "csv-parse";
 import _ from "lodash";
+
+import { ChromosomeInterval } from "./model/ChromosomeInterval";
+import { GenomicBin } from "./model/GenomicBin";
+import { SampleIndexedBins } from "./model/BinIndex";
+
 import { SampleViz } from "./components/SampleViz";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
-import { ChromosomeInterval } from "./model/ChromosomeInterval";
-import { GenomicBin, GenomicBinHelpers, IndexedGenomicBins } from "./model/GenomicBin";
 
 import spinner from "./loading-small.gif";
 import "./App.css";
@@ -48,7 +51,7 @@ enum ProcessingStatus {
 
 interface State {
     processingStatus: ProcessingStatus;
-    indexedData: IndexedGenomicBins;
+    indexedData: SampleIndexedBins;
     hoveredLocation: ChromosomeInterval | null;
 }
 
@@ -57,7 +60,7 @@ export class App extends React.Component<{}, State> {
         super(props);
         this.state = {
             processingStatus: ProcessingStatus.none,
-            indexedData: {},
+            indexedData: new SampleIndexedBins([]),
             hoveredLocation: null
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -91,7 +94,7 @@ export class App extends React.Component<{}, State> {
         }
 
         this.setState({
-            indexedData: GenomicBinHelpers.indexBins(parsed),
+            indexedData: new SampleIndexedBins(parsed),
             processingStatus: ProcessingStatus.done
         });
     }
@@ -101,9 +104,7 @@ export class App extends React.Component<{}, State> {
             this.setState({hoveredLocation: null});
             return;
         }
-        const sampleDatas = Object.values(this.state.indexedData);
-        const binSize = sampleDatas.length > 0 ?
-            GenomicBinHelpers.estimateBinSize(sampleDatas[0].getAllRecords()) : 50000;
+        const binSize = this.state.indexedData.estimateBinSize();
         this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
     }
 
@@ -124,9 +125,9 @@ export class App extends React.Component<{}, State> {
 
     render() {
         const {indexedData, hoveredLocation} = this.state;
-        const samples = Object.keys(indexedData);
+        const samples = indexedData.getSamples();
         let mainUI = null;
-        if (this.state.processingStatus === ProcessingStatus.done && samples.length > 0) {
+        if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
                 indexedData,
                 hoveredLocation: hoveredLocation || undefined,
