@@ -52,7 +52,7 @@ export class SampleViz extends React.Component<Props, State> {
         const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        const selectedData = indexedData.getDataForSample(selectedSample)
+        const selectedData = indexedData.getDataForSample(selectedSample);
 
         return <div className="SampleViz">
             <div className="SampleViz-select">

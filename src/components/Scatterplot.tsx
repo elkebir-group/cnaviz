@@ -188,6 +188,7 @@ export class Scatterplot extends React.Component<Props> {
                     .attr("cy", d => bafScale(0.5 - d.averageBaf))
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
                     .attr("fill", d => colorScale(String(d.bins[0].CLUSTER)))
+                    .attr("fill-opacity", 0.8)
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
     }
@@ -228,8 +229,11 @@ export class Scatterplot extends React.Component<Props> {
         }
         for (const element of elements) {
             const r = Number(element.getAttribute("r"));
+            const parent = element.parentElement!;
+            element.remove();
             element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
             element.removeAttribute("stroke");
+            parent.insertBefore(element, parent.firstChild); // Move the element to the very back
         }
     }
 }

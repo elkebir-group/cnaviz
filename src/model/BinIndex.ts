@@ -62,7 +62,7 @@ export class ChrIndexedBins {
         this._grouped = _.groupBy(bins, "#CHR");
         this._merged = {};
         for (const chr in this._grouped) {
-            this._merged[chr] = merger.doMerge(bins);
+            this._merged[chr] = merger.doMerge(this._grouped[chr]);
         }
     }
 
