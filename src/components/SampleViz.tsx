@@ -13,6 +13,7 @@ import "./SampleViz.css";
 
 interface Props {
     indexedData: SampleIndexedBins;
+    chr?: string;
     initialSelectedSample?: string;
     width?: number;
     height?: number;
@@ -47,12 +48,15 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, width, height, hoveredLocation, onLocationHovered} = this.props;
+        const {indexedData, chr, width, height, hoveredLocation, onLocationHovered} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        const selectedData = indexedData.getDataForSample(selectedSample);
+        let selectedData = indexedData.getDataForSample(selectedSample);
+        if (chr) {
+            selectedData = selectedData.makeCopyWithJustChr(chr);
+        }
 
         return <div className="SampleViz">
             <div className="SampleViz-select">
@@ -72,12 +76,16 @@ export class SampleViz extends React.Component<Props, State> {
             <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot
                     data={selectedData}
+                    chr={chr}
                     rdRange={indexedData.rdRange}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} />
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
-                    data={selectedData} hoveredLocation={hoveredLocation} onLocationHovered={onLocationHovered} />
+                    data={selectedData}
+                    chr={chr}
+                    hoveredLocation={hoveredLocation}
+                    onLocationHovered={onLocationHovered} />
             </DivWithBullseye>
         </div>;
     }

@@ -61,14 +61,15 @@ export function applyRetinaFix(canvas: HTMLCanvasElement) {
 
 /**
  * @param {number} bases - number of bases
+ * @param {number} sigFigs - number of digits after the decimal point
  * @return {string} human-readable string representing that number of bases
  */
-export function niceBpCount(bases: number) {
+export function niceBpCount(bases: number, sigFigs=1) {
     const rounded = Math.floor(bases);
     if (rounded >= 750000) {
-        return `${(rounded/1000000).toFixed(1)} Mb`;
+        return `${(rounded/1000000).toFixed(sigFigs)} Mb`;
     } else if (rounded >= 10000) {
-        return `${(rounded/1000).toFixed(1)} kb`;
+        return `${(rounded/1000).toFixed(sigFigs)} kb`;
     } else {
         return `${rounded} bp`;
     }

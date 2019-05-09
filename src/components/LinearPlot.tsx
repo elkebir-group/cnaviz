@@ -7,18 +7,28 @@ import { ChrIndexedBins } from "../model/BinIndex";
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { getRelativeCoordinates, applyRetinaFix } from "../util";
+import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 
 const SCALES_CLASS_NAME = "linearplot-scale";
 const PADDING = { // For the SVG
     left: 50,
     right: 10,
     top: 10,
-    bottom: 30,
+    bottom: 35,
 };
+
+function findChrNumber(chr: string) {
+    const match = chr.match(/\d+/);
+    if (!match) {
+        return chr;
+    } else {
+        return match[0];
+    }
+}
 
 interface Props {
     data: ChrIndexedBins;
+    chr?: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "BAF">;
     width: number;
     height: number;
@@ -35,7 +45,7 @@ interface Props {
 export class LinearPlot extends React.PureComponent<Props> {
     static defaultProps = {
         width: 600,
-        height: 100,
+        height: 110,
         color: "blue",
         onLocationHovered: _.noop
     };
@@ -60,14 +70,21 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["data", "width", "height"])) {
+        if (this.propsDidChange(prevProps, ["data", "width", "height", "chr"])) {
             this.redraw();
         }
     }
 
-    getXScale(width: number, genome: Genome) {
+    getXScale(width: number, genome: Genome, chr?: string) {
+        let domain = [0, 0];
+        if (!chr) {
+            domain[1] = genome.getLength();
+        } else {
+            domain[0] = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, 1)).start;
+            domain[1] = domain[0] + genome.getLength(chr);
+        }
         return d3.scaleLinear()
-            .domain([0, genome.getLength()])
+            .domain(domain)
             .range([PADDING.left, width - PADDING.right]);
     }
 
@@ -75,29 +92,46 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._svg) {
             return;
         }
-        const data = this.props.data.getAllRecords();
-        const {width, height, genome, dataKeyToPlot, yMin, yMax, yLabel, color} = this.props;
-        const chromosomes = genome.getChromosomeList();
+        const data = this.props.data.getRecords();
+        const {width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, color} = this.props;
+
+        const xScale = this.getXScale(width, genome, chr);
+        const yScale = d3.scaleLinear()
+            .domain([yMin, yMax])
+            .range([height - PADDING.bottom, PADDING.top]);
+        let xAxis;
+        if (!chr) {
+            const chromosomes = genome.getChromosomeList();
+            xAxis = d3.axisBottom(xScale)
+                .tickValues(genome.getChromosomeStarts())
+                .tickFormat((unused, i) => findChrNumber(chromosomes[i].name));
+        } else {
+            const nonImplicitXScale = d3.scaleLinear()
+                .domain([0, genome.getLength(chr)])
+                .range(xScale.range())
+            xAxis = d3.axisBottom(nonImplicitXScale)
+                .tickFormat(baseNum => niceBpCount(baseNum.valueOf(), 0));
+        }
+        
+        const yAxis = d3.axisLeft(yScale)
+            .ticks((yScale.range()[0] - yScale.range()[1]) / 15); // Every ~10 pixels
 
         const svg = d3.select(this._svg);
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
-
-        const xScale = this.getXScale(width, genome);
-        const yScale = d3.scaleLinear()
-            .domain([yMin, yMax])
-            .range([height - PADDING.bottom, PADDING.top]);
-        const xAxis = d3.axisBottom(xScale)
-            .tickValues(genome.getChromosomeStarts())
-            .tickFormat((unused, i) => chromosomes[i].name.substr(3));
-        const yAxis = d3.axisLeft(yScale)
-            .ticks((yScale.range()[0] - yScale.range()[1]) / 15); // Every ~10 pixels
 
         // X axis stuff
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(xAxis);
+        svg.append("text")
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("text-anchor", "middle")
+            .attr("font-size", 11)
+            .attr("x", _.mean(xScale.range()))
+            .attr("y", height - PADDING.bottom + 30)
+            .text(chr || genome.getName());
 
         // Y axis stuff
         svg.append("g")
@@ -128,12 +162,12 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     renderHighlight() {
-        const {width, genome, hoveredLocation} = this.props;
+        const {width, genome, chr, hoveredLocation} = this.props;
         if (!hoveredLocation) {
             return null;
         }
 
-        const xScale = this.getXScale(width, genome);
+        const xScale = this.getXScale(width, genome, chr);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil(xScale(implicitCoords.end) - start);
@@ -149,8 +183,8 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     handleMouseMove(event: React.MouseEvent) {
-        const {width, genome, onLocationHovered} = this.props;
-        const xScale = this.getXScale(width, genome);
+        const {width, genome, chr, onLocationHovered} = this.props;
+        const xScale = this.getXScale(width, genome, chr);
         const range = xScale.range();
         const mouseX = getRelativeCoordinates(event).x;
         if (mouseX < range[0] || mouseX > range[1]) { // Count mouse events outside the range as mouseleaves

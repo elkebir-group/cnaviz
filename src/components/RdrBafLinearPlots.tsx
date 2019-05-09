@@ -7,17 +7,19 @@ import { LinearPlot } from "./LinearPlot";
 
 interface Props {
     data: ChrIndexedBins;
+    chr?: string;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered?: (location: ChromosomeInterval | null) => void
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
-    const {data, rdRange, hoveredLocation, onLocationHovered} = props;
+    const {data, chr, rdRange, hoveredLocation, onLocationHovered} = props;
 
     return <LinearPlot
         data={data}
         dataKeyToPlot="RD"
         genome={hg38}
+        chr={chr}
         hoveredLocation={hoveredLocation}
         onLocationHovered={onLocationHovered}
         yMin={rdRange[0]}
@@ -26,9 +28,10 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, hoveredLocation, onLocationHovered} = props;
+    const {data, chr, hoveredLocation, onLocationHovered} = props;
     return <LinearPlot
         data={data}
+        chr={chr}
         dataKeyToPlot="BAF"
         genome={hg38}
         hoveredLocation={hoveredLocation}

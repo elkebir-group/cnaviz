@@ -54,8 +54,22 @@ export class Genome {
         return this._chromosomes.map(chr => this._chrStarts[chr.name]);
     }
 
-    getLength(): number {
-        return this._length;
+    /**
+     * Gets a length of a chromosome in base pairs, or the entire genome if the chromosome is unspecified.  Returns 0
+     * if the chromosome does not exist.
+     * 
+     * @param chrName - the chromosome for which to get the length of, or undefined to query the entire genome's length
+     * @return {number} length of the chromosome or genome.
+     */
+    getLength(chrName?: string): number {
+        if (!chrName) {
+            return this._length;
+        } else {
+            if ( !(chrName in this._chrStarts) ) {
+                return 0; // Chr not in this genome
+            }
+            return this._chromosomes.find(chr => chr.name === chrName)!.length;
+        }
     }
 
     getImplicitCoordinates(location: ChromosomeInterval): OpenInterval {

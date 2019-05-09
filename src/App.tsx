@@ -53,6 +53,7 @@ interface State {
     processingStatus: ProcessingStatus;
     indexedData: SampleIndexedBins;
     hoveredLocation: ChromosomeInterval | null;
+    selectedChr: string;
 }
 
 export class App extends React.Component<{}, State> {
@@ -61,9 +62,11 @@ export class App extends React.Component<{}, State> {
         this.state = {
             processingStatus: ProcessingStatus.none,
             indexedData: new SampleIndexedBins([]),
-            hoveredLocation: null
+            hoveredLocation: null,
+            selectedChr: ""
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
+        this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
     }
 
@@ -99,6 +102,10 @@ export class App extends React.Component<{}, State> {
         });
     }
 
+    handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.setState({selectedChr: event.target.value});
+    }
+
     handleLocationHovered(location: ChromosomeInterval | null) {
         if (!location) {
             this.setState({hoveredLocation: null});
@@ -124,7 +131,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, hoveredLocation} = this.state;
+        const {indexedData, selectedChr, hoveredLocation} = this.state;
         const samples = indexedData.getSamples();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -134,19 +141,24 @@ export class App extends React.Component<{}, State> {
                 onLocationHovered: this.handleLocationHovered
             };
 
+            const chrOptions = indexedData.getChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
+            chrOptions.push(<option key="" value="">ALL</option>);
             mainUI = <div>
                 <div className="App-global-controls">
+                    Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected}>
+                        {chrOptions}
+                    </select>
                     <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
                 </div>
                 <div className="row">
                     {
                     samples.length > 0 && <div className="col">
-                        <SampleViz {...scatterplotProps} initialSelectedSample={samples[0]} />
+                        <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
                     </div>
                     }
                     {
                     samples.length > 1 && <div className="col">
-                        <SampleViz {...scatterplotProps} initialSelectedSample={samples[1]} />
+                        <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
                     </div>
                     }
                 </div>

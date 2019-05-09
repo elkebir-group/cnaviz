@@ -201,7 +201,10 @@ export class Scatterplot extends React.Component<Props> {
         const results: Element[] = [];
         for (const record of records) {
             const id = this._circleIdPrefix + record.location.toString();
-            results.push(this._svg.getElementById(id));
+            const element = this._svg.getElementById(id);
+            if (element) {
+                results.push(element);
+            }
         }
         return results;
     }
