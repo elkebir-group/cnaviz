@@ -12,6 +12,7 @@ enum ProcessingStatus {
     none,
     readingFile,
     processing,
+    done,
     error
 }
 
@@ -90,7 +91,7 @@ export class App extends React.Component<{}, AppState> {
 
         this.setState({
             indexedData: GenomicBinHelpers.indexBins(parsed),
-            processingStatus: ProcessingStatus.none
+            processingStatus: ProcessingStatus.done
         });
     }
 
@@ -114,6 +115,7 @@ export class App extends React.Component<{}, AppState> {
             case ProcessingStatus.error:
                 return "ERROR";
             case ProcessingStatus.none:
+            case ProcessingStatus.done:
             default:
                 return "";
         }
@@ -122,29 +124,46 @@ export class App extends React.Component<{}, AppState> {
     render() {
         const {indexedData, hoveredLocation} = this.state;
         const samples = Object.keys(indexedData);
-        const scatterplotProps = {
-            indexedData,
-            hoveredLocation: hoveredLocation || undefined,
-            onLocationHovered: this.handleLocationHovered
-        };
+        let mainUI = null;
+        if (this.state.processingStatus === ProcessingStatus.done && samples.length > 0) {
+            const scatterplotProps = {
+                indexedData,
+                hoveredLocation: hoveredLocation || undefined,
+                onLocationHovered: this.handleLocationHovered
+            };
+            const stringRegion = hoveredLocation ? hoveredLocation.toString() : "";
+            mainUI = <div>
+                <div className="App-global-controls">
+                    <div>
+                        Highlight region: <input type="text" size={30} value={stringRegion} /><button>Set</button>
+                    </div>
+                </div>
+                <div className="row">
+                    {
+                    samples.length > 0 && <div className="col">
+                        <SampleViz {...scatterplotProps} initialSelectedSample={samples[0]} />
+                    </div>
+                    }
+                    {
+                    samples.length > 1 && <div className="col">
+                        <SampleViz {...scatterplotProps} initialSelectedSample={samples[1]} />
+                    </div>
+                    }
+                </div>
+            </div>;
+        }
+
+        const status = this.getStatusCaption();
         return <div className="container-fluid">
-            <h1>CNA-Viz</h1>
-            <div>
-                Choose .bbc file: <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
-            </div>
-            <div>{this.getStatusCaption()}</div>
-            <div className="row">
-                {
-                samples.length > 0 && <div className="col">
-                    <SampleViz {...scatterplotProps} initialSelectedSample={samples[0]} />
-                </div>
+            <div className="App-title-bar">
+                <h1>CNA-Viz</h1>
+                {samples.length === 0 &&
+                    <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
                 }
-                {
-                samples.length > 1 && <div className="col">
-                    <SampleViz {...scatterplotProps} initialSelectedSample={samples[1]} />
-                </div>
-                }
+                <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
             </div>
+            {status && <div className="App-status-pane">{status}</div>}
+            {mainUI}
         </div>;
     }
 }

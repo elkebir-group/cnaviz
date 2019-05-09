@@ -3,3 +3,28 @@ body {
     padding-left: 10px;
     padding-right: 10px;
 }
+
+.App-title-bar {
+    border-bottom: 2px solid black;
+}
+
+.App-title-bar h1 {
+    display: inline;
+    margin-right: 50px;
+}
+
+.App-file-upload-explanation {
+    margin-right: 10px;
+}
+
+.App-status-pane {
+    display: flex;
+    height: 85vh;
+    justify-content: center;
+    align-items: center;
+}
+
+.App-global-controls {
+    padding-top: 25px;
+    display: inline-block;
+}

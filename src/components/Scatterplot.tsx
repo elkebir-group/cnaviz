@@ -219,6 +219,7 @@ export class Scatterplot extends React.Component<Props> {
             element.remove();
             element.setAttribute("r", String(r + SELECTED_CIRCLE_R_INCREASE));
             element.setAttribute("stroke", "black");
+            element.setAttribute("stroke-width", "2");
             parent.appendChild(element); // Re-add the circle, which moves it to the top.
         }
     }
