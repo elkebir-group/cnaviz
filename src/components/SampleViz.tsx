@@ -63,6 +63,7 @@ export class SampleViz extends React.Component<Props, State> {
             selectedData = selectedData.makeCopyWithJustChr(chr);
         }
 
+        const rdRange: [number, number] = [indexedData.rdRange[0], indexedData.rdRange[1] + 1];
         return <div className="SampleViz">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
@@ -72,7 +73,7 @@ export class SampleViz extends React.Component<Props, State> {
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     data={selectedData}
-                    rdRange={indexedData.rdRange}
+                    rdRange={rdRange}
                     width={width}
                     height={height}
                     curveState={curveState}

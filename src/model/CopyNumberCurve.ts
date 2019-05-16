@@ -1,7 +1,7 @@
 import { RdBaf, CopyNumberState } from "./CopyNumberState";
 import { getMinDistanceIndex } from "../util";
 
-const DEFAULT_SAMPLES = 20;
+const DEFAULT_SAMPLES = 25;
 
 export class CopyNumberCurve {
     readonly state1: CopyNumberState;

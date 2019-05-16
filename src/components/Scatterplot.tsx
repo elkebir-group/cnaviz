@@ -170,8 +170,8 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     render() {
-        const {width, height, curveState} = this.props;
-        const {rdrScale, bafScale} = this.computeScales(this.props.rdRange, width, height);
+        const {width, height, curveState, rdRange} = this.props;
+        const {rdrScale, bafScale} = this.computeScales(rdRange, width, height);
         return <div className="Scatterplot" style={{position: "relative"}}>
             <svg
                 ref={node => this._svg = node}
