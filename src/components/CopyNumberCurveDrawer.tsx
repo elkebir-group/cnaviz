@@ -6,6 +6,9 @@ import {  CopyNumberCurve } from "../model/CopyNumberCurve";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
 import { getCopyNumCandidates } from "../model/CopyNumberState";
 
+const END_POINT_COLOR = "yellow";
+const PICK_CAPTION_OFFSET = 10;
+
 interface Props {
     curveState: CurveState;
     rdScale: d3.ScaleLinear<number, number>;
@@ -57,34 +60,47 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
 
         let pointPath = null;
         let hoverCircle = null;
+        let pickingCaption = null;
         let copyGrid = [];
         if (state1 && !state2) {
             const curve = new CopyNumberCurve(state1, state1);
             const point = this.scaleRdBaf(curve.rdGivenP(0), curve.bafGivenP(0));
-            hoverCircle = <circle cx={point.x} cy={point.y} r={3} fill="black" />;
+            hoverCircle = <circle cx={point.x} cy={point.y} r={4} fill={END_POINT_COLOR} />;
+            pickingCaption = <text x={point.x + PICK_CAPTION_OFFSET} y={point.y + PICK_CAPTION_OFFSET}>
+                {state1.aCopies} | {state1.bCopies}
+            </text>;
         } else if (state1 && state2) {
             const curve = new CopyNumberCurve(state1, state2);
+            const points = curve.sampleCurve().map(point => this.scaleRdBaf(point.rd, point.baf));
             pointPath = <SvgPointPath
-                points={curve.sampleCurve().map(point => this.scaleRdBaf(point.rd, point.baf))}
+                points={points}
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave} />;
+            if (pickStatus === CurvePickStatus.pickingState2) {
+                const firstPoint = points[0]; // Because the first point is p=0, which means 100% state2.
+                pickingCaption = <text x={firstPoint.x + PICK_CAPTION_OFFSET} y={firstPoint.y + PICK_CAPTION_OFFSET}>
+                    {state2.aCopies} | {state2.bCopies}
+                </text>;
+            }
+
             if (hoveredP >= 0) {
                 const hoverPoint = this.scaleRdBaf(curve.rdGivenP(hoveredP), curve.bafGivenP(hoveredP));
-                hoverCircle = <circle cx={hoverPoint.x} cy={hoverPoint.y} r={3} fill="yellow" />;
+                hoverCircle = <circle cx={hoverPoint.x} cy={hoverPoint.y} r={4} fill="yellow" />;
             }
         }
 
         if (pickStatus === CurvePickStatus.pickingState1 || pickStatus === CurvePickStatus.pickingState2) {
-            for (const rdBaf of getCopyNumCandidates()) {
+            for (const rdBaf of getCopyNumCandidates()) { // Show copyGrid
                 const x = rdScale(rdBaf.rd);
                 const y = bafScale(rdBaf.baf);
-                copyGrid.push(<circle key={`${rdBaf.rd} ${rdBaf.baf}`} cx={x} cy={y} r={2} fill="grey" />);
+                copyGrid.push(<circle key={`${rdBaf.rd} ${rdBaf.baf}`} cx={x} cy={y} r={2} fill="black" />);
             }
         }
     
         return <g>
             {pointPath}
             {hoverCircle}
+            {pickingCaption}
             {copyGrid}
         </g>;
     }
@@ -104,16 +120,16 @@ function SvgPointPath(props: PointPathProps) {
 
     const firstPoint = points[0];
     const lastPoint = points[points.length - 1];
-    let pathString = `M ${points[0].x} ${points[0].y} `;
+    let pathString = `M ${firstPoint.x} ${firstPoint.y} `;
     for (let i = 1; i < points.length; i++) {
         const {x, y} = points[i];
         pathString += `L ${x} ${y} `;
     }
     return <React.Fragment>
-        <path d={pathString} fill="transparent" stroke="black" strokeWidth={2} />
+        <path d={pathString} fill="transparent" stroke="black" strokeWidth={2} strokeDasharray="4" />
         <path d={pathString} fill="transparent" strokeOpacity={0} strokeWidth={4}
             onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}/>
-        <circle cx={firstPoint.x} cy={firstPoint.y} r={2} />
-        <circle cx={lastPoint.x} cy={lastPoint.y} r={2} />
+        <circle cx={firstPoint.x} cy={firstPoint.y} r={4} fill={END_POINT_COLOR} />
+        <circle cx={lastPoint.x} cy={lastPoint.y} r={4} fill={END_POINT_COLOR} />
     </React.Fragment>;
 }

@@ -73,7 +73,7 @@ export class Scatterplot extends React.Component<Props> {
                     ...curveState,
                     state1: copyState
                 });
-            } else if (curveState.state2 !== copyState) { // We know for sure that pick status is pickingState2
+            } else if (curveState.pickStatus === CurvePickStatus.pickingState2 && curveState.state2 !== copyState) {
                 onNewCurveState({
                     ...curveState,
                     state2: copyState

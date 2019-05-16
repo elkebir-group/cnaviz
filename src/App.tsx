@@ -37,6 +37,9 @@ function parseGenomicBins(data: string): Promise<GenomicBin[]> {
                 reject(error);
                 return;
             }
+            for (const bin of parsed) {
+                bin.RD = Math.log2(bin.RD);
+            }
             resolve(parsed);
         });
     })

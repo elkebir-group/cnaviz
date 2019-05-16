@@ -35,9 +35,13 @@ export class CopyNumberCurve {
     }
 
     sampleCurve(samples=DEFAULT_SAMPLES): RdBaf[] {
+        if (samples <= 0) {
+            return [];
+        }
+    
         const points = [];
-        const pIncrement = 1/samples;
-        for (let p = 0; p <= 1; p += pIncrement) {
+        for (let i = 0; i <= samples; i++) {
+            const p = i / samples;
             points.push({
                 rd: this.rdGivenP(p),
                 baf: this.bafGivenP(p)
