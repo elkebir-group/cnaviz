@@ -35,3 +35,7 @@ export function getCopyStateFromRdBaf(rdBaf: RdBaf): CopyNumberState {
     const closestRdBaf = candidates[minIndex];
     return copyNumStateForRdBaf.get(closestRdBaf)!;
 }
+
+export function copyStateToString(state: CopyNumberState) {
+    return `${state.aCopies} | ${state.bCopies}`;
+}

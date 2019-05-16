@@ -8,7 +8,8 @@ import { ChrIndexedBins } from "../model/BinIndex";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
-import { getCopyStateFromRdBaf } from "../model/CopyNumberState";
+import { CopyNumberCurve } from "../model/CopyNumberCurve";
+import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberState";
 import { niceBpCount, getRelativeCoordinates } from "../util";
 
 import "./Scatterplot.css";
@@ -55,6 +56,7 @@ export class Scatterplot extends React.Component<Props> {
         this.computeScales = memoizeOne(this.computeScales);
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleClick = this.handleClick.bind(this);
+        this.handleCurveHovered = this.handleCurveHovered.bind(this);
     }
 
     handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
@@ -91,30 +93,63 @@ export class Scatterplot extends React.Component<Props> {
         }
     }
 
+    handleCurveHovered(p: number) {
+        const {curveState, onNewCurveState} = this.props;
+        onNewCurveState({...curveState, hoveredP: p});
+    }
+
+    _renderTooltipHelper(rd: number, baf: number, contents: JSX.Element | null) {
+        if (!contents) {
+            return null;
+        }
+
+        const {rdRange, width, height} = this.props;
+        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
+        return <div
+            className="Scatterplot-tooltip"
+            style={{
+                position: "absolute",
+                top: bafScale(baf) + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
+                left: rdrScale(rd) + TOOLTIP_OFFSET
+            }}
+        >
+            {contents}
+        </div>;
+    }
+
     renderTooltip() {
-        const {data, rdRange, width, height, hoveredLocation} = this.props;
+        const {data, hoveredLocation, curveState} = this.props;
+        if (curveState.hoveredP >= 0 && curveState.state1 && curveState.state2) {
+            const {hoveredP, state1, state2} = curveState;
+            const curve = new CopyNumberCurve(state1, state2);
+            const rd = curve.rdGivenP(hoveredP);
+            const baf = curve.bafGivenP(hoveredP);
+            return this._renderTooltipHelper(rd, baf, <React.Fragment>
+                <b>Mix of:</b>
+                <div>{Math.round(hoveredP * 100)}% {copyStateToString(state1)}</div>
+                <div>{Math.round((1 - hoveredP) * 100)}% {copyStateToString(state2)}</div>
+                <hr/>
+                <b>Predicted RD/BAF:</b>
+                <div>RD = {rd.toFixed(2)}</div>
+                <div>BAF = {baf.toFixed(2)}</div>
+            </React.Fragment>);
+        }
+
         if (!hoveredLocation) {
             return null;
         }
         const records = data.findOverlappingRecords(hoveredLocation);
-        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         if (records.length === 1) {
             const record = records[0];
-            return <div
-                className="Scatterplot-tooltip"
-                style={{
-                    position: "absolute",
-                    top: bafScale(record.averageBaf) + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
-                    left: rdrScale(record.averageRd) + TOOLTIP_OFFSET
-                }}>
-                    <p>
-                        <b>{record.location.toString()}</b><br/>
-                        ({niceBpCount(record.location.getLength())})
-                    </p>
-                    <div>Average RDR: {record.averageRd.toFixed(2)}</div>
-                    <div>Average BAF: {record.averageBaf.toFixed(2)}</div>
-                    <div>Cluster ID:{record.bins[0].CLUSTER}</div>
-            </div>;
+            return this._renderTooltipHelper(record.averageRd, record.averageBaf, <React.Fragment>
+                <p>
+                    <b>{record.location.toString()}</b><br/>
+                    ({niceBpCount(record.location.getLength())})
+                </p>
+                <div>Average RDR: {record.averageRd.toFixed(2)}</div>
+                <div>Average BAF: {record.averageBaf.toFixed(2)}</div>
+                <div>Cluster ID:{record.bins[0].CLUSTER}</div>
+            </React.Fragment>);
         } else if (records.length > 1) {
             const minBaf = _.minBy(records, "averageBaf")!.averageBaf;
             const maxBaf = _.maxBy(records, "averageBaf")!.averageBaf;
@@ -122,19 +157,13 @@ export class Scatterplot extends React.Component<Props> {
             const minRd = _.minBy(records, "averageRd")!.averageRd;
             const maxRd = _.maxBy(records, "averageRd")!.averageRd;
             const meanRd = _.meanBy(records, "averageRd");
-            return <div
-                className="Scatterplot-tooltip"
-                style={{
-                    position: "absolute",
-                    top: bafScale(maxBaf) + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
-                    left: rdrScale(maxRd) + TOOLTIP_OFFSET
-                }}>
-                    <p><b>{records.length} corresponding regions</b></p>
-                    <div>Average RDR: {meanRd.toFixed(2)}</div>
-                    <div>Average BAF: {meanBaf.toFixed(2)}</div>
-                    <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
-                    <div>BAF range: [{minBaf.toFixed(2)}, {maxBaf.toFixed(2)}]</div>
-            </div>;
+            return this._renderTooltipHelper(maxRd, maxBaf, <React.Fragment>
+                <p><b>{records.length} corresponding regions</b></p>
+                <div>Average RDR: {meanRd.toFixed(2)}</div>
+                <div>Average BAF: {meanBaf.toFixed(2)}</div>
+                <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
+                <div>BAF range: [{minBaf.toFixed(2)}, {maxBaf.toFixed(2)}]</div>
+            </React.Fragment>);
         }
 
         return null;
@@ -150,7 +179,12 @@ export class Scatterplot extends React.Component<Props> {
                 onMouseMove={this.handleMouseMove}
                 onClick={this.handleClick}
             >
-                <CopyNumberCurveDrawer rdScale={rdrScale} bafScale={bafScale} curveState={curveState} />
+                <CopyNumberCurveDrawer
+                    rdScale={rdrScale}
+                    bafScale={bafScale}
+                    curveState={curveState}
+                    onLocationHovered={this.handleCurveHovered}
+                    svgRef={this._svg || undefined} />
             </svg>
             {this.renderTooltip()}
         </div>;

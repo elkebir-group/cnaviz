@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { Coordinate, getRelativeCoordinates } from "../util";
 import {  CopyNumberCurve } from "../model/CopyNumberCurve";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
-import { getCopyNumCandidates } from "../model/CopyNumberState";
+import { getCopyNumCandidates, copyStateToString } from "../model/CopyNumberState";
 
 const END_POINT_COLOR = "yellow";
 const PICK_CAPTION_OFFSET = 10;
@@ -13,6 +13,7 @@ interface Props {
     curveState: CurveState;
     rdScale: d3.ScaleLinear<number, number>;
     bafScale: d3.ScaleLinear<number, number>;
+    svgRef?: SVGSVGElement; // Needed to calculate p correctly
     onLocationHovered: (p: number) => void;
 }
 
@@ -28,16 +29,18 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
     }
 
     handleMouseMove(event: React.MouseEvent<SVGPathElement>) {
-        const {curveState, rdScale, bafScale, onLocationHovered} = this.props;
+        const {curveState, rdScale, bafScale, svgRef, onLocationHovered} = this.props;
         const {state1, state2} = curveState;
         if (!state1 || !state2) {
             return;
         }
-        const {x, y} = getRelativeCoordinates(event);
+        const {x, y} = getRelativeCoordinates(event, svgRef);
         const rd = rdScale.invert(x);
         const baf = bafScale.invert(y);
         const p = new CopyNumberCurve(state1, state2).getClosestPForLocation(rd, baf);
-        onLocationHovered(p);
+        if (curveState.hoveredP !== p) {
+            onLocationHovered(p);
+        }
     }
 
     handleMouseLeave() {
@@ -67,7 +70,7 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
             const point = this.scaleRdBaf(curve.rdGivenP(0), curve.bafGivenP(0));
             hoverCircle = <circle cx={point.x} cy={point.y} r={4} fill={END_POINT_COLOR} />;
             pickingCaption = <text x={point.x + PICK_CAPTION_OFFSET} y={point.y + PICK_CAPTION_OFFSET}>
-                {state1.aCopies} | {state1.bCopies}
+                {copyStateToString(state1)}
             </text>;
         } else if (state1 && state2) {
             const curve = new CopyNumberCurve(state1, state2);
@@ -79,13 +82,13 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
             if (pickStatus === CurvePickStatus.pickingState2) {
                 const firstPoint = points[0]; // Because the first point is p=0, which means 100% state2.
                 pickingCaption = <text x={firstPoint.x + PICK_CAPTION_OFFSET} y={firstPoint.y + PICK_CAPTION_OFFSET}>
-                    {state2.aCopies} | {state2.bCopies}
+                    {copyStateToString(state2)}
                 </text>;
             }
 
             if (hoveredP >= 0) {
                 const hoverPoint = this.scaleRdBaf(curve.rdGivenP(hoveredP), curve.bafGivenP(hoveredP));
-                hoverCircle = <circle cx={hoverPoint.x} cy={hoverPoint.y} r={4} fill="yellow" />;
+                hoverCircle = <circle cx={hoverPoint.x} cy={hoverPoint.y} r={5} fill="black" />;
             }
         }
 
@@ -98,8 +101,8 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
         }
     
         return <g>
-            {pointPath}
             {hoverCircle}
+            {pointPath}
             {pickingCaption}
             {copyGrid}
         </g>;
@@ -127,8 +130,9 @@ function SvgPointPath(props: PointPathProps) {
     }
     return <React.Fragment>
         <path d={pathString} fill="transparent" stroke="black" strokeWidth={2} strokeDasharray="4" />
-        <path d={pathString} fill="transparent" strokeOpacity={0} strokeWidth={4}
-            onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}/>
+        {/* A wider, invisible path for hover purposes */}
+        <path d={pathString} fill="transparent" stroke="black" strokeWidth={10} strokeOpacity={0}
+            onMouseMove={onMouseMove} onMouseLeave={onMouseLeave} />
         <circle cx={firstPoint.x} cy={firstPoint.y} r={4} fill={END_POINT_COLOR} />
         <circle cx={lastPoint.x} cy={lastPoint.y} r={4} fill={END_POINT_COLOR} />
     </React.Fragment>;
