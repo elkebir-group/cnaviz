@@ -3,10 +3,13 @@ import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 
+import { CopyNumberCurveDrawer } from "./CopyNumberCurveDrawer";
 import { ChrIndexedBins } from "../model/BinIndex";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { niceBpCount } from "../util";
+import { CurveState, CurvePickStatus } from "../model/CurveState";
+import { getCopyStateFromRdBaf } from "../model/CopyNumberState";
+import { niceBpCount, getRelativeCoordinates } from "../util";
 
 import "./Scatterplot.css";
 
@@ -29,6 +32,8 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
+    curveState: CurveState;
+    onNewCurveState: (state: CurveState) => void;
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
 }
 
@@ -36,6 +41,7 @@ export class Scatterplot extends React.Component<Props> {
     static defaultProps = {
         width: 600,
         height: 500,
+        onNewCurveState: _.noop,
         onRecordHovered: _.noop
     };
 
@@ -47,14 +53,42 @@ export class Scatterplot extends React.Component<Props> {
         this._circleIdPrefix = nextCircleIdPrefix;
         nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleClick = this.handleClick.bind(this);
     }
 
-    render() {
-        const {width, height} = this.props;
-        return <div className="Scatterplot" style={{position: "relative"}}>
-            <svg ref={node => this._svg = node} width={width} height={height} />
-            {this.renderTooltip()}
-        </div>;
+    handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
+        const {rdRange, width, height, curveState, onNewCurveState} = this.props;
+        if (curveState.pickStatus === CurvePickStatus.pickingState1 ||
+            curveState.pickStatus === CurvePickStatus.pickingState2)
+        {
+            const {x, y} = getRelativeCoordinates(event);
+            const {rdrScale, bafScale} = this.computeScales(rdRange, width, height);
+            const copyState = getCopyStateFromRdBaf({
+                rd: rdrScale.invert(x),
+                baf: bafScale.invert(y)
+            });
+            if (curveState.pickStatus === CurvePickStatus.pickingState1 && curveState.state1 !== copyState) {
+                onNewCurveState({
+                    ...curveState,
+                    state1: copyState
+                });
+            } else if (curveState.state2 !== copyState) { // We know for sure that pick status is pickingState2
+                onNewCurveState({
+                    ...curveState,
+                    state2: copyState
+                });
+            }
+        }
+    }
+
+    handleClick() {
+        const {curveState, onNewCurveState} = this.props;
+        if (curveState.pickStatus === CurvePickStatus.pickingState1) {
+            onNewCurveState({...curveState, pickStatus: CurvePickStatus.pickingState2});
+        } else if (curveState.pickStatus === CurvePickStatus.pickingState2) {
+            onNewCurveState({...curveState, pickStatus: CurvePickStatus.picked});
+        }
     }
 
     renderTooltip() {
@@ -70,7 +104,7 @@ export class Scatterplot extends React.Component<Props> {
                 className="Scatterplot-tooltip"
                 style={{
                     position: "absolute",
-                    top: bafScale(0.5 - record.averageBaf) + TOOLTIP_OFFSET,
+                    top: bafScale(record.averageBaf) + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
                     left: rdrScale(record.averageRd) + TOOLTIP_OFFSET
                 }}>
                     <p>
@@ -79,6 +113,7 @@ export class Scatterplot extends React.Component<Props> {
                     </p>
                     <div>Average RDR: {record.averageRd.toFixed(2)}</div>
                     <div>Average BAF: {record.averageBaf.toFixed(2)}</div>
+                    <div>Cluster ID:{record.bins[0].CLUSTER}</div>
             </div>;
         } else if (records.length > 1) {
             const minBaf = _.minBy(records, "averageBaf")!.averageBaf;
@@ -91,7 +126,7 @@ export class Scatterplot extends React.Component<Props> {
                 className="Scatterplot-tooltip"
                 style={{
                     position: "absolute",
-                    top: bafScale(0.5 - maxBaf) + TOOLTIP_OFFSET,
+                    top: bafScale(maxBaf) + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
                     left: rdrScale(maxRd) + TOOLTIP_OFFSET
                 }}>
                     <p><b>{records.length} corresponding regions</b></p>
@@ -103,6 +138,22 @@ export class Scatterplot extends React.Component<Props> {
         }
 
         return null;
+    }
+
+    render() {
+        const {width, height, curveState} = this.props;
+        const {rdrScale, bafScale} = this.computeScales(this.props.rdRange, width, height);
+        return <div className="Scatterplot" style={{position: "relative"}}>
+            <svg
+                ref={node => this._svg = node}
+                width={width} height={height}
+                onMouseMove={this.handleMouseMove}
+                onClick={this.handleClick}
+            >
+                <CopyNumberCurveDrawer rdScale={rdrScale} bafScale={bafScale} curveState={curveState} />
+            </svg>
+            {this.renderTooltip()}
+        </div>;
     }
 
     componentDidMount() {
@@ -126,7 +177,7 @@ export class Scatterplot extends React.Component<Props> {
 
     computeScales(rdRange: [number, number], width: number, height: number) {
         return {
-            bafScale: d3.scaleLinear() // Note that the raw data is BAF.  We want to plot 0.5 - BAF.
+            bafScale: d3.scaleLinear()
                 .domain([0, 0.5])
                 .range([height - PADDING.bottom, PADDING.top]),
             rdrScale: d3.scaleLinear()
@@ -170,7 +221,7 @@ export class Scatterplot extends React.Component<Props> {
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `rotate(90, ${PADDING.left - 60}, ${_.mean(bafScale.range())})`)
-            .text("0.5 - BAF")
+            .text("BAF")
             .attr("y", _.mean(bafScale.range()));
 
         // Circles: remove any previous
@@ -185,7 +236,7 @@ export class Scatterplot extends React.Component<Props> {
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
                     .attr("cx", d => rdrScale(d.averageRd))
-                    .attr("cy", d => bafScale(0.5 - d.averageBaf))
+                    .attr("cy", d => bafScale(d.averageBaf)) // Alternatively, this could be 0.5 - baf
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
                     .attr("fill", d => colorScale(String(d.bins[0].CLUSTER)))
                     .attr("fill-opacity", 0.8)

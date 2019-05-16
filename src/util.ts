@@ -74,3 +74,33 @@ export function niceBpCount(bases: number, sigFigs=1) {
         return `${rounded} bp`;
     }
 }
+
+/**
+ * Finds the object in `searchPoints` that is "closest" to `queryPoint`, and returns its index.  Returns -1 if given an
+ * empty list. Uses euclidean distance.  Takes any type of object, but the object must contain keys that point to number
+ * values.
+ * 
+ * @param {T} queryPoint - the point for which to find the closest point in `searchPoints`
+ * @param {T[]} searchPoints - points to search
+ * @param {keyof T} xKey - key of the input objects, which should have a number value, to use as a "x" coordinate
+ * @param {keyof T} yKey - key of the input objects, which should have a number value, to use as a "y" coordinate
+ * @return {number} the index in `searchPoints` that contains the object closest to `queryPoint`
+ */
+export function getMinDistanceIndex<T>(queryPoint: T, searchPoints: T[], xKey: keyof T, yKey: keyof T): number {
+    let minDistance = Number.MAX_VALUE;
+    let minIndex = -1;
+    for (let i = 0; i < searchPoints.length; i++) {
+        const distance = squaredDistance(searchPoints[i], queryPoint);
+        if (distance < minDistance) {
+            minDistance = distance;
+            minIndex = i;
+        }
+    }
+    return minIndex;
+
+    function squaredDistance(a: T, b: T) {
+        const xDiff = (a[xKey] as any) - (b[xKey] as any);
+        const yDiff = (a[yKey] as any) - (b[yKey] as any);
+        return xDiff * xDiff + yDiff * yDiff;
+    }
+}

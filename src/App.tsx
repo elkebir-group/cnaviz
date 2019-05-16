@@ -5,6 +5,7 @@ import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
 import { SampleIndexedBins } from "./model/BinIndex";
+import { CurveState, CurvePickStatus } from "./model/CurveState";
 
 import { SampleViz } from "./components/SampleViz";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
@@ -54,7 +55,15 @@ interface State {
     indexedData: SampleIndexedBins;
     hoveredLocation: ChromosomeInterval | null;
     selectedChr: string;
+    curveState: CurveState;
 }
+
+const INITIAL_CURVE_STATE: CurveState = {
+    hoveredP: -1,
+    state1: null,
+    state2: null,
+    pickStatus: CurvePickStatus.none
+};
 
 export class App extends React.Component<{}, State> {
     constructor(props: {}) {
@@ -63,11 +72,14 @@ export class App extends React.Component<{}, State> {
             processingStatus: ProcessingStatus.none,
             indexedData: new SampleIndexedBins([]),
             hoveredLocation: null,
-            selectedChr: ""
+            selectedChr: "",
+            curveState: INITIAL_CURVE_STATE
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
+        this.toggleCurveDrawing = this.toggleCurveDrawing.bind(this);
+        this.handleNewCurveState = _.throttle(this.handleNewCurveState.bind(this), 20);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -87,9 +99,10 @@ export class App extends React.Component<{}, State> {
         }
 
         this.setState({processingStatus: ProcessingStatus.processing});
-        let parsed = [];
+        let indexedData = null;
         try {
-            parsed = await parseGenomicBins(contents);
+            const parsed = await parseGenomicBins(contents);
+            indexedData = new SampleIndexedBins(parsed);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -97,7 +110,7 @@ export class App extends React.Component<{}, State> {
         }
 
         this.setState({
-            indexedData: new SampleIndexedBins(parsed),
+            indexedData: indexedData,
             processingStatus: ProcessingStatus.done
         });
     }
@@ -113,6 +126,27 @@ export class App extends React.Component<{}, State> {
         }
         const binSize = this.state.indexedData.estimateBinSize();
         this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
+    }
+
+    toggleCurveDrawing() {
+        this.setState(prevState => {
+            let newCurveState;
+            if (prevState.curveState.pickStatus !== CurvePickStatus.none) {
+                newCurveState = INITIAL_CURVE_STATE;
+            } else {
+                newCurveState = {
+                    ...prevState.curveState,
+                    pickStatus: CurvePickStatus.pickingState1
+                };
+            }
+            return {
+                curveState: newCurveState
+            };
+        });
+    }
+
+    handleNewCurveState(newState: CurveState) {
+        this.setState({curveState: newState});
     }
 
     getStatusCaption() {
@@ -131,13 +165,15 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, hoveredLocation} = this.state;
+        const {indexedData, selectedChr, hoveredLocation, curveState} = this.state;
         const samples = indexedData.getSamples();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
                 indexedData,
                 hoveredLocation: hoveredLocation || undefined,
+                curveState,
+                onNewCurveState: this.handleNewCurveState,
                 onLocationHovered: this.handleLocationHovered
             };
 
@@ -149,6 +185,17 @@ export class App extends React.Component<{}, State> {
                         {chrOptions}
                     </select>
                     <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
+                    <div>
+                        {curveState.pickStatus === CurvePickStatus.none ? 
+                            <button onClick={this.toggleCurveDrawing}>
+                                Draw curve <i className="fas fa-pencil-alt" />
+                            </button>
+                            :
+                            <button onClick={this.toggleCurveDrawing}>
+                                Clear curve <i className="fas fa-times" />
+                            </button>
+                        }
+                    </div>
                 </div>
                 <div className="row">
                     {

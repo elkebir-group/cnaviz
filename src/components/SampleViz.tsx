@@ -4,6 +4,7 @@ import _ from "lodash";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { SampleIndexedBins } from "../model/BinIndex";
 import { MergedGenomicBin } from "../model/BinMerger";
+import { CurveState } from "../model/CurveState";
 
 import { Scatterplot } from "./Scatterplot";
 import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
@@ -17,6 +18,8 @@ interface Props {
     initialSelectedSample?: string;
     width?: number;
     height?: number;
+    curveState: CurveState;
+    onNewCurveState: (newState: CurveState) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null) => void;
 }
@@ -26,6 +29,7 @@ interface State {
 
 export class SampleViz extends React.Component<Props, State> {
     static defaultProps = {
+        onNewCurveState: _.noop,
         onLocationHovered: _.noop
     };
 
@@ -48,7 +52,8 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, chr, width, height, hoveredLocation, onLocationHovered} = this.props;
+        const {indexedData, chr, width, height, curveState, onNewCurveState, hoveredLocation,
+            onLocationHovered} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -70,6 +75,8 @@ export class SampleViz extends React.Component<Props, State> {
                     rdRange={indexedData.rdRange}
                     width={width}
                     height={height}
+                    curveState={curveState}
+                    onNewCurveState={onNewCurveState}
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered} />
             </DivWithBullseye>
