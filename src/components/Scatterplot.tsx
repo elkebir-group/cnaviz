@@ -34,7 +34,7 @@ interface Props {
     width: number;
     height: number;
     curveState: CurveState;
-    onNewCurveState: (state: CurveState) => void;
+    onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
 }
 
@@ -61,41 +61,45 @@ export class Scatterplot extends React.Component<Props> {
 
     handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
         const {rdRange, width, height, curveState, onNewCurveState} = this.props;
-        if (curveState.pickStatus === CurvePickStatus.pickingState1 ||
+        if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation ||
+            curveState.pickStatus === CurvePickStatus.pickingState1 ||
             curveState.pickStatus === CurvePickStatus.pickingState2)
         {
             const {x, y} = getRelativeCoordinates(event);
             const {rdrScale, bafScale} = this.computeScales(rdRange, width, height);
-            const copyState = getCopyStateFromRdBaf({
+            const hoveredRdBaf = {
                 rd: rdrScale.invert(x),
                 baf: bafScale.invert(y)
-            });
+            };
+
+
+            if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
+                onNewCurveState({normalLocation: hoveredRdBaf});
+                return;
+            }
+
+            const copyState = getCopyStateFromRdBaf(hoveredRdBaf);
             if (curveState.pickStatus === CurvePickStatus.pickingState1 && curveState.state1 !== copyState) {
-                onNewCurveState({
-                    ...curveState,
-                    state1: copyState
-                });
+                onNewCurveState({state1: copyState});
             } else if (curveState.pickStatus === CurvePickStatus.pickingState2 && curveState.state2 !== copyState) {
-                onNewCurveState({
-                    ...curveState,
-                    state2: copyState
-                });
+                onNewCurveState({state2: copyState});
             }
         }
     }
 
     handleClick() {
         const {curveState, onNewCurveState} = this.props;
-        if (curveState.pickStatus === CurvePickStatus.pickingState1) {
-            onNewCurveState({...curveState, pickStatus: CurvePickStatus.pickingState2});
+        if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
+            onNewCurveState({pickStatus: CurvePickStatus.pickingState1});
+        } else if (curveState.pickStatus === CurvePickStatus.pickingState1) {
+            onNewCurveState({pickStatus: CurvePickStatus.pickingState2});
         } else if (curveState.pickStatus === CurvePickStatus.pickingState2) {
-            onNewCurveState({...curveState, pickStatus: CurvePickStatus.picked});
+            onNewCurveState({pickStatus: CurvePickStatus.picked});
         }
     }
 
     handleCurveHovered(p: number) {
-        const {curveState, onNewCurveState} = this.props;
-        onNewCurveState({...curveState, hoveredP: p});
+        this.props.onNewCurveState({hoveredP: p});
     }
 
     _renderTooltipHelper(rd: number, baf: number, contents: JSX.Element | null) {
@@ -119,6 +123,15 @@ export class Scatterplot extends React.Component<Props> {
 
     renderTooltip() {
         const {data, hoveredLocation, curveState} = this.props;
+        if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
+            const {rd, baf} = curveState.normalLocation;
+            return this._renderTooltipHelper(rd, baf, <React.Fragment>
+                <div>RD = {rd.toFixed(2)}</div>
+                <div>BAF = {baf.toFixed(2)}</div>
+                <i>Click to set location for 1|1 copy state</i>
+            </React.Fragment>);
+        }
+
         if (curveState.hoveredP >= 0 && curveState.state1 && curveState.state2) {
             const {hoveredP, state1, state2} = curveState;
             const curve = new CopyNumberCurve(state1, state2);

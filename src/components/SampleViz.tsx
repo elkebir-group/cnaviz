@@ -19,7 +19,7 @@ interface Props {
     width?: number;
     height?: number;
     curveState: CurveState;
-    onNewCurveState: (newState: CurveState) => void;
+    onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null) => void;
 }

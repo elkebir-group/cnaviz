@@ -5,10 +5,11 @@ import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
 import { SampleIndexedBins } from "./model/BinIndex";
-import { CurveState, CurvePickStatus } from "./model/CurveState";
+import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 
 import { SampleViz } from "./components/SampleViz";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
+import { CurveManager } from "./components/CurveManager";
 
 import spinner from "./loading-small.gif";
 import "./App.css";
@@ -61,13 +62,6 @@ interface State {
     curveState: CurveState;
 }
 
-const INITIAL_CURVE_STATE: CurveState = {
-    hoveredP: -1,
-    state1: null,
-    state2: null,
-    pickStatus: CurvePickStatus.none
-};
-
 export class App extends React.Component<{}, State> {
     constructor(props: {}) {
         super(props);
@@ -81,7 +75,6 @@ export class App extends React.Component<{}, State> {
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
-        this.toggleCurveDrawing = this.toggleCurveDrawing.bind(this);
         this.handleNewCurveState = _.throttle(this.handleNewCurveState.bind(this), 20);
     }
 
@@ -131,25 +124,19 @@ export class App extends React.Component<{}, State> {
         this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
     }
 
-    toggleCurveDrawing() {
+    handleNewCurveState(newState: Partial<CurveState>) {
         this.setState(prevState => {
-            let newCurveState;
-            if (prevState.curveState.pickStatus !== CurvePickStatus.none) {
-                newCurveState = INITIAL_CURVE_STATE;
-            } else {
-                newCurveState = {
-                    ...prevState.curveState,
-                    pickStatus: CurvePickStatus.pickingState1
-                };
-            }
-            return {
-                curveState: newCurveState
+            const nextCurveState = {
+                ...prevState.curveState,
+                ...newState
             };
+    
+            if (prevState.curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
+                nextCurveState.state1 = null;
+                nextCurveState.state2 = null;
+            }
+            return {curveState: nextCurveState};
         });
-    }
-
-    handleNewCurveState(newState: CurveState) {
-        this.setState({curveState: newState});
     }
 
     getStatusCaption() {
@@ -188,17 +175,7 @@ export class App extends React.Component<{}, State> {
                         {chrOptions}
                     </select>
                     <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
-                    <div>
-                        {curveState.pickStatus === CurvePickStatus.none ? 
-                            <button onClick={this.toggleCurveDrawing}>
-                                Draw curve <i className="fas fa-pencil-alt" />
-                            </button>
-                            :
-                            <button onClick={this.toggleCurveDrawing}>
-                                Clear curve <i className="fas fa-times" />
-                            </button>
-                        }
-                    </div>
+                    <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
                 </div>
                 <div className="row">
                     {

@@ -6,6 +6,9 @@ import {  CopyNumberCurve } from "../model/CopyNumberCurve";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
 import { getCopyNumCandidates, copyStateToString } from "../model/CopyNumberState";
 
+const GRID_INDICATOR_SIZE = 4;
+const INDICATOR_SIZE = 6;
+const INDICATOR_HIGHLIGHT_SIZE = 8;
 const END_POINT_COLOR = "yellow";
 const PICK_CAPTION_OFFSET = 10;
 
@@ -68,7 +71,10 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
         if (state1 && !state2) {
             const curve = new CopyNumberCurve(state1, state1);
             const point = this.scaleRdBaf(curve.rdGivenP(0), curve.bafGivenP(0));
-            hoverCircle = <circle cx={point.x} cy={point.y} r={4} fill={END_POINT_COLOR} />;
+            hoverCircle = <CopyStateIndicator
+                cx={point.x} cy={point.y}
+                size={INDICATOR_HIGHLIGHT_SIZE}
+                fill={END_POINT_COLOR} />;
             pickingCaption = <text x={point.x + PICK_CAPTION_OFFSET} y={point.y + PICK_CAPTION_OFFSET}>
                 {copyStateToString(state1)}
             </text>;
@@ -88,7 +94,11 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
 
             if (hoveredP >= 0) {
                 const hoverPoint = this.scaleRdBaf(curve.rdGivenP(hoveredP), curve.bafGivenP(hoveredP));
-                hoverCircle = <circle cx={hoverPoint.x} cy={hoverPoint.y} r={5} fill="black" />;
+                hoverCircle = <CopyStateIndicator
+                    cx={hoverPoint.x}
+                    cy={hoverPoint.y}
+                    size={INDICATOR_HIGHLIGHT_SIZE}
+                    fill="black" />;
             }
         }
 
@@ -96,7 +106,12 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
             for (const rdBaf of getCopyNumCandidates()) { // Show copyGrid
                 const x = rdScale(rdBaf.rd);
                 const y = bafScale(rdBaf.baf);
-                copyGrid.push(<circle key={`${rdBaf.rd} ${rdBaf.baf}`} cx={x} cy={y} r={2} fill="black" />);
+                copyGrid.push(<CopyStateIndicator
+                    key={`${rdBaf.rd} ${rdBaf.baf}`}
+                    cx={x} cy={y}
+                    size={GRID_INDICATOR_SIZE}
+                    fill="black"
+                />);
             }
         }
     
@@ -133,7 +148,26 @@ function SvgPointPath(props: PointPathProps) {
         {/* A wider, invisible path for hover purposes */}
         <path d={pathString} fill="transparent" stroke="black" strokeWidth={10} strokeOpacity={0}
             onMouseMove={onMouseMove} onMouseLeave={onMouseLeave} />
-        <circle cx={firstPoint.x} cy={firstPoint.y} r={4} fill={END_POINT_COLOR} />
-        <circle cx={lastPoint.x} cy={lastPoint.y} r={4} fill={END_POINT_COLOR} />
+        <CopyStateIndicator cx={firstPoint.x} cy={firstPoint.y} fill={END_POINT_COLOR} />
+        <CopyStateIndicator cx={lastPoint.x} cy={lastPoint.y} fill={END_POINT_COLOR} />
     </React.Fragment>;
+}
+
+interface CopyStateIndicatorProps {
+    cx: number;
+    cy: number;
+    size?: number;
+    fill?: string;
+}
+
+function CopyStateIndicator(props: CopyStateIndicatorProps) {
+    const {cx, cy, fill} = props;
+    let size = props.size || INDICATOR_SIZE;
+    return <rect 
+        x={cx - 0.5 * size}
+        y={cy - 0.5 * size}
+        width={size}
+        height={size}
+        fill={fill || "black"}
+    />;
 }
