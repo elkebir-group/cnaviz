@@ -30,7 +30,7 @@ export class BinMerger {
             const baf = firstBinOfMerge.BAF;
             const binsInCurrentMerge = [firstBinOfMerge];
 
-             // Find the end of the current merge.  Everything has to be similar to the first bin of the merge.
+            // Find the end of the current merge.  Everything has to be similar to the first bin of the merge.
             let j = i + 1;
             for (; j < bins.length; j++) {
                 const thisBin = bins[j];
@@ -56,4 +56,42 @@ export class BinMerger {
         }
         return merged;
     }
+
+    /*
+    doMergeMultiSample(samples: GenomicBin[][]): GenomicBin[][] {
+        if (samples.length === 0) {
+            return [];
+        }
+
+        const mergedSamples = [];
+        const firstSample = samples[0];
+        const sampleIndices = new Array(samples.length).fill(0);
+
+        let i = 0;
+        while (i < firstSample.length) {
+            const firstBinOfMerge = firstSample[i];
+            const rd = firstBinOfMerge.RD;
+            const baf = firstBinOfMerge.BAF;
+            const binsInCurrentMerge = [firstBinOfMerge];
+
+            // Find the end of the current merge.  Everything has to be similar to the first bin of the merge.
+            let j = i + 1;
+            for (; j < firstSample.length; j++) {
+                const thisBin = firstSample[j];
+                const rdDiff = Math.abs(rd - thisBin.RD);
+                const bafDiff = Math.abs(baf - thisBin.BAF);
+                if (firstBinOfMerge["#CHR"] === thisBin["#CHR"] &&
+                    rdDiff < this.rdThreshold &&
+                    bafDiff < this.bafThreshold
+                ) {
+                    binsInCurrentMerge.push(thisBin); // Similar enough, add to merge
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return [];
+    }
+    */
 }

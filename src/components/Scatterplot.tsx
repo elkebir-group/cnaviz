@@ -72,13 +72,12 @@ export class Scatterplot extends React.Component<Props> {
                 baf: bafScale.invert(y)
             };
 
-
             if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
                 onNewCurveState({normalLocation: hoveredRdBaf});
                 return;
             }
 
-            const copyState = getCopyStateFromRdBaf(hoveredRdBaf);
+            const copyState = getCopyStateFromRdBaf(hoveredRdBaf, curveState.normalLocation);
             if (curveState.pickStatus === CurvePickStatus.pickingState1 && curveState.state1 !== copyState) {
                 onNewCurveState({state1: copyState});
             } else if (curveState.pickStatus === CurvePickStatus.pickingState2 && curveState.state2 !== copyState) {
@@ -133,8 +132,8 @@ export class Scatterplot extends React.Component<Props> {
         }
 
         if (curveState.hoveredP >= 0 && curveState.state1 && curveState.state2) {
-            const {hoveredP, state1, state2} = curveState;
-            const curve = new CopyNumberCurve(state1, state2);
+            const {hoveredP, state1, state2, normalLocation} = curveState;
+            const curve = new CopyNumberCurve(state1, state2, normalLocation);
             const rd = curve.rdGivenP(hoveredP);
             const baf = curve.bafGivenP(hoveredP);
             return this._renderTooltipHelper(rd, baf, <React.Fragment>

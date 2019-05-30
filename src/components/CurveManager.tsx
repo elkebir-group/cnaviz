@@ -90,7 +90,7 @@ export class CurveManager extends React.Component<Props, State> {
                         type="number"
                         ref={input => this._bafInput = input}
                         defaultValue={String(curveState.normalLocation.baf)}
-                        min={0} max={1} step={0.05} />
+                        min={0.05} max={1} step={0.05} />
                 </div>
                 :
                 <button onClick={this.enableSetNormalState} >Set location for 1|1 state</button>

@@ -3,13 +3,27 @@ import { getMinDistanceIndex } from "../util";
 
 const DEFAULT_SAMPLES = 25;
 
+interface RdBafModifiers {
+    rdModifier: (rd: number) => number;
+    bafModifier: (baf: number) => number;
+}
+
 export class CopyNumberCurve {
+    static getCurveModifiers(normalRdBaf: RdBaf): RdBafModifiers {
+        return {
+            rdModifier: rd => rd + normalRdBaf.rd,
+            bafModifier: baf => normalRdBaf.baf !== 0 ? baf * (normalRdBaf.baf / 0.5) : 0
+        };
+    }
+
     readonly state1: CopyNumberState;
     readonly state2: CopyNumberState;
+    private readonly _rdBafModifiers: RdBafModifiers;
 
-    constructor(state1: CopyNumberState, state2: CopyNumberState) {
+    constructor(state1: CopyNumberState, state2: CopyNumberState, normalRdBaf: RdBaf) {
         this.state1 = state1;
         this.state2 = state2;
+        this._rdBafModifiers = CopyNumberCurve.getCurveModifiers(normalRdBaf);
     }
 
     getTotalCopies() {
@@ -21,7 +35,7 @@ export class CopyNumberCurve {
 
     rdGivenP(p: number): number {
         const {total1, total2} = this.getTotalCopies();
-        return Math.log2(p * (total1 - total2) + total2) - 1;
+        return this._rdBafModifiers.rdModifier(Math.log2(p * (total1 - total2) + total2) - 1);
     }
 
     bafGivenP(p: number): number {
@@ -31,7 +45,7 @@ export class CopyNumberCurve {
             return 0;
         }
         const numerator = p * this.state1.bCopies + (1 - p) * this.state2.bCopies;
-        return numerator / demoninator; // Alternatively, this could be 0.5 - baf
+        return this._rdBafModifiers.bafModifier(numerator / demoninator); // Alternatively, this could be 0.5 - baf
     }
 
     sampleCurve(samples=DEFAULT_SAMPLES): RdBaf[] {

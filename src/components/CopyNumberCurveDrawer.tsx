@@ -33,14 +33,14 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
 
     handleMouseMove(event: React.MouseEvent<SVGPathElement>) {
         const {curveState, rdScale, bafScale, svgRef, onLocationHovered} = this.props;
-        const {state1, state2} = curveState;
+        const {state1, state2, normalLocation} = curveState;
         if (!state1 || !state2) {
             return;
         }
         const {x, y} = getRelativeCoordinates(event, svgRef);
         const rd = rdScale.invert(x);
         const baf = bafScale.invert(y);
-        const p = new CopyNumberCurve(state1, state2).getClosestPForLocation(rd, baf);
+        const p = new CopyNumberCurve(state1, state2, normalLocation).getClosestPForLocation(rd, baf);
         if (curveState.hoveredP !== p) {
             onLocationHovered(p);
         }
@@ -50,27 +50,25 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
         this.props.onLocationHovered(-1);
     }
 
-    scaleRdBaf(rd: number, baf: number): Coordinate {
+    getXY(rd: number, baf: number): Coordinate {
+        const {rdScale, bafScale} = this.props;
         return {
-            x: this.props.rdScale(rd),
-            y: this.props.bafScale(baf)
+            x: rdScale(rd),
+            y: bafScale(baf)
         };
     }
 
     render() {
-        const {curveState, rdScale, bafScale} = this.props;
-        const {state1, state2, hoveredP, pickStatus} = curveState;
-        if (!state1 && !state2) {
-            return null;
-        }
+        const {curveState} = this.props;
+        const {state1, state2, hoveredP, pickStatus, normalLocation} = curveState;
 
         let pointPath = null;
         let hoverCircle = null;
         let pickingCaption = null;
         let copyGrid = [];
         if (state1 && !state2) {
-            const curve = new CopyNumberCurve(state1, state1);
-            const point = this.scaleRdBaf(curve.rdGivenP(0), curve.bafGivenP(0));
+            const curve = new CopyNumberCurve(state1, state1, normalLocation);
+            const point = this.getXY(curve.rdGivenP(0), curve.bafGivenP(0));
             hoverCircle = <CopyStateIndicator
                 cx={point.x} cy={point.y}
                 size={INDICATOR_HIGHLIGHT_SIZE}
@@ -79,8 +77,8 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
                 {copyStateToString(state1)}
             </text>;
         } else if (state1 && state2) {
-            const curve = new CopyNumberCurve(state1, state2);
-            const points = curve.sampleCurve().map(point => this.scaleRdBaf(point.rd, point.baf));
+            const curve = new CopyNumberCurve(state1, state2, normalLocation);
+            const points = curve.sampleCurve().map(point => this.getXY(point.rd, point.baf));
             pointPath = <SvgPointPath
                 points={points}
                 onMouseMove={this.handleMouseMove}
@@ -93,7 +91,7 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
             }
 
             if (hoveredP >= 0) {
-                const hoverPoint = this.scaleRdBaf(curve.rdGivenP(hoveredP), curve.bafGivenP(hoveredP));
+                const hoverPoint = this.getXY(curve.rdGivenP(hoveredP), curve.bafGivenP(hoveredP));
                 hoverCircle = <CopyStateIndicator
                     cx={hoverPoint.x}
                     cy={hoverPoint.y}
@@ -102,10 +100,12 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
             }
         }
 
-        if (pickStatus === CurvePickStatus.pickingState1 || pickStatus === CurvePickStatus.pickingState2) {
-            for (const rdBaf of getCopyNumCandidates()) { // Show copyGrid
-                const x = rdScale(rdBaf.rd);
-                const y = bafScale(rdBaf.baf);
+        if (pickStatus === CurvePickStatus.pickingNormalLocation ||
+            pickStatus === CurvePickStatus.pickingState1 || 
+            pickStatus === CurvePickStatus.pickingState2
+        ) { // Show copyGrid
+            for (const rdBaf of getCopyNumCandidates(curveState.normalLocation).keys()) {
+                const {x, y} = this.getXY(rdBaf.rd, rdBaf.baf);
                 copyGrid.push(<CopyStateIndicator
                     key={`${rdBaf.rd} ${rdBaf.baf}`}
                     cx={x} cy={y}
@@ -114,7 +114,7 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
                 />);
             }
         }
-    
+
         return <g>
             {hoverCircle}
             {pointPath}
