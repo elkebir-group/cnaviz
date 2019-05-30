@@ -7,10 +7,10 @@ import { MergedGenomicBin } from "../model/BinMerger";
 import { CurveState } from "../model/CurveState";
 
 import { Scatterplot } from "./Scatterplot";
-import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 import { DivWithBullseye } from "./DivWithBullseye";
 
 import "./SampleViz.css";
+import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
 
 interface Props {
     indexedData: SampleIndexedBins;
@@ -81,20 +81,9 @@ export class SampleViz extends React.Component<Props, State> {
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered} />
             </DivWithBullseye>
-            <DivWithBullseye className="SampleViz-pane">
-                <RDLinearPlot
-                    data={selectedData}
-                    chr={chr}
-                    rdRange={indexedData.rdRange}
-                    hoveredLocation={hoveredLocation}
-                    onLocationHovered={onLocationHovered} />
-                <div className="SampleViz-separator" />
-                <BAFLinearPlot
-                    data={selectedData}
-                    chr={chr}
-                    hoveredLocation={hoveredLocation}
-                    onLocationHovered={onLocationHovered} />
-            </DivWithBullseye>
+            <RdrBafCircosPlot
+                data={selectedData}
+                rdRange={rdRange} />
         </div>;
     }
 }

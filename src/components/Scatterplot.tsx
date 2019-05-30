@@ -40,8 +40,8 @@ interface Props {
 
 export class Scatterplot extends React.Component<Props> {
     static defaultProps = {
-        width: 600,
-        height: 500,
+        width: 400,
+        height: 350,
         onNewCurveState: _.noop,
         onRecordHovered: _.noop
     };
