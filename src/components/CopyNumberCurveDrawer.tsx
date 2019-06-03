@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { Coordinate, getRelativeCoordinates } from "../util";
 import {  CopyNumberCurve } from "../model/CopyNumberCurve";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
-import { getCopyNumCandidates, copyStateToString } from "../model/CopyNumberState";
+import { getCopyNumCandidates, copyStateToString, CopyNumberState } from "../model/CopyNumberState";
 
 const GRID_INDICATOR_SIZE = 4;
 const INDICATOR_SIZE = 6;
@@ -20,18 +20,28 @@ interface Props {
     onLocationHovered: (p: number) => void;
 }
 
-export class CopyNumberCurveDrawer extends React.Component<Props> {
+interface State {
+    hoveredGridPoint: {
+        coordinate: Coordinate,
+        state: CopyNumberState
+    } | null;
+}
+
+export class CopyNumberCurveDrawer extends React.Component<Props, State> {
     static defaultProps = {
         onLocationHovered: _.noop
     };
 
     constructor(props: Props) {
         super(props);
-        this.handleMouseMove = this.handleMouseMove.bind(this);
-        this.handleMouseLeave = this.handleMouseLeave.bind(this);
+        this.state = {
+            hoveredGridPoint: null
+        };
+        this.handlePathMouseMove = this.handlePathMouseMove.bind(this);
+        this.handlePathMouseLeave = this.handlePathMouseLeave.bind(this);
     }
 
-    handleMouseMove(event: React.MouseEvent<SVGPathElement>) {
+    handlePathMouseMove(event: React.MouseEvent<SVGPathElement>) {
         const {curveState, rdScale, bafScale, svgRef, onLocationHovered} = this.props;
         const {state1, state2, normalLocation} = curveState;
         if (!state1 || !state2) {
@@ -46,7 +56,7 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
         }
     }
 
-    handleMouseLeave() {
+    handlePathMouseLeave() {
         this.props.onLocationHovered(-1);
     }
 
@@ -64,7 +74,7 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
 
         let pointPath = null;
         let hoverCircle = null;
-        let pickingCaption = null;
+        let gridPointCaption = null;
         let copyGrid = [];
         if (state1 && !state2) {
             const curve = new CopyNumberCurve(state1, state1, normalLocation);
@@ -73,21 +83,17 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
                 cx={point.x} cy={point.y}
                 size={INDICATOR_HIGHLIGHT_SIZE}
                 fill={END_POINT_COLOR} />;
-            pickingCaption = <text x={point.x + PICK_CAPTION_OFFSET} y={point.y + PICK_CAPTION_OFFSET}>
-                {copyStateToString(state1)}
-            </text>;
+            gridPointCaption = <CopyStateCaption state={state1} coordinate={point} />;
         } else if (state1 && state2) {
             const curve = new CopyNumberCurve(state1, state2, normalLocation);
             const points = curve.sampleCurve().map(point => this.getXY(point.rd, point.baf));
             pointPath = <SvgPointPath
                 points={points}
-                onMouseMove={this.handleMouseMove}
-                onMouseLeave={this.handleMouseLeave} />;
+                onMouseMove={this.handlePathMouseMove}
+                onMouseLeave={this.handlePathMouseLeave} />;
             if (pickStatus === CurvePickStatus.pickingState2) {
                 const firstPoint = points[0]; // Because the first point is p=0, which means 100% state2.
-                pickingCaption = <text x={firstPoint.x + PICK_CAPTION_OFFSET} y={firstPoint.y + PICK_CAPTION_OFFSET}>
-                    {copyStateToString(state2)}
-                </text>;
+                gridPointCaption = <CopyStateCaption state={state2} coordinate={firstPoint} />;
             }
 
             if (hoveredP >= 0) {
@@ -100,25 +106,31 @@ export class CopyNumberCurveDrawer extends React.Component<Props> {
             }
         }
 
-        if (pickStatus === CurvePickStatus.pickingNormalLocation ||
-            pickStatus === CurvePickStatus.pickingState1 || 
-            pickStatus === CurvePickStatus.pickingState2
-        ) { // Show copyGrid
-            for (const rdBaf of getCopyNumCandidates(curveState.normalLocation).keys()) {
-                const {x, y} = this.getXY(rdBaf.rd, rdBaf.baf);
+        if (pickStatus !== CurvePickStatus.none) { // Show copyGrid
+            const cnStateForRdBaf = getCopyNumCandidates(curveState.normalLocation)
+            for (const [rdBaf, state] of cnStateForRdBaf.entries()) {
+                const xy = this.getXY(rdBaf.rd, rdBaf.baf);
                 copyGrid.push(<CopyStateIndicator
                     key={`${rdBaf.rd} ${rdBaf.baf}`}
-                    cx={x} cy={y}
+                    onMouseEnter={() => this.setState({hoveredGridPoint: {coordinate: xy, state}})}
+                    onMouseLeave={() => this.setState({hoveredGridPoint: null})}
+                    cx={xy.x} cy={xy.y}
                     size={GRID_INDICATOR_SIZE}
                     fill="black"
                 />);
+            }
+            const hoveredGridPoint = this.state.hoveredGridPoint;
+            if (hoveredGridPoint) {
+                gridPointCaption = <CopyStateCaption
+                    state={hoveredGridPoint.state}
+                    coordinate={hoveredGridPoint.coordinate} />;
             }
         }
 
         return <g>
             {hoverCircle}
             {pointPath}
-            {pickingCaption}
+            {gridPointCaption}
             {copyGrid}
         </g>;
     }
@@ -158,10 +170,11 @@ interface CopyStateIndicatorProps {
     cy: number;
     size?: number;
     fill?: string;
+    onMouseEnter?: (event: React.MouseEvent<SVGRectElement>) => void;
+    onMouseLeave?: (event: React.MouseEvent<SVGRectElement>) => void;
 }
-
 function CopyStateIndicator(props: CopyStateIndicatorProps) {
-    const {cx, cy, fill} = props;
+    const {cx, cy, fill, onMouseEnter, onMouseLeave} = props;
     let size = props.size || INDICATOR_SIZE;
     return <rect 
         x={cx - 0.5 * size}
@@ -169,5 +182,17 @@ function CopyStateIndicator(props: CopyStateIndicatorProps) {
         width={size}
         height={size}
         fill={fill || "black"}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
     />;
+}
+
+interface CopyStateCaptionProps {
+    state?: CopyNumberState;
+    coordinate: Coordinate;
+}
+function CopyStateCaption(props: CopyStateCaptionProps) {
+    return <text x={props.coordinate.x + PICK_CAPTION_OFFSET} y={props.coordinate.y + PICK_CAPTION_OFFSET}>
+        {props.state ? copyStateToString(props.state) : "unknown state"}
+    </text>;
 }
