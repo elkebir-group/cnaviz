@@ -13,6 +13,7 @@ import { CurveManager } from "./components/CurveManager";
 
 import spinner from "./loading-small.gif";
 import "./App.css";
+import { CircosSelector } from "./components/CircosSelector";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -178,16 +179,21 @@ export class App extends React.Component<{}, State> {
                     <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
                 </div>
                 <div className="row">
-                    {
-                    samples.length > 0 && <div className="col">
-                        <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                    <div className="col-md-4">
+                        {
+                        samples.length > 0 && <div className="row">
+                            <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                        </div>
+                        }
+                        {
+                        samples.length > 1 && <div className="row">
+                            <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
+                        </div>
+                        }
                     </div>
-                    }
-                    {
-                    samples.length > 1 && <div className="col">
-                        <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
+                    <div className="col">
+                        <CircosSelector {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
                     </div>
-                    }
                 </div>
             </div>;
         }

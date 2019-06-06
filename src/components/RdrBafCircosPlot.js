@@ -4,10 +4,13 @@ import * as d3 from "d3";
 import { hg38 } from "../model/Genome";
 import { sampleWithEqualSpacing } from "../util";
 
-function convertGenomeToCircosLayout(genome) {
+function convertGenomeToCircosLayout(genome, chrFilter) {
     const colorScale = d3.scaleOrdinal(d3.schemeDark2);
     const layout = [];
     for (const chr of genome.getChromosomeList()) {
+        if (chrFilter && chr.name !== chrFilter) {
+            continue;
+        }
         layout.push({
             id: chr.name,
             label: chr.name.substr(3),
@@ -20,8 +23,8 @@ function convertGenomeToCircosLayout(genome) {
 
 const LAYOUT = convertGenomeToCircosLayout(hg38);
 const CONFIG = {
-    innerRadius: 160,
-    outerRadius: 175,
+    innerRadius: 300,
+    outerRadius: 315,
     labels: {
         radialOffset: 2,
         size: 10,
@@ -49,7 +52,9 @@ export class RdrBafCircosPlot extends React.PureComponent {
     static nextId = 0;
     constructor(props) {
         super(props);
-        this._containerNode = null;
+        this._mainContainer = null;
+        this._subContainer = null;
+        this._circos = null;
         RdrBafCircosPlot.nextId++;
     }
 
@@ -57,21 +62,30 @@ export class RdrBafCircosPlot extends React.PureComponent {
         this.drawCircos();
     }
 
-    componentDidUpdate() {
-        this.drawCircos();
+    componentDidUpdate(prevProps) {
+        if (this.props.data !== prevProps.data) {
+            this.drawCircos();
+        } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
+            this.drawHighlight();
+        }
     }
 
     render() {
-        return <div ref={node => this._containerNode = node} />;
+        return <div ref={node => this._mainContainer = node} />;
     }
 
     drawCircos() {
-        if (!this._containerNode) {
+        if (!this._mainContainer) {
             return;
         }
+        if (this._subContainer) {
+            this._subContainer.remove();
+        }
+        this._subContainer = document.createElement("div");
+        this._mainContainer.append(this._subContainer);
 
         const records = this.props.data.getRecords();
-        const {rdRange, hoveredRegion} = this.props;
+        const {rdRange} = this.props;
 
         let rdData = [];
         let bafData = [];
@@ -86,32 +100,12 @@ export class RdrBafCircosPlot extends React.PureComponent {
         rdData = sampleWithEqualSpacing(rdData, MAX_RECORDS);
         bafData = sampleWithEqualSpacing(bafData, MAX_RECORDS);
 
-        d3.select(this._containerNode).select("g").remove();
-
         const circos = new Circos({
-            container: this._containerNode,
-            width: 400,
-            height: 400
+            container: this._subContainer,
+            width: 800,
+            height: 800
         });
         circos.layout(LAYOUT, CONFIG);
-        if (hoveredRegion) {
-            circos.highlight(
-                "hoveredRegion",
-                [{
-                    block_id: hoveredRegion.chr,
-                    start: hoveredRegion.start,
-                    end: hoveredRegion.end
-                }],
-                {
-                    innerRadius: 0.70,
-                    outerRadius: 1,
-                    color: "yellow",
-                    strokeWidth: 2,
-                    strokeColor: "yellow",
-                    opacity: 0.5
-                }
-            )
-        }
 
         circos.scatter(
             "rdr", rdData, {
@@ -138,6 +132,36 @@ export class RdrBafCircosPlot extends React.PureComponent {
             }
         );
 
+        this._circos = circos;
+        this.drawHighlight(false);
         circos.render();
+    }
+
+    drawHighlight(doRender=true) {
+        const hoveredLocation = this.props.hoveredLocation;
+        if (!this._circos) {
+            return;
+        }
+
+        const data = [];
+        if (hoveredLocation) {
+            data.push({
+                block_id: hoveredLocation.chr,
+                start: hoveredLocation.start,
+                end: hoveredLocation.end
+            });
+        }
+
+        this._circos.highlight("hoveredLocation", data, {
+            innerRadius: 0.70,
+            outerRadius: 1,
+            color: "yellow",
+            strokeWidth: 2,
+            strokeColor: "yellow",
+            opacity: 0.5
+        });
+        if (doRender) {
+            this._circos.render();
+        }
     }
 }

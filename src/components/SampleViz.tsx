@@ -81,10 +81,6 @@ export class SampleViz extends React.Component<Props, State> {
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered} />
             </DivWithBullseye>
-            <RdrBafCircosPlot
-                data={selectedData}
-                rdRange={rdRange}
-                hoveredLocation={hoveredLocation} />
         </div>;
     }
 }
