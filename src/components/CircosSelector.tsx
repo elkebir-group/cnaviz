@@ -1,12 +1,14 @@
 import React from "react";
+import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
 import { SampleIndexedBins } from "../model/BinIndex";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
+import { hg38 } from "../model/Genome";
 
 interface Props {
     indexedData: SampleIndexedBins;
     chr?: string;
     hoveredLocation?: ChromosomeInterval;
+    onLocationHovered?: (location: ChromosomeInterval | null) => void;
     initialSelectedSample?: string;
 }
 
@@ -28,7 +30,7 @@ export class CircosSelector extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, chr, hoveredLocation} = this.props;
+        const {indexedData, chr, hoveredLocation, onLocationHovered} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -48,7 +50,10 @@ export class CircosSelector extends React.Component<Props, State> {
             <RdrBafCircosPlot
                 data={selectedData}
                 rdRange={rdRange}
-                hoveredLocation={hoveredLocation} />
+                hoveredLocation={hoveredLocation}
+                onLocationHovered={onLocationHovered}
+                genome={hg38}
+                chr={chr} />
         </div>;
     }
 }

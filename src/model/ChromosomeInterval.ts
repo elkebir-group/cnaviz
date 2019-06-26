@@ -1,4 +1,4 @@
-import OpenInterval from "./OpenInterval";
+import { OpenInterval } from "./OpenInterval";
 
 export class ChromosomeInterval {
     public readonly chr: string;

@@ -1,6 +1,6 @@
 import _ from "lodash";
+import { OpenInterval } from "./OpenInterval";
 import { ChromosomeInterval } from "./ChromosomeInterval";
-import OpenInterval from "./OpenInterval";
 
 interface Chromosome {
     readonly name: string;

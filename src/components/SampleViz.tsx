@@ -10,7 +10,6 @@ import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 
 import "./SampleViz.css";
-import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
 
 interface Props {
     indexedData: SampleIndexedBins;
@@ -52,8 +51,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, chr, width, height, curveState, onNewCurveState, hoveredLocation,
-            onLocationHovered} = this.props;
+        const {indexedData, chr, width, height, curveState, onNewCurveState, hoveredLocation} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
