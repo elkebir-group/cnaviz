@@ -7,11 +7,13 @@ import { Genome } from "../model/Genome";
 import { ChrIndexedBins } from "../model/BinIndex";
 import { OpenInterval } from "../model/OpenInterval";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { sampleWithEqualSpacing } from "../util";
+import { sampleWithEqualSpacing, niceBpCount } from "../util";
 
 const SIZE = 800;
 const INNER_RADIUS = 300;
 const MAX_RECORDS = 7500;
+const RDR_COLOR = "blue";
+const BAF_COLOR = "red";
 
 const CONFIG: Circos.LayoutConfig = {
     innerRadius: INNER_RADIUS,
@@ -96,9 +98,33 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
 
     render() {
         return <div style={{position: "relative"}}>
+            {this.props.hoveredLocation && this.renderLocationDetails(this.props.hoveredLocation)}
             <div ref={node => this._highlightContainer = node} style={{position: "absolute"}} />
             <div ref={node => this._mainContainer = node} style={{position: "absolute"}} />
             <div ref={node => this._hoverMapContainer = node} style={{position: "absolute"}} />
+        </div>;
+    }
+
+    renderLocationDetails(location: ChromosomeInterval): JSX.Element {
+        const records = this.props.data.findOverlappingRecords(location);
+
+        let contents: JSX.Element;
+        if (records.length === 0) {
+            contents = <div style={{color: "grey"}}>No data</div>;
+        } else {
+            const meanRd = _.meanBy(records, "averageRd");
+            const meanBaf = _.meanBy(records, "averageBaf");
+            contents = <React.Fragment>
+                <div style={{color: RDR_COLOR}}>Average RDR: {meanRd.toFixed(2)}</div>
+                <div style={{color: BAF_COLOR}}>Average BAF: {meanBaf.toFixed(2)}</div>
+            </React.Fragment>;
+        }
+        return <div className="flex-center" style={{position: "absolute", width: SIZE, height: SIZE}}>
+            <p>
+                {location.toString()}<br/>
+                ({niceBpCount(location.getLength())})
+            </p>
+            {contents}
         </div>;
     }
 
@@ -177,7 +203,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
                 max: rdRange[1],
                 strokeWidth: 0,
                 size: 3,
-                color: "blue",
+                color: RDR_COLOR,
                 axes: [{color: "black", position: rdRange[0]}, {color: "black", position: rdRange[1]}]
             }
         );
@@ -189,7 +215,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
                 max: 0.5,
                 strokeWidth: 0,
                 size: 3,
-                color: "red",
+                color: BAF_COLOR,
                 axes: [{color: "black", position: 0}, {color: "black", position: 0.5}]
             }
         );
@@ -263,8 +289,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         const eventConfig = {
             mouseenter: (slice: Circos.IntervalDatum) => onLocationHovered(
                 new ChromosomeInterval(slice.block_id, slice.start, slice.start + binSize)
-            ),
-            mouseleave: () => onLocationHovered(null)
+            )
         };
 
         const circos = this.makeLaidOutCircos(this._replaceSubContainer(this._hoverMapContainer), false);

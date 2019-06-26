@@ -61,7 +61,7 @@ export function applyRetinaFix(canvas: HTMLCanvasElement) {
 
 /**
  * @param {number} bases - number of bases
- * @param {number} sigFigs - number of digits after the decimal point
+ * @param {number} [sigFigs] - number of digits after the decimal point.  Default = 1
  * @return {string} human-readable string representing that number of bases
  */
 export function niceBpCount(bases: number, sigFigs=1) {
