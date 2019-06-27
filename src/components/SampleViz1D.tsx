@@ -3,6 +3,10 @@ import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
 import { SampleIndexedBins } from "../model/BinIndex";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { hg38 } from "../model/Genome";
+import { DivWithBullseye } from "./DivWithBullseye";
+import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
+
+import "./SampleViz.css";
 
 interface Props {
     indexedData: SampleIndexedBins;
@@ -50,9 +54,20 @@ export class SampleViz1D extends React.Component<Props, State> {
         const rdRange: [number, number] = [indexedData.rdRange[0], indexedData.rdRange[1]];
         let visualization: React.ReactNode = null;
         if (this.state.displayMode === DisplayMode.linear) {
-            visualization = <div>
-                
-            </div>;
+            visualization = <DivWithBullseye className="SampleViz-pane">
+                <RDLinearPlot
+                    data={selectedData}
+                    chr={chr}
+                    rdRange={indexedData.rdRange}
+                    hoveredLocation={hoveredLocation}
+                    onLocationHovered={onLocationHovered} />
+                <div className="SampleViz-separator" />
+                <BAFLinearPlot
+                    data={selectedData}
+                    chr={chr}
+                    hoveredLocation={hoveredLocation}
+                    onLocationHovered={onLocationHovered} />
+            </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {
             visualization = <RdrBafCircosPlot
                 data={selectedData}
@@ -71,7 +86,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                 {this.renderDisplayModeRadioOption(DisplayMode.linear)}
                 {this.renderDisplayModeRadioOption(DisplayMode.circos)}
             </div>
-            
+            {visualization}
         </div>;
     }
 

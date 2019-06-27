@@ -44,8 +44,8 @@ interface Props {
 
 export class LinearPlot extends React.PureComponent<Props> {
     static defaultProps = {
-        width: 600,
-        height: 110,
+        width: 800,
+        height: 200,
         color: "blue",
         onLocationHovered: _.noop
     };

@@ -9,7 +9,7 @@ import { CurveState } from "../model/CurveState";
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 
-import "./SampleViz2D.css";
+import "./SampleViz.css";
 
 interface Props {
     indexedData: SampleIndexedBins;
