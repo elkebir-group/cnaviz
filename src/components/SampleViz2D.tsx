@@ -9,7 +9,7 @@ import { CurveState } from "../model/CurveState";
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 
-import "./SampleViz.css";
+import "./SampleViz2D.css";
 
 interface Props {
     indexedData: SampleIndexedBins;
@@ -26,7 +26,7 @@ interface State {
     selectedSample: string;
 }
 
-export class SampleViz extends React.Component<Props, State> {
+export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
         onNewCurveState: _.noop,
         onLocationHovered: _.noop
@@ -35,8 +35,8 @@ export class SampleViz extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || Object.keys(props.indexedData)[0]
-        }
+            selectedSample: props.initialSelectedSample || props.indexedData.getSamples()[0]
+        };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
     }

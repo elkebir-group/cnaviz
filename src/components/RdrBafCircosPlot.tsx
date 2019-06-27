@@ -9,7 +9,6 @@ import { OpenInterval } from "../model/OpenInterval";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { sampleWithEqualSpacing, niceBpCount } from "../util";
 
-const SIZE = 800;
 const INNER_RADIUS = 300;
 const MAX_RECORDS = 7500;
 const RDR_COLOR = "blue";
@@ -53,6 +52,8 @@ const CONFIG_NO_DISPLAY: Circos.LayoutConfig = {
 interface Props {
     data: ChrIndexedBins;
     genome: Genome;
+    width: number;
+    height: number;
     chr?: string;
     hoveredLocation?: ChromosomeInterval;
     rdRange: [number, number];
@@ -61,6 +62,8 @@ interface Props {
 
 export class RdrBafCircosPlot extends React.PureComponent<Props> {
     static defaultProps = {
+        width: 800,
+        height: 700,
         onLocationHovered: _.noop
     };
     static nextId = 0;
@@ -106,6 +109,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
     }
 
     renderLocationDetails(location: ChromosomeInterval): JSX.Element {
+        const { width, height } = this.props;
         const records = this.props.data.findOverlappingRecords(location);
 
         let contents: JSX.Element;
@@ -119,7 +123,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
                 <div style={{color: BAF_COLOR}}>Average BAF: {meanBaf.toFixed(2)}</div>
             </React.Fragment>;
         }
-        return <div className="flex-center" style={{position: "absolute", width: SIZE, height: SIZE}}>
+        return <div className="flex-center" style={{position: "absolute", width, height}}>
             <p>
                 {location.toString()}<br/>
                 ({niceBpCount(location.getLength())})
@@ -159,12 +163,8 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
     }
 
     makeLaidOutCircos(container: HTMLDivElement, isDisplayLayout=true): Circos {
-        const { genome, chr } = this.props;
-        const circos = new Circos({
-            container: container,
-            width: SIZE,
-            height: SIZE
-        });
+        const { genome, chr, width, height } = this.props;
+        const circos = new Circos({container, width, height});
         const layoutConfig = isDisplayLayout ? CONFIG : CONFIG_NO_DISPLAY;
         circos.layout(this._convertGenomeToCircosLayout(genome, chr), layoutConfig);
         return circos;

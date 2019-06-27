@@ -7,13 +7,13 @@ import { GenomicBin } from "./model/GenomicBin";
 import { SampleIndexedBins } from "./model/BinIndex";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 
-import { SampleViz } from "./components/SampleViz";
+import { SampleViz2D } from "./components/SampleViz2D";
+import { SampleViz1D } from "./components/SampleViz1D";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
 
 import spinner from "./loading-small.gif";
 import "./App.css";
-import { CircosSelector } from "./components/CircosSelector";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -182,17 +182,17 @@ export class App extends React.Component<{}, State> {
                     <div className="col-md-4">
                         {
                         samples.length > 0 && <div className="row">
-                            <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
                         </div>
                         }
                         {
                         samples.length > 1 && <div className="row">
-                            <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
                         </div>
                         }
                     </div>
                     <div className="col">
-                        <CircosSelector {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                        <SampleViz1D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
                     </div>
                 </div>
             </div>;
