@@ -40,8 +40,8 @@ interface Props {
 
 export class Scatterplot extends React.Component<Props> {
     static defaultProps = {
-        width: 600,
-        height: 500,
+        width: 400,
+        height: 350,
         onNewCurveState: _.noop,
         onRecordHovered: _.noop
     };
@@ -101,7 +101,7 @@ export class Scatterplot extends React.Component<Props> {
         this.props.onNewCurveState({hoveredP: p});
     }
 
-    _renderTooltipHelper(rd: number, baf: number, contents: JSX.Element | null) {
+    renderTooltipAtRdBaf(rd: number, baf: number, contents: JSX.Element | null) {
         if (!contents) {
             return null;
         }
@@ -124,7 +124,7 @@ export class Scatterplot extends React.Component<Props> {
         const {data, hoveredLocation, curveState} = this.props;
         if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
             const {rd, baf} = curveState.normalLocation;
-            return this._renderTooltipHelper(rd, baf, <React.Fragment>
+            return this.renderTooltipAtRdBaf(rd, baf, <React.Fragment>
                 <div>RD = {rd.toFixed(2)}</div>
                 <div>BAF = {baf.toFixed(2)}</div>
                 <i>Click to set location for 1|1 copy state</i>
@@ -136,7 +136,7 @@ export class Scatterplot extends React.Component<Props> {
             const curve = new CopyNumberCurve(state1, state2, normalLocation);
             const rd = curve.rdGivenP(hoveredP);
             const baf = curve.bafGivenP(hoveredP);
-            return this._renderTooltipHelper(rd, baf, <React.Fragment>
+            return this.renderTooltipAtRdBaf(rd, baf, <React.Fragment>
                 <b>Mix of:</b>
                 <div>{Math.round(hoveredP * 100)}% {copyStateToString(state1)}</div>
                 <div>{Math.round((1 - hoveredP) * 100)}% {copyStateToString(state2)}</div>
@@ -153,7 +153,7 @@ export class Scatterplot extends React.Component<Props> {
         const records = data.findOverlappingRecords(hoveredLocation);
         if (records.length === 1) {
             const record = records[0];
-            return this._renderTooltipHelper(record.averageRd, record.averageBaf, <React.Fragment>
+            return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
                 <p>
                     <b>{record.location.toString()}</b><br/>
                     ({niceBpCount(record.location.getLength())})
@@ -169,7 +169,7 @@ export class Scatterplot extends React.Component<Props> {
             const minRd = _.minBy(records, "averageRd")!.averageRd;
             const maxRd = _.maxBy(records, "averageRd")!.averageRd;
             const meanRd = _.meanBy(records, "averageRd");
-            return this._renderTooltipHelper(maxRd, maxBaf, <React.Fragment>
+            return this.renderTooltipAtRdBaf(maxRd, maxBaf, <React.Fragment>
                 <p><b>{records.length} corresponding regions</b></p>
                 <div>Average RDR: {meanRd.toFixed(2)}</div>
                 <div>Average BAF: {meanBaf.toFixed(2)}</div>

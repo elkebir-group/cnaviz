@@ -61,7 +61,7 @@ export function applyRetinaFix(canvas: HTMLCanvasElement) {
 
 /**
  * @param {number} bases - number of bases
- * @param {number} sigFigs - number of digits after the decimal point
+ * @param {number} [sigFigs] - number of digits after the decimal point.  Default = 1
  * @return {string} human-readable string representing that number of bases
  */
 export function niceBpCount(bases: number, sigFigs=1) {
@@ -103,4 +103,28 @@ export function getMinDistanceIndex<T>(queryPoint: T, searchPoints: T[], xKey: k
         const yDiff = (a[yKey] as any) - (b[yKey] as any);
         return xDiff * xDiff + yDiff * yDiff;
     }
+}
+
+
+/**
+ * Samples `numSamples` items from the input list by selecting equally-spaced elements.  If the list is shorter than the
+ * desired number of samples, returns the entire list.  Note that if the input is sorted, the output will be sorted as
+ * well.
+ * 
+ * @param {T[]} list - list for which to sample
+ * @param {number} numSamples - number of samples
+ * @return {T[]} items sampled from the list
+ */
+export function sampleWithEqualSpacing<T>(list: T[], numSamples: number): T[] {
+    if (list.length <= numSamples) {
+        return list;
+    }
+
+    const samples: T[] = [];
+    for (let i = 0; i < numSamples; i++) {
+        const fractionIterated = i / numSamples;
+        const selectedIndex = Math.ceil(fractionIterated * list.length);
+        samples.push(list[selectedIndex]);
+    }
+    return samples;
 }

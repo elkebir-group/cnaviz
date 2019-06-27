@@ -1,7 +1,7 @@
 import { ChromosomeInterval } from "./ChromosomeInterval";
 
 export interface GenomicBin {
-    readonly "#CHR": string;
+    readonly "#CHR": string; // Despite this key implying that it is a number, it actually contains values like "chr3"
     readonly START: number;
     readonly END: number;
     readonly SAMPLE: string;

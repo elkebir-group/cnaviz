@@ -7,7 +7,6 @@ import { MergedGenomicBin } from "../model/BinMerger";
 import { CurveState } from "../model/CurveState";
 
 import { Scatterplot } from "./Scatterplot";
-import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 import { DivWithBullseye } from "./DivWithBullseye";
 
 import "./SampleViz.css";
@@ -27,7 +26,7 @@ interface State {
     selectedSample: string;
 }
 
-export class SampleViz extends React.Component<Props, State> {
+export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
         onNewCurveState: _.noop,
         onLocationHovered: _.noop
@@ -36,8 +35,8 @@ export class SampleViz extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || Object.keys(props.indexedData)[0]
-        }
+            selectedSample: props.initialSelectedSample || props.indexedData.getSamples()[0]
+        };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
     }
@@ -52,8 +51,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, chr, width, height, curveState, onNewCurveState, hoveredLocation,
-            onLocationHovered} = this.props;
+        const {indexedData, chr, width, height, curveState, onNewCurveState, hoveredLocation} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = indexedData.getSamples().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -80,20 +78,6 @@ export class SampleViz extends React.Component<Props, State> {
                     onNewCurveState={onNewCurveState}
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered} />
-            </DivWithBullseye>
-            <DivWithBullseye className="SampleViz-pane">
-                <RDLinearPlot
-                    data={selectedData}
-                    chr={chr}
-                    rdRange={indexedData.rdRange}
-                    hoveredLocation={hoveredLocation}
-                    onLocationHovered={onLocationHovered} />
-                <div className="SampleViz-separator" />
-                <BAFLinearPlot
-                    data={selectedData}
-                    chr={chr}
-                    hoveredLocation={hoveredLocation}
-                    onLocationHovered={onLocationHovered} />
             </DivWithBullseye>
         </div>;
     }

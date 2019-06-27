@@ -7,7 +7,8 @@ import { GenomicBin } from "./model/GenomicBin";
 import { SampleIndexedBins } from "./model/BinIndex";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 
-import { SampleViz } from "./components/SampleViz";
+import { SampleViz2D } from "./components/SampleViz2D";
+import { SampleViz1D } from "./components/SampleViz1D";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
 
@@ -178,16 +179,21 @@ export class App extends React.Component<{}, State> {
                     <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
                 </div>
                 <div className="row">
-                    {
-                    samples.length > 0 && <div className="col">
-                        <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                    <div className="col-md-4">
+                        {
+                        samples.length > 0 && <div className="row">
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                        </div>
+                        }
+                        {
+                        samples.length > 1 && <div className="row">
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
+                        </div>
+                        }
                     </div>
-                    }
-                    {
-                    samples.length > 1 && <div className="col">
-                        <SampleViz {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
+                    <div className="col">
+                        <SampleViz1D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
                     </div>
-                    }
                 </div>
             </div>;
         }

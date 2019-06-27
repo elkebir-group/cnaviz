@@ -2,7 +2,7 @@
  * A 0-indexed open interval.  Intervals are iterable, so code can take advantage of the spread operator:
  *     `myFunction(...interval)` is equivalent to `myFunction(interval.start, interval.end)`
  */
-export default class OpenInterval {
+export class OpenInterval {
     /**
      * Makes a new instance.  The input should represent a 0-indexed open interval.
      * 

@@ -41,11 +41,7 @@ export class SampleIndexedBins {
     }
 
     estimateBinSize() {
-        const data = this._getDataForFirstSample().getRecords();
-        if (data.length === 0) {
-            return 0;
-        }
-        return data[0].END - data[0].START;
+        return this._getDataForFirstSample().estimateBinSize();
     }
 
     getChromosomes() {
@@ -66,6 +62,14 @@ export class ChrIndexedBins {
             this._merged[chr] = merger.doMerge(this._grouped[chr]);
         }
         this.makeCopyWithJustChr = memoizeOne(this.makeCopyWithJustChr);
+    }
+
+    estimateBinSize(): number {
+        const records = this.getRecords();
+        if (records.length === 0) {
+            return 0;
+        }
+        return records[0].END - records[0].START;
     }
 
     makeCopyWithJustChr(chr: string): ChrIndexedBins {
