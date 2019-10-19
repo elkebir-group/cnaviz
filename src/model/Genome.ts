@@ -2,27 +2,49 @@ import _ from "lodash";
 import { OpenInterval } from "./OpenInterval";
 import { ChromosomeInterval } from "./ChromosomeInterval";
 
+/**
+ * Container to hold the name and length of a chromosome in bases.
+ */
 interface Chromosome {
+    /** Name of the chromosome. */
     readonly name: string;
+    /** Length of the chromosome, in bases. */
     readonly length: number;
 }
 
 /**
- * A named set of chromosomes.
+ * A named set of chromosomes.  Because a single number system is easier to work with for visualization, instances
+ * assign a unique base number to every location in the genome.  We term these unique base numbers as members of an 
+ * "implicit" coordinate system.  In contrast, locations specified by a set of base numbers in a specific chromosome,
+ * for example "chr1:0-1000", are termed "chromosome" locations.
+ * 
+ * You may assume that if bases are adjacent in chromosomes, they are also adjacent in the implicit coordinate system.
+ * For instance, if the first base of chr10 maps to an implicit coordinate of 1000, and chr10 is five hundred bases
+ * long, then it is safe to assume that chr10 maps to implicit bases 10000 to 10499.
  * 
  * @author Silas Hsu
  */
 export class Genome {
+    /** The name of this genome. */
     private _name: string;
+
+    /** Ordered list of chromosomes in the genome. */
     private _chromosomes: Chromosome[];
+
+    /**
+     * Mapping from chromosome name to the implicit coordinate of the chromosome's first base (see class description).
+     */
     private _chrStarts: {[chrName: string]: number};
+
+    /** Total number of bases in the genome. */
     private _length: number;
 
     /**
-     * Makes a new instance, with name and list of chromosomes.  For best results, chromosomes should have unique names.
+     * Makes a new instance, with name and list of chromosomes.  Chromosomes *must* have unique names.
      * 
-     * @param {string} name - name of the genome
-     * @param {Chromosome[]} chromosomes - list of chromosomes in the genome
+     * @param name - name of the genome
+     * @param chromosomes - list of chromosomes in the genome
+     * @throws {Error} if there are duplicate chromosome names
      */
     constructor(name: string, chromosomes: Chromosome[]) {
         this._name = name;
@@ -40,17 +62,29 @@ export class Genome {
     }
 
     /**
-     * @return {string} this genome's name
+     * @return this genome's name
      */
     getName(): string {
         return this._name;
     }
 
+    /**
+     * Returns the list of Chromosome objects backing this instance.  Caution: modifying this list or objects in the
+     * list will modify this instance.
+     * 
+     * @return the list of Chromosome objects backing this instance.
+     */
     getChromosomeList(): Chromosome[] {
         return this._chromosomes;
     }
 
-    getChromosomeStarts() {
+    /**
+     * Gets a list of implicit coordinates of each chromosome's 0th base.  This list is in the same order as the list of
+     * chromosomes returned by `getChromosomeList()`.
+     * 
+     * @return list of implicit coordinates of each chromosome's 0th base
+     */
+    getChromosomeStarts(): number[] {
         return this._chromosomes.map(chr => this._chrStarts[chr.name]);
     }
 
@@ -58,8 +92,8 @@ export class Genome {
      * Gets a length of a chromosome in base pairs, or the entire genome if the chromosome is unspecified.  Returns 0
      * if the chromosome does not exist.
      * 
-     * @param chrName - the chromosome for which to get the length of, or undefined to query the entire genome's length
-     * @return {number} length of the chromosome or genome.
+     * @param chrName - the name of the chromosome to query, or `undefined` to query the entire genome's length
+     * @return length of the chromosome or genome.
      */
     getLength(chrName?: string): number {
         if (!chrName) {
@@ -72,6 +106,14 @@ export class Genome {
         }
     }
 
+    /**
+     * Converts a chromosome location into this instance's implicit coordinates.  See class description for more about
+     * implicit coordinates.
+     * 
+     * @param location the genomic location to convert into implicit coordinates
+     * @return implicit base numbers in this instance that represent the genomic location
+     * @throws {Error} if the chromosome in the genomic location does not exist in this instance
+     */
     getImplicitCoordinates(location: ChromosomeInterval): OpenInterval {
         const {chr, start, end} = location;
         if ( !(chr in this._chrStarts) ) {
@@ -81,13 +123,22 @@ export class Genome {
         return new OpenInterval(chrStart + start, chrStart + end);
     }
 
-    getGenomicCoordinates(implicit: number, ensureInGenome=true) {
-        if (ensureInGenome) {
-            if (implicit < 0) {
-                implicit = 0;
-            } else if (implicit >= this.getLength()) {
-                implicit = this.getLength() - 1;
-            }
+    /**
+     * Converts an implicit base number into a base number of a specific chromosome.  The result is returned in a
+     * ChromosomeInterval that has a length of 1.
+     * 
+     * Input base numbers will be clamped to be a valid implicit coordinate before conversion takes place.  More
+     * formally, inputs will be clamped to be between [0, this.getLength() - 1].
+     * 
+     * @param implicit the implicit base number to convert
+     * @return base number in a specific chromosome
+     */
+    getChromosomeLocation(implicit: number): ChromosomeInterval {
+        // Clamp the input
+        if (implicit < 0) {
+            implicit = 0;
+        } else if (implicit >= this.getLength()) {
+            implicit = this.getLength() - 1;
         }
 
         const sortedChrStarts = Object.values(this._chrStarts).sort((a, b) => a - b); // Sorted smallest to largest

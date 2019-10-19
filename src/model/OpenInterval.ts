@@ -1,13 +1,15 @@
 /**
- * A 0-indexed open interval.  Intervals are iterable, so code can take advantage of the spread operator:
- *     `myFunction(...interval)` is equivalent to `myFunction(interval.start, interval.end)`
+ * A 0-indexed open interval; e.g. [0, 3).  Intervals are iterable, so code can take advantage of the spread operator:
+ * `myFunction(...interval)` is equivalent to `myFunction(interval.start, interval.end)`
+ * 
+ * @author Silas Hsu
  */
 export class OpenInterval {
     /**
      * Makes a new instance.  The input should represent a 0-indexed open interval.
      * 
-     * @param {number} start - start of the interval, inclusive
-     * @param {number} end - end of the interval, exclusive
+     * @param start - start of the interval, inclusive
+     * @param end - end of the interval, exclusive
      * @throws {RangeError} if the end is less than the start
      */
     constructor(public readonly start: number, public readonly end: number) {
@@ -27,25 +29,24 @@ export class OpenInterval {
     }
 
     /**
-     * @return {number} the length of this interval
+     * @return the length of this interval
      */
     getLength(): number {
         return this.end - this.start;
     }
 
     /**
-     * @return {number} the center of this interval
+     * @return the center of this interval
      */
     getCenter(): number {
         return 0.5 * (this.start + this.end);
     }
 
     /**
-     * Intersects this and another OpenInterval, and returns the result in as a new OpenInterval.  Returns null if there
-     * is no intersection at all.
+     * Gets whether this interval overlaps or intersects with another one.
      * 
-     * @param {OpenInterval} other - other OpenInterval to intersect
-     * @return {OpenInterval} intersection of this and the other interval
+     * @param other other OpenInterval with which to check for overlap
+     * @return whether this and the other interval overlap
      */
     hasOverlap(other: OpenInterval): boolean {
         const intersectionStart = Math.max(this.start, other.start);
@@ -54,7 +55,7 @@ export class OpenInterval {
     }
 
     /**
-     * @return {string} human-readable representation of this instance
+     * @return human-readable representation of this instance
      */
     toString(): string {
         return `[${this.start}, ${this.end})`;

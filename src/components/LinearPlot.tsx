@@ -193,7 +193,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         const implicitLocation = xScale.invert(mouseX);
-        onLocationHovered(genome.getGenomicCoordinates(implicitLocation));
+        onLocationHovered(genome.getChromosomeLocation(implicitLocation));
     }
 
     handleMouseLeave() {

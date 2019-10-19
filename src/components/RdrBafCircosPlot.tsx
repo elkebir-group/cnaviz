@@ -274,7 +274,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
 
         const slices: Circos.IntervalDatum[] = [];
         for (let base = basesInMap.start; base < basesInMap.end; base += basesPerSlice) {
-            const sliceLocation = genome.getGenomicCoordinates(base);
+            const sliceLocation = genome.getChromosomeLocation(base);
             // Make the slice basesPerSlice long, but for sliceEnd, ensure we don't go past the end of the chromosome
             const sliceEnd = Math.min(sliceLocation.start + basesPerSlice, genome.getLength(sliceLocation.chr));
             slices.push({
