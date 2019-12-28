@@ -47,22 +47,48 @@ function parseGenomicBins(data: string): Promise<GenomicBin[]> {
     })
 }
 
+/**
+ * Possible states of processing input data.
+ */
 enum ProcessingStatus {
+    /** No data input (yet) */
     none,
+
+    /** Reading data into memory */
     readingFile,
+
+    /** Reformatting, aggregating, converting, or otherwise analyzing data. */
     processing,
+
+    /** The results of data processing step are available. */
     done,
+
+    /** An error happened during any step. */
     error
 }
 
 interface State {
+    /** Current status of reading/processing input data */
     processingStatus: ProcessingStatus;
+
+    /** indexed */
     indexedData: SampleIndexedBins;
+    
+    /** Current genomic location that the user has selected.  Null if no such location. */
     hoveredLocation: ChromosomeInterval | null;
+
+    /** Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected. */
     selectedChr: string;
+
+    /**  */
     curveState: CurveState;
 }
 
+/**
+ * Top-level container.
+ * 
+ * @author Silas Hsu
+ */
 export class App extends React.Component<{}, State> {
     constructor(props: {}) {
         super(props);

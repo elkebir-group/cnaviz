@@ -15,14 +15,14 @@ export interface GenomicBin {
 }
 
 export const GenomicBinHelpers = {
+    /**
+     * Converts a GenomicBin to a ChromosomeInterval.  Only considers genomic location; other data will not be
+     * converted.
+     * 
+     * @param bin the GenomicBin to convert
+     * @return ChromosomeInterval representing the genomic region of the GenomicBin
+     */
     toChromosomeInterval: function(bin: GenomicBin): ChromosomeInterval {
         return new ChromosomeInterval(bin["#CHR"], bin.START, bin.END);
-    },
-
-    estimateBinSize: function(bins: GenomicBin[]): number {
-        if (bins.length === 0) {
-            return 0;
-        }
-        return bins[0].END - bins[0].START;
     }
 }
