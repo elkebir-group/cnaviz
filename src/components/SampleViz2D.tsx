@@ -2,7 +2,7 @@ import React from "react";
 import _ from "lodash";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { SampleIndexedBins } from "../model/BinIndex";
+import { DataWarehouse } from "../model/DataWarehouse";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { CurveState } from "../model/CurveState";
 
@@ -12,8 +12,8 @@ import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
 
 interface Props {
-    indexedData: SampleIndexedBins;
-    chr?: string;
+    data: DataWarehouse;
+    chr: string;
     initialSelectedSample?: string;
     width?: number;
     height?: number;
@@ -35,7 +35,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || props.indexedData.getSamples()[0]
+            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0]
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
@@ -51,17 +51,14 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, chr, width, height, curveState, onNewCurveState, hoveredLocation} = this.props;
+        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation} = this.props;
         const selectedSample = this.state.selectedSample;
-        const sampleOptions = indexedData.getSamples().map(sampleName =>
+        const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        let selectedData = indexedData.getDataForSample(selectedSample);
-        if (chr) {
-            selectedData = selectedData.makeCopyWithJustChr(chr);
-        }
+        const rdRange = data.getRdRange();
+        rdRange[1] += 1; // Add one so it's prettier
 
-        const rdRange: [number, number] = [indexedData.rdRange[0], indexedData.rdRange[1] + 1];
         return <div className="SampleViz">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
@@ -70,7 +67,7 @@ export class SampleViz2D extends React.Component<Props, State> {
             </div>
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
-                    data={selectedData}
+                    data={data.getMergedRecords(selectedSample, chr)}
                     rdRange={rdRange}
                     width={width}
                     height={height}

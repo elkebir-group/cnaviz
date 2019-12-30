@@ -4,13 +4,16 @@ import * as d3 from "d3";
 import _ from "lodash";
 
 import { Genome } from "../model/Genome";
-import { ChrIndexedBins } from "../model/BinIndex";
+import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { OpenInterval } from "../model/OpenInterval";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { sampleWithEqualSpacing, niceBpCount } from "../util";
 
 const INNER_RADIUS = 300;
 const MAX_RECORDS = 7500;
+
+// How many bases are selected when the user hovers over the circos, in the event there are no records on display.
+const DEFAULT_HOVER_BP = 50000; 
 const RDR_COLOR = "blue";
 const BAF_COLOR = "red";
 
@@ -50,11 +53,11 @@ const CONFIG_NO_DISPLAY: Circos.LayoutConfig = {
 };
 
 interface Props {
-    data: ChrIndexedBins;
+    data: GenomicBin[];
     genome: Genome;
     width: number;
     height: number;
-    chr?: string;
+    chr: string;
     hoveredLocation?: ChromosomeInterval;
     rdRange: [number, number];
     onLocationHovered: (location: ChromosomeInterval | null) => void;
@@ -109,15 +112,15 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
     }
 
     renderLocationDetails(location: ChromosomeInterval): JSX.Element {
-        const { width, height } = this.props;
-        const records = this.props.data.findOverlappingRecords(location);
+        const { data, width, height } = this.props;
+        const records = data.filter(record => GenomicBinHelpers.toChromosomeInterval(record).hasOverlap(location));
 
         let contents: JSX.Element;
         if (records.length === 0) {
             contents = <div style={{color: "grey"}}>No data</div>;
         } else {
-            const meanRd = _.meanBy(records, "averageRd");
-            const meanBaf = _.meanBy(records, "averageBaf");
+            const meanRd = _.meanBy(records, "RD");
+            const meanBaf = _.meanBy(records, "BAF");
             contents = <React.Fragment>
                 <div style={{color: RDR_COLOR}}>Average RDR: {meanRd.toFixed(2)}</div>
                 <div style={{color: BAF_COLOR}}>Average BAF: {meanBaf.toFixed(2)}</div>
@@ -176,12 +179,11 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         }
 
         // Convert to circos-readable format
-        const records = this.props.data.getRecords();
-        const {rdRange} = this.props;
+        const { data, rdRange } = this.props;
 
         let rdData: Circos.PointDatum[] = [];
         let bafData: Circos.PointDatum[] = [];
-        for (const record of records) {
+        for (const record of data) {
             const blockAndPosition = {
                 block_id: record["#CHR"],
                 position: record.START
@@ -261,7 +263,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         }
 
         // Set up the genomic coordinates covered by the hover map
-        const {genome, chr, onLocationHovered} = this.props;
+        const {data, genome, chr, onLocationHovered} = this.props;
         let basesInMap: OpenInterval;
         if (chr) {
             basesInMap = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, genome.getLength(chr)));
@@ -285,7 +287,8 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         }
         
         // Set up hover events
-        const binSize = this.props.data.estimateBinSize()
+        const binSize = data.length > 0 ?
+            GenomicBinHelpers.toChromosomeInterval(data[0]).getLength() : DEFAULT_HOVER_BP;
         const eventConfig = {
             mouseenter: (slice: Circos.IntervalDatum) => onLocationHovered(
                 new ChromosomeInterval(slice.block_id, slice.start, slice.start + binSize)

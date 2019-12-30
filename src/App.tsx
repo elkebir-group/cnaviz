@@ -4,7 +4,7 @@ import _ from "lodash";
 
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
-import { SampleIndexedBins } from "./model/BinIndex";
+import { DataWarehouse } from "./model/DataWarehouse";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 
 import { SampleViz2D } from "./components/SampleViz2D";
@@ -71,8 +71,8 @@ interface State {
     /** Current status of reading/processing input data */
     processingStatus: ProcessingStatus;
 
-    /** indexed */
-    indexedData: SampleIndexedBins;
+    /** Indexed data */
+    indexedData: DataWarehouse;
     
     /** Current genomic location that the user has selected.  Null if no such location. */
     hoveredLocation: ChromosomeInterval | null;
@@ -94,9 +94,9 @@ export class App extends React.Component<{}, State> {
         super(props);
         this.state = {
             processingStatus: ProcessingStatus.none,
-            indexedData: new SampleIndexedBins([]),
+            indexedData: new DataWarehouse([]),
             hoveredLocation: null,
-            selectedChr: "",
+            selectedChr: DataWarehouse.ALL_CHRS_KEY,
             curveState: INITIAL_CURVE_STATE
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -125,7 +125,7 @@ export class App extends React.Component<{}, State> {
         let indexedData = null;
         try {
             const parsed = await parseGenomicBins(contents);
-            indexedData = new SampleIndexedBins(parsed);
+            indexedData = new DataWarehouse(parsed);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -147,7 +147,7 @@ export class App extends React.Component<{}, State> {
             this.setState({hoveredLocation: null});
             return;
         }
-        const binSize = this.state.indexedData.estimateBinSize();
+        const binSize = this.state.indexedData.guessBinSize();
         this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
     }
 
@@ -183,19 +183,19 @@ export class App extends React.Component<{}, State> {
 
     render() {
         const {indexedData, selectedChr, hoveredLocation, curveState} = this.state;
-        const samples = indexedData.getSamples();
+        const samples = indexedData.getSampleList();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
-                indexedData,
+                data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
                 curveState,
                 onNewCurveState: this.handleNewCurveState,
                 onLocationHovered: this.handleLocationHovered
             };
 
-            const chrOptions = indexedData.getChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
-            chrOptions.push(<option key="" value="">ALL</option>);
+            const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
+            chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
             mainUI = <div>
                 <div className="App-global-controls">
                     Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected}>

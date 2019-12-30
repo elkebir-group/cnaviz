@@ -2,43 +2,72 @@ import _ from "lodash";
 import { GenomicBin } from "./GenomicBin";
 import { ChromosomeInterval } from "./ChromosomeInterval";
 
+/**
+ * Output of BinMerger -- an aggregation of GenomicBins that are adjacent in the genome.
+ */
 export interface MergedGenomicBin {
+    /** The genomic region that all the bins span. */
     location: ChromosomeInterval;
+
+    /** Average read depth ratio of all the bins. */
     averageRd: number;
+
+    /** Average B allele frequency of all the bins. */
     averageBaf: number;
+
+    /** The original data that comprises this aggregation. */
     bins: GenomicBin[];
 }
 
+/**
+ * Aggregator of GenomicBin.
+ * 
+ * @author Silas Hsu
+ */
 export class BinMerger {
-    // eslint-disable-next-line no-useless-constructor
-    constructor(public readonly rdThreshold=0.2, public readonly bafThreshold=0.05) {
+    private readonly _rdThreshold: number;
+    private readonly _bafThreshold: number;
 
+    /**
+     * Makes a new instance with parameters that represent the extent to which data points must be similar in order for
+     * them to be aggregated.
+     * 
+     * @param rdThreshold similarity threshold for read depth ratio
+     * @param bafThreshold similarity threshold for b allele frequency
+     */
+    constructor(rdThreshold=0.4, bafThreshold=0.1) {
+        this._rdThreshold = rdThreshold;
+        this._bafThreshold = bafThreshold;
+        this.doMerge = this.doMerge.bind(this);
     }
 
     /**
+     * Aggregates those bins that are similar enough, according to the configuration specified in the constructor.
+     * Only data points from the same chromosome will be considered for aggregation.  The input MUST be sorted by
+     * genomic coordinates.
      * 
-     * @param bins - bins sorted by genomic coordinate
-     * @param rdThreshold 
-     * @param bafThreshold 
+     * @param bins - data sorted by genomic coordinates
+     * @return list of aggregated data
      */
-    doMerge(bins: GenomicBin[]) {
+    doMerge(bins: GenomicBin[]): MergedGenomicBin[] {
         const merged: MergedGenomicBin[] = [];
         let i = 0;
         while (i < bins.length) {
             const firstBinOfMerge = bins[i];
-            const rd = firstBinOfMerge.RD;
-            const baf = firstBinOfMerge.BAF;
             const binsInCurrentMerge = [firstBinOfMerge];
+            // Keep track of the rd and baf ranges in the current merge
+            const rdMinMax = new MinMax(firstBinOfMerge.RD, firstBinOfMerge.RD);
+            const bafMinMax = new MinMax(firstBinOfMerge.BAF, firstBinOfMerge.BAF);
 
-            // Find the end of the current merge.  Everything has to be similar to the first bin of the merge.
+            // Find the end of the current merge.  The RD and BAF ranges cannot exceed the thresholds. 
             let j = i + 1;
             for (; j < bins.length; j++) {
                 const thisBin = bins[j];
-                const rdDiff = Math.abs(rd - thisBin.RD);
-                const bafDiff = Math.abs(baf - thisBin.BAF);
+                rdMinMax.update(thisBin.RD);
+                bafMinMax.update(thisBin.BAF);
                 if (firstBinOfMerge["#CHR"] === thisBin["#CHR"] &&
-                    rdDiff < this.rdThreshold &&
-                    bafDiff < this.bafThreshold
+                    rdMinMax.getRange() < this._rdThreshold &&
+                    bafMinMax.getRange() < this._bafThreshold
                 ) {
                     binsInCurrentMerge.push(thisBin); // Similar enough, add to merge
                 } else {
@@ -56,42 +85,43 @@ export class BinMerger {
         }
         return merged;
     }
+}
 
-    /*
-    doMergeMultiSample(samples: GenomicBin[][]): GenomicBin[][] {
-        if (samples.length === 0) {
-            return [];
-        }
+/**
+ * Simple tracker for the min and max of a list of values.
+ */
+class MinMax {
+    private _min: number;
+    private _max: number;
 
-        const mergedSamples = [];
-        const firstSample = samples[0];
-        const sampleIndices = new Array(samples.length).fill(0);
-
-        let i = 0;
-        while (i < firstSample.length) {
-            const firstBinOfMerge = firstSample[i];
-            const rd = firstBinOfMerge.RD;
-            const baf = firstBinOfMerge.BAF;
-            const binsInCurrentMerge = [firstBinOfMerge];
-
-            // Find the end of the current merge.  Everything has to be similar to the first bin of the merge.
-            let j = i + 1;
-            for (; j < firstSample.length; j++) {
-                const thisBin = firstSample[j];
-                const rdDiff = Math.abs(rd - thisBin.RD);
-                const bafDiff = Math.abs(baf - thisBin.BAF);
-                if (firstBinOfMerge["#CHR"] === thisBin["#CHR"] &&
-                    rdDiff < this.rdThreshold &&
-                    bafDiff < this.bafThreshold
-                ) {
-                    binsInCurrentMerge.push(thisBin); // Similar enough, add to merge
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return [];
+    /**
+     * Makes a new instance with initial min and max values.
+     * 
+     * @param min initial min value
+     * @param max initial max value
+     */
+    constructor(min: number, max: number) {
+        this._min = min;
+        this._max = max;
     }
-    */
+
+    /**
+     * @return the current range; max value - min value
+     */
+    getRange(): number {
+        return this._max - this._min;
+    }
+
+    /**
+     * Adds another number to this range of values, updating the max or min as necessary.
+     * 
+     * @param num the number to add
+     */
+    update(num: number) {
+        if (num > this._max) {
+            this._max = num;
+        } else if (num < this._min) {
+            this._min = num;
+        }
+    }
 }

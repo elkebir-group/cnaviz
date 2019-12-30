@@ -2,12 +2,12 @@ import React from "react";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { hg38 } from "../model/Genome";
-import { ChrIndexedBins } from "../model/BinIndex";
 import { LinearPlot } from "./LinearPlot";
+import { GenomicBin } from "../model/GenomicBin";
 
 interface Props {
-    data: ChrIndexedBins;
-    chr?: string;
+    data: GenomicBin[];
+    chr: string;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered?: (location: ChromosomeInterval | null) => void
 }

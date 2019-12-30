@@ -4,7 +4,6 @@ import _ from "lodash";
 import memoizeOne from "memoize-one";
 
 import { CopyNumberCurveDrawer } from "./CopyNumberCurveDrawer";
-import { ChrIndexedBins } from "../model/BinIndex";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
@@ -28,7 +27,7 @@ const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
-    data: ChrIndexedBins;
+    data: MergedGenomicBin[];
     rdRange: [number, number];
     hoveredLocation?: ChromosomeInterval;
     width: number;
@@ -150,9 +149,9 @@ export class Scatterplot extends React.Component<Props> {
         if (!hoveredLocation) {
             return null;
         }
-        const records = data.findOverlappingRecords(hoveredLocation);
-        if (records.length === 1) {
-            const record = records[0];
+        const hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation));
+        if (hoveredRecords.length === 1) {
+            const record = hoveredRecords[0];
             return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
                 <p>
                     <b>{record.location.toString()}</b><br/>
@@ -162,15 +161,15 @@ export class Scatterplot extends React.Component<Props> {
                 <div>Average BAF: {record.averageBaf.toFixed(2)}</div>
                 <div>Cluster ID:{record.bins[0].CLUSTER}</div>
             </React.Fragment>);
-        } else if (records.length > 1) {
-            const minBaf = _.minBy(records, "averageBaf")!.averageBaf;
-            const maxBaf = _.maxBy(records, "averageBaf")!.averageBaf;
-            const meanBaf = _.meanBy(records, "averageBaf");
-            const minRd = _.minBy(records, "averageRd")!.averageRd;
-            const maxRd = _.maxBy(records, "averageRd")!.averageRd;
-            const meanRd = _.meanBy(records, "averageRd");
+        } else if (hoveredRecords.length > 1) {
+            const minBaf = _.minBy(hoveredRecords, "averageBaf")!.averageBaf;
+            const maxBaf = _.maxBy(hoveredRecords, "averageBaf")!.averageBaf;
+            const meanBaf = _.meanBy(hoveredRecords, "averageBaf");
+            const minRd = _.minBy(hoveredRecords, "averageRd")!.averageRd;
+            const maxRd = _.maxBy(hoveredRecords, "averageRd")!.averageRd;
+            const meanRd = _.meanBy(hoveredRecords, "averageRd");
             return this.renderTooltipAtRdBaf(maxRd, maxBaf, <React.Fragment>
-                <p><b>{records.length} corresponding regions</b></p>
+                <p><b>{hoveredRecords.length} corresponding regions</b></p>
                 <div>Average RDR: {meanRd.toFixed(2)}</div>
                 <div>Average BAF: {meanBaf.toFixed(2)}</div>
                 <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
@@ -237,9 +236,7 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
 
-        const data = this.props.data.getMergedRecords();
-        const onRecordsHovered = this.props.onRecordsHovered;
-        const {width, height} = this.props;
+        const {data, width, height, onRecordsHovered} = this.props;
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(d3.schemeDark2);
 
@@ -294,9 +291,9 @@ export class Scatterplot extends React.Component<Props> {
         if (!this._svg || !hoveredLocation) {
             return [];
         }
-        const records = this.props.data.findOverlappingRecords(hoveredLocation);
+        const hoveredRecords = this.props.data.filter(record => record.location.hasOverlap(hoveredLocation));
         const results: Element[] = [];
-        for (const record of records) {
+        for (const record of hoveredRecords) {
             const id = this._circleIdPrefix + record.location.toString();
             const element = this._svg.getElementById(id);
             if (element) {

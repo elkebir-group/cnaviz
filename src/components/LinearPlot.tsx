@@ -3,7 +3,6 @@ import * as d3 from "d3";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 
-import { ChrIndexedBins } from "../model/BinIndex";
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
@@ -27,8 +26,8 @@ function findChrNumber(chr: string) {
 }
 
 interface Props {
-    data: ChrIndexedBins;
-    chr?: string;
+    data: GenomicBin[];
+    chr: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "BAF">;
     width: number;
     height: number;
@@ -77,9 +76,9 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     getXScale(width: number, genome: Genome, chr?: string) {
         let domain = [0, 0];
-        if (!chr) {
+        if (!chr) { // No chromosome specified: X domain is entire genome
             domain[1] = genome.getLength();
-        } else {
+        } else { // Chromosome specified: X domain is length of one chromosome
             domain[0] = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, 1)).start;
             domain[1] = domain[0] + genome.getLength(chr);
         }
@@ -92,8 +91,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._svg) {
             return;
         }
-        const data = this.props.data.getRecords();
-        const {width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, color} = this.props;
+        const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, color} = this.props;
 
         const xScale = this.getXScale(width, genome, chr);
         const yScale = d3.scaleLinear()

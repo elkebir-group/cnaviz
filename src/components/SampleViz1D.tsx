@@ -1,6 +1,6 @@
 import React from "react";
 import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
-import { SampleIndexedBins } from "../model/BinIndex";
+import { DataWarehouse } from "../model/DataWarehouse";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { hg38 } from "../model/Genome";
 import { DivWithBullseye } from "./DivWithBullseye";
@@ -9,8 +9,8 @@ import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 import "./SampleViz.css";
 
 interface Props {
-    indexedData: SampleIndexedBins;
-    chr?: string;
+    data: DataWarehouse;
+    chr: string;
     hoveredLocation?: ChromosomeInterval;
     initialSelectedSample?: string;
     onLocationHovered?: (location: ChromosomeInterval | null) => void;
@@ -30,7 +30,7 @@ export class SampleViz1D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || props.indexedData.getSamples()[0],
+            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
             displayMode: DisplayMode.linear
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
@@ -41,37 +41,32 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {indexedData, chr, hoveredLocation, onLocationHovered} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered} = this.props;
         const selectedSample = this.state.selectedSample;
-        const sampleOptions = indexedData.getSamples().map(sampleName =>
+        const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        let selectedData = indexedData.getDataForSample(selectedSample);
-        if (chr) {
-            selectedData = selectedData.makeCopyWithJustChr(chr);
-        }
-
-        const rdRange: [number, number] = [indexedData.rdRange[0], indexedData.rdRange[1]];
+        const selectedRecords = data.getRecords(selectedSample, chr);
         let visualization: React.ReactNode = null;
         if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot
-                    data={selectedData}
+                    data={selectedRecords}
                     chr={chr}
-                    rdRange={indexedData.rdRange}
+                    rdRange={data.getRdRange()}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} />
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
-                    data={selectedData}
+                    data={selectedRecords}
                     chr={chr}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} />
             </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {
             visualization = <RdrBafCircosPlot
-                data={selectedData}
-                rdRange={rdRange}
+                data={selectedRecords}
+                rdRange={data.getRdRange()}
                 hoveredLocation={hoveredLocation}
                 onLocationHovered={onLocationHovered}
                 genome={hg38}
