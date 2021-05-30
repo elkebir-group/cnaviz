@@ -125,6 +125,7 @@ export class App extends React.Component<{}, State> {
         let indexedData = null;
         try {
             const parsed = await parseGenomicBins(contents);
+            console.log("Parsing")
             indexedData = new DataWarehouse(parsed);
         } catch (error) {
             console.error(error);
@@ -208,17 +209,17 @@ export class App extends React.Component<{}, State> {
                     <div className="col-md-4">
                         {
                         samples.length > 0 && <div className="row">
-                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} initialSelectedCluster={""} />
                         </div>
                         }
                         {
                         samples.length > 1 && <div className="row">
-                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} />
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} initialSelectedCluster={""}/>
                         </div>
                         }
                     </div>
                     <div className="col">
-                        <SampleViz1D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} />
+                        <SampleViz1D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} initialSelectedCluster={""}/>
                     </div>
                 </div>
             </div>;

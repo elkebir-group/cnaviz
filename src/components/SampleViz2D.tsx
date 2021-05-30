@@ -15,6 +15,7 @@ interface Props {
     data: DataWarehouse;
     chr: string;
     initialSelectedSample?: string;
+    initialSelectedCluster?: string;
     width?: number;
     height?: number;
     curveState: CurveState;
@@ -24,6 +25,7 @@ interface Props {
 }
 interface State {
     selectedSample: string;
+    selectedCluster: string;
 }
 
 export class SampleViz2D extends React.Component<Props, State> {
@@ -35,14 +37,20 @@ export class SampleViz2D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0]
+            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
+            selectedCluster: props.initialSelectedCluster || ""
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
+        this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedSample: event.target.value});
+    }
+
+    handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.setState({selectedCluster: event.target.value});
     }
 
     handleRecordsHovered(record: MergedGenomicBin | null) {
@@ -56,6 +64,13 @@ export class SampleViz2D extends React.Component<Props, State> {
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
+        
+        const selectedCluster = this.state.selectedCluster;
+        const clusterOptions = data.getAllClusters().map((clusterName : string) =>
+            <option key={clusterName} value={clusterName}>{clusterName}</option>
+        );
+        clusterOptions.push(<option key="" value="">ALL</option>);
+
         const rdRange = data.getRdRange();
         rdRange[1] += 1; // Add one so it's prettier
 
@@ -65,9 +80,16 @@ export class SampleViz2D extends React.Component<Props, State> {
                     {sampleOptions}
                 </select>
             </div>
+            <div className="Cluster-select">
+                Select cluster: <select value={selectedCluster} 
+                                        onChange={this.handleSelectedClusterChanged} 
+                                        >
+                            {clusterOptions}
+                </select>
+            </div>
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
-                    data={data.getMergedRecords(selectedSample, chr)}
+                    data={data.getMergedRecords(selectedSample, chr, selectedCluster)}
                     rdRange={rdRange}
                     width={width}
                     height={height}

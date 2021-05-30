@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { GenomicBin } from "./GenomicBin";
 import { MergedGenomicBin, BinMerger } from "./BinMerger";
+import { group } from "d3-array";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is chromosome in that sample.
@@ -8,9 +9,16 @@ import { MergedGenomicBin, BinMerger } from "./BinMerger";
  * @typeParam T type of value stored
  */
 type IndexedBioData<T> = {
+    // [sample: string]: {
+    //     [chr: string]: T
+    // }
+
     [sample: string]: {
-        [chr: string]: T
+        [cluster: string] : {
+            [chr: string]: T
+        }
     }
+    
 };
 
 /**
@@ -22,7 +30,8 @@ type IndexedBioData<T> = {
  */
 export class DataWarehouse {
     /** The special chromosome name that signifies a query for the entire genome (all chromosomes). */
-    public static readonly ALL_CHRS_KEY = ""; 
+    public static readonly ALL_CHRS_KEY : string = ""; 
+    public static readonly ALL_CLUSTERS_KEY : string = "";
 
     /** Indexed GenomicBin for supporting fast queries. */
     private readonly _indexedData: IndexedBioData<GenomicBin[]>;
@@ -47,28 +56,52 @@ export class DataWarehouse {
         this._indexedData = {};
         this._indexedMergedData = {};
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
-            const groupedByChr = _.groupBy(binsForSample, "#CHR");
-            if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
-                throw new Error(`Data contains reserved chromosome name '${DataWarehouse.ALL_CHRS_KEY}'.` +
+            const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
+            const sampleGroupedByChr = _.groupBy(binsForSample, "#CHR");
+
+            if (DataWarehouse.ALL_CLUSTERS_KEY in  groupedByCluster) {
+                throw new Error(`Data contains reserved cluster name '${DataWarehouse.ALL_CLUSTERS_KEY}'.` +
                     "Please remove or rename this chromosome from the data and try again.");
             }
 
-            this._indexedData[sample] = groupedByChr;
-            this._indexedMergedData[sample] = _.mapValues(groupedByChr, merger.doMerge);
-            // Aggregate all the data in this sample under the special key of DataWarehouse.ALL_CHRS_KEY
-            this._indexedData[sample][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
-            this._indexedMergedData[sample][DataWarehouse.ALL_CHRS_KEY] = _.flatten(
-                Object.values(this._indexedMergedData[sample])
+            let clusterChrDict : {[cl : string] : {[chr : string] : GenomicBin[]}} = {};
+            let mergedClusterChrDict : {[cl : string] : {[chr : string] : MergedGenomicBin[]}} = {};
+            for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
+                const groupedByChr = _.groupBy(binsForCluster, "#CHR");
+                
+                if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
+                    throw new Error(`Data contains reserved chromosome name '${DataWarehouse.ALL_CHRS_KEY}'.` +
+                        "Please remove or rename this chromosome from the data and try again.");
+                }
+
+                clusterChrDict[cluster] = groupedByChr;
+                mergedClusterChrDict[cluster] = _.mapValues(groupedByChr, merger.doMerge);
+                clusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
+                mergedClusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(mergedClusterChrDict[cluster]));
+            }
+
+            this._indexedData[sample] = clusterChrDict;
+            this._indexedMergedData[sample] = mergedClusterChrDict;
+            
+            console.log("GROUPED BY CHR: ", sampleGroupedByChr);
+            this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = sampleGroupedByChr;
+            this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = _.mapValues(sampleGroupedByChr, merger.doMerge);
+            this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(sampleGroupedByChr));
+                this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(
+                Object.values(this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY])
             );
         }
+
+        console.log("INDEXED DATA: ", this._indexedData);
 
         if (rawData.length > 0) {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         } else {
             this._rdRange = [0, 0];
         }
-
+        console.log(this._indexedData)
         this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
+        this.getClusterList = this.getClusterList.bind(this); // Needed for getAllChromosomes() to work
     }
 
     /**
@@ -102,6 +135,15 @@ export class DataWarehouse {
         return _.uniq(this.getSampleList().flatMap(this.getChromosomeList));
     }
 
+    getAllClusters(): string[] {
+        return _.uniq(this.getSampleList().flatMap(this.getClusterList));
+    }
+
+    getClusterList(sample: string): string[] {
+        const nameList = Object.keys(this._indexedData[sample] || {});
+        return nameList.filter(name => name !== DataWarehouse.ALL_CLUSTERS_KEY); // Remove the special ALL_CHRS_KEY
+    }
+
     /**
      * Gets a list of chromosome names found in one sample.  If the sample is not in this data set, returns an empty
      * list.
@@ -110,7 +152,7 @@ export class DataWarehouse {
      * @return a list of chromosome names represented in the query sample
      */
     getChromosomeList(sample: string): string[] {
-        const nameList = Object.keys(this._indexedData[sample] || {});
+        const nameList = Object.keys(this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] || {});
         return nameList.filter(name => name !== DataWarehouse.ALL_CHRS_KEY); // Remove the special ALL_CHRS_KEY
     }
 
@@ -125,7 +167,7 @@ export class DataWarehouse {
             return 0;
         }
         const firstSample = this.getSampleList()[0];
-        const firstRecord = this.getRecords(firstSample, DataWarehouse.ALL_CHRS_KEY)[0];
+        const firstRecord = this.getRecords(firstSample, DataWarehouse.ALL_CHRS_KEY, DataWarehouse.ALL_CLUSTERS_KEY)[0];
         return firstRecord.END - firstRecord.START;
     }
 
@@ -138,8 +180,8 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getRecords(sample: string, chr: string): GenomicBin[] {
-        return this._getData(this._indexedData, sample, chr);
+    getRecords(sample: string, chr: string, cluster: string): GenomicBin[] {
+        return this._getData(this._indexedData, sample, chr, cluster);
     }
 
     /**
@@ -151,8 +193,8 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getMergedRecords(sample: string, chr: string): MergedGenomicBin[] {
-        return this._getData(this._indexedMergedData, sample, chr);
+    getMergedRecords(sample: string, chr: string, cluster: string): MergedGenomicBin[] {
+        return this._getData(this._indexedMergedData, sample, chr, cluster);
     }
 
     /**
@@ -164,8 +206,8 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    private _getData<T>(index: IndexedBioData<T[]>, sample: string, chr: string): T[] {
-        const dataForSample = index[sample] || {};
+    private _getData<T>(index: IndexedBioData<T[]>, sample: string, chr: string, cluster: string): T[] {
+        const dataForSample = index[sample][cluster] || {};
         return dataForSample[chr] || [];
     }
 }

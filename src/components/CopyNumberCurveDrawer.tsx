@@ -63,8 +63,8 @@ export class CopyNumberCurveDrawer extends React.Component<Props, State> {
     getXY(rd: number, baf: number): Coordinate {
         const {rdScale, bafScale} = this.props;
         return {
-            x: rdScale(rd),
-            y: bafScale(baf)
+            x: (rdScale(rd) || 0),
+            y: bafScale(baf) || 0
         };
     }
 

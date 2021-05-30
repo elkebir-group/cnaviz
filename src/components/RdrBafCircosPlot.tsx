@@ -9,7 +9,8 @@ import { OpenInterval } from "../model/OpenInterval";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { sampleWithEqualSpacing, niceBpCount } from "../util";
 
-const INNER_RADIUS = 300;
+const INNER_RADIUS = 200;
+const OUTER_RADIUS = 215;
 const MAX_RECORDS = 7500;
 
 // How many bases are selected when the user hovers over the circos, in the event there are no records on display.
@@ -19,7 +20,7 @@ const BAF_COLOR = "red";
 
 const CONFIG: Circos.LayoutConfig = {
     innerRadius: INNER_RADIUS,
-    outerRadius: 315,
+    outerRadius: OUTER_RADIUS,
     labels: {
         radialOffset: 2,
         size: 10,
@@ -42,8 +43,8 @@ const CONFIG: Circos.LayoutConfig = {
     },
 };
 const CONFIG_NO_DISPLAY: Circos.LayoutConfig = {
-    innerRadius: 300,
-    outerRadius: 315,
+    innerRadius: INNER_RADIUS,
+    outerRadius: OUTER_RADIUS,
     labels: {
         display: false
     },

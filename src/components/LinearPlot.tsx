@@ -146,6 +146,10 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._canvas) {
             return;
         }
+
+        this._canvas.width = 800;
+        this._canvas.height = 200;
+
         applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
@@ -155,7 +159,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             const range = genome.getImplicitCoordinates(location);
             const x = xScale(range.getCenter());
             const y = yScale(d[dataKeyToPlot]);
-            ctx.fillRect(x, y - 1, 2, 3);
+            ctx.fillRect(x || 0, y || 0 - 1, 2, 3);
         }
     }
 
@@ -168,7 +172,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const xScale = this.getXScale(width, genome, chr);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
-        const boxWidth = Math.ceil(xScale(implicitCoords.end) - start);
+        const boxWidth = Math.ceil(xScale(implicitCoords.end) || 0 - (start || 0));
         return <div style={{
             position: "absolute",
             left: start,

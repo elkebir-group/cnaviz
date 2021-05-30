@@ -111,8 +111,8 @@ export class Scatterplot extends React.Component<Props> {
             className="Scatterplot-tooltip"
             style={{
                 position: "absolute",
-                top: bafScale(baf) + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
-                left: rdrScale(rd) + TOOLTIP_OFFSET
+                top: bafScale(baf) || 0 + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
+                left: rdrScale(rd) || 0 + TOOLTIP_OFFSET
             }}
         >
             {contents}
@@ -278,8 +278,8 @@ export class Scatterplot extends React.Component<Props> {
                 .enter()
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
-                    .attr("cx", d => rdrScale(d.averageRd))
-                    .attr("cy", d => bafScale(d.averageBaf)) // Alternatively, this could be 0.5 - baf
+                    .attr("cx", d => rdrScale(d.averageRd) || 0)
+                    .attr("cy", d => bafScale(d.averageBaf) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
                     .attr("fill", d => colorScale(String(d.bins[0].CLUSTER)))
                     .attr("fill-opacity", 0.8)
