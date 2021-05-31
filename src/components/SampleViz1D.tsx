@@ -94,8 +94,12 @@ export class SampleViz1D extends React.Component<Props, State> {
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
-                {this.renderDisplayModeRadioOption(DisplayMode.linear)}
-                {this.renderDisplayModeRadioOption(DisplayMode.circos)}
+                <div className="row">
+                    {this.renderDisplayModeRadioOption(DisplayMode.linear)}
+                    {this.renderDisplayModeRadioOption(DisplayMode.circos)}
+                </div>
+                
+                
             </div>
             <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
@@ -110,19 +114,23 @@ export class SampleViz1D extends React.Component<Props, State> {
 
     renderDisplayModeRadioOption(mode: DisplayMode) {
         let label: string;
+        let padding: string;
         switch (mode) {
             case DisplayMode.linear:
                 label = "Linear";
+                padding= "15px"
                 break;
             case DisplayMode.circos:
                 label = "Circos";
+                padding = "10px";
                 break;
             default:
                 label = "???";
+                padding= "0px"
         }
 
-        return <div>
-            <div style={{display: "inline-block"}} onClick={() => this.setState({displayMode: mode})}>
+        return <div className="row">
+            <div className="col" style={{marginLeft: padding, display: "inline-block"}} onClick={() => this.setState({displayMode: mode})}>
                 {label} <input type="radio" checked={this.state.displayMode === mode} readOnly/>
             </div>
         </div>;

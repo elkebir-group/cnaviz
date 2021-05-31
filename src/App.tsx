@@ -1,6 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
-import _ from "lodash";
+import _, { sample } from "lodash";
 
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
@@ -11,7 +11,6 @@ import { SampleViz2D } from "./components/SampleViz2D";
 import { SampleViz1D } from "./components/SampleViz1D";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
-
 import spinner from "./loading-small.gif";
 import "./App.css";
 
@@ -82,6 +81,10 @@ interface State {
 
     /**  */
     curveState: CurveState;
+
+    invertAxis: boolean;
+
+    sampleAmount: number;
 }
 
 /**
@@ -97,12 +100,16 @@ export class App extends React.Component<{}, State> {
             indexedData: new DataWarehouse([]),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
-            curveState: INITIAL_CURVE_STATE
+            curveState: INITIAL_CURVE_STATE,
+            invertAxis: false,
+            sampleAmount: 3
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleNewCurveState = _.throttle(this.handleNewCurveState.bind(this), 20);
+        this.handleAxisInvert = this.handleAxisInvert.bind(this);
+        this.handleAddSampleClick = this.handleAddSampleClick.bind(this);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -152,6 +159,14 @@ export class App extends React.Component<{}, State> {
         this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
     }
 
+    handleAxisInvert() {
+        this.setState({invertAxis: !this.state.invertAxis});
+    }
+
+    handleAddSampleClick() {
+        this.setState({sampleAmount: this.state.sampleAmount + 1})
+    }
+
     handleNewCurveState(newState: Partial<CurveState>) {
         this.setState(prevState => {
             const nextCurveState = {
@@ -183,7 +198,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, hoveredLocation, curveState} = this.state;
+        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -192,11 +207,14 @@ export class App extends React.Component<{}, State> {
                 hoveredLocation: hoveredLocation || undefined,
                 curveState,
                 onNewCurveState: this.handleNewCurveState,
-                onLocationHovered: this.handleLocationHovered
+                onLocationHovered: this.handleLocationHovered,
+                invertAxis,
+                chr: selectedChr
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
+            
             mainUI = <div>
                 <div className="App-global-controls">
                     Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected}>
@@ -204,37 +222,16 @@ export class App extends React.Component<{}, State> {
                     </select>
                     <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
                     <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
+                    <button onClick={this.handleAxisInvert}> Invert Axes </button>
+                    <button onClick={this.handleAddSampleClick}> Add Sample </button>
                 </div>
                 <div className="col">
                     <div className="row">
-                        {
-                        samples.length > 0 && <div className="col">
-                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} initialSelectedCluster={""} />
-                        </div>
-                        }
-                        {
-                        samples.length > 1 && <div className="col">
-                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} initialSelectedCluster={""}/>
-                        </div>
-                        }
-                        {
-                        samples.length > 2 && <div className="col">
-                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[2]} initialSelectedCluster={""}/>
-                        </div>
-                        }
+                        {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D key={i} {...scatterplotProps} /> </div>)}
                     </div>
                     <div className="row">
-                        {
-                            samples.length > 2 && <div className="col">
-                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[2]} initialSelectedCluster={""}/>
-                            </div>
-                        }
-                        <div className="col">
-                        <SampleViz1D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} initialSelectedCluster={""}/>
-                        </div>
-                        
+                        <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div> 
                     </div>
-                    
                 </div>
             </div>;
         }

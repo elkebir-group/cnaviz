@@ -22,30 +22,30 @@ interface Props {
     onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null) => void;
+    invertAxis?: boolean;
 }
+
 interface State {
     selectedSample: string;
     selectedCluster: string;
-    invertAxis: boolean;
 }
 
 export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
         onNewCurveState: _.noop,
-        onLocationHovered: _.noop
+        onLocationHovered: _.noop,
+        invertAxis: false
     };
 
     constructor(props: Props) {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            selectedCluster: props.initialSelectedCluster || "",
-            invertAxis: false
+            selectedCluster: props.initialSelectedCluster || ""
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
-        this.handleAxisInvert = this.handleAxisInvert.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -56,18 +56,13 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.setState({selectedCluster: event.target.value});
     }
 
-    handleAxisInvert() {
-        this.setState({invertAxis: !this.state.invertAxis});
-        //console.log(this.state.axisChange)
-    }
-
     handleRecordsHovered(record: MergedGenomicBin | null) {
         const location = record ? record.location : null;
         this.props.onLocationHovered(location);
     }
 
     render() {
-        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation} = this.props;
+        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -87,9 +82,6 @@ export class SampleViz2D extends React.Component<Props, State> {
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.handleAxisInvert} style={{marginLeft: 20}}>
-                        Invert Axes
-                </button> 
             </div>
             <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
@@ -108,7 +100,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onNewCurveState={onNewCurveState}
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered}
-                    invertAxis= {this.state.invertAxis} />
+                    invertAxis= {invertAxis || false} />
             </DivWithBullseye>
         </div>;
     }
