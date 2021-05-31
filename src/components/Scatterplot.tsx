@@ -57,6 +57,7 @@ interface Props {
     invertAxis: boolean;
     onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
+    customColor: string;
 }
 
 interface State {
@@ -250,7 +251,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis"])) {
+        if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis", "customColor"])) {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -277,7 +278,7 @@ export class Scatterplot extends React.Component<Props, State> {
             return;
         }
 
-        const {data, width, height, onRecordsHovered, curveState} = this.props;
+        const {data, width, height, onRecordsHovered, curveState, customColor} = this.props;
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
         const svg = d3.select(this._svg);
@@ -340,6 +341,22 @@ export class Scatterplot extends React.Component<Props, State> {
         // Circles: remove any previous
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
 
+        let highlight = function (m : MergedGenomicBin) {
+            let selected_cluster = String(m.bins[0].CLUSTER);
+
+            d3.selectAll(".test" + selected_cluster)
+                .transition()
+                .duration(400)
+                .style("fill", customColor)
+
+            let col = colorScale(selected_cluster);
+            for (let i = 0; i < CLUSTER_COLORS.length; i++) {
+                if (CLUSTER_COLORS[i] == col) {
+                    CLUSTER_COLORS[i] = customColor
+                }
+            }
+        }
+
         // Add circles
         svg.append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
@@ -348,6 +365,8 @@ export class Scatterplot extends React.Component<Props, State> {
                 .enter()
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
+                    .attr("class", function(d : MergedGenomicBin) : string {
+                        return "dot " + "test" + String(d.bins[0].CLUSTER);})
                     .attr("cx", d => xScale(rdOrBaf(d, this.props.invertAxis, true)) || 0)
                     .attr("cy", d => yScale(rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
@@ -355,6 +374,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("fill-opacity", 0.8)
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
+                    .on("click", highlight);
         
         /**
          * Based on which values are on the x/y axes and which axis the caller is requesting, 
@@ -385,11 +405,10 @@ export class Scatterplot extends React.Component<Props, State> {
                             const id = circleId + node.location.toString();
                             const element = plot.getElementById(id);
                             if (element) {
-                                element.setAttribute("fill", "red");      
+                                element.setAttribute("fill", customColor);      
                             }
                         }
-                    }
-                    
+                    }  
                 } catch (error) {
                     console.log(error);
                 }

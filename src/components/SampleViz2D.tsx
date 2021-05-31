@@ -23,6 +23,7 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null) => void;
     invertAxis?: boolean;
+    customColor: string;
 }
 
 interface State {
@@ -62,7 +63,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis} = this.props;
+        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis, customColor} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -100,7 +101,8 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onNewCurveState={onNewCurveState}
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered}
-                    invertAxis= {invertAxis || false} />
+                    invertAxis= {invertAxis || false} 
+                    customColor= {customColor}/>
             </DivWithBullseye>
         </div>;
     }

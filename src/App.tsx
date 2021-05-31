@@ -12,7 +12,9 @@ import { SampleViz1D } from "./components/SampleViz1D";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
 import spinner from "./loading-small.gif";
+import {HuePicker, SliderPicker} from "react-color";
 import "./App.css";
+import { cpuUsage } from "process";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -85,6 +87,8 @@ interface State {
     invertAxis: boolean;
 
     sampleAmount: number;
+
+    color: string;
 }
 
 /**
@@ -102,7 +106,8 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
-            sampleAmount: 3
+            sampleAmount: 3,
+            color: '#fff'
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -110,6 +115,7 @@ export class App extends React.Component<{}, State> {
         this.handleNewCurveState = _.throttle(this.handleNewCurveState.bind(this), 20);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
         this.handleAddSampleClick = this.handleAddSampleClick.bind(this);
+        this.handleColorChange = this.handleColorChange.bind(this);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -167,6 +173,11 @@ export class App extends React.Component<{}, State> {
         this.setState({sampleAmount: this.state.sampleAmount + 1})
     }
 
+    handleColorChange(color : any) {
+        this.setState({color: color.hex}) 
+        console.log(this.state.color);
+    }
+
     handleNewCurveState(newState: Partial<CurveState>) {
         this.setState(prevState => {
             const nextCurveState = {
@@ -198,7 +209,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount} = this.state;
+        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color} = this.state;
         const samples = indexedData.getSampleList();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -209,21 +220,31 @@ export class App extends React.Component<{}, State> {
                 onNewCurveState: this.handleNewCurveState,
                 onLocationHovered: this.handleLocationHovered,
                 invertAxis,
-                chr: selectedChr
+                chr: selectedChr,
+                customColor: color
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
             
             mainUI = <div>
-                <div className="App-global-controls">
-                    Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected}>
-                        {chrOptions}
-                    </select>
-                    <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
-                    <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
-                    <button onClick={this.handleAxisInvert}> Invert Axes </button>
-                    <button onClick={this.handleAddSampleClick}> Add Sample </button>
+                <div className="App-global-controls" style={{marginLeft: 30}}>
+                        Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected} style={{marginLeft: 10}}>
+                            {chrOptions}
+                        </select>
+                        <div className="row">
+                            <div className="col">
+                                <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
+                            </div>
+                        </div>
+                        <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
+                        <button onClick={this.handleAxisInvert}> Invert Axes </button>
+                        <button onClick={this.handleAddSampleClick}> Add Sample </button>
+                </div>
+                <div className="row">
+                    <div className="col" style={{paddingTop: 25, marginLeft: 30}}>
+                        <HuePicker color={color} onChange={this.handleColorChange}/>
+                    </div>
                 </div>
                 <div className="col">
                     <div className="row">
