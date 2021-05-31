@@ -11,6 +11,11 @@
 # production
 /build
 
+# Data
+data/bulk.bbc
+data/demo-wgs-cancer.bb
+data/demo-wgs-sim.bb
+
 # misc
 .DS_Store
 .env.local

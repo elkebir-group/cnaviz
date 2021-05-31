@@ -13,6 +13,7 @@ import { niceBpCount, getRelativeCoordinates } from "../util";
 
 import "./Scatterplot.css";
 import { cluster } from "d3";
+const visutils = require('vis-utils');
 
 const PADDING = { // For the SVG
     left: 60,
@@ -58,7 +59,11 @@ interface Props {
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
 }
 
-export class Scatterplot extends React.Component<Props> {
+interface State {
+    brushedNodes: MergedGenomicBin[]
+}
+
+export class Scatterplot extends React.Component<Props, State> {
     static defaultProps = {
         width: 400,
         height: 350,
@@ -80,6 +85,9 @@ export class Scatterplot extends React.Component<Props> {
         this.handleClick = this.handleClick.bind(this);
         this.handleCurveHovered = this.handleCurveHovered.bind(this);
         this._clusters = this.initializeListOfClusters();
+        this.state = {
+            brushedNodes: []
+        }
     }
 
     initializeListOfClusters() : string[] {
@@ -99,7 +107,7 @@ export class Scatterplot extends React.Component<Props> {
                 rd: invertAxis ? rdrScale.invert(x) : rdrScale.invert(y),
                 baf: invertAxis ? bafScale.invert(y) : bafScale.invert(x)
             };
-            console.log("Hovered RD BAF: ", hoveredRdBaf);
+            
             if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
                 onNewCurveState({normalLocation: hoveredRdBaf});
                 return;
@@ -133,8 +141,7 @@ export class Scatterplot extends React.Component<Props> {
         if (!contents) {
             return null;
         }
-        console.log("RD: ", rd);
-        console.log("BAF: ", baf);
+
         const {rdRange, width, height, invertAxis} = this.props;
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         const top = invertAxis ? bafScale(baf) : rdrScale(rd);
@@ -270,7 +277,7 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
 
-        const {data, width, height, onRecordsHovered} = this.props;
+        const {data, width, height, onRecordsHovered, curveState} = this.props;
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
         const svg = d3.select(this._svg);
@@ -281,6 +288,23 @@ export class Scatterplot extends React.Component<Props> {
         let yLabel = "Read Depth Ratio";
         if (this.props.invertAxis) {
             [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "Read Depth Ratio", "B-Allele Frequency"];
+        }
+
+        // Remove previous brush
+        svg.selectAll("." + "brush").remove();
+
+        let brushNodes = this.state.brushedNodes;
+        if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
+            // Create brush and limit it to the scatterplot region
+            const brush = d3.brush()
+            .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
+                    [width - PADDING.right + 2*CIRCLE_R , height - PADDING.bottom + 2*CIRCLE_R]])
+                    .on("brush end", updatePoints);
+
+            // attach the brush to the chart
+            const gBrush = svg.append('g')
+            .attr('class', 'brush')
+            .call(brush);
         }
         
         // Remove any previous scales
@@ -345,6 +369,30 @@ export class Scatterplot extends React.Component<Props> {
                 return (invert) ? m.averageRd : m.averageBaf;
             } else {  
                 return (invert) ?  m.averageBaf :  m.averageRd;
+            }
+        }
+
+        const circleId = this._circleIdPrefix;
+        const plot = this._svg;
+        const invert = this.props.invertAxis;
+        function updatePoints() {
+            if (data) {
+                try {
+                    const { selection } = d3.event;
+                    brushNodes = visutils.filterInRect(data, selection, (d : MergedGenomicBin) => xScale(rdOrBaf(d, invert, true)), (d : MergedGenomicBin)  => yScale(rdOrBaf(d, invert, false)));
+                    if (brushNodes) {
+                        for (const node of brushNodes) {
+                            const id = circleId + node.location.toString();
+                            const element = plot.getElementById(id);
+                            if (element) {
+                                element.setAttribute("fill", "red");      
+                            }
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.log(error);
+                }
             }
         }
     }
