@@ -4,21 +4,16 @@ import { MergedGenomicBin, BinMerger } from "./BinMerger";
 import { group } from "d3-array";
 
 /**
- * Nested dictionary type.  First level key is the sample name; second level key is chromosome in that sample.
+ * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
  * 
  * @typeParam T type of value stored
  */
 type IndexedBioData<T> = {
-    // [sample: string]: {
-    //     [chr: string]: T
-    // }
-
     [sample: string]: {
         [cluster: string] : {
             [chr: string]: T
         }
-    }
-    
+    } 
 };
 
 /**
@@ -82,8 +77,6 @@ export class DataWarehouse {
 
             this._indexedData[sample] = clusterChrDict;
             this._indexedMergedData[sample] = mergedClusterChrDict;
-            
-            console.log("GROUPED BY CHR: ", sampleGroupedByChr);
             this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = sampleGroupedByChr;
             this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = _.mapValues(sampleGroupedByChr, merger.doMerge);
             this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(sampleGroupedByChr));

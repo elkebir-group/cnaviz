@@ -12,6 +12,7 @@ import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberSta
 import { niceBpCount, getRelativeCoordinates } from "../util";
 
 import "./Scatterplot.css";
+import { cluster } from "d3";
 
 const PADDING = { // For the SVG
     left: 60,
@@ -19,6 +20,25 @@ const PADDING = { // For the SVG
     top: 20,
     bottom: 60,
 };
+
+const CLUSTER_COLORS = [
+    "#1b9e77", 
+    "#d95f02", 
+    "#7570b3", 
+    "#e7298a", 
+    "#66a61e", 
+    "#e6ab02", 
+    "#a6761d", 
+    "#666666", 
+    "#fe6794", 
+    "#10b0ff", 
+    "#ac7bff", 
+    "#964c63", 
+    "#cfe589", 
+    "#fdb082", 
+    "#28c2b5"
+];
+
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASS_NAME = "circles";
 const CIRCLE_R = 1;
@@ -48,6 +68,8 @@ export class Scatterplot extends React.Component<Props> {
 
     private _svg: SVGSVGElement | null;
     private _circleIdPrefix: number;
+    private _clusters : string[];
+
     constructor(props: Props) {
         super(props);
         this._svg = null;
@@ -57,10 +79,16 @@ export class Scatterplot extends React.Component<Props> {
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleCurveHovered = this.handleCurveHovered.bind(this);
+        this._clusters = this.initializeListOfClusters();
+    }
+
+    initializeListOfClusters() : string[] {
+        let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+        return [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare);  
     }
 
     handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
-        const {rdRange, width, height, curveState, onNewCurveState} = this.props;
+        const {rdRange, width, height, curveState, onNewCurveState, invertAxis} = this.props;
         if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation ||
             curveState.pickStatus === CurvePickStatus.pickingState1 ||
             curveState.pickStatus === CurvePickStatus.pickingState2)
@@ -68,10 +96,10 @@ export class Scatterplot extends React.Component<Props> {
             const {x, y} = getRelativeCoordinates(event);
             const {rdrScale, bafScale} = this.computeScales(rdRange, width, height);
             const hoveredRdBaf = {
-                rd: rdrScale.invert(x),
-                baf: bafScale.invert(y)
+                rd: invertAxis ? rdrScale.invert(x) : rdrScale.invert(y),
+                baf: invertAxis ? bafScale.invert(y) : bafScale.invert(x)
             };
-
+            console.log("Hovered RD BAF: ", hoveredRdBaf);
             if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
                 onNewCurveState({normalLocation: hoveredRdBaf});
                 return;
@@ -105,15 +133,18 @@ export class Scatterplot extends React.Component<Props> {
         if (!contents) {
             return null;
         }
-
-        const {rdRange, width, height} = this.props;
+        console.log("RD: ", rd);
+        console.log("BAF: ", baf);
+        const {rdRange, width, height, invertAxis} = this.props;
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
+        const top = invertAxis ? bafScale(baf) : rdrScale(rd);
+        const left = invertAxis ? rdrScale(rd) : bafScale(baf);
         return <div
             className="Scatterplot-tooltip"
             style={{
                 position: "absolute",
-                top: bafScale(baf) || 0 + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
-                left: rdrScale(rd) || 0 + TOOLTIP_OFFSET
+                top:   top || 0 + TOOLTIP_OFFSET, // Alternatively, this could be 0.5 - baf
+                left:  left || 0 + TOOLTIP_OFFSET
             }}
         >
             {contents}
@@ -241,8 +272,7 @@ export class Scatterplot extends React.Component<Props> {
 
         const {data, width, height, onRecordsHovered} = this.props;
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
-        const colorScale = d3.scaleOrdinal(d3.schemeDark2);
-
+        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
         const svg = d3.select(this._svg);
         
         let xScale = bafScale;
@@ -276,7 +306,7 @@ export class Scatterplot extends React.Component<Props> {
             .call(d3.axisLeft(yScale));
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            .attr("y", PADDING.left-40)//_.mean(yScale.range()))
+            .attr("y", PADDING.left-40)
             .attr("x", 0-_.mean(yScale.range()))
             .attr("transform", `rotate(-90)`)
             .style("text-anchor", "middle")
@@ -302,11 +332,19 @@ export class Scatterplot extends React.Component<Props> {
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
         
-        function rdOrBaf(b : MergedGenomicBin, invert : boolean, xAxis : boolean) {
+        /**
+         * Based on which values are on the x/y axes and which axis the caller is requesting, 
+         * gives the relevant data (rdr or baf)
+         * @param m Data that the average read depth ratio and average baf are taken from
+         * @param invert Indicates which value is on the x-axis and which is on the y (True: baf is on the x-axis)
+         * @param xAxis True if it should return the x-axis value
+         * @returns Either the averageRd or averageBaf
+         */
+        function rdOrBaf(m : MergedGenomicBin, invert : boolean, xAxis : boolean) {
             if (xAxis) {
-                return (invert) ? b.averageRd : b.averageBaf;
+                return (invert) ? m.averageRd : m.averageBaf;
             } else {  
-                return (invert) ?  b.averageBaf :  b.averageRd;
+                return (invert) ?  m.averageBaf :  m.averageRd;
             }
         }
     }
