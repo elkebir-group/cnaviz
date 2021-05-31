@@ -14,7 +14,7 @@ import { niceBpCount, getRelativeCoordinates } from "../util";
 import "./Scatterplot.css";
 
 const PADDING = { // For the SVG
-    left: 70,
+    left: 60,
     right: 20,
     top: 20,
     bottom: 60,
@@ -33,6 +33,7 @@ interface Props {
     width: number;
     height: number;
     curveState: CurveState;
+    invertAxis: boolean;
     onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
 }
@@ -211,7 +212,7 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["data", "width", "height"])) {
+        if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis"])) {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -221,13 +222,15 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     computeScales(rdRange: [number, number], width: number, height: number) {
+        let bafScaleRange = (this.props.invertAxis) ?  [height - PADDING.bottom, PADDING.top] : [PADDING.left, width - PADDING.right];
+        let rdrScaleRange = (this.props.invertAxis) ?  [PADDING.left, width - PADDING.right] :  [height - PADDING.bottom, PADDING.top];
         return {
             bafScale: d3.scaleLinear()
                 .domain([0, 0.5])
-                .range([height - PADDING.bottom, PADDING.top]),
+                .range(bafScaleRange),
             rdrScale: d3.scaleLinear()
                 .domain(rdRange)
-                .range([PADDING.left, width - PADDING.right])
+                .range(rdrScaleRange)
         };
     }
 
@@ -241,6 +244,15 @@ export class Scatterplot extends React.Component<Props> {
         const colorScale = d3.scaleOrdinal(d3.schemeDark2);
 
         const svg = d3.select(this._svg);
+        
+        let xScale = bafScale;
+        let yScale = rdrScale;
+        let xLabel = "B-Allele Frequency";
+        let yLabel = "Read Depth Ratio";
+        if (this.props.invertAxis) {
+            [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "Read Depth Ratio", "B-Allele Frequency"];
+        }
+        
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
@@ -248,24 +260,28 @@ export class Scatterplot extends React.Component<Props> {
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-            .call(d3.axisBottom(rdrScale));
+            .call(d3.axisBottom(xScale));
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
-            .attr("x", _.mean(rdrScale.range()))
+            .attr("x", _.mean(xScale.range()))
             .attr("y", height - PADDING.bottom + 40)
-            .text("Read depth ratio");
+            .style("text-anchor", "middle")
+            .text(xLabel);
 
         // Y axis stuff
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(${PADDING.left}, 0)`)
-            .call(d3.axisLeft(bafScale));
+            .call(d3.axisLeft(yScale));
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `rotate(90, ${PADDING.left - 60}, ${_.mean(bafScale.range())})`)
-            .text("BAF")
-            .attr("y", _.mean(bafScale.range()));
+            .attr("y", PADDING.left-40)//_.mean(yScale.range()))
+            .attr("x", 0-_.mean(yScale.range()))
+            .attr("transform", `rotate(-90)`)
+            .style("text-anchor", "middle")
+            .text(yLabel);
+            
 
         // Circles: remove any previous
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
@@ -278,13 +294,21 @@ export class Scatterplot extends React.Component<Props> {
                 .enter()
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
-                    .attr("cx", d => rdrScale(d.averageRd) || 0)
-                    .attr("cy", d => bafScale(d.averageBaf) || 0) // Alternatively, this could be 0.5 - baf
+                    .attr("cx", d => xScale(rdOrBaf(d, this.props.invertAxis, true)) || 0)
+                    .attr("cy", d => yScale(rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
                     .attr("fill", d => colorScale(String(d.bins[0].CLUSTER)))
                     .attr("fill-opacity", 0.8)
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
+        
+        function rdOrBaf(b : MergedGenomicBin, invert : boolean, xAxis : boolean) {
+            if (xAxis) {
+                return (invert) ? b.averageRd : b.averageBaf;
+            } else {  
+                return (invert) ?  b.averageBaf :  b.averageRd;
+            }
+        }
     }
 
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {

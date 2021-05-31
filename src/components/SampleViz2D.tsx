@@ -26,6 +26,7 @@ interface Props {
 interface State {
     selectedSample: string;
     selectedCluster: string;
+    invertAxis: boolean;
 }
 
 export class SampleViz2D extends React.Component<Props, State> {
@@ -38,11 +39,13 @@ export class SampleViz2D extends React.Component<Props, State> {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            selectedCluster: props.initialSelectedCluster || ""
+            selectedCluster: props.initialSelectedCluster || "",
+            invertAxis: false
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
+        this.handleAxisInvert = this.handleAxisInvert.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -51,6 +54,11 @@ export class SampleViz2D extends React.Component<Props, State> {
 
     handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedCluster: event.target.value});
+    }
+
+    handleAxisInvert() {
+        this.setState({invertAxis: !this.state.invertAxis});
+        //console.log(this.state.axisChange)
     }
 
     handleRecordsHovered(record: MergedGenomicBin | null) {
@@ -79,6 +87,9 @@ export class SampleViz2D extends React.Component<Props, State> {
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
+                <button onClick={this.handleAxisInvert} style={{marginLeft: 20}}>
+                        Invert Axes
+                </button> 
             </div>
             <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
@@ -96,7 +107,8 @@ export class SampleViz2D extends React.Component<Props, State> {
                     curveState={curveState}
                     onNewCurveState={onNewCurveState}
                     hoveredLocation={hoveredLocation}
-                    onRecordsHovered={this.handleRecordsHovered} />
+                    onRecordsHovered={this.handleRecordsHovered}
+                    invertAxis= {this.state.invertAxis} />
             </DivWithBullseye>
         </div>;
     }

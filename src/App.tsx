@@ -205,22 +205,36 @@ export class App extends React.Component<{}, State> {
                     <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
                     <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
                 </div>
-                <div className="row">
-                    <div className="col-md-4">
+                <div className="col">
+                    <div className="row">
                         {
-                        samples.length > 0 && <div className="row">
+                        samples.length > 0 && <div className="col">
                             <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} initialSelectedCluster={""} />
                         </div>
                         }
                         {
-                        samples.length > 1 && <div className="row">
+                        samples.length > 1 && <div className="col">
                             <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[1]} initialSelectedCluster={""}/>
                         </div>
                         }
+                        {
+                        samples.length > 2 && <div className="col">
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[2]} initialSelectedCluster={""}/>
+                        </div>
+                        }
                     </div>
-                    <div className="col">
+                    <div className="row">
+                        {
+                            samples.length > 2 && <div className="col">
+                            <SampleViz2D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[2]} initialSelectedCluster={""}/>
+                            </div>
+                        }
+                        <div className="col">
                         <SampleViz1D {...scatterplotProps} chr={selectedChr} initialSelectedSample={samples[0]} initialSelectedCluster={""}/>
+                        </div>
+                        
                     </div>
+                    
                 </div>
             </div>;
         }
