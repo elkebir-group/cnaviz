@@ -59,6 +59,8 @@ export class Genome {
             this._chrStarts[chrName] = this._length;
             this._length += chromosome.length;
         }
+        
+        console.log("CHR STARTS: ", this._chrStarts);
     }
 
     /**

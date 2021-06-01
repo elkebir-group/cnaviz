@@ -18,7 +18,7 @@ export interface GenomicBin {
     /** B allele frequency */
     readonly BAF: number;
     /** Cluster ID */
-    CLUSTER: number;
+    readonly CLUSTER: number;
 }
 
 export const GenomicBinHelpers = {

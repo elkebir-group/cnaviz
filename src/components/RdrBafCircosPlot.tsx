@@ -268,8 +268,10 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         let basesInMap: OpenInterval;
         if (chr) {
             basesInMap = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, genome.getLength(chr)));
+            console.log("BasesInMap: ", basesInMap);
         } else {
             basesInMap = new OpenInterval(0, genome.getLength());
+            console.log("BasesInMap: ", basesInMap);
         }
 
         const circumference = Math.PI * INNER_RADIUS * 2;
@@ -288,8 +290,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         }
         
         // Set up hover events
-        const binSize = data.length > 0 ?
-            GenomicBinHelpers.toChromosomeInterval(data[0]).getLength() : DEFAULT_HOVER_BP;
+        const binSize = data.length > 0 ? GenomicBinHelpers.toChromosomeInterval(data[0]).getLength() : DEFAULT_HOVER_BP;
         const eventConfig = {
             mouseenter: (slice: Circos.IntervalDatum) => onLocationHovered(
                 new ChromosomeInterval(slice.block_id, slice.start, slice.start + binSize)

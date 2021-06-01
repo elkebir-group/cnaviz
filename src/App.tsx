@@ -28,7 +28,7 @@ function getFileContentsAsString(file: File) {
     });
 }
 
-function parseGenomicBins(data: string): Promise<GenomicBin[]> {
+function parseGenomicBins(data: string, applyLog: boolean): Promise<GenomicBin[]> {
     return new Promise((resolve, reject) => {
         parse(data, {
             cast: true,
@@ -40,9 +40,12 @@ function parseGenomicBins(data: string): Promise<GenomicBin[]> {
                 reject(error);
                 return;
             }
-            for (const bin of parsed) {
-                bin.RD = Math.log2(bin.RD);
+            if(applyLog) {
+                for (const bin of parsed) {
+                    bin.RD = Math.log2(bin.RD);
+                }
             }
+
             resolve(parsed);
         });
     })
@@ -93,6 +96,8 @@ interface State {
     assignCluster: boolean;
 
     assigned: boolean;
+    
+    applyLog: boolean;
 }
 
 /**
@@ -111,9 +116,10 @@ export class App extends React.Component<{}, State> {
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
             sampleAmount: 1,
-            color: '#fff',
+            color: '#1b9e77',
             assignCluster: false,
-            assigned: false
+            assigned: false,
+            applyLog: false
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -145,7 +151,7 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.processing});
         let indexedData = null;
         try {
-            const parsed = await parseGenomicBins(contents);
+            const parsed = await parseGenomicBins(contents, this.state.applyLog);
             console.log("Parsing")
             indexedData = new DataWarehouse(parsed);
         } catch (error) {
@@ -170,25 +176,25 @@ export class App extends React.Component<{}, State> {
             return;
         }
         const binSize = this.state.indexedData.guessBinSize();
-        this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
+        this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)}); //.endsRoundedToMultiple(binSize)
     }
 
     handleCallBack(childData: any) {
         console.log("CHILD DATA2: ", childData);
-        if(!this.state.assigned) {
-            let allBins = this.state.indexedData.getRecords(childData["selectedSample"], this.state.selectedChr, "");
-            for (const node of childData["data"]) {
-                for (let i=0; i < allBins.length; i++) {
-                    if(node === allBins[i]) {
-                        console.log("doing it")
-                        allBins[i].CLUSTER = 0;
-                    }
-                }     
-            }
-            let indexedData = new DataWarehouse(allBins);
-            this.setState({indexedData : indexedData});
-            this.setState({assigned: true})
-        }
+        // if(!this.state.assigned) {
+        //     let allBins = this.state.indexedData.getRecords(childData["selectedSample"], this.state.selectedChr, "");
+        //     for (const node of childData["data"]) {
+        //         for (let i=0; i < allBins.length; i++) {
+        //             if(node === allBins[i]) {
+        //                 console.log("doing it")
+        //                 allBins[i].CLUSTER = 0;
+        //             }
+        //         }     
+        //     }
+        //     let indexedData = new DataWarehouse(allBins);
+        //     this.setState({indexedData : indexedData});
+        //     this.setState({assigned: true})
+        // }
     }
 
     handleAxisInvert() {
@@ -196,16 +202,15 @@ export class App extends React.Component<{}, State> {
     }
 
     handleAddSampleClick() {
-        this.setState({sampleAmount: this.state.sampleAmount + 1})
+        this.setState({sampleAmount: this.state.sampleAmount + 1});
     }
 
     handleAssignCluster() {
-        this.setState({assignCluster: !this.state.assignCluster})
+        this.setState({assignCluster: !this.state.assignCluster});
     }
 
     handleColorChange(color : any) {
-        this.setState({color: color.hex}) 
-        console.log(this.state.color);
+        this.setState({color: color.hex});
     }
 
     handleNewCurveState(newState: Partial<CurveState>) {
@@ -236,6 +241,12 @@ export class App extends React.Component<{}, State> {
             default:
                 return "";
         }
+    }
+
+    toggle() {
+        this.setState({
+            applyLog: !this.state.applyLog
+        });
     }
 
     render() {
@@ -288,10 +299,6 @@ export class App extends React.Component<{}, State> {
                     {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D parentCallBack = {this.handleCallBack} key={i} {...scatterplotProps} /> </div>)}
                         <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div>   
                     </div>
-                    <div className="row">
-                        
-                    </div>
-                    
                 </div>
             </div>;
         }
@@ -304,6 +311,8 @@ export class App extends React.Component<{}, State> {
                     <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
                 }
                 <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
+                <span className="App-CheckBox-explanation">Apply log to RD: </span>
+                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggle.bind(this)} />
             </div>
             {status && <div className="App-status-pane">{status}</div>}
             {mainUI}

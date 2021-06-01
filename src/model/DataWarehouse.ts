@@ -47,7 +47,7 @@ export class DataWarehouse {
      */
     constructor(rawData: GenomicBin[], merger=new BinMerger()) {
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
-
+        console.log("All bins: ", rawData);
         this._indexedData = {};
         this._indexedMergedData = {};
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {

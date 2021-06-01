@@ -37,7 +37,8 @@ export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
         onNewCurveState: _.noop,
         onLocationHovered: _.noop,
-        invertAxis: false
+        invertAxis: false,
+        customColor: "#1b9e77"
     };
 
     constructor(props: Props) {

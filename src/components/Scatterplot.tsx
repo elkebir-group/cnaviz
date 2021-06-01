@@ -10,7 +10,7 @@ import { CurveState, CurvePickStatus } from "../model/CurveState";
 import { CopyNumberCurve } from "../model/CopyNumberCurve";
 import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberState";
 import { niceBpCount, getRelativeCoordinates } from "../util";
-
+import {GenomicBinHelpers} from "../model/GenomicBin";
 import "./Scatterplot.css";
 import { brush, cluster } from "d3";
 const visutils = require('vis-utils');
@@ -72,7 +72,8 @@ export class Scatterplot extends React.Component<Props, State> {
         width: 400,
         height: 350,
         onNewCurveState: _.noop,
-        onRecordHovered: _.noop
+        onRecordHovered: _.noop,
+        customColor: CLUSTER_COLORS[0]
     };
 
     private _svg: SVGSVGElement | null;
@@ -195,8 +196,11 @@ export class Scatterplot extends React.Component<Props, State> {
             return null;
         }
         const hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation));
+        
         if (hoveredRecords.length === 1) {
             const record = hoveredRecords[0];
+            //console.log("Bins", record.bins)
+            console.log("Bins Length", record.bins.length)
             return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
                 <p>
                     <b>{record.location.toString()}</b><br/>
@@ -207,6 +211,8 @@ export class Scatterplot extends React.Component<Props, State> {
                 <div>Cluster ID:{record.bins[0].CLUSTER}</div>
             </React.Fragment>);
         } else if (hoveredRecords.length > 1) {
+            console.log("Hovered Location", hoveredLocation)
+            console.log("Hovered Records", hoveredRecords)
             const minBaf = _.minBy(hoveredRecords, "averageBaf")!.averageBaf;
             const maxBaf = _.maxBy(hoveredRecords, "averageBaf")!.averageBaf;
             const meanBaf = _.meanBy(hoveredRecords, "averageBaf");
@@ -271,7 +277,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let rdrScaleRange = (this.props.invertAxis) ?  [PADDING.left, width - PADDING.right] :  [height - PADDING.bottom, PADDING.top];
         return {
             bafScale: d3.scaleLinear()
-                .domain([0, 0.5])
+                .domain([0.5, 0])
                 .range(bafScaleRange),
             rdrScale: d3.scaleLinear()
                 .domain(rdRange)
@@ -296,10 +302,10 @@ export class Scatterplot extends React.Component<Props, State> {
         
         let xScale = bafScale;
         let yScale = rdrScale;
-        let xLabel = "B-Allele Frequency";
+        let xLabel = "0.5 - B-Allele Frequency";
         let yLabel = "Read Depth Ratio";
         if (this.props.invertAxis) {
-            [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "Read Depth Ratio", "B-Allele Frequency"];
+            [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "Read Depth Ratio", "0.5 - B-Allele Frequency"];
         }
 
         // Remove previous brush
