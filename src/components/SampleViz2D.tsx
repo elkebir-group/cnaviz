@@ -1,5 +1,5 @@
 import React from "react";
-import _ from "lodash";
+import _, { assign } from "lodash";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { DataWarehouse } from "../model/DataWarehouse";
@@ -12,6 +12,7 @@ import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
 
 interface Props {
+    parentCallBack: any;
     data: DataWarehouse;
     chr: string;
     initialSelectedSample?: string;
@@ -24,6 +25,7 @@ interface Props {
     onLocationHovered: (location: ChromosomeInterval | null) => void;
     invertAxis?: boolean;
     customColor: string;
+    assignCluster: boolean;
 }
 
 interface State {
@@ -47,6 +49,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
+        this.handleCallBack = this.handleCallBack.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -62,8 +65,27 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.props.onLocationHovered(location);
     }
 
+    handleCallBack = (childData : any) =>{
+        //this.setState({name: childData})
+        // console.log(childData);
+        // let allBins = this.props.data.getRecords(this.state.selectedSample, this.state.selectedCluster, "");
+        // for (const node of childData) {
+        //     for (let i=0; i < allBins.length; i++) {
+        //         if(node === allBins[i]) {
+        //             allBins[i].CLUSTER = 0;
+        //         }
+        //     }     
+        // }
+
+        // this.setState({data : new DataWarehouse(allBins)});
+        console.log("CHILD DATA: ", childData)
+        //if(this.props.assignCluster) {
+        this.props.parentCallBack({"data": childData, "selectedSample": this.state.selectedSample});
+        //}
+    }
+
     render() {
-        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis, customColor} = this.props;
+        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis, customColor, assignCluster} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -93,6 +115,7 @@ export class SampleViz2D extends React.Component<Props, State> {
             </div>
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
+                    parentCallBack = {this.handleCallBack}
                     data={data.getMergedRecords(selectedSample, chr, selectedCluster)}
                     rdRange={rdRange}
                     width={width}
@@ -102,7 +125,8 @@ export class SampleViz2D extends React.Component<Props, State> {
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered}
                     invertAxis= {invertAxis || false} 
-                    customColor= {customColor}/>
+                    customColor= {customColor}
+                    assignCluster= {assignCluster} />
             </DivWithBullseye>
         </div>;
     }

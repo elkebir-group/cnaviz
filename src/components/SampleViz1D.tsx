@@ -89,18 +89,19 @@ export class SampleViz1D extends React.Component<Props, State> {
                 chr={chr} />;
         }
 
-        return <div>
-            <div className="SampleViz-select">
-                Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
-                    {sampleOptions}
-                </select>
-                <div className="row">
+        return <div className="SampleViz">
+            
+            <div className="SampleViz-select" >
+                <div className="row" style={{marginLeft: 1}}>
+                    Select sample:  <select value={selectedSample} onChange={this.handleSelectedSampleChanged} >
+                        {sampleOptions}
+                    </select>
                     {this.renderDisplayModeRadioOption(DisplayMode.linear)}
                     {this.renderDisplayModeRadioOption(DisplayMode.circos)}
+                    
                 </div>
-                
-                
             </div>
+            
             <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
                                         onChange={this.handleSelectedClusterChanged} 

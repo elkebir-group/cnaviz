@@ -66,8 +66,8 @@ interface Props {
 
 export class RdrBafCircosPlot extends React.PureComponent<Props> {
     static defaultProps = {
-        width: 800,
-        height: 700,
+        width: 600,
+        height: 500,
         onLocationHovered: _.noop
     };
     static nextId = 0;

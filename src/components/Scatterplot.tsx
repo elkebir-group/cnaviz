@@ -1,6 +1,6 @@
 import React from "react";
 import * as d3 from "d3";
-import _ from "lodash";
+import _, { assign } from "lodash";
 import memoizeOne from "memoize-one";
 
 import { CopyNumberCurveDrawer } from "./CopyNumberCurveDrawer";
@@ -12,7 +12,7 @@ import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberSta
 import { niceBpCount, getRelativeCoordinates } from "../util";
 
 import "./Scatterplot.css";
-import { cluster } from "d3";
+import { brush, cluster } from "d3";
 const visutils = require('vis-utils');
 
 const PADDING = { // For the SVG
@@ -48,6 +48,7 @@ const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
+    parentCallBack: any;
     data: MergedGenomicBin[];
     rdRange: [number, number];
     hoveredLocation?: ChromosomeInterval;
@@ -58,10 +59,12 @@ interface Props {
     onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
     customColor: string;
+    assignCluster: boolean;
 }
 
 interface State {
-    brushedNodes: MergedGenomicBin[]
+    brushedNodes: MergedGenomicBin[];
+    assigned: boolean;
 }
 
 export class Scatterplot extends React.Component<Props, State> {
@@ -85,9 +88,11 @@ export class Scatterplot extends React.Component<Props, State> {
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleCurveHovered = this.handleCurveHovered.bind(this);
+        this.onTrigger = this.onTrigger.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.state = {
-            brushedNodes: []
+            brushedNodes: [],
+            assigned: false
         }
     }
 
@@ -251,7 +256,8 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis", "customColor"])) {
+        if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
+            //this.onTrigger(this.state.brushedNodes);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -273,12 +279,17 @@ export class Scatterplot extends React.Component<Props, State> {
         };
     }
 
+    onTrigger = (brushedNodes : any) => {
+        this.props.parentCallBack(brushedNodes);
+    }
+
     redraw() {
         if (!this._svg) {
             return;
         }
 
-        const {data, width, height, onRecordsHovered, curveState, customColor} = this.props;
+        const {width, height, onRecordsHovered, curveState, customColor, assignCluster} = this.props;
+        let {data} = this.props
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
         const svg = d3.select(this._svg);
@@ -294,7 +305,7 @@ export class Scatterplot extends React.Component<Props, State> {
         // Remove previous brush
         svg.selectAll("." + "brush").remove();
 
-        let brushNodes = this.state.brushedNodes;
+        let brushNodes : MergedGenomicBin[] = []; //this.state.brushedNodes;
         if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
             // Create brush and limit it to the scatterplot region
             const brush = d3.brush()
@@ -395,6 +406,9 @@ export class Scatterplot extends React.Component<Props, State> {
         const circleId = this._circleIdPrefix;
         const plot = this._svg;
         const invert = this.props.invertAxis;
+        let trigger = this.onTrigger;
+        let assigned = this.state.assigned;
+
         function updatePoints() {
             if (data) {
                 try {
@@ -408,13 +422,26 @@ export class Scatterplot extends React.Component<Props, State> {
                                 element.setAttribute("fill", customColor);      
                             }
                         }
-                    }  
+                        
+                        // for (const node of brushNodes) {
+                        //     for (let i=0; i < data.length; i++) {
+                        //         if(node === data[i]) {
+                        //             for (let j=0; j < data[i].bins.length; j++) {
+                        //                 data[i].bins[j].CLUSTER = 0;
+                        //             }
+                        //         }
+                        //     }     
+                        // }
+                    } 
                 } catch (error) {
                     console.log(error);
                 }
             }
         }
-    }
+        if(assigned) {
+            this.setState({assigned: true}) 
+        }
+     }
 
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
         if (!this._svg || !hoveredLocation) {

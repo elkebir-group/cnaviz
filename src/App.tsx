@@ -89,6 +89,10 @@ interface State {
     sampleAmount: number;
 
     color: string;
+
+    assignCluster: boolean;
+
+    assigned: boolean;
 }
 
 /**
@@ -106,8 +110,10 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
-            sampleAmount: 3,
-            color: '#fff'
+            sampleAmount: 1,
+            color: '#fff',
+            assignCluster: false,
+            assigned: false
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -116,6 +122,8 @@ export class App extends React.Component<{}, State> {
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
         this.handleAddSampleClick = this.handleAddSampleClick.bind(this);
         this.handleColorChange = this.handleColorChange.bind(this);
+        this.handleAssignCluster = this.handleAssignCluster.bind(this);
+        this.handleCallBack = this.handleCallBack.bind(this);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -165,12 +173,34 @@ export class App extends React.Component<{}, State> {
         this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)});
     }
 
+    handleCallBack(childData: any) {
+        console.log("CHILD DATA2: ", childData);
+        if(!this.state.assigned) {
+            let allBins = this.state.indexedData.getRecords(childData["selectedSample"], this.state.selectedChr, "");
+            for (const node of childData["data"]) {
+                for (let i=0; i < allBins.length; i++) {
+                    if(node === allBins[i]) {
+                        console.log("doing it")
+                        allBins[i].CLUSTER = 0;
+                    }
+                }     
+            }
+            let indexedData = new DataWarehouse(allBins);
+            this.setState({indexedData : indexedData});
+            this.setState({assigned: true})
+        }
+    }
+
     handleAxisInvert() {
         this.setState({invertAxis: !this.state.invertAxis});
     }
 
     handleAddSampleClick() {
         this.setState({sampleAmount: this.state.sampleAmount + 1})
+    }
+
+    handleAssignCluster() {
+        this.setState({assignCluster: !this.state.assignCluster})
     }
 
     handleColorChange(color : any) {
@@ -209,7 +239,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color} = this.state;
+        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster} = this.state;
         const samples = indexedData.getSampleList();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -221,7 +251,8 @@ export class App extends React.Component<{}, State> {
                 onLocationHovered: this.handleLocationHovered,
                 invertAxis,
                 chr: selectedChr,
-                customColor: color
+                customColor: color,
+                assignCluster
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -238,21 +269,29 @@ export class App extends React.Component<{}, State> {
                             </div>
                         </div>
                         <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
-                        <button onClick={this.handleAxisInvert}> Invert Axes </button>
-                        <button onClick={this.handleAddSampleClick}> Add Sample </button>
+                        
+                        <div className="row">
+                            <div className = "col">
+                                <button onClick={this.handleAxisInvert}> Invert Axes </button>
+                                <button onClick={this.handleAddSampleClick}> Add Sample </button>
+                                <button onClick={this.handleAssignCluster}> Assign Cluster </button>
+                            </div>
+                            <div className = "col" style={{paddingTop: 5}}>
+                                <HuePicker color={color} onChange={this.handleColorChange}/>
+                            </div>
+                            
+                        </div>
                 </div>
-                <div className="row">
-                    <div className="col" style={{paddingTop: 25, marginLeft: 30}}>
-                        <HuePicker color={color} onChange={this.handleColorChange}/>
-                    </div>
-                </div>
+                
                 <div className="col">
                     <div className="row">
-                        {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D key={i} {...scatterplotProps} /> </div>)}
+                    {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D parentCallBack = {this.handleCallBack} key={i} {...scatterplotProps} /> </div>)}
+                        <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div>   
                     </div>
                     <div className="row">
-                        <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div> 
+                        
                     </div>
+                    
                 </div>
             </div>;
         }

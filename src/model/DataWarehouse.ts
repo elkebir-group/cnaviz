@@ -86,7 +86,7 @@ export class DataWarehouse {
         }
 
         console.log("INDEXED DATA: ", this._indexedData);
-
+        console.log("MERGED DATA: ", this._indexedMergedData);
         if (rawData.length > 0) {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         } else {
@@ -94,7 +94,7 @@ export class DataWarehouse {
         }
         console.log(this._indexedData)
         this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
-        this.getClusterList = this.getClusterList.bind(this); // Needed for getAllChromosomes() to work
+        this.getClusterList = this.getClusterList.bind(this); // Needed for getAllClusters() to work
     }
 
     /**
