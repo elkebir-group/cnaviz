@@ -40,6 +40,9 @@ const CLUSTER_COLORS = [
     "#28c2b5"
 ];
 
+const UNCLUSTERED_COLOR = "#999999";
+const HIGHLIGHT_COLOR = "red";
+
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASS_NAME = "circles";
 const CIRCLE_R = 1;
@@ -199,6 +202,7 @@ export class Scatterplot extends React.Component<Props, State> {
         
         if (hoveredRecords.length === 1) {
             const record = hoveredRecords[0];
+            console.log("HOVERED RECORD: ", record);
             //console.log("Bins", record.bins)
             console.log("Bins Length", record.bins.length)
             return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
@@ -374,6 +378,8 @@ export class Scatterplot extends React.Component<Props, State> {
             }
         }
 
+        let previous_brushed_nodes = this.state.brushedNodes;
+        
         // Add circles
         svg.append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
@@ -387,7 +393,12 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("cx", d => xScale(rdOrBaf(d, this.props.invertAxis, true)) || 0)
                     .attr("cy", d => yScale(rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
-                    .attr("fill", d => colorScale(String(d.bins[0].CLUSTER)))
+                    .attr("fill", function(d:MergedGenomicBin) : string {
+                        if (previous_brushed_nodes.some(n => (n.location.chr === d.location.chr) && (n.location.start === d.location.start) && (n.location.end === d.location.end))) {
+                            return customColor;
+                        }
+                        return (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.bins[0].CLUSTER));
+                    }) //d => (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.bins[0].CLUSTER)))
                     .attr("fill-opacity", 0.8)
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
@@ -414,7 +425,7 @@ export class Scatterplot extends React.Component<Props, State> {
         const invert = this.props.invertAxis;
         let trigger = this.onTrigger;
         let assigned = this.state.assigned;
-
+        let self = this;
         function updatePoints() {
             if (data) {
                 try {
@@ -428,7 +439,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                 element.setAttribute("fill", customColor);      
                             }
                         }
-                        
+                        self.setState({brushedNodes: brushNodes});
                         // for (const node of brushNodes) {
                         //     for (let i=0; i < data.length; i++) {
                         //         if(node === data[i]) {
@@ -438,12 +449,14 @@ export class Scatterplot extends React.Component<Props, State> {
                         //         }
                         //     }     
                         // }
+                        
                     } 
                 } catch (error) {
                     console.log(error);
                 }
             }
         }
+
         if(assigned) {
             this.setState({assigned: true}) 
         }

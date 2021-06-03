@@ -28,11 +28,11 @@ function getFileContentsAsString(file: File) {
     });
 }
 
-function parseGenomicBins(data: string, applyLog: boolean): Promise<GenomicBin[]> {
+function parseGenomicBins(data: string, applyLog: boolean, applyClustering: boolean): Promise<GenomicBin[]> {
     return new Promise((resolve, reject) => {
         parse(data, {
             cast: true,
-            columns: true,
+            columns: true,//["#CHR", "START", "END", "SAMPLE", "RD", "#SNPS", "COV", "ALPHA", "BETA", "BAF", "CLUSTER", "cn_normal", "u_normal", "cn_clone1", "u_clone1", "cn_clone2", "u_clone2"],
             delimiter: "\t",
             skip_empty_lines: true,
         }, (error, parsed) => {
@@ -43,9 +43,18 @@ function parseGenomicBins(data: string, applyLog: boolean): Promise<GenomicBin[]
             if(applyLog) {
                 for (const bin of parsed) {
                     bin.RD = Math.log2(bin.RD);
+                    //console.log("Applying clustering: ", bin.RD);
+                    if (!applyClustering) {
+                        bin.CLUSTER = -1;
+                    }
+                }
+            } else if(!applyClustering) {
+                for (const bin of parsed) {
+                    bin.CLUSTER = -1;
                 }
             }
-
+            
+            console.log("PARSED: ", parsed);
             resolve(parsed);
         });
     })
@@ -98,6 +107,8 @@ interface State {
     assigned: boolean;
     
     applyLog: boolean;
+
+    applyClustering: boolean;
 }
 
 /**
@@ -110,7 +121,7 @@ export class App extends React.Component<{}, State> {
         super(props);
         this.state = {
             processingStatus: ProcessingStatus.none,
-            indexedData: new DataWarehouse([]),
+            indexedData: new DataWarehouse([], false),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             curveState: INITIAL_CURVE_STATE,
@@ -119,7 +130,8 @@ export class App extends React.Component<{}, State> {
             color: '#1b9e77',
             assignCluster: false,
             assigned: false,
-            applyLog: false
+            applyLog: false,
+            applyClustering: false
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -151,9 +163,9 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.processing});
         let indexedData = null;
         try {
-            const parsed = await parseGenomicBins(contents, this.state.applyLog);
+            const parsed = await parseGenomicBins(contents, this.state.applyLog, this.state.applyClustering);
             console.log("Parsing")
-            indexedData = new DataWarehouse(parsed);
+            indexedData = new DataWarehouse(parsed, this.state.applyClustering);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -243,9 +255,15 @@ export class App extends React.Component<{}, State> {
         }
     }
 
-    toggle() {
+    toggleLog() {
         this.setState({
             applyLog: !this.state.applyLog
+        });
+    }
+
+    toggleClustering() {
+        this.setState({
+            applyClustering: !this.state.applyClustering
         });
     }
 
@@ -312,7 +330,9 @@ export class App extends React.Component<{}, State> {
                 }
                 <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
                 <span className="App-CheckBox-explanation">Apply log to RD: </span>
-                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggle.bind(this)} />
+                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
+                <span className="App-CheckBox-explanation" style={{marginLeft: 10}}>Apply provided clustering: </span>
+                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleClustering.bind(this)} />
             </div>
             {status && <div className="App-status-pane">{status}</div>}
             {mainUI}

@@ -45,7 +45,7 @@ export class DataWarehouse {
      * @param merger aggregator to use
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
-    constructor(rawData: GenomicBin[], merger=new BinMerger()) {
+    constructor(rawData: GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         console.log("All bins: ", rawData);
         this._indexedData = {};
@@ -61,19 +61,21 @@ export class DataWarehouse {
 
             let clusterChrDict : {[cl : string] : {[chr : string] : GenomicBin[]}} = {};
             let mergedClusterChrDict : {[cl : string] : {[chr : string] : MergedGenomicBin[]}} = {};
-            for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
-                const groupedByChr = _.groupBy(binsForCluster, "#CHR");
-                
-                if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
-                    throw new Error(`Data contains reserved chromosome name '${DataWarehouse.ALL_CHRS_KEY}'.` +
-                        "Please remove or rename this chromosome from the data and try again.");
-                }
+            if(applyClustering) {
+                for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
+                    const groupedByChr = _.groupBy(binsForCluster, "#CHR");
+                    
+                    if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
+                        throw new Error(`Data contains reserved chromosome name '${DataWarehouse.ALL_CHRS_KEY}'.` +
+                            "Please remove or rename this chromosome from the data and try again.");
+                    }
 
-                clusterChrDict[cluster] = groupedByChr;
-                mergedClusterChrDict[cluster] = _.mapValues(groupedByChr, merger.doMerge);
-                clusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
-                mergedClusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(mergedClusterChrDict[cluster]));
-            }
+                    clusterChrDict[cluster] = groupedByChr;
+                    mergedClusterChrDict[cluster] = _.mapValues(groupedByChr, merger.doMerge);
+                    clusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
+                    mergedClusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(mergedClusterChrDict[cluster]));
+                }
+           }
 
             this._indexedData[sample] = clusterChrDict;
             this._indexedMergedData[sample] = mergedClusterChrDict;
