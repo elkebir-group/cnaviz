@@ -195,20 +195,12 @@ export class DataWarehouse {
     }
 
     getRawData() : GenomicBin[] {
-
-        //console.log(test.length);
         let rawData : GenomicBin[] = []
-        for (const value of Object.values(this._indexedData)) {
-            let chrDictArr  = Object.values(value);
-            for (const chrDict of chrDictArr) {
-                let binArr = _.flatten(Object.values(chrDict));
-                for(const bin of binArr) {
-                    rawData.push(bin);  
-                }
-            }
+        for(const sample of this.getSampleList()) {
+            const binArr = this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY];
+            rawData = rawData.concat(binArr);
         }
-
-        rawData = [...new Set(rawData)];
+        
         console.log("RAW DATA 2: ", rawData.length);
         return rawData;
     }

@@ -226,7 +226,6 @@ export class App extends React.Component<{}, State> {
                         "BAF": allBins[i]["BAF"],
                         "CLUSTER": Number(this.state.value)
                     };
-                    //allBins[i].CLUSTER = Number(this.state.value);
                 }
             }     
         }
