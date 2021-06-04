@@ -32,7 +32,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
     return new Promise((resolve, reject) => {
         parse(data, {
             cast: true,
-            columns: true,//["#CHR", "START", "END", "SAMPLE", "RD", "#SNPS", "COV", "ALPHA", "BETA", "BAF", "CLUSTER", "cn_normal", "u_normal", "cn_clone1", "u_clone1", "cn_clone2", "u_clone2"],
+            columns: true,
             delimiter: "\t",
             skip_empty_lines: true,
         }, (error, parsed) => {
@@ -53,7 +53,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     bin.CLUSTER = -1;
                 }
             }
-            
+
             console.log("PARSED: ", parsed);
             resolve(parsed);
         });
@@ -109,6 +109,12 @@ interface State {
     applyLog: boolean;
 
     applyClustering: boolean;
+
+    clusterAssignment: number;
+
+    inputError: boolean;
+    
+    value: string;
 }
 
 /**
@@ -131,7 +137,10 @@ export class App extends React.Component<{}, State> {
             assignCluster: false,
             assigned: false,
             applyLog: false,
-            applyClustering: false
+            applyClustering: false,
+            clusterAssignment: -1,
+            inputError: false,
+            value: ""
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -142,6 +151,7 @@ export class App extends React.Component<{}, State> {
         this.handleColorChange = this.handleColorChange.bind(this);
         this.handleAssignCluster = this.handleAssignCluster.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
+        this.handleClusterAssignmentInput = this.handleClusterAssignmentInput.bind(this);
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -188,25 +198,42 @@ export class App extends React.Component<{}, State> {
             return;
         }
         const binSize = this.state.indexedData.guessBinSize();
-        this.setState({hoveredLocation: location.endsRoundedToMultiple(binSize)}); //.endsRoundedToMultiple(binSize)
+        this.setState({hoveredLocation: location}); //.endsRoundedToMultiple(binSize)
+    }
+
+    handleClusterAssignmentInput(event: any) {
+        this.setState({value: event.target.value})
     }
 
     handleCallBack(childData: any) {
-        console.log("CHILD DATA2: ", childData);
-        // if(!this.state.assigned) {
-        //     let allBins = this.state.indexedData.getRecords(childData["selectedSample"], this.state.selectedChr, "");
-        //     for (const node of childData["data"]) {
-        //         for (let i=0; i < allBins.length; i++) {
-        //             if(node === allBins[i]) {
-        //                 console.log("doing it")
-        //                 allBins[i].CLUSTER = 0;
-        //             }
-        //         }     
-        //     }
-        //     let indexedData = new DataWarehouse(allBins);
-        //     this.setState({indexedData : indexedData});
-        //     this.setState({assigned: true})
-        // }
+        const allBins = this.state.indexedData.getRawData();
+        console.log("Brushed nodes: ", childData["data"]);
+
+        for (const node of childData["data"]) {
+            for (let i=0; i < allBins.length; i++) {
+                if(node.bins[0] === allBins[i]) {
+                    //console.log("doing it")
+                    allBins[i] = {
+                        "#CHR": allBins[i]["#CHR"],
+                        "START": allBins[i]["START"],
+                        "END": allBins[i]["END"],
+                        "SAMPLE": allBins[i]["SAMPLE"],
+                        "RD": allBins[i]["RD"],
+                        "#SNPS": allBins[i]["#SNPS"],
+                        "COV": allBins[i]["COV"],
+                        "ALPHA": allBins[i]["ALPHA"],
+                        "BETA": allBins[i]["BETA"],
+                        "BAF": allBins[i]["BAF"],
+                        "CLUSTER": Number(this.state.value)
+                    };
+                    //allBins[i].CLUSTER = Number(this.state.value);
+                }
+            }     
+        }
+
+        this.setState({indexedData: new DataWarehouse(allBins, true)})
+        console.log(this.state.indexedData.getAllClusters());
+        this.setState({assignCluster: false});
     }
 
     handleAxisInvert() {
@@ -304,11 +331,12 @@ export class App extends React.Component<{}, State> {
                                 <button onClick={this.handleAxisInvert}> Invert Axes </button>
                                 <button onClick={this.handleAddSampleClick}> Add Sample </button>
                                 <button onClick={this.handleAssignCluster}> Assign Cluster </button>
+                                <input type="number" size={30} min="0" max="14" 
+                                        onChange={this.handleClusterAssignmentInput}/>
                             </div>
                             <div className = "col" style={{paddingTop: 5}}>
                                 <HuePicker color={color} onChange={this.handleColorChange}/>
                             </div>
-                            
                         </div>
                 </div>
                 

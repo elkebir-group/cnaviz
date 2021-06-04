@@ -67,7 +67,6 @@ interface Props {
 
 interface State {
     brushedNodes: MergedGenomicBin[];
-    assigned: boolean;
 }
 
 export class Scatterplot extends React.Component<Props, State> {
@@ -95,8 +94,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.onTrigger = this.onTrigger.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.state = {
-            brushedNodes: [],
-            assigned: false
+            brushedNodes: []
         }
     }
 
@@ -202,9 +200,6 @@ export class Scatterplot extends React.Component<Props, State> {
         
         if (hoveredRecords.length === 1) {
             const record = hoveredRecords[0];
-            console.log("HOVERED RECORD: ", record);
-            //console.log("Bins", record.bins)
-            console.log("Bins Length", record.bins.length)
             return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
                 <p>
                     <b>{record.location.toString()}</b><br/>
@@ -215,8 +210,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 <div>Cluster ID:{record.bins[0].CLUSTER}</div>
             </React.Fragment>);
         } else if (hoveredRecords.length > 1) {
-            console.log("Hovered Location", hoveredLocation)
-            console.log("Hovered Records", hoveredRecords)
             const minBaf = _.minBy(hoveredRecords, "averageBaf")!.averageBaf;
             const maxBaf = _.maxBy(hoveredRecords, "averageBaf")!.averageBaf;
             const meanBaf = _.meanBy(hoveredRecords, "averageBaf");
@@ -267,7 +260,6 @@ export class Scatterplot extends React.Component<Props, State> {
 
     componentDidUpdate(prevProps: Props) {
         if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
-            //this.onTrigger(this.state.brushedNodes);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -363,17 +355,19 @@ export class Scatterplot extends React.Component<Props, State> {
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
 
         let highlight = function (m : MergedGenomicBin) {
-            let selected_cluster = String(m.bins[0].CLUSTER);
+            if(m.bins[0].CLUSTER != -1) {
+                let selected_cluster = String(m.bins[0].CLUSTER);
+                
+                d3.selectAll(".test" + selected_cluster)
+                    .transition()
+                    .duration(400)
+                    .style("fill", customColor)
 
-            d3.selectAll(".test" + selected_cluster)
-                .transition()
-                .duration(400)
-                .style("fill", customColor)
-
-            let col = colorScale(selected_cluster);
-            for (let i = 0; i < CLUSTER_COLORS.length; i++) {
-                if (CLUSTER_COLORS[i] == col) {
-                    CLUSTER_COLORS[i] = customColor
+                let col = colorScale(selected_cluster);
+                for (let i = 0; i < CLUSTER_COLORS.length; i++) {
+                    if (CLUSTER_COLORS[i] == col) {
+                        CLUSTER_COLORS[i] = customColor
+                    }
                 }
             }
         }
@@ -423,8 +417,6 @@ export class Scatterplot extends React.Component<Props, State> {
         const circleId = this._circleIdPrefix;
         const plot = this._svg;
         const invert = this.props.invertAxis;
-        let trigger = this.onTrigger;
-        let assigned = this.state.assigned;
         let self = this;
         function updatePoints() {
             if (data) {
@@ -457,8 +449,9 @@ export class Scatterplot extends React.Component<Props, State> {
             }
         }
 
-        if(assigned) {
-            this.setState({assigned: true}) 
+        if(assignCluster) {
+            this.onTrigger(this.state.brushedNodes);
+            this.setState({brushedNodes: []})
         }
      }
 
@@ -501,11 +494,14 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         for (const element of elements) {
             const r = Number(element.getAttribute("r"));
-            const parent = element.parentElement!;
-            element.remove();
-            element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
-            element.removeAttribute("stroke");
-            parent.insertBefore(element, parent.firstChild); // Move the element to the very back
+            console.log(r);
+            if(r) {
+                const parent = element.parentElement!;
+                element.remove();
+                element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
+                element.removeAttribute("stroke");
+                parent.insertBefore(element, parent.firstChild); // Move the element to the very back
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ import _ from "lodash";
 import { GenomicBin } from "./GenomicBin";
 import { MergedGenomicBin, BinMerger } from "./BinMerger";
 import { group } from "d3-array";
+import { cluster } from "d3-hierarchy";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -46,8 +47,8 @@ export class DataWarehouse {
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
     constructor(rawData: GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
+        console.log("RAW DATA: ", rawData.length);
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
-        console.log("All bins: ", rawData);
         this._indexedData = {};
         this._indexedMergedData = {};
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -63,6 +64,7 @@ export class DataWarehouse {
             let mergedClusterChrDict : {[cl : string] : {[chr : string] : MergedGenomicBin[]}} = {};
             if(applyClustering) {
                 for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
+                    console.log("cluster: ", cluster)
                     const groupedByChr = _.groupBy(binsForCluster, "#CHR");
                     
                     if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
@@ -88,7 +90,7 @@ export class DataWarehouse {
         }
 
         console.log("INDEXED DATA: ", this._indexedData);
-        console.log("MERGED DATA: ", this._indexedMergedData);
+        //console.log("MERGED DATA: ", this._indexedMergedData);
         if (rawData.length > 0) {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         } else {
@@ -190,6 +192,25 @@ export class DataWarehouse {
      */
     getMergedRecords(sample: string, chr: string, cluster: string): MergedGenomicBin[] {
         return this._getData(this._indexedMergedData, sample, chr, cluster);
+    }
+
+    getRawData() : GenomicBin[] {
+
+        //console.log(test.length);
+        let rawData : GenomicBin[] = []
+        for (const value of Object.values(this._indexedData)) {
+            let chrDictArr  = Object.values(value);
+            for (const chrDict of chrDictArr) {
+                let binArr = _.flatten(Object.values(chrDict));
+                for(const bin of binArr) {
+                    rawData.push(bin);  
+                }
+            }
+        }
+
+        rawData = [...new Set(rawData)];
+        console.log("RAW DATA 2: ", rawData.length);
+        return rawData;
     }
 
     /**
