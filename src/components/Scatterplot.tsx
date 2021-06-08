@@ -452,6 +452,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if(assignCluster) {
             this.onTrigger(this.state.brushedNodes);
             this.setState({brushedNodes: []})
+            this._clusters = this.initializeListOfClusters();
         }
      }
 

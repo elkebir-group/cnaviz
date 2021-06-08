@@ -211,8 +211,9 @@ export class App extends React.Component<{}, State> {
 
         for (const node of childData["data"]) {
             for (let i=0; i < allBins.length; i++) {
-                if(node.bins[0] === allBins[i]) {
-                    //console.log("doing it")
+                if(node.bins[0]["#CHR"] === allBins[i]["#CHR"] 
+                    && node.bins[0]["START"] === allBins[i]["START"] 
+                    && node.bins[0]["END"] === allBins[i]["END"]) {
                     allBins[i] = {
                         "#CHR": allBins[i]["#CHR"],
                         "START": allBins[i]["START"],
