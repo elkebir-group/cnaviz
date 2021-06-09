@@ -281,7 +281,7 @@ export class Scatterplot extends React.Component<Props, State> {
         };
     }
 
-    onTrigger = (brushedNodes : any) => {
+    onTrigger = (brushedNodes : MergedGenomicBin[]) => {
         this.props.parentCallBack(brushedNodes);
     }
 
@@ -495,7 +495,6 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         for (const element of elements) {
             const r = Number(element.getAttribute("r"));
-            console.log(r);
             if(r) {
                 const parent = element.parentElement!;
                 element.remove();

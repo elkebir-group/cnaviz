@@ -66,23 +66,8 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.props.onLocationHovered(location);
     }
 
-    handleCallBack = (childData : any) =>{
-        //this.setState({name: childData})
-        // console.log(childData);
-        // let allBins = this.props.data.getRecords(this.state.selectedSample, this.state.selectedCluster, "");
-        // for (const node of childData) {
-        //     for (let i=0; i < allBins.length; i++) {
-        //         if(node === allBins[i]) {
-        //             allBins[i].CLUSTER = 0;
-        //         }
-        //     }     
-        // }
-
-        // this.setState({data : new DataWarehouse(allBins)});
-        console.log("CHILD DATA: ", childData)
-        //if(this.props.assignCluster) {
-        this.props.parentCallBack({"data": childData, "selectedSample": this.state.selectedSample});
-        //}
+    handleCallBack = (childData : MergedGenomicBin[]) => {
+        this.props.parentCallBack(childData);
     }
 
     render() {

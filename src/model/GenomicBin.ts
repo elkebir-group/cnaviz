@@ -30,5 +30,22 @@ export const GenomicBinHelpers = {
      */
     toChromosomeInterval: function(bin: GenomicBin): ChromosomeInterval {
         return new ChromosomeInterval(bin["#CHR"], bin.START, bin.END);
+    },
+
+    getLocationKey: function(bin: GenomicBin): string {
+        return bin["#CHR"]+"|"+bin.START+"|"+bin.END;
+    },
+
+    flattenNestedBins: function(arr : any, result : GenomicBin[] = []) : GenomicBin[] {
+        for (let i = 0, length = arr.length; i < length; i++) {
+          const value = arr[i];
+          if (Array.isArray(value)) {
+            this.flattenNestedBins(value, result);
+          } else {
+            result.push(value);
+          }
+        }
+        
+        return result;
     }
 }

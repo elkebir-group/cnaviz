@@ -1,8 +1,9 @@
 import _ from "lodash";
-import { GenomicBin } from "./GenomicBin";
+import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import { MergedGenomicBin, BinMerger } from "./BinMerger";
 import { group } from "d3-array";
 import { cluster } from "d3-hierarchy";
+import { ChromosomeInterval } from "./ChromosomeInterval";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -14,7 +15,11 @@ type IndexedBioData<T> = {
         [cluster: string] : {
             [chr: string]: T
         }
-    } 
+    }
+};
+
+type LocationIndexedData<T> = {
+    [loc : string]: T
 };
 
 /**
@@ -30,12 +35,12 @@ export class DataWarehouse {
     public static readonly ALL_CLUSTERS_KEY : string = "";
 
     /** Indexed GenomicBin for supporting fast queries. */
-    private readonly _indexedData: IndexedBioData<GenomicBin[]>;
+    private _indexedData: IndexedBioData<GenomicBin[]>;
     /** Indexed, pre-aggregated GenomicBin for supporting fast queries. */
-    private readonly _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
+    private _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
     /** The range of read depth ratios represented in this data set.  First number is min, second is max. */
     private readonly _rdRange: [number, number];
-
+    private readonly _locationGroupedData: LocationIndexedData<GenomicBin[]>;
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -46,9 +51,34 @@ export class DataWarehouse {
      * @param merger aggregator to use
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
-    constructor(rawData: GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
-        console.log("RAW DATA: ", rawData.length);
+    constructor(rawData: GenomicBin[], applyClustering: boolean) {
+        //console.log("RAW DATA: ", rawData.length);
+        this._locationGroupedData = {};
+        for(const bin of rawData) {
+            if(this._locationGroupedData[GenomicBinHelpers.getLocationKey(bin)]) {
+                this._locationGroupedData[GenomicBinHelpers.getLocationKey(bin)].push(bin);
+            } else {
+                this._locationGroupedData[GenomicBinHelpers.getLocationKey(bin)] = [bin];
+            }
+        }
+        
+        this._rdRange = [0, 0];
+        this._indexedData = {};
+        this._indexedMergedData = {};
+        this.initializeBins(rawData, applyClustering);
+
+        if (rawData.length > 0) {
+            this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
+        }
+        this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
+        this.getClusterList = this.getClusterList.bind(this);
+    }
+
+    initializeBins(rawData:GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
+        this._indexedData = {};
+        this._indexedMergedData = {};
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
+        
         this._indexedData = {};
         this._indexedMergedData = {};
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -62,9 +92,9 @@ export class DataWarehouse {
 
             let clusterChrDict : {[cl : string] : {[chr : string] : GenomicBin[]}} = {};
             let mergedClusterChrDict : {[cl : string] : {[chr : string] : MergedGenomicBin[]}} = {};
+            
             if(applyClustering) {
                 for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
-                    console.log("cluster: ", cluster)
                     const groupedByChr = _.groupBy(binsForCluster, "#CHR");
                     
                     if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
@@ -77,7 +107,7 @@ export class DataWarehouse {
                     clusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
                     mergedClusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(mergedClusterChrDict[cluster]));
                 }
-           }
+            }
 
             this._indexedData[sample] = clusterChrDict;
             this._indexedMergedData[sample] = mergedClusterChrDict;
@@ -88,19 +118,8 @@ export class DataWarehouse {
                 Object.values(this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY])
             );
         }
-
-        console.log("INDEXED DATA: ", this._indexedData);
-        //console.log("MERGED DATA: ", this._indexedMergedData);
-        if (rawData.length > 0) {
-            this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
-        } else {
-            this._rdRange = [0, 0];
-        }
-        console.log(this._indexedData)
-        this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
-        this.getClusterList = this.getClusterList.bind(this); // Needed for getAllClusters() to work
     }
-
+    
     /**
      * @return whether this instance stores any data
      */
@@ -140,6 +159,35 @@ export class DataWarehouse {
         const nameList = Object.keys(this._indexedData[sample] || {});
         return nameList.filter(name => name !== DataWarehouse.ALL_CLUSTERS_KEY); // Remove the special ALL_CHRS_KEY
     }
+
+    updateCluster(childData: MergedGenomicBin[], cluster: number) {
+        for (let i = 0; i < childData.length; i++) {
+            const currKey = GenomicBinHelpers.getLocationKey(childData[i].bins[0])
+            if(this._locationGroupedData[currKey]) {
+                for(let j = 0; j < this._locationGroupedData[currKey].length; j++) {
+                    const currBin = this._locationGroupedData[currKey][j]
+                    this._locationGroupedData[currKey][j] = {
+                        "#CHR": currBin["#CHR"],
+                        "START": currBin["START"],
+                        "END": currBin["END"],
+                        "SAMPLE": currBin["SAMPLE"],
+                        "RD": currBin["RD"],
+                        "#SNPS": currBin["#SNPS"],
+                        "COV": currBin["COV"],
+                        "ALPHA": currBin["ALPHA"],
+                        "BETA": currBin["BETA"],
+                        "BAF": currBin["BAF"],
+                        "CLUSTER": cluster
+                    };
+                }
+            }
+        }
+
+        const allBins = Object.values(this._locationGroupedData);
+        this.initializeBins(GenomicBinHelpers.flattenNestedBins(allBins), true);
+    }
+
+    
 
     /**
      * Gets a list of chromosome names found in one sample.  If the sample is not in this data set, returns an empty
@@ -201,10 +249,18 @@ export class DataWarehouse {
             rawData = rawData.concat(binArr);
         }
         
-        console.log("RAW DATA 2: ", rawData.length);
         return rawData;
     }
 
+    getRawDataFilteredByCluster(chr: string) : GenomicBin[] {
+        let rawData : GenomicBin[] = []
+        for(const sample of this.getSampleList()) {
+            const binArr = this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][chr];
+            rawData = rawData.concat(binArr);
+        }
+        
+        return rawData;
+    }
     /**
      * Helper function for performing queries.
      * 

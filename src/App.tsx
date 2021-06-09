@@ -3,7 +3,7 @@ import parse from "csv-parse";
 import _, { sample } from "lodash";
 
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
-import { GenomicBin } from "./model/GenomicBin";
+import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 
@@ -15,6 +15,7 @@ import spinner from "./loading-small.gif";
 import {HuePicker, SliderPicker} from "react-color";
 import "./App.css";
 import { cpuUsage } from "process";
+import { MergedGenomicBin } from "./model/BinMerger";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -205,34 +206,8 @@ export class App extends React.Component<{}, State> {
         this.setState({value: event.target.value})
     }
 
-    handleCallBack(childData: any) {
-        const allBins = this.state.indexedData.getRawData();
-        console.log("Brushed nodes: ", childData["data"]);
-
-        for (const node of childData["data"]) {
-            for (let i=0; i < allBins.length; i++) {
-                if(node.bins[0]["#CHR"] === allBins[i]["#CHR"] 
-                    && node.bins[0]["START"] === allBins[i]["START"] 
-                    && node.bins[0]["END"] === allBins[i]["END"]) {
-                    allBins[i] = {
-                        "#CHR": allBins[i]["#CHR"],
-                        "START": allBins[i]["START"],
-                        "END": allBins[i]["END"],
-                        "SAMPLE": allBins[i]["SAMPLE"],
-                        "RD": allBins[i]["RD"],
-                        "#SNPS": allBins[i]["#SNPS"],
-                        "COV": allBins[i]["COV"],
-                        "ALPHA": allBins[i]["ALPHA"],
-                        "BETA": allBins[i]["BETA"],
-                        "BAF": allBins[i]["BAF"],
-                        "CLUSTER": Number(this.state.value)
-                    };
-                }
-            }     
-        }
-
-        this.setState({indexedData: new DataWarehouse(allBins, true)})
-        console.log(this.state.indexedData.getAllClusters());
+    handleCallBack(childData: MergedGenomicBin[]) {
+        this.state.indexedData.updateCluster(childData, Number(this.state.value));
         this.setState({assignCluster: false});
     }
 
