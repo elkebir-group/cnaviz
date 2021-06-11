@@ -1,7 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
 import _, { sample } from "lodash";
-
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
@@ -16,6 +15,7 @@ import {HuePicker, SliderPicker} from "react-color";
 import "./App.css";
 import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
+import keydown, { Keys } from "react-keydown";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -116,14 +116,18 @@ interface State {
     inputError: boolean;
     
     value: string;
+
 }
+
 
 /**
  * Top-level container.
  * 
  * @author Silas Hsu
  */
+//@keydown
 export class App extends React.Component<{}, State> {
+    
     constructor(props: {}) {
         super(props);
         this.state = {
@@ -153,7 +157,24 @@ export class App extends React.Component<{}, State> {
         this.handleAssignCluster = this.handleAssignCluster.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleClusterAssignmentInput = this.handleClusterAssignmentInput.bind(this);
+        const { ENTER, TAB, SHIFT } = Keys;
+        const KEYS = [ 'shift+up', 'shift+down']
+        
     }
+
+    // componentWillReceiveProps( { keydown } : any) {
+    //     if ( keydown.event ) {
+    //       // inspect the keydown event and decide what to do
+    //       //if(keydown.event.key == SHIFT)
+    //         // if(keydown.event.keycode == 16) {
+    //         //     console.log("hello")
+    //         // }
+    //         if(keydown.event.keyCode == 16) {
+    //             console.log(keydown.event)
+    //         }
+    //         //console.log(keydown.event);
+    //     }
+    // }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;

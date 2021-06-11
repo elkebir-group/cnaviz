@@ -311,9 +311,13 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
             // Create brush and limit it to the scatterplot region
             const brush = d3.brush()
+            .keyModifiers(false)
+            //.filter(() => d3.event.shiftKey)
             .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
                     [width - PADDING.right + 2*CIRCLE_R , height - PADDING.bottom + 2*CIRCLE_R]])
-                    .on("brush end", updatePoints);
+                    .on("brush end", function() {
+                        updatePoints(d3.event.shiftKey)
+                    });
 
             // attach the brush to the chart
             const gBrush = svg.append('g')
@@ -396,7 +400,14 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("fill-opacity", 0.8)
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
-                    .on("click", highlight);
+                    .on("click", function(d) {
+                        // if(d3.event.shiftKey) {
+                        //     highlight(d);
+                        //     //console.log("SHIFT: ", d3.event.shiftKey)
+                        // } else {
+                        //     console.log("shiftKey not pressed")
+                        // };
+                    });
         
         /**
          * Based on which values are on the x/y axes and which axis the caller is requesting, 
@@ -418,10 +429,14 @@ export class Scatterplot extends React.Component<Props, State> {
         const plot = this._svg;
         const invert = this.props.invertAxis;
         let self = this;
-        function updatePoints() {
+        var shiftKey : boolean;
+        d3.select(window).on("keydown", function() {
+            shiftKey = d3.event.shiftKey;
+        });
+        function updatePoints(event : any) {
             if (data) {
                 try {
-                    const { selection } = d3.event;
+                    const { selection, key } = d3.event;
                     brushNodes = visutils.filterInRect(data, selection, (d : MergedGenomicBin) => xScale(rdOrBaf(d, invert, true)), (d : MergedGenomicBin)  => yScale(rdOrBaf(d, invert, false)));
                     if (brushNodes) {
                         for (const node of brushNodes) {
@@ -431,17 +446,12 @@ export class Scatterplot extends React.Component<Props, State> {
                                 element.setAttribute("fill", customColor);      
                             }
                         }
-                        self.setState({brushedNodes: brushNodes});
-                        // for (const node of brushNodes) {
-                        //     for (let i=0; i < data.length; i++) {
-                        //         if(node === data[i]) {
-                        //             for (let j=0; j < data[i].bins.length; j++) {
-                        //                 data[i].bins[j].CLUSTER = 0;
-                        //             }
-                        //         }
-                        //     }     
-                        // }
                         
+                        if(shiftKey) {
+                            brushNodes = brushNodes.concat(self.state.brushedNodes)
+                        }
+
+                        self.setState({brushedNodes: brushNodes});                   
                     } 
                 } catch (error) {
                     console.log(error);
