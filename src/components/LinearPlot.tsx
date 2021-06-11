@@ -92,7 +92,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             return;
         }
         const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, color} = this.props;
-
+        console.log(data);
         const xScale = this.getXScale(width, genome, chr);
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
@@ -172,7 +172,12 @@ export class LinearPlot extends React.PureComponent<Props> {
         const xScale = this.getXScale(width, genome, chr);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
-        const boxWidth = Math.ceil(xScale(implicitCoords.end) || 0 - (start || 0));
+        console.log("START: ", start || 0);
+        console.log("END: ", xScale(implicitCoords.end) || 0);
+        let result = Math.ceil(xScale(implicitCoords.end) || 0) - (start || 0);
+        console.log("Subtract: ", Math.ceil(result));
+        const boxWidth = result;//Math.ceil(xScale(implicitCoords.end) || 0 - (start || 0));
+        console.log("BOX WIDTH: ", boxWidth);
         return <div style={{
             position: "absolute",
             left: start,

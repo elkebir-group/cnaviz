@@ -45,8 +45,6 @@ export class DataWarehouse {
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
      * 
-     * 
-     * 
      * @param rawData the data to process
      * @param merger aggregator to use
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
@@ -188,7 +186,6 @@ export class DataWarehouse {
     }
 
     
-
     /**
      * Gets a list of chromosome names found in one sample.  If the sample is not in this data set, returns an empty
      * list.

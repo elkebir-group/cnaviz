@@ -269,6 +269,13 @@ export class App extends React.Component<{}, State> {
         });
     }
 
+    handleKeyPress = (event : any) => {
+        if(event.key === 'Shift'){
+          console.log('Shift press here! ')
+        }
+    }
+
+    
     render() {
         const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster} = this.state;
         const samples = indexedData.getSampleList();
