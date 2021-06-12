@@ -111,8 +111,6 @@ interface State {
 
     applyClustering: boolean;
 
-    clusterAssignment: number;
-
     inputError: boolean;
     
     value: string;
@@ -125,7 +123,7 @@ interface State {
  * 
  * @author Silas Hsu
  */
-//@keydown
+//@keydown("DELETE")
 export class App extends React.Component<{}, State> {
     
     constructor(props: {}) {
@@ -143,7 +141,6 @@ export class App extends React.Component<{}, State> {
             assigned: false,
             applyLog: false,
             applyClustering: false,
-            clusterAssignment: -1,
             inputError: false,
             value: ""
         };
@@ -157,9 +154,6 @@ export class App extends React.Component<{}, State> {
         this.handleAssignCluster = this.handleAssignCluster.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleClusterAssignmentInput = this.handleClusterAssignmentInput.bind(this);
-        const { ENTER, TAB, SHIFT } = Keys;
-        const KEYS = [ 'shift+up', 'shift+down']
-        
     }
 
     // componentWillReceiveProps( { keydown } : any) {
@@ -169,12 +163,26 @@ export class App extends React.Component<{}, State> {
     //         // if(keydown.event.keycode == 16) {
     //         //     console.log("hello")
     //         // }
-    //         if(keydown.event.keyCode == 16) {
-    //             console.log(keydown.event)
-    //         }
-    //         //console.log(keydown.event);
+    //         console.log(keydown.event);
     //     }
     // }
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.onCero, false);
+      }
+      
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.onCero, false);
+    }
+
+    onCero = (e:any) => {
+        //if (e.keyCode === 27 || e.keyCode === 13) {
+        if(e.keyCode === 8) {
+            console.log("CLUSTER DELETED: ", this.state.value);
+            this.state.indexedData.deleteCluster(Number(this.state.value));
+            this.setState({indexedData: this.state.indexedData});
+        }
+    };
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
@@ -299,6 +307,7 @@ export class App extends React.Component<{}, State> {
     
     render() {
         const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster} = this.state;
+        console.log("Render method");
         const samples = indexedData.getSampleList();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {

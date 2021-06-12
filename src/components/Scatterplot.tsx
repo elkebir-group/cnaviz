@@ -260,6 +260,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
     componentDidUpdate(prevProps: Props) {
         if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
+            console.log("data changed");
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -286,6 +287,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     redraw() {
+        console.time("test");
         if (!this._svg) {
             return;
         }
@@ -400,14 +402,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("fill-opacity", 0.8)
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
-                    .on("click", function(d) {
-                        // if(d3.event.shiftKey) {
-                        //     highlight(d);
-                        //     //console.log("SHIFT: ", d3.event.shiftKey)
-                        // } else {
-                        //     console.log("shiftKey not pressed")
-                        // };
-                    });
+                    .on("click", highlight);
         
         /**
          * Based on which values are on the x/y axes and which axis the caller is requesting, 
@@ -464,6 +459,7 @@ export class Scatterplot extends React.Component<Props, State> {
             this.setState({brushedNodes: []})
             this._clusters = this.initializeListOfClusters();
         }
+        console.timeEnd("test");
      }
 
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
