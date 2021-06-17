@@ -61,8 +61,11 @@ interface Props {
     invertAxis: boolean;
     onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
+    onBrushedBinsUpdated: any;
     customColor: string;
     assignCluster: boolean;
+    brushedBins: MergedGenomicBin[];
+    updatedBins: boolean;
 }
 
 interface State {
@@ -92,9 +95,11 @@ export class Scatterplot extends React.Component<Props, State> {
         this.handleClick = this.handleClick.bind(this);
         this.handleCurveHovered = this.handleCurveHovered.bind(this);
         this.onTrigger = this.onTrigger.bind(this);
+        this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
+
         this.state = {
-            brushedNodes: []
+            brushedNodes: props.brushedBins
         }
     }
 
@@ -249,7 +254,7 @@ export class Scatterplot extends React.Component<Props, State> {
         </div>;
     }
 
-    componentDidMount() {
+    componentDidMount() { 
         this.redraw();
         this.forceHover(this.props.hoveredLocation);
     }
@@ -259,8 +264,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["data", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
-            console.log("data changed");
+        if (this.propsDidChange(prevProps, ["brushedBins", "data", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -286,13 +290,17 @@ export class Scatterplot extends React.Component<Props, State> {
         this.props.parentCallBack(brushedNodes);
     }
 
+    onBrushedBinsUpdated = (brushedNodes: MergedGenomicBin[]) => {
+        this.props.onBrushedBinsUpdated(brushedNodes);
+    }
+
     redraw() {
         console.time("test");
         if (!this._svg) {
             return;
         }
 
-        const {width, height, onRecordsHovered, curveState, customColor, assignCluster} = this.props;
+        const {width, height, onRecordsHovered, curveState, customColor, assignCluster, invertAxis, brushedBins} = this.props;
         let {data} = this.props
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
@@ -302,24 +310,22 @@ export class Scatterplot extends React.Component<Props, State> {
         let yScale = rdrScale;
         let xLabel = "0.5 - B-Allele Frequency";
         let yLabel = "Read Depth Ratio";
-        if (this.props.invertAxis) {
+        if (invertAxis) {
             [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "Read Depth Ratio", "0.5 - B-Allele Frequency"];
         }
 
         // Remove previous brush
         svg.selectAll("." + "brush").remove();
 
-        let brushNodes : MergedGenomicBin[] = []; //this.state.brushedNodes;
+        let brushNodes : MergedGenomicBin[] = [];
         if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
             // Create brush and limit it to the scatterplot region
             const brush = d3.brush()
             .keyModifiers(false)
-            //.filter(() => d3.event.shiftKey)
             .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
                     [width - PADDING.right + 2*CIRCLE_R , height - PADDING.bottom + 2*CIRCLE_R]])
-                    .on("brush end", function() {
-                        updatePoints(d3.event.shiftKey)
-                    });
+                    .on("start brush", updatePoints)
+                    .on("end", endBrush);
 
             // attach the brush to the chart
             const gBrush = svg.append('g')
@@ -361,7 +367,7 @@ export class Scatterplot extends React.Component<Props, State> {
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
 
         let highlight = function (m : MergedGenomicBin) {
-            if(m.bins[0].CLUSTER != -1) {
+            if(m.bins[0].CLUSTER !== -1) {
                 let selected_cluster = String(m.bins[0].CLUSTER);
                 
                 d3.selectAll(".test" + selected_cluster)
@@ -378,13 +384,15 @@ export class Scatterplot extends React.Component<Props, State> {
             }
         }
 
-        let previous_brushed_nodes = this.state.brushedNodes;
-        
+        //console.log("length: ", this.state.brushedNodes.length);
+        const previous_brushed_nodes = brushedBins;
+
         // Add circles
+        console.time("test");
         svg.append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
             .selectAll("circle")
-                .data(data)
+                .data(data, function(d : any) { return (JSON.stringify(d))})
                 .enter()
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
@@ -392,9 +400,12 @@ export class Scatterplot extends React.Component<Props, State> {
                         return "dot " + "test" + String(d.bins[0].CLUSTER);})
                     .attr("cx", d => xScale(rdOrBaf(d, this.props.invertAxis, true)) || 0)
                     .attr("cy", d => yScale(rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
-                    .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length))
+                    .attr("r", d => CIRCLE_R + 1) //+ Math.sqrt(d.bins.length))
                     .attr("fill", function(d:MergedGenomicBin) : string {
-                        if (previous_brushed_nodes.some(n => (n.location.chr === d.location.chr) && (n.location.start === d.location.start) && (n.location.end === d.location.end))) {
+                        if (previous_brushed_nodes.some(
+                            n => (n.location.chr === d.location.chr) 
+                                && (n.location.start === d.location.start) 
+                                && (n.location.end === d.location.end))) {
                             return customColor;
                         }
                         return (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.bins[0].CLUSTER));
@@ -403,7 +414,8 @@ export class Scatterplot extends React.Component<Props, State> {
                     .on("mouseenter", onRecordsHovered)
                     .on("mouseleave", () => onRecordsHovered(null))
                     .on("click", highlight);
-        
+        console.timeEnd("test");
+                    
         /**
          * Based on which values are on the x/y axes and which axis the caller is requesting, 
          * gives the relevant data (rdr or baf)
@@ -411,6 +423,7 @@ export class Scatterplot extends React.Component<Props, State> {
          * @param invert Indicates which value is on the x-axis and which is on the y (True: baf is on the x-axis)
          * @param xAxis True if it should return the x-axis value
          * @returns Either the averageRd or averageBaf
+         * @author Zubair Lalani
          */
         function rdOrBaf(m : MergedGenomicBin, invert : boolean, xAxis : boolean) {
             if (xAxis) {
@@ -420,19 +433,26 @@ export class Scatterplot extends React.Component<Props, State> {
             }
         }
 
+        function endBrush() {
+            self.onBrushedBinsUpdated(self.state.brushedNodes);
+        }
+
         const circleId = this._circleIdPrefix;
         const plot = this._svg;
         const invert = this.props.invertAxis;
-        let self = this;
-        var shiftKey : boolean;
+        const self = this;
+        let shiftKey : boolean;
         d3.select(window).on("keydown", function() {
             shiftKey = d3.event.shiftKey;
+            console.log("ShiftKey");
         });
-        function updatePoints(event : any) {
+
+        function updatePoints() {
             if (data) {
                 try {
-                    const { selection, key } = d3.event;
+                    const { selection } = d3.event;
                     brushNodes = visutils.filterInRect(data, selection, (d : MergedGenomicBin) => xScale(rdOrBaf(d, invert, true)), (d : MergedGenomicBin)  => yScale(rdOrBaf(d, invert, false)));
+
                     if (brushNodes) {
                         for (const node of brushNodes) {
                             const id = circleId + node.location.toString();
@@ -441,12 +461,14 @@ export class Scatterplot extends React.Component<Props, State> {
                                 element.setAttribute("fill", customColor);      
                             }
                         }
-                        
+
+                        console.log(shiftKey);
                         if(shiftKey) {
-                            brushNodes = brushNodes.concat(self.state.brushedNodes)
+                            brushNodes = _.uniq(brushNodes.concat(previous_brushed_nodes))
                         }
 
-                        self.setState({brushedNodes: brushNodes});                   
+                        self.setState({brushedNodes: brushNodes});
+                        //self.onBrushedBinsUpdated(this.state.brushNodes);                
                     } 
                 } catch (error) {
                     console.log(error);

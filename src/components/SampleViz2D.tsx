@@ -26,6 +26,9 @@ interface Props {
     invertAxis?: boolean;
     customColor: string;
     assignCluster: boolean;
+    onBrushedBinsUpdated: any;
+    brushedBins: MergedGenomicBin[];
+    updatedBins: boolean;
 }
 
 interface State {
@@ -51,6 +54,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
+        this.handleUpdatedBrushedBins = this.handleUpdatedBrushedBins.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -70,8 +74,12 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.props.parentCallBack(childData);
     }
 
+    handleUpdatedBrushedBins(brushedBins: MergedGenomicBin[]) {
+        this.props.onBrushedBinsUpdated(brushedBins);
+    }
+
     render() {
-        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis, customColor, assignCluster} = this.props;
+        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis, customColor, assignCluster, brushedBins, updatedBins} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -112,7 +120,10 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onRecordsHovered={this.handleRecordsHovered}
                     invertAxis= {invertAxis || false} 
                     customColor= {customColor}
-                    assignCluster= {assignCluster} />
+                    assignCluster= {assignCluster} 
+                    onBrushedBinsUpdated= {this.handleUpdatedBrushedBins}
+                    brushedBins= {brushedBins}
+                    updatedBins= {updatedBins}/>
             </DivWithBullseye>
         </div>;
     }

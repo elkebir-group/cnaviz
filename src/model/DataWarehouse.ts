@@ -1,6 +1,6 @@
 import _, { sample } from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
-import { MergedGenomicBin, BinMerger } from "./BinMerger";
+import { MergedGenomicBin, BinMerger, MergedBinHelpers } from "./BinMerger";
 import { group } from "d3-array";
 import { cluster } from "d3-hierarchy";
 import { ChromosomeInterval } from "./ChromosomeInterval";
@@ -46,6 +46,7 @@ export class DataWarehouse {
     private readonly _rdRange: [number, number];
     private _locationGroupedData: LocationIndexedData<GenomicBin[]>;
     private _clusterGroupedData: ClusterIndexedData<GenomicBin[]>;
+    private brushedBins: MergedGenomicBin[];
 
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -66,6 +67,8 @@ export class DataWarehouse {
         this._indexedMergedData = {};
         this.initializeBins(rawData, applyClustering);
 
+        this.brushedBins = [];
+
         if (rawData.length > 0) {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         }
@@ -85,14 +88,12 @@ export class DataWarehouse {
     }
 
     initializeBins(rawData:GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
+        console.time("initializing bins");
         this._indexedData = {};
         this._indexedMergedData = {};
 
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         this._clusterGroupedData = _.groupBy(rawData, "CLUSTER");
-
-        this._indexedData = {};
-        this._indexedMergedData = {};
         
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
             const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
@@ -127,10 +128,11 @@ export class DataWarehouse {
             this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = sampleGroupedByChr;
             this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = _.mapValues(sampleGroupedByChr, merger.doMerge);
             this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(sampleGroupedByChr));
-                this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(
+            this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(
                 Object.values(this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY])
             );
         }
+        console.timeEnd("initializing bins");
     }
     
     /**
@@ -173,9 +175,9 @@ export class DataWarehouse {
         return nameList.filter(name => name !== DataWarehouse.ALL_CLUSTERS_KEY); // Remove the special ALL_CHRS_KEY
     }
 
-    updateCluster(childData: MergedGenomicBin[], cluster: number) {
-        for (let i = 0; i < childData.length; i++) {
-            const currKey = GenomicBinHelpers.getLocationKey(childData[i].bins[0])
+    updateCluster(cluster: number) {
+        for (let i = 0; i < this.brushedBins.length; i++) {
+            const currKey = GenomicBinHelpers.getLocationKey(this.brushedBins[i].bins[0])
             if(this._locationGroupedData[currKey]) {
                 for(let j = 0; j < this._locationGroupedData[currKey].length; j++) {
                     const currBin = this._locationGroupedData[currKey][j]
@@ -195,7 +197,8 @@ export class DataWarehouse {
                 }
             }
         }
-
+        
+        this.brushedBins = [];
         const allBins = Object.values(this._locationGroupedData);
         this.initializeBins(GenomicBinHelpers.flattenNestedBins(allBins), true);
     }
@@ -282,6 +285,15 @@ export class DataWarehouse {
         
         return rawData;
     }
+
+    setbrushedBins(brushedBins: MergedGenomicBin[]) {
+        this.brushedBins = brushedBins;
+    }
+
+    getBrushedBins() {
+        return this.brushedBins;
+    }
+
     /**
      * Helper function for performing queries.
      * 

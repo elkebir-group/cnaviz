@@ -1,6 +1,7 @@
-import _ from "lodash";
+import _, { first } from "lodash";
 import { GenomicBin } from "./GenomicBin";
 import { ChromosomeInterval } from "./ChromosomeInterval";
+import { group } from "d3-array";
 
 /**
  * Output of BinMerger -- an aggregation of GenomicBins that are adjacent in the genome.
@@ -27,6 +28,7 @@ export interface MergedGenomicBin {
 export class BinMerger {
     private readonly _rdThreshold: number;
     private readonly _bafThreshold: number;
+    private readonly _binsPerMergeThreshold: number;
 
     /**
      * Makes a new instance with parameters that represent the extent to which data points must be similar in order for
@@ -35,10 +37,12 @@ export class BinMerger {
      * @param rdThreshold similarity threshold for read depth ratio
      * @param bafThreshold similarity threshold for b allele frequency
      */
-    constructor(rdThreshold=0.0000000004, bafThreshold=0.000000001) { // originally 0.4, 0.1
+    constructor(rdThreshold=0.0, bafThreshold=0.0, binsPerMergeThreshold=3) { // originally 0.4, 0.1
         this._rdThreshold = rdThreshold;
         this._bafThreshold = bafThreshold;
+        this._binsPerMergeThreshold = binsPerMergeThreshold;
         this.doMerge = this.doMerge.bind(this);
+        this.doNeighboringBinsMerge = this.doNeighboringBinsMerge.bind(this);
     }
 
     /**
@@ -73,6 +77,13 @@ export class BinMerger {
                 } else {
                     break;
                 }
+
+                // const thisBin = bins[j];
+                // if(thisBin && firstBinOfMerge["#CHR"] === thisBin["#CHR"]) {
+                //     binsInCurrentMerge.push(thisBin);
+                // } else {
+                //     break;
+                // }
             }
 
             merged.push({
@@ -81,6 +92,41 @@ export class BinMerger {
                 averageBaf: _.meanBy(binsInCurrentMerge, "BAF"),
                 bins: binsInCurrentMerge
             });
+            i = j;
+        }
+        return merged;
+    }
+
+    doNeighboringBinsMerge(bins: GenomicBin[]): MergedGenomicBin[] {
+        const merged: MergedGenomicBin[] = [];
+        let i = 0;
+        while (i < bins.length) {
+            const firstBinOfMerge = bins[i];
+            const binsInCurrentMerge = [firstBinOfMerge];
+
+            let j = i + 1;
+            for (; j < i+1 + this._binsPerMergeThreshold; j++) {
+                const thisBin = bins[j];
+                if(thisBin && firstBinOfMerge["#CHR"] === thisBin["#CHR"] && thisBin.CLUSTER === firstBinOfMerge.CLUSTER) {
+                    binsInCurrentMerge.push(thisBin);
+                } else {
+                    break;
+                }
+            }
+
+            // const groupedByCluster = _.groupBy(binsInCurrentMerge, "CLUSTER");
+            // let clusters = Object.keys(groupedByCluster);
+            // for (const cluster of clusters) {
+            //     groupedByCluster[cluster]  
+            // }
+
+            merged.push({
+                location: new ChromosomeInterval(firstBinOfMerge["#CHR"], firstBinOfMerge.START, bins[j - 1].END),
+                averageRd: _.meanBy(binsInCurrentMerge, "RD"),
+                averageBaf: _.meanBy(binsInCurrentMerge, "BAF"),
+                bins: binsInCurrentMerge
+            });
+            
             i = j;
         }
         return merged;
@@ -123,5 +169,14 @@ class MinMax {
         } else if (num < this._min) {
             this._min = num;
         }
+    }
+}
+
+export const MergedBinHelpers = {
+    flattenNestedDict(dict: {[cl : string] : {[chr : string] : MergedGenomicBin[]}}, result: any = []) {
+        Object.values(dict).forEach(d => result = result.concat(_.flatten(Object.values(d))));
+        //console.log(result);
+       
+        return result;
     }
 }

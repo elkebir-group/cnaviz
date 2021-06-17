@@ -61,6 +61,37 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
     })
 }
 
+function convertObjectArrToCSV(args : any) {
+    var result:any, ctr:any, keys:any, columnDelimiter:any, lineDelimiter:any, data:any;
+    data = args.data || null;
+    if (data == null || !data.length) {
+    return null;
+    }
+
+    columnDelimiter = args.columnDelimiter || ',';
+    lineDelimiter = args.lineDelimiter || '\n';
+
+    keys = Object.keys(data[0]);
+
+    result = '';
+    result += keys.join(columnDelimiter);
+    result += lineDelimiter;
+
+    data.forEach(function(item:any) {
+    ctr = 0;
+    keys.forEach(function(key:any) {
+    if (ctr > 0) result += columnDelimiter;
+
+    result += item[key];
+    ctr++;
+    });
+    result += lineDelimiter;
+    });
+
+    return result;
+}
+
+
 /**
  * Possible states of processing input data.
  */
@@ -115,6 +146,7 @@ interface State {
     
     value: string;
 
+    updatedBins: boolean;
 }
 
 
@@ -123,7 +155,7 @@ interface State {
  * 
  * @author Silas Hsu
  */
-//@keydown("DELETE")
+
 export class App extends React.Component<{}, State> {
     
     constructor(props: {}) {
@@ -142,7 +174,8 @@ export class App extends React.Component<{}, State> {
             applyLog: false,
             applyClustering: false,
             inputError: false,
-            value: ""
+            value: "0",
+            updatedBins: false
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -154,18 +187,8 @@ export class App extends React.Component<{}, State> {
         this.handleAssignCluster = this.handleAssignCluster.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleClusterAssignmentInput = this.handleClusterAssignmentInput.bind(this);
+        this.updateBrushedBins = this.updateBrushedBins.bind(this);
     }
-
-    // componentWillReceiveProps( { keydown } : any) {
-    //     if ( keydown.event ) {
-    //       // inspect the keydown event and decide what to do
-    //       //if(keydown.event.key == SHIFT)
-    //         // if(keydown.event.keycode == 16) {
-    //         //     console.log("hello")
-    //         // }
-    //         console.log(keydown.event);
-    //     }
-    // }
 
     componentDidMount() {
         document.addEventListener('keydown', this.onCero, false);
@@ -235,9 +258,15 @@ export class App extends React.Component<{}, State> {
         this.setState({value: event.target.value})
     }
 
-    handleCallBack(childData: MergedGenomicBin[]) {
-        this.state.indexedData.updateCluster(childData, Number(this.state.value));
+    handleCallBack() {
+        this.state.indexedData.updateCluster(Number(this.state.value));
         this.setState({assignCluster: false});
+    }
+
+    updateBrushedBins(brushedBins: MergedGenomicBin[]) {
+        this.state.indexedData.setbrushedBins(brushedBins);
+        this.setState({updatedBins: true});
+        this.forceUpdate();
     }
 
     handleAxisInvert() {
@@ -254,6 +283,26 @@ export class App extends React.Component<{}, State> {
 
     handleColorChange(color : any) {
         this.setState({color: color.hex});
+    }
+
+    downloadCSV(args:any) {
+        var data, filename, link;
+        var csv = convertObjectArrToCSV({
+            data: this.state.indexedData.getRawData()
+        });
+        if (csv == null) return;
+        
+        filename = args.filename || 'export.csv';
+        
+        if (!csv.match(/^data:text\/csv/i)) {
+        csv = 'data:text/csv;charset=utf-8,' + csv;
+        }
+        data = encodeURI(csv);
+        
+        link = document.createElement('a');
+        link.setAttribute('href', data);
+        link.setAttribute('download', filename);
+        link.click();
     }
 
     handleNewCurveState(newState: Partial<CurveState>) {
@@ -305,10 +354,11 @@ export class App extends React.Component<{}, State> {
     }
 
     
+    
     render() {
-        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster} = this.state;
-        console.log("Render method");
+        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster, updatedBins, value} = this.state;
         const samples = indexedData.getSampleList();
+        const brushedBins = indexedData.getBrushedBins();
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
@@ -320,7 +370,11 @@ export class App extends React.Component<{}, State> {
                 invertAxis,
                 chr: selectedChr,
                 customColor: color,
-                assignCluster
+                assignCluster,
+                onBrushedBinsUpdated: this.updateBrushedBins,
+                parentCallBack: this.handleCallBack,
+                brushedBins: brushedBins,
+                updatedBins: updatedBins
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -343,7 +397,7 @@ export class App extends React.Component<{}, State> {
                                 <button onClick={this.handleAxisInvert}> Invert Axes </button>
                                 <button onClick={this.handleAddSampleClick}> Add Sample </button>
                                 <button onClick={this.handleAssignCluster}> Assign Cluster </button>
-                                <input type="number" size={30} min="0" max="14" 
+                                <input type="number" value={value} size={30} min="0" max="14" 
                                         onChange={this.handleClusterAssignmentInput}/>
                             </div>
                             <div className = "col" style={{paddingTop: 5}}>
@@ -354,7 +408,7 @@ export class App extends React.Component<{}, State> {
                 
                 <div className="col">
                     <div className="row">
-                    {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D parentCallBack = {this.handleCallBack} key={i} {...scatterplotProps} /> </div>)}
+                    {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D key={i} {...scatterplotProps} /> </div>)}
                         <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div>   
                     </div>
                 </div>

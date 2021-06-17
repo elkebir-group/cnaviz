@@ -160,7 +160,7 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
                 id: chr.name,
                 label: chr.name.substr(3),
                 len: chr.length,
-                color: colorScale(chr.name)
+                color: ""
             });
         }
         return layout;
