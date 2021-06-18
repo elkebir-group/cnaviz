@@ -13,7 +13,6 @@ interface Props {
     chr: string;
     hoveredLocation?: ChromosomeInterval;
     initialSelectedSample?: string;
-    initialSelectedCluster?: string;
     onLocationHovered?: (location: ChromosomeInterval | null) => void;
 }
 
@@ -24,7 +23,6 @@ enum DisplayMode {
 
 interface State {
     selectedSample: string;
-    selectedCluster: string;
     displayMode: DisplayMode;
 }
 
@@ -33,20 +31,14 @@ export class SampleViz1D extends React.Component<Props, State> {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            selectedCluster: props.initialSelectedCluster || "",
             displayMode: DisplayMode.linear
         };
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
-        this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedSample: event.target.value});
-    }
-
-    handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({selectedCluster: event.target.value});
     }
 
     render() {
@@ -56,13 +48,7 @@ export class SampleViz1D extends React.Component<Props, State> {
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
 
-        const selectedCluster = this.state.selectedCluster;
-        const clusterOptions = data.getAllClusters().map((clusterName : string) =>
-            <option key={clusterName} value={clusterName}>{clusterName}</option>
-        );
-        clusterOptions.push(<option key="" value="">ALL</option>);
-
-        const selectedRecords = data.getRecords(selectedSample, chr, selectedCluster);
+        const selectedRecords = data.getRecords(selectedSample, chr);
         let visualization: React.ReactNode = null;
         if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
@@ -102,13 +88,6 @@ export class SampleViz1D extends React.Component<Props, State> {
                 </div>
             </div>
             
-            <div className="Cluster-select">
-                Select cluster: <select value={selectedCluster} 
-                                        onChange={this.handleSelectedClusterChanged} 
-                                        >
-                            {clusterOptions}
-                </select>
-            </div>
             {visualization}
         </div>;
     }

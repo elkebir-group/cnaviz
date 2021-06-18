@@ -17,6 +17,7 @@ import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
 import keydown, { Keys } from "react-keydown";
 
+
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -95,6 +96,8 @@ interface State {
     /** Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected. */
     selectedChr: string;
 
+    selectedCluster: string;
+
     /**  */
     curveState: CurveState;
 
@@ -135,6 +138,7 @@ export class App extends React.Component<{}, State> {
             indexedData: new DataWarehouse([], false),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
+            selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
             sampleAmount: 1,
@@ -149,6 +153,7 @@ export class App extends React.Component<{}, State> {
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
+        this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleNewCurveState = _.throttle(this.handleNewCurveState.bind(this), 20);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
@@ -197,7 +202,6 @@ export class App extends React.Component<{}, State> {
         let indexedData = null;
         try {
             const parsed = await parseGenomicBins(contents, this.state.applyLog, this.state.applyClustering);
-            console.log("Parsing")
             indexedData = new DataWarehouse(parsed, this.state.applyClustering);
         } catch (error) {
             console.error(error);
@@ -214,6 +218,11 @@ export class App extends React.Component<{}, State> {
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
         this.state.indexedData.setChrFilter(event.target.value);
+    }
+
+    handleClusterSelected(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.setState({selectedCluster: event.target.value});
+        this.state.indexedData.setClusterFilters([event.target.value]);
     }
 
     handleLocationHovered(location: ChromosomeInterval | null) {
@@ -304,10 +313,8 @@ export class App extends React.Component<{}, State> {
         }
     }
 
-    
-    
     render() {
-        const {indexedData, selectedChr, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster, updatedBins, value} = this.state;
+        const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster, updatedBins, value} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
         let mainUI = null;
@@ -320,6 +327,7 @@ export class App extends React.Component<{}, State> {
                 onLocationHovered: this.handleLocationHovered,
                 invertAxis,
                 chr: selectedChr,
+                cluster: selectedCluster,
                 customColor: color,
                 assignCluster,
                 onBrushedBinsUpdated: this.updateBrushedBins,
@@ -330,18 +338,26 @@ export class App extends React.Component<{}, State> {
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
-            
+
+            const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
+                <option key={clusterName} value={clusterName}>{clusterName}</option>
+            );
+            clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
+
             mainUI = <div>
-                <div className="App-global-controls" style={{marginLeft: 30}}>
-                        Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected} style={{marginLeft: 10}}>
+                    <div className="App-global-controls" style={{marginLeft: 30}}>
+                        Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected} style={{marginLeft: 10, marginRight: 30}}>
                             {chrOptions}
                         </select>
-                        <div className="row">
+                        Select cluster: <select value={selectedCluster} onChange={this.handleClusterSelected} style={{marginLeft: 10}}>
+                            {clusterOptions}
+                        </select>
+                        {/* <div className="row">
                             <div className="col">
                                 <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
                             </div>
-                        </div>
-                        <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} />
+                        </div> */}
+                        {/* <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} /> */}
                         
                         <div className="row">
                             <div className = "col">

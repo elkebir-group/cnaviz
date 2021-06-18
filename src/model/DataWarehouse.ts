@@ -121,9 +121,7 @@ export class DataWarehouse {
         this._merged_chr_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.location.chr);
         
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
-        
-        
+        this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);  
         
         if (rawData.length > 0) {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
@@ -281,9 +279,12 @@ export class DataWarehouse {
             this._cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
             this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
         }
-
+        
+        console.log(this._ndx.allFiltered());
+        console.log(this._merged_ndx.allFiltered());
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
+        
     }
 
     clearAllFilters() {
@@ -379,10 +380,13 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getRecords(sample: string, chr: string, cluster: string): GenomicBin[] {
+    getRecords(sample: string, chr?: string, cluster?: string): GenomicBin[] {
         //return this._getData(this._indexedData, sample, chr, cluster);
-        
-        return this._sampleGroupedData[sample]; //this._ndx.allFiltered();
+        if(sample in this._sampleGroupedData) {
+            return this._sampleGroupedData[sample];
+        }
+        //console.log(sample + " " + chr + " " + cluster);
+        return []; //this._ndx.allFiltered();
     }
 
     // getRecords(): GenomicBin[] {
@@ -398,9 +402,13 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getMergedRecords(sample: string, chr: string, cluster: string): MergedGenomicBin[] {
+    getMergedRecords(sample: string, chr?: string, cluster?: string): MergedGenomicBin[] {
         //return this._getData(this._indexedMergedData, sample, chr, cluster);
-        return this._sampleGroupedMergedData[sample]; //this._merged_ndx.allFiltered();//this._merged_sample_dim.top(Infinity);
+        if(sample in this._sampleGroupedMergedData) {
+            return this._sampleGroupedMergedData[sample];
+        }
+        //console.log(sample + " " + chr + " " + cluster);
+        return []; //this._merged_ndx.allFiltered();//this._merged_sample_dim.top(Infinity);
     }
 
     // getRawData() : GenomicBin[] {
@@ -431,6 +439,10 @@ export class DataWarehouse {
         return this.brushedBins;
     }
 
+    getClusterDim() {
+        return this._cluster_dim;
+    }
+    
     /**
      * Helper function for performing queries.
      * 

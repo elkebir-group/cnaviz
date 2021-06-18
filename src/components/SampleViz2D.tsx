@@ -15,6 +15,7 @@ interface Props {
     parentCallBack: any;
     data: DataWarehouse;
     chr: string;
+    cluster: string;
     initialSelectedSample?: string;
     initialSelectedCluster?: string;
     width?: number;
@@ -33,7 +34,7 @@ interface Props {
 
 interface State {
     selectedSample: string;
-    selectedCluster: string;
+    //selectedCluster: string;
 }
 
 export class SampleViz2D extends React.Component<Props, State> {
@@ -48,10 +49,10 @@ export class SampleViz2D extends React.Component<Props, State> {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            selectedCluster: props.initialSelectedCluster || ""
+           // selectedCluster: props.initialSelectedCluster || ""
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
-        this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
+        //this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleUpdatedBrushedBins = this.handleUpdatedBrushedBins.bind(this);
@@ -62,10 +63,10 @@ export class SampleViz2D extends React.Component<Props, State> {
         //this.props.data.setSampleFilter(event.target.value);
     }
 
-    handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({selectedCluster: event.target.value});
-        this.props.data.setClusterFilters([event.target.value]);
-    }
+    // handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
+    //     this.setState({selectedCluster: event.target.value});
+    //     this.props.data.setClusterFilters([event.target.value]);
+    // }
 
     handleRecordsHovered(record: MergedGenomicBin | null) {
         const location = record ? record.location : null;
@@ -86,34 +87,27 @@ export class SampleViz2D extends React.Component<Props, State> {
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        
-        const selectedCluster = this.state.selectedCluster;
-        const clusterOptions = data.getAllClusters().map((clusterName : string) =>
-            <option key={clusterName} value={clusterName}>{clusterName}</option>
-        );
-        clusterOptions.push(<option key="" value="">ALL</option>);
 
         const rdRange = data.getRdRange();
         rdRange[1] += 1; // Add one so it's prettier
-        //data.clearAllFilters();
-        //data.setFilters(selectedSample, chr, [selectedCluster]);
+
         return <div className="SampleViz">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
             </div>
-            <div className="Cluster-select">
+            {/* <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
                                         onChange={this.handleSelectedClusterChanged} 
                                         >
                             {clusterOptions}
                 </select>
-            </div>
+            </div> */}
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}
-                    data={data.getMergedRecords(selectedSample, chr, selectedCluster)}
+                    data={data.getMergedRecords(selectedSample, chr)}
                     rdRange={rdRange}
                     width={width}
                     height={height}
