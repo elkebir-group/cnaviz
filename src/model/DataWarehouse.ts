@@ -4,6 +4,8 @@ import { MergedGenomicBin, BinMerger, MergedBinHelpers } from "./BinMerger";
 import { group } from "d3-array";
 import { cluster } from "d3-hierarchy";
 import { ChromosomeInterval } from "./ChromosomeInterval";
+import "crossfilter2";
+import crossfilter from "crossfilter2";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -39,14 +41,30 @@ export class DataWarehouse {
     public static readonly ALL_CLUSTERS_KEY : string = "";
 
     /** Indexed GenomicBin for supporting fast queries. */
-    private _indexedData: IndexedBioData<GenomicBin[]>;
+    //private _indexedData: IndexedBioData<GenomicBin[]>;
     /** Indexed, pre-aggregated GenomicBin for supporting fast queries. */
-    private _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
+    //private _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
     /** The range of read depth ratios represented in this data set.  First number is min, second is max. */
     private readonly _rdRange: [number, number];
     private _locationGroupedData: LocationIndexedData<GenomicBin[]>;
     private _clusterGroupedData: ClusterIndexedData<GenomicBin[]>;
     private brushedBins: MergedGenomicBin[];
+    private readonly _merged_ndx: any;
+    private readonly _ndx: any;
+
+    private _sample_dim: any;
+    private _cluster_dim: any;
+    private _chr_dim: any;
+
+    private _merged_sample_dim: any;
+    private _merged_cluster_dim: any;
+    private _merged_chr_dim: any;
+
+    private _samples: string[];
+    private _clusters: string[];
+    private _chrs: string[];
+
+
 
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -56,24 +74,65 @@ export class DataWarehouse {
      * @param merger aggregator to use
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
-    constructor(rawData: GenomicBin[], applyClustering: boolean) {
+    constructor(rawData: GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
         //console.log("RAW DATA: ", rawData.length);
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
         this._clusterGroupedData = {};
-
+        this._ndx = crossfilter(rawData);
+        //console.log("ALL: ", this._ndx.all());
         this._rdRange = [0, 0];
-        this._indexedData = {};
-        this._indexedMergedData = {};
-        this.initializeBins(rawData, applyClustering);
+        //._indexedData = {};
+        //this._indexedMergedData = {};
+        
+        //this.initializeBins(rawData, applyClustering);
+        
+        this._samples = [];
+        this._chrs = [];
+        this._clusters = [];
 
         this.brushedBins = [];
+        console.time("test2");
+        let mergedArr : MergedGenomicBin[] = [];
+        const groupedBySample = _.groupBy(rawData, "SAMPLE");
+        for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
+            this._samples.push(sample);
+            const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
+            this._clusters = _.union(this._clusters, Object.keys(groupedByCluster));
+            for (const binsForCluster of Object.values(groupedByCluster)) {
+                const groupedByChr = _.groupBy(binsForCluster, "#CHR");
+                this._chrs = _.union(this._chrs, Object.keys(groupedByChr));
+                mergedArr = mergedArr.concat( _.flatten(Object.values(_.mapValues(groupedByChr, merger.doNeighboringBinsMerge))));
+            }
+        }
+
+        this._merged_ndx = crossfilter(mergedArr);
+        
+        this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
+        this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
+        this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
+
+        this._merged_sample_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].SAMPLE);
+        this._merged_cluster_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].CLUSTER);
+        this._merged_chr_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.location.chr);
+
+        console.log("ALL BEFORE FILTERED: ", this._ndx.allFiltered());
+        console.log("ALL  BEFORE FILTERED: ", this._merged_ndx.allFiltered());
+
+        this._sample_dim.filter((d:string) => d === this._samples[0]);
+        this._merged_sample_dim.filter((d:string) => d === this._samples[0]);
+
+        console.log(this._sample_dim.top(Infinity));
+        console.log("ALL FILTERED: ", this._ndx.allFiltered());
+        console.log("ALL FILTERED: ", this._merged_ndx.allFiltered());
+        console.timeEnd("test2");
 
         if (rawData.length > 0) {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         }
-        this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
-        this.getClusterList = this.getClusterList.bind(this);
+
+        //this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
+        //this.getClusterList = this.getClusterList.bind(this);
     }
 
     initializeLocationGroupedData(rawData: GenomicBin[]) {
@@ -87,53 +146,53 @@ export class DataWarehouse {
         }
     }
 
-    initializeBins(rawData:GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
-        console.time("initializing bins");
-        this._indexedData = {};
-        this._indexedMergedData = {};
+    // initializeBins(rawData:GenomicBin[], applyClustering: boolean, merger=new BinMerger()) {
+    //     console.time("initializing bins");
+    //     this._indexedData = {};
+    //     this._indexedMergedData = {};
 
-        const groupedBySample = _.groupBy(rawData, "SAMPLE");
-        this._clusterGroupedData = _.groupBy(rawData, "CLUSTER");
+    //     const groupedBySample = _.groupBy(rawData, "SAMPLE");
+    //     this._clusterGroupedData = _.groupBy(rawData, "CLUSTER");
         
-        for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
-            const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
-            const sampleGroupedByChr = _.groupBy(binsForSample, "#CHR");
+    //     for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
+    //         const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
+    //         const sampleGroupedByChr = _.groupBy(binsForSample, "#CHR");
 
-            if (DataWarehouse.ALL_CLUSTERS_KEY in  groupedByCluster) {
-                throw new Error(`Data contains reserved cluster name '${DataWarehouse.ALL_CLUSTERS_KEY}'.` +
-                    "Please remove or rename this chromosome from the data and try again.");
-            }
+    //         if (DataWarehouse.ALL_CLUSTERS_KEY in  groupedByCluster) {
+    //             throw new Error(`Data contains reserved cluster name '${DataWarehouse.ALL_CLUSTERS_KEY}'.` +
+    //                 "Please remove or rename this chromosome from the data and try again.");
+    //         }
 
-            let clusterChrDict : {[cl : string] : {[chr : string] : GenomicBin[]}} = {};
-            let mergedClusterChrDict : {[cl : string] : {[chr : string] : MergedGenomicBin[]}} = {};
+    //         let clusterChrDict : {[cl : string] : {[chr : string] : GenomicBin[]}} = {};
+    //         let mergedClusterChrDict : {[cl : string] : {[chr : string] : MergedGenomicBin[]}} = {};
             
-            if(applyClustering) {
-                for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
-                    const groupedByChr = _.groupBy(binsForCluster, "#CHR");
+    //         if(applyClustering) {
+    //             for (const [cluster, binsForCluster] of Object.entries(groupedByCluster)) {
+    //                 const groupedByChr = _.groupBy(binsForCluster, "#CHR");
                     
-                    if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
-                        throw new Error(`Data contains reserved chromosome name '${DataWarehouse.ALL_CHRS_KEY}'.` +
-                            "Please remove or rename this chromosome from the data and try again.");
-                    }
+    //                 if (DataWarehouse.ALL_CHRS_KEY in groupedByChr) {
+    //                     throw new Error(`Data contains reserved chromosome name '${DataWarehouse.ALL_CHRS_KEY}'.` +
+    //                         "Please remove or rename this chromosome from the data and try again.");
+    //                 }
 
-                    clusterChrDict[cluster] = groupedByChr;
-                    mergedClusterChrDict[cluster] = _.mapValues(groupedByChr, merger.doMerge);
-                    clusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
-                    mergedClusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(mergedClusterChrDict[cluster]));
-                }
-            }
+    //                 clusterChrDict[cluster] = groupedByChr;
+    //                 mergedClusterChrDict[cluster] = _.mapValues(groupedByChr, merger.doMerge);
+    //                 clusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(groupedByChr));
+    //                 mergedClusterChrDict[cluster][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(mergedClusterChrDict[cluster]));
+    //             }
+    //         }
 
-            this._indexedData[sample] = clusterChrDict;
-            this._indexedMergedData[sample] = mergedClusterChrDict;
-            this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = sampleGroupedByChr;
-            this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = _.mapValues(sampleGroupedByChr, merger.doMerge);
-            this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(sampleGroupedByChr));
-            this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(
-                Object.values(this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY])
-            );
-        }
-        console.timeEnd("initializing bins");
-    }
+    //         this._indexedData[sample] = clusterChrDict;
+    //         this._indexedMergedData[sample] = mergedClusterChrDict;
+    //         this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = sampleGroupedByChr;
+    //         this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] = _.mapValues(sampleGroupedByChr, merger.doMerge);
+    //         this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(Object.values(sampleGroupedByChr));
+    //         this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY] = _.flatten(
+    //             Object.values(this._indexedMergedData[sample][DataWarehouse.ALL_CLUSTERS_KEY])
+    //         );
+    //     }
+    //     console.timeEnd("initializing bins");
+    // }
     
     /**
      * @return whether this instance stores any data
@@ -156,61 +215,124 @@ export class DataWarehouse {
      * @return a list of sample names represented in this data set
      */
     getSampleList(): string[] {
-        return Object.keys(this._indexedData);
+        return this._samples;
     }
 
     /**
      * @return a list of chromosome names represented in this data set
      */
     getAllChromosomes(): string[] {
-        return _.uniq(this.getSampleList().flatMap(this.getChromosomeList));
+        return this._chrs;
     }
 
     getAllClusters(): string[] {
-        return _.uniq(this.getSampleList().flatMap(this.getClusterList));
+        return this._clusters;
     }
 
-    getClusterList(sample: string): string[] {
-        const nameList = Object.keys(this._indexedData[sample] || {});
-        return nameList.filter(name => name !== DataWarehouse.ALL_CLUSTERS_KEY); // Remove the special ALL_CHRS_KEY
+    setFilters(sample?: string, chr?: string, clusters?: string[]) {
+        if(sample) {
+            this._sample_dim.filter((d:string) => d === sample);
+            this._merged_sample_dim.filter((d:string) => d === sample);
+        }
+
+        if(chr) {
+            this._chr_dim.filter((d:string) => d === chr);
+            this._merged_chr_dim.filter((d:string) => d === chr);
+        }
+
+        if(clusters) {
+            this._cluster_dim.filter((d:string) => clusters.indexOf(d) === -1 ? false : true);
+            this._merged_cluster_dim.filter((d:string) => clusters.indexOf(d) === -1 ? false : true);
+        }
     }
+
+    setSampleFilter(sample?: string) {
+        if(sample) {
+            console.log("setting sample to: ", sample);
+            this._sample_dim.filterAll();
+            this._merged_sample_dim.filterAll();
+            this._sample_dim.filter((d:string) => d === sample);
+            this._merged_sample_dim.filter((d:string) => d === sample);
+        }
+    }
+
+    setChrFilter(chr?: string) {
+        if(chr) {
+            this._chr_dim.filterAll();
+            this._merged_chr_dim.filterAll();
+            this._chr_dim.filter((d:string) => d === chr);
+            this._merged_chr_dim.filter((d:string) => d === chr);
+        } else {
+            this._chr_dim.filterAll();
+            this._merged_chr_dim.filterAll();
+        }
+    }
+
+    setClusterFilters(clusters?: String[]) {
+        if(clusters && clusters.length == 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY) {
+            this._cluster_dim.filterAll();
+            this._merged_cluster_dim.filterAll();
+            return;
+        }
+
+        if(clusters && clusters.length > 0) {
+            console.log(clusters);
+            this._cluster_dim.filterAll();
+            this._merged_cluster_dim.filterAll();   
+            this._cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
+            this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
+        }
+    }
+
+    clearAllFilters() {
+        this._sample_dim.filterAll();
+        this._merged_sample_dim.filterAll();
+        this._cluster_dim.filterAll();
+        this._merged_cluster_dim.filterAll();
+        this._chr_dim.filterAll();
+        this._merged_chr_dim.filterAll();
+    }
+    // getClusterList(sample: string): string[] {
+    //     const nameList = Object.keys(this._indexedData[sample] || {});
+    //     return nameList.filter(name => name !== DataWarehouse.ALL_CLUSTERS_KEY); // Remove the special ALL_CHRS_KEY
+    // }
 
     updateCluster(cluster: number) {
-        for (let i = 0; i < this.brushedBins.length; i++) {
-            const currKey = GenomicBinHelpers.getLocationKey(this.brushedBins[i].bins[0])
-            if(this._locationGroupedData[currKey]) {
-                for(let j = 0; j < this._locationGroupedData[currKey].length; j++) {
-                    const currBin = this._locationGroupedData[currKey][j]
-                    this._locationGroupedData[currKey][j] = {
-                        "#CHR": currBin["#CHR"],
-                        "START": currBin["START"],
-                        "END": currBin["END"],
-                        "SAMPLE": currBin["SAMPLE"],
-                        "RD": currBin["RD"],
-                        "#SNPS": currBin["#SNPS"],
-                        "COV": currBin["COV"],
-                        "ALPHA": currBin["ALPHA"],
-                        "BETA": currBin["BETA"],
-                        "BAF": currBin["BAF"],
-                        "CLUSTER": cluster
-                    };
-                }
-            }
-        }
+        // for (let i = 0; i < this.brushedBins.length; i++) {
+        //     const currKey = GenomicBinHelpers.getLocationKey(this.brushedBins[i].bins[0])
+        //     if(this._locationGroupedData[currKey]) {
+        //         for(let j = 0; j < this._locationGroupedData[currKey].length; j++) {
+        //             const currBin = this._locationGroupedData[currKey][j]
+        //             this._locationGroupedData[currKey][j] = {
+        //                 "#CHR": currBin["#CHR"],
+        //                 "START": currBin["START"],
+        //                 "END": currBin["END"],
+        //                 "SAMPLE": currBin["SAMPLE"],
+        //                 "RD": currBin["RD"],
+        //                 "#SNPS": currBin["#SNPS"],
+        //                 "COV": currBin["COV"],
+        //                 "ALPHA": currBin["ALPHA"],
+        //                 "BETA": currBin["BETA"],
+        //                 "BAF": currBin["BAF"],
+        //                 "CLUSTER": cluster
+        //             };
+        //         }
+        //     }
+        // }
         
-        this.brushedBins = [];
-        const allBins = Object.values(this._locationGroupedData);
-        this.initializeBins(GenomicBinHelpers.flattenNestedBins(allBins), true);
+        // this.brushedBins = [];
+        // const allBins = Object.values(this._locationGroupedData);
+        // this.initializeBins(GenomicBinHelpers.flattenNestedBins(allBins), true);
     }
 
     deleteCluster(cluster: number) {
-        if(this._clusterGroupedData[cluster]) {
-            delete this._clusterGroupedData[cluster];
-            const allBins = Object.values(this._clusterGroupedData);
-            const allFlattenedBins = GenomicBinHelpers.flattenNestedBins(allBins);
-            this.initializeLocationGroupedData(allFlattenedBins);
-            this.initializeBins(allFlattenedBins, true);
-        }
+        // if(this._clusterGroupedData[cluster]) {
+        //     delete this._clusterGroupedData[cluster];
+        //     const allBins = Object.values(this._clusterGroupedData);
+        //     const allFlattenedBins = GenomicBinHelpers.flattenNestedBins(allBins);
+        //     this.initializeLocationGroupedData(allFlattenedBins);
+        //     this.initializeBins(allFlattenedBins, true);
+        // }
     }
 
     /**
@@ -220,10 +342,10 @@ export class DataWarehouse {
      * @param sample the sample to query
      * @return a list of chromosome names represented in the query sample
      */
-    getChromosomeList(sample: string): string[] {
-        const nameList = Object.keys(this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] || {});
-        return nameList.filter(name => name !== DataWarehouse.ALL_CHRS_KEY); // Remove the special ALL_CHRS_KEY
-    }
+    // getChromosomeList(sample: string): string[] {
+    //     const nameList = Object.keys(this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY] || {});
+    //     return nameList.filter(name => name !== DataWarehouse.ALL_CHRS_KEY); // Remove the special ALL_CHRS_KEY
+    // }
 
     /**
      * Gets the bin size in bases of an arbitrary data point in this data set.  Most useful if it is known that all data
@@ -240,6 +362,10 @@ export class DataWarehouse {
         return firstRecord.END - firstRecord.START;
     }
 
+    // getMergedRecords() {
+
+    // }
+
     /**
      * Performs a query for records matching a sample and a chromosome.  To get all records matching a sample,
      * regardless of chromosome, use the special chromosome name `DataWarehouse.ALL_CHRS_KEY`.  If either sample or
@@ -250,8 +376,13 @@ export class DataWarehouse {
      * @return a list of matching records
      */
     getRecords(sample: string, chr: string, cluster: string): GenomicBin[] {
-        return this._getData(this._indexedData, sample, chr, cluster);
+        //return this._getData(this._indexedData, sample, chr, cluster);
+        return this._ndx.allFiltered();
     }
+
+    // getRecords(): GenomicBin[] {
+    //     return this._sample_dim.top(Infinity);
+    // }
 
     /**
      * Performs a query for aggregated records matching a sample and a chromosome.  To get all records matching a
@@ -263,28 +394,29 @@ export class DataWarehouse {
      * @return a list of matching records
      */
     getMergedRecords(sample: string, chr: string, cluster: string): MergedGenomicBin[] {
-        return this._getData(this._indexedMergedData, sample, chr, cluster);
+        //return this._getData(this._indexedMergedData, sample, chr, cluster);
+        return this._merged_ndx.allFiltered();//this._merged_sample_dim.top(Infinity);
     }
 
-    getRawData() : GenomicBin[] {
-        let rawData : GenomicBin[] = []
-        for(const sample of this.getSampleList()) {
-            const binArr = this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY];
-            rawData = rawData.concat(binArr);
-        }
+    // getRawData() : GenomicBin[] {
+    //     let rawData : GenomicBin[] = []
+    //     for(const sample of this.getSampleList()) {
+    //         const binArr = this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][DataWarehouse.ALL_CHRS_KEY];
+    //         rawData = rawData.concat(binArr);
+    //     }
         
-        return rawData;
-    }
+    //     return rawData;
+    // }
 
-    getRawDataFilteredByCluster(chr: string) : GenomicBin[] {
-        let rawData : GenomicBin[] = []
-        for(const sample of this.getSampleList()) {
-            const binArr = this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][chr];
-            rawData = rawData.concat(binArr);
-        }
+    // getRawDataFilteredByCluster(chr: string) : GenomicBin[] {
+    //     let rawData : GenomicBin[] = []
+    //     for(const sample of this.getSampleList()) {
+    //         const binArr = this._indexedData[sample][DataWarehouse.ALL_CLUSTERS_KEY][chr];
+    //         rawData = rawData.concat(binArr);
+    //     }
         
-        return rawData;
-    }
+    //     return rawData;
+    // }
 
     setbrushedBins(brushedBins: MergedGenomicBin[]) {
         this.brushedBins = brushedBins;

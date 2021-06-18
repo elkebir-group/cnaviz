@@ -69,7 +69,9 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["data", "width", "height", "chr"])) {
+        if (this.propsDidChange(prevProps, ["width", "height", "chr"])) {
+            this.redraw();
+        } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
             this.redraw();
         }
     }
@@ -153,6 +155,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
         ctx.fillStyle = color;
+        console.log(data);
         for (const d of data) {
             const location = GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);

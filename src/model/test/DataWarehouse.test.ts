@@ -45,7 +45,7 @@ class DummyMerger extends BinMerger {
 }
 
 function makeTestInstance() {
-    return new DataWarehouse(INPUT_DATA, new DummyMerger());
+    return new DataWarehouse(INPUT_DATA, true, new DummyMerger());
 }
 
 function expectListInAnyOrder<T>(actual: T[], expected: T[]) {
@@ -57,7 +57,7 @@ function expectListInAnyOrder<T>(actual: T[], expected: T[]) {
 
 describe("isEmpty()", () => {
     it("returns true when there is no data", () => {
-        expect(new DataWarehouse([]).isEmpty()).toBe(true);
+        expect(new DataWarehouse([], true).isEmpty()).toBe(true);
     });
 
     it("returns false when there is data", () => {

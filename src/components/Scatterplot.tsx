@@ -84,6 +84,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private _svg: SVGSVGElement | null;
     private _circleIdPrefix: number;
     private _clusters : string[];
+    private _hovered_bin: MergedGenomicBin | null;
 
     constructor(props: Props) {
         super(props);
@@ -97,7 +98,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
-
+        this._hovered_bin = null;
         this.state = {
             brushedNodes: props.brushedBins
         }
@@ -201,8 +202,12 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!hoveredLocation) {
             return null;
         }
-        const hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation));
-        
+       
+        let hoveredRecords = data.filter(record => record.location === hoveredLocation)//record.location.hasOverlap(hoveredLocation));
+        if(hoveredRecords.length === 0) {
+            hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation))
+        }
+
         if (hoveredRecords.length === 1) {
             const record = hoveredRecords[0];
             return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
@@ -264,12 +269,15 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["brushedBins", "data", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
+        if (this.propsDidChange(prevProps, ["brushedBins", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
             this.forceHover(this.props.hoveredLocation);
             this.forceUnhover(prevProps.hoveredLocation);
+        } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
+            this.redraw();
+            this.forceHover(this.props.hoveredLocation);
         }
     }
 
@@ -295,7 +303,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     redraw() {
-        console.time("test");
+        //console.time("test");
         if (!this._svg) {
             return;
         }
@@ -388,7 +396,7 @@ export class Scatterplot extends React.Component<Props, State> {
         const previous_brushed_nodes = brushedBins;
 
         // Add circles
-        console.time("test");
+        //console.time("test");
         svg.append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
             .selectAll("circle")
@@ -411,10 +419,13 @@ export class Scatterplot extends React.Component<Props, State> {
                         return (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.bins[0].CLUSTER));
                     })
                     .attr("fill-opacity", 0.8)
-                    .on("mouseenter", onRecordsHovered)
+                    .on("mouseenter", function(d){
+                        self._hovered_bin = d;
+                        onRecordsHovered(d)
+                    }) 
                     .on("mouseleave", () => onRecordsHovered(null))
                     .on("click", highlight);
-        console.timeEnd("test");
+        //console.timeEnd("test");
                     
         /**
          * Based on which values are on the x/y axes and which axis the caller is requesting, 
@@ -481,14 +492,14 @@ export class Scatterplot extends React.Component<Props, State> {
             this.setState({brushedNodes: []})
             this._clusters = this.initializeListOfClusters();
         }
-        console.timeEnd("test");
+        //console.timeEnd("test");
      }
 
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
         if (!this._svg || !hoveredLocation) {
             return [];
         }
-        const hoveredRecords = this.props.data.filter(record => record.location.hasOverlap(hoveredLocation));
+        const hoveredRecords = this.props.data.filter(record => record.location === hoveredLocation)//record.location.hasOverlap(hoveredLocation));
         const results: Element[] = [];
         for (const record of hoveredRecords) {
             const id = this._circleIdPrefix + record.location.toString();
@@ -497,6 +508,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 results.push(element);
             }
         }
+
         return results;
     }
 
@@ -519,6 +531,7 @@ export class Scatterplot extends React.Component<Props, State> {
     forceUnhover(genomeLocation?: ChromosomeInterval) {
         const elements = this.getElementsForGenomeLocation(genomeLocation);
         if (elements.length === 0) {
+            console.log("it's zero!");
             return;
         }
         for (const element of elements) {

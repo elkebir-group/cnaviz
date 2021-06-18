@@ -37,7 +37,7 @@ export class BinMerger {
      * @param rdThreshold similarity threshold for read depth ratio
      * @param bafThreshold similarity threshold for b allele frequency
      */
-    constructor(rdThreshold=0.0, bafThreshold=0.0, binsPerMergeThreshold=3) { // originally 0.4, 0.1
+    constructor(rdThreshold=0.0, bafThreshold=0.0, binsPerMergeThreshold=4) { // originally 0.4, 0.1
         this._rdThreshold = rdThreshold;
         this._bafThreshold = bafThreshold;
         this._binsPerMergeThreshold = binsPerMergeThreshold;
@@ -105,20 +105,14 @@ export class BinMerger {
             const binsInCurrentMerge = [firstBinOfMerge];
 
             let j = i + 1;
-            for (; j < i+1 + this._binsPerMergeThreshold; j++) {
+            for (; j < i + 1 + this._binsPerMergeThreshold; j++) {
                 const thisBin = bins[j];
-                if(thisBin && firstBinOfMerge["#CHR"] === thisBin["#CHR"] && thisBin.CLUSTER === firstBinOfMerge.CLUSTER) {
+                if(thisBin) {
                     binsInCurrentMerge.push(thisBin);
                 } else {
                     break;
                 }
             }
-
-            // const groupedByCluster = _.groupBy(binsInCurrentMerge, "CLUSTER");
-            // let clusters = Object.keys(groupedByCluster);
-            // for (const cluster of clusters) {
-            //     groupedByCluster[cluster]  
-            // }
 
             merged.push({
                 location: new ChromosomeInterval(firstBinOfMerge["#CHR"], firstBinOfMerge.START, bins[j - 1].END),
