@@ -16,7 +16,8 @@ import "./App.css";
 import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
 import keydown, { Keys } from "react-keydown";
-
+import DataTable from "react-data-table-component"
+import {MyComponent} from "./components/ClusterTable";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -163,6 +164,7 @@ export class App extends React.Component<{}, State> {
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleClusterAssignmentInput = this.handleClusterAssignmentInput.bind(this);
         this.updateBrushedBins = this.updateBrushedBins.bind(this);
+        this.onClusterRowsChange = this.onClusterRowsChange.bind(this);
     }
 
     componentDidMount() {
@@ -226,22 +228,13 @@ export class App extends React.Component<{}, State> {
     }
 
     handleLocationHovered(location: ChromosomeInterval | null) {
-        //console.log(record);
         if (!location) {
             this.setState({hoveredLocation: null});
-            //this.setState({hoveredBin: null});
             return;
         }
-        // } else if(!record) {
-        //     this.setState({hoveredBin: null});
-        // }
+
         //const binSize = this.state.indexedData.guessBinSize();
         this.setState({hoveredLocation: location}); //.endsRoundedToMultiple(binSize)
-        
-        // if(record) {
-        //     console.log("setting state2");
-        //     this.setState({hoveredBin: record})
-        // }
     }
 
     handleClusterAssignmentInput(event: any) {
@@ -318,9 +311,15 @@ export class App extends React.Component<{}, State> {
     }
 
     handleKeyPress = (event : any) => {
-        if(event.key === 'Shift'){
+        if(event.key === 'Shift') {
           console.log('Shift press here! ')
         }
+    }
+
+    onClusterRowsChange(state: any) {
+        console.log("Changed!", state.selectedRows);
+        this.state.indexedData.setClusterFilters(Object.keys(state.selectedRows));
+        this.setState({indexedData: this.state.indexedData});
     }
 
     render() {
@@ -361,6 +360,7 @@ export class App extends React.Component<{}, State> {
                         Select cluster: <select value={selectedCluster} onChange={this.handleClusterSelected} style={{marginLeft: 10}}>
                             {clusterOptions}
                         </select>
+                        <MyComponent test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange}></MyComponent>
                         {/* <div className="row">
                             <div className="col">
                                 <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />

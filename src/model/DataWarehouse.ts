@@ -280,12 +280,12 @@ export class DataWarehouse {
             this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
         }
         
-        console.log(this._ndx.allFiltered());
-        console.log(this._merged_ndx.allFiltered());
+        // console.log(this._ndx.allFiltered());
+        // console.log(this._merged_ndx.allFiltered());
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
-        
+        this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE); 
     }
+
 
     clearAllFilters() {
         this._sample_dim.filterAll();
@@ -389,6 +389,9 @@ export class DataWarehouse {
         return []; //this._ndx.allFiltered();
     }
 
+    getClusterTableInfo() {
+        return this._cluster_dim.group().all();
+    }
     // getRecords(): GenomicBin[] {
     //     return this._sample_dim.top(Infinity);
     // }
