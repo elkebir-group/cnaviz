@@ -59,7 +59,7 @@ export class SampleViz2D extends React.Component<Props, State> {
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedSample: event.target.value});
-        this.props.data.setSampleFilter(event.target.value);
+        //this.props.data.setSampleFilter(event.target.value);
     }
 
     handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -97,7 +97,6 @@ export class SampleViz2D extends React.Component<Props, State> {
         rdRange[1] += 1; // Add one so it's prettier
         //data.clearAllFilters();
         //data.setFilters(selectedSample, chr, [selectedCluster]);
-        console.log("test");
         return <div className="SampleViz">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>

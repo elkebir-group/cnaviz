@@ -531,7 +531,6 @@ export class Scatterplot extends React.Component<Props, State> {
     forceUnhover(genomeLocation?: ChromosomeInterval) {
         const elements = this.getElementsForGenomeLocation(genomeLocation);
         if (elements.length === 0) {
-            console.log("it's zero!");
             return;
         }
         for (const element of elements) {
