@@ -8,6 +8,7 @@ import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { OpenInterval } from "../model/OpenInterval";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { sampleWithEqualSpacing, niceBpCount } from "../util";
+import { MergedGenomicBin } from "../model/BinMerger";
 
 const INNER_RADIUS = 200;
 const OUTER_RADIUS = 215;

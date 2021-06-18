@@ -7,6 +7,7 @@ import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
+import { MergedGenomicBin } from "../model/BinMerger";
 
 const SCALES_CLASS_NAME = "linearplot-scale";
 const PADDING = { // For the SVG

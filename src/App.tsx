@@ -226,12 +226,22 @@ export class App extends React.Component<{}, State> {
     }
 
     handleLocationHovered(location: ChromosomeInterval | null) {
+        //console.log(record);
         if (!location) {
             this.setState({hoveredLocation: null});
+            //this.setState({hoveredBin: null});
             return;
         }
+        // } else if(!record) {
+        //     this.setState({hoveredBin: null});
+        // }
         //const binSize = this.state.indexedData.guessBinSize();
         this.setState({hoveredLocation: location}); //.endsRoundedToMultiple(binSize)
+        
+        // if(record) {
+        //     console.log("setting state2");
+        //     this.setState({hoveredBin: record})
+        // }
     }
 
     handleClusterAssignmentInput(event: any) {
@@ -343,7 +353,6 @@ export class App extends React.Component<{}, State> {
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
-
             mainUI = <div>
                     <div className="App-global-controls" style={{marginLeft: 30}}>
                         Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected} style={{marginLeft: 10, marginRight: 30}}>

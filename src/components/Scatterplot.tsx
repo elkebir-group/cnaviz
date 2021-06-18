@@ -84,7 +84,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private _svg: SVGSVGElement | null;
     private _circleIdPrefix: number;
     private _clusters : string[];
-    private _hovered_bin: MergedGenomicBin | null;
+    //private _hovered_bin: MergedGenomicBin | null;
 
     constructor(props: Props) {
         super(props);
@@ -98,7 +98,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
-        this._hovered_bin = null;
+        //this._hovered_bin = null;
         this.state = {
             brushedNodes: props.brushedBins
         }
@@ -202,8 +202,8 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!hoveredLocation) {
             return null;
         }
-       
-        let hoveredRecords = data.filter(record => record.location === hoveredLocation)//record.location.hasOverlap(hoveredLocation));
+        let hoveredRecords : MergedGenomicBin[] = [];
+        hoveredRecords = data.filter(record => _.isEqual(record.location, hoveredLocation))//record.location.hasOverlap(hoveredLocation));
         if(hoveredRecords.length === 0) {
             hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation))
         }
@@ -408,7 +408,7 @@ export class Scatterplot extends React.Component<Props, State> {
                         return "dot " + "test" + String(d.bins[0].CLUSTER);})
                     .attr("cx", d => xScale(rdOrBaf(d, this.props.invertAxis, true)) || 0)
                     .attr("cy", d => yScale(rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
-                    .attr("r", d => CIRCLE_R + 1) //+ Math.sqrt(d.bins.length))
+                    .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length)) //+ Math.sqrt(d.bins.length))
                     .attr("fill", function(d:MergedGenomicBin) : string {
                         if (previous_brushed_nodes.some(
                             n => (n.location.chr === d.location.chr) 
@@ -419,11 +419,8 @@ export class Scatterplot extends React.Component<Props, State> {
                         return (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.bins[0].CLUSTER));
                     })
                     .attr("fill-opacity", 0.8)
-                    .on("mouseenter", function(d){
-                        self._hovered_bin = d;
-                        onRecordsHovered(d)
-                    }) 
-                    .on("mouseleave", () => onRecordsHovered(null))
+                    .on("mouseenter", onRecordsHovered) 
+                    .on("mouseleave", () => { onRecordsHovered(null) })
                     .on("click", highlight);
         //console.timeEnd("test");
                     
@@ -499,7 +496,12 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!this._svg || !hoveredLocation) {
             return [];
         }
-        const hoveredRecords = this.props.data.filter(record => record.location === hoveredLocation)//record.location.hasOverlap(hoveredLocation));
+
+        let hoveredRecords = this.props.data.filter(record => _.isEqual(record.location, hoveredLocation))//record.location.hasOverlap(hoveredLocation));
+        if(hoveredRecords.length === 0) {
+            hoveredRecords = this.props.data.filter(record => record.location.hasOverlap(hoveredLocation))
+        }
+
         const results: Element[] = [];
         for (const record of hoveredRecords) {
             const id = this._circleIdPrefix + record.location.toString();
@@ -517,6 +519,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if (elements.length === 0) {
             return;
         }
+
         for (const element of elements) {
             const parent = element.parentElement!;
             const r = Number(element.getAttribute("r"));
@@ -533,6 +536,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if (elements.length === 0) {
             return;
         }
+
         for (const element of elements) {
             const r = Number(element.getAttribute("r"));
             if(r) {

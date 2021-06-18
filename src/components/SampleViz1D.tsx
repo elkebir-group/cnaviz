@@ -7,6 +7,7 @@ import { DivWithBullseye } from "./DivWithBullseye";
 import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 
 import "./SampleViz.css";
+import { MergedGenomicBin } from "../model/BinMerger";
 
 interface Props {
     data: DataWarehouse;

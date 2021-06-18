@@ -23,7 +23,7 @@ interface Props {
     curveState: CurveState;
     onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
-    onLocationHovered: (location: ChromosomeInterval | null) => void;
+    onLocationHovered: (location: ChromosomeInterval | null, record?: MergedGenomicBin | null) => void;
     invertAxis?: boolean;
     customColor: string;
     assignCluster: boolean;
