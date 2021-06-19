@@ -121,6 +121,7 @@ interface State {
     value: string;
 
     updatedBins: boolean;
+
 }
 
 
@@ -318,7 +319,7 @@ export class App extends React.Component<{}, State> {
 
     onClusterRowsChange(state: any) {
         console.log("Changed!", state.selectedRows);
-        this.state.indexedData.setClusterFilters(Object.keys(state.selectedRows));
+        this.state.indexedData.setClusterFilters( state.selectedRows.map((d:any)  => String(d.key)));
         this.setState({indexedData: this.state.indexedData});
     }
 
@@ -384,7 +385,7 @@ export class App extends React.Component<{}, State> {
                 
                 <div className="col">
                     <div className="row">
-                    {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D key={i} {...scatterplotProps} /> </div>)}
+                    {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D key={i} {...scatterplotProps} initialSelectedSample={samples[i]}/> </div>)}
                         <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div>   
                     </div>
                 </div>

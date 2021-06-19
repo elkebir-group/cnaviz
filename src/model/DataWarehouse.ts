@@ -71,6 +71,8 @@ export class DataWarehouse {
     private _sampleGroupedData: SampleIndexedData<GenomicBin[]>;
     private _sampleGroupedMergedData: SampleIndexedData<MergedGenomicBin[]>;
 
+    private readonly clusterTableInfo: any; 
+
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -127,6 +129,22 @@ export class DataWarehouse {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         }
 
+        const numberOfSamples = this.getSampleList().length;
+        type obj =  {key: string, value: number}
+        const arr : obj[] = this._cluster_dim.group().all();
+        //console.log("Normal values: ", arr);
+        arr.forEach(d => d.value = Number(((d.value/rawData.length) * 100).toFixed(2)));
+
+        let clone : obj[] = [];
+        for(const keyval of arr){
+            let newKeyval : obj = {key: "", value: 0};
+            newKeyval.key = keyval.key;
+            newKeyval.value = keyval.value;
+            clone.push(newKeyval);
+        }
+        
+        
+        this.clusterTableInfo = clone;
         console.timeEnd("test2");
         
         //this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
@@ -270,12 +288,13 @@ export class DataWarehouse {
     }
 
     setClusterFilters(clusters?: String[]) {
-        if(clusters && clusters.length == 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY) {
+        if(clusters && (clusters.length === 0 ||(clusters.length === 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY))) {
             this._cluster_dim.filterAll();
             this._merged_cluster_dim.filterAll();
         } else if(clusters && clusters.length > 0) {
             this._cluster_dim.filterAll();
             this._merged_cluster_dim.filterAll();   
+            console.log("Filtered cClusters: ", clusters);
             this._cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
             this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
         }
@@ -390,7 +409,8 @@ export class DataWarehouse {
     }
 
     getClusterTableInfo() {
-        return this._cluster_dim.group().all();
+        console.log("TABLE INFO: ", this.clusterTableInfo);
+        return this.clusterTableInfo;
     }
     // getRecords(): GenomicBin[] {
     //     return this._sample_dim.top(Infinity);

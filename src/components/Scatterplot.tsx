@@ -215,6 +215,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     <b>{record.location.toString()}</b><br/>
                     ({niceBpCount(record.location.getLength())})
                 </p>
+                <div>Number of Bins: {record.bins.length}</div>
                 <div>Average RDR: {record.averageRd.toFixed(2)}</div>
                 <div>Average BAF: {record.averageBaf.toFixed(2)}</div>
                 <div>Cluster ID:{record.bins[0].CLUSTER}</div>

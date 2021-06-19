@@ -105,7 +105,7 @@ export class BinMerger {
             const binsInCurrentMerge = [firstBinOfMerge];
 
             let j = i + 1;
-            for (; j < i + 1 + this._binsPerMergeThreshold; j++) {
+            for (; j < i + this._binsPerMergeThreshold; j++) {
                 const thisBin = bins[j];
                 if(thisBin) {
                     binsInCurrentMerge.push(thisBin);
