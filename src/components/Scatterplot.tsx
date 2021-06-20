@@ -75,7 +75,7 @@ interface State {
 export class Scatterplot extends React.Component<Props, State> {
     static defaultProps = {
         width: 400,
-        height: 350,
+        height: 400,
         onNewCurveState: _.noop,
         onRecordHovered: _.noop,
         customColor: CLUSTER_COLORS[0]
@@ -310,6 +310,8 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         const {width, height, onRecordsHovered, curveState, customColor, assignCluster, invertAxis, brushedBins} = this.props;
+        console.log("WIDHTTHTHTH: ", width);
+        console.log("HEIGHTSTS: ", height);
         let {data} = this.props
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)

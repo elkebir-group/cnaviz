@@ -140,7 +140,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             .call(yAxis);
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `rotate(90, ${PADDING.left - 40}, ${_.mean(yScale.range())})`)
+            //.attr("transform", `rotate(90, ${PADDING.left - 40}, ${_.mean(yScale.range())})`)
+            .attr("transform", `rotate(-90, ${PADDING.left- 30}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
             .attr("y", _.mean(yScale.range()));
 

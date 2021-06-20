@@ -87,6 +87,8 @@ export class SampleViz2D extends React.Component<Props, State> {
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
+        console.log("WIDTH: ", width);
+        console.log("Height: ", height);
 
         const rdRange = data.getRdRange();
         rdRange[1] += 1; // Add one so it's prettier

@@ -25,6 +25,25 @@ body {
 }
 
 .App-global-controls {
+    display: grid;
+    justify-content: center;
     padding-top: 25px;
-    display: inline-block;
 }
+
+.sampleviz-wrapper {
+    display: grid;
+    justify-content: center;
+    padding-top: 25px;
+}
+
+#grid-container {
+    display: grid;
+    /* grid-template-columns: repeat(2, auto); */
+    grid-auto-rows: auto;
+    justify-content: center;
+}
+
+#sampleviz-container {
+    justify-content: center;
+}
+

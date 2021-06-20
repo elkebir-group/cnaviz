@@ -11,7 +11,7 @@ import { SampleViz1D } from "./components/SampleViz1D";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
 import spinner from "./loading-small.gif";
-import {HuePicker, SliderPicker} from "react-color";
+import {HuePicker} from "react-color";
 import "./App.css";
 import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
@@ -353,43 +353,49 @@ export class App extends React.Component<{}, State> {
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
-            mainUI = <div>
-                    <div className="App-global-controls" style={{marginLeft: 30}}>
-                        Select chromosome: <select value={selectedChr} onChange={this.handleChrSelected} style={{marginLeft: 10, marginRight: 30}}>
-                            {chrOptions}
-                        </select>
-                        Select cluster: <select value={selectedCluster} onChange={this.handleClusterSelected} style={{marginLeft: 10}}>
-                            {clusterOptions}
-                        </select>
-                        <MyComponent test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange}></MyComponent>
-                        {/* <div className="row">
-                            <div className="col">
-                                <GenomicLocationInput label="Highlight region: " onNewLocation={this.handleLocationHovered} />
-                            </div>
-                        </div> */}
-                        {/* <CurveManager curveState={curveState} onNewCurveState={this.handleNewCurveState} /> */}
+            mainUI = (
+                <div id="grid-container">
+                    <div className="App-global-controls">
+                            <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
+                            <select name="Select Chromosome" id="Select Chromosome" value={selectedChr} onChange={this.handleChrSelected} >
+                                {chrOptions}
+                            </select>
                         
+
                         <div className="row">
-                            <div className = "col">
-                                <button onClick={this.handleAxisInvert}> Invert Axes </button>
-                                <button onClick={this.handleAddSampleClick}> Add Sample </button>
-                                <button onClick={this.handleAssignCluster}> Assign Cluster </button>
-                                <input type="number" value={value} size={30} min="0" max="14" 
-                                        onChange={this.handleClusterAssignmentInput}/>
-                            </div>
-                            <div className = "col" style={{paddingTop: 5}}>
-                                <HuePicker color={color} onChange={this.handleColorChange}/>
+                            <div className = "col" >
+                                <div className="row" style={{paddingTop: 10}}>
+                                    <button onClick={this.handleAxisInvert} style={{marginRight: 10}}> Invert Axes </button>
+                                    <button onClick={this.handleAddSampleClick} style={{marginRight: 10}}> Add Sample </button>
+                                    <button onClick={this.handleAssignCluster} style={{marginRight: 10}} > Assign Cluster </button>
+                                    <input type="number" style={{marginLeft: 10}} value={value} size={30} min="0" max="14" 
+                                            onChange={this.handleClusterAssignmentInput}/>
+                                </div>
+                                
+                                <div className = "row" style={{paddingTop: 10}}>
+                                    <HuePicker width="100%" color={color} onChange={this.handleColorChange}/>
+                                </div>
                             </div>
                         </div>
-                </div>
-                
-                <div className="col">
-                    <div className="row">
-                    {_.times(sampleAmount, i => samples.length > i && <div className="col" > <SampleViz2D key={i} {...scatterplotProps} initialSelectedSample={samples[i]}/> </div>)}
-                        <div className="col"> <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[0]} /> </div>   
+
+                        <MyComponent test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange}></MyComponent>
+                        
                     </div>
-                </div>
-            </div>;
+                    
+                    <div className="sampleviz-wrapper">
+                        {_.times(sampleAmount, i => samples.length > i 
+                            && <div className="row"> 
+                                    <div className="col"> 
+                                        <SampleViz2D key={i} {...scatterplotProps} initialSelectedSample={samples[i]}/> 
+                                    </div>
+                                    <div className="col">
+                                        <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[i]} /> 
+                                    </div>
+                                </div> 
+                            )}
+                    </div>
+                    
+                </div>);
         }
 
         const status = this.getStatusCaption();
