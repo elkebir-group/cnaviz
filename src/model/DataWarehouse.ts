@@ -32,6 +32,7 @@ type SampleIndexedData<T> = {
     [sample: string] : T
 }
 
+type clusterTableRow =  {key: string, value: number}
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
  * chromosome.  For applications that want a limited amount of data, pre-aggregates GenomicBin and allows fast queries
@@ -131,7 +132,7 @@ export class DataWarehouse {
             this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
         }
 
-        type clusterTableRow =  {key: string, value: number}
+       
         const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
         //console.log("Normal values: ", arr);
         clusterTable.forEach(d => d.value = Number(((d.value/rawData.length) * 100).toFixed(2)));
@@ -355,9 +356,25 @@ export class DataWarehouse {
         let allBins : GenomicBin[][] = [];
         let flattenNestedBins : MergedGenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
         flattenNestedBins.forEach(d => allBins.push(d.bins));
-
+        const flattenedBins = GenomicBinHelpers.flattenNestedBins(allBins);
         this._ndx.remove();
-        this._ndx.add(GenomicBinHelpers.flattenNestedBins(allBins));
+        this._ndx.add(flattenedBins);
+        
+        const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
+        //console.log("Normal values: ", arr);
+        clusterTable.forEach(d => d.value = Number(((d.value/flattenedBins.length) * 100).toFixed(2)));
+
+        let clone : clusterTableRow[] = [];
+        for(const row of clusterTable){
+            let rowClone : clusterTableRow = {key: "", value: 0};
+            rowClone.key = row.key;
+            rowClone.value = row.value;
+            clone.push(rowClone);
+        }
+        
+        
+        this.clusterTableInfo = clone;
+
         console.timeEnd("Updating cluster");
     }
 

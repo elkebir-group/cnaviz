@@ -1,4 +1,5 @@
 import React from "react"
+import _ from "lodash";
 import DataTable from 'react-data-table-component';
 
 const columns = [
@@ -22,6 +23,7 @@ const columns = [
 interface Props {
     test : any;
     onClusterRowsChange : any;
+    
 }
 
 export class MyComponent extends React.Component<Props> {
@@ -33,18 +35,13 @@ export class MyComponent extends React.Component<Props> {
         //console.log(this.props.test);
     }
 
-    componentDidMount() { 
-    }
-
-    shouldComponentUpdate() {
-        return false;
-    }
 
     render() {
+        console.log("Re-rendering", this.props.test)
         return (
             <DataTable
                 columns={columns}
-                data={this.table_data}
+                data={this.props.test}
                 selectableRows
                 onSelectedRowsChange={this.props.onClusterRowsChange}
                 pagination={true}
