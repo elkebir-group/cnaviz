@@ -15,6 +15,8 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     initialSelectedSample?: string;
     onLocationHovered?: (location: ChromosomeInterval | null) => void;
+    brushedBins: MergedGenomicBin[];
+    customColor: string;
 }
 
 enum DisplayMode {
@@ -43,7 +45,7 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, brushedBins, customColor} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -58,13 +60,18 @@ export class SampleViz1D extends React.Component<Props, State> {
                     chr={chr}
                     rdRange={data.getRdRange()}
                     hoveredLocation={hoveredLocation}
-                    onLocationHovered={onLocationHovered} />
+                    onLocationHovered={onLocationHovered} 
+                    brushedBins={brushedBins}
+                    customColor={customColor}/>
+                    
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
                     data={selectedRecords}
                     chr={chr}
                     hoveredLocation={hoveredLocation}
-                    onLocationHovered={onLocationHovered} />
+                    onLocationHovered={onLocationHovered}
+                    brushedBins={brushedBins} 
+                    customColor={customColor}/>
             </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {
             visualization = <RdrBafCircosPlot

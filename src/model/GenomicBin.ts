@@ -18,7 +18,7 @@ export interface GenomicBin {
     /** B allele frequency */
     readonly BAF: number;
     /** Cluster ID */
-    readonly CLUSTER: number;
+    CLUSTER: number;
 }
 
 export const GenomicBinHelpers = {
@@ -36,7 +36,7 @@ export const GenomicBinHelpers = {
         return bin["#CHR"]+"|"+bin.START+"|"+bin.END;
     },
 
-    flattenNestedBins: function(arr : any, result : GenomicBin[] = []) : GenomicBin[] {
+    flattenNestedBins: function(arr : any, result : any[] = []) : any[] {
         for (let i = 0, length = arr.length; i < length; i++) {
           const value = arr[i];
           if (Array.isArray(value)) {

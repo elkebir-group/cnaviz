@@ -22,6 +22,8 @@ const PADDING = { // For the SVG
     bottom: 60,
 };
 
+const UNCLUSTERED_COLOR = "#999999";
+
 const CLUSTER_COLORS = [
     "#1b9e77", 
     "#d95f02", 
@@ -39,9 +41,7 @@ const CLUSTER_COLORS = [
     "#fdb082", 
     "#28c2b5"
 ];
-
-const UNCLUSTERED_COLOR = "#999999";
-const HIGHLIGHT_COLOR = "red";
+//const HIGHLIGHT_COLOR = "red";
 
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASS_NAME = "circles";
@@ -68,11 +68,11 @@ interface Props {
     updatedBins: boolean;
 }
 
-interface State {
-    brushedNodes: MergedGenomicBin[];
-}
+// interface State {
+//     brushedNodes: MergedGenomicBin[];
+// }
 
-export class Scatterplot extends React.Component<Props, State> {
+export class Scatterplot extends React.Component<Props> {
     static defaultProps = {
         width: 400,
         height: 400,
@@ -84,6 +84,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private _svg: SVGSVGElement | null;
     private _circleIdPrefix: number;
     private _clusters : string[];
+    private brushedNodes: MergedGenomicBin[];
     //private _hovered_bin: MergedGenomicBin | null;
 
     constructor(props: Props) {
@@ -98,15 +99,25 @@ export class Scatterplot extends React.Component<Props, State> {
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
+        //this.updatePoints = this.updatePoints.bind(this);
+        this.endBrush = this.endBrush.bind(this);
+        this.updateAssignedColor = this.updateAssignedColor.bind(this);
+        this.rdOrBaf = this.rdOrBaf.bind(this);
+        //this.createNewBrush =  this.createNewBrush.bind(this);
         //this._hovered_bin = null;
-        this.state = {
-            brushedNodes: props.brushedBins
-        }
+        // this.state = {
+        //     brushedNodes: props.brushedBins
+        // }
+        this.brushedNodes = [];
     }
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        return [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare);  
+        let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
+        if(clusters[0] === "-1") {
+            clusters.shift();
+        }
+        return clusters;
     }
 
     handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
@@ -137,7 +148,12 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     handleClick() {
-        const {curveState, onNewCurveState} = this.props;
+        const {curveState, onNewCurveState, width, height} = this.props;
+        
+        if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
+            // Create brush and limit it to the scatterplot region
+            
+        }
         if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
             onNewCurveState({pickStatus: CurvePickStatus.pickingState1});
         } else if (curveState.pickStatus === CurvePickStatus.pickingState1) {
@@ -210,7 +226,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
         if (hoveredRecords.length === 1) {
             const record = hoveredRecords[0];
-            return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
+            return this.renderTooltipAtRdBaf(record.averageRd,0.5 -record.averageBaf, <React.Fragment>
                 <p>
                     <b>{record.location.toString()}</b><br/>
                     ({niceBpCount(record.location.getLength())})
@@ -237,11 +253,40 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         return null;
-    }
+    }  
+
+    // createNewBrush() {
+    //     if (!this._svg) {
+    //         return;
+    //     }
+
+    //     const {width, height, onRecordsHovered, curveState, customColor, assignCluster, invertAxis, brushedBins} = this.props;
+    //     const svg = d3.select(this._svg);
+
+    //     // Remove previous brush
+    //     svg.selectAll("." + "brush").remove();
+
+    //     let brushNodes : MergedGenomicBin[] = [];
+    //     if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
+    //         // Create brush and limit it to the scatterplot region
+    //         const brush = d3.brush()
+    //         .keyModifiers(false)
+    //         .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
+    //                 [width - PADDING.right + 2*CIRCLE_R , height - PADDING.bottom + 2*CIRCLE_R]])
+    //                 .on("start brush", this.updatePoints)
+    //                 .on("end", this.endBrush);
+
+    //         // attach the brush to the chart
+    //         const gBrush = svg.append('g')
+    //         .attr('class', 'brush')
+    //         .call(brush);
+    //     }
+    // }
 
     render() {
         const {width, height, curveState, rdRange} = this.props;
         const {rdrScale, bafScale} = this.computeScales(rdRange, width, height);
+        
         return <div className="Scatterplot" style={{position: "relative"}}>
             <svg
                 ref={node => this._svg = node}
@@ -266,17 +311,34 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     propsDidChange(prevProps: Props, keys: (keyof Props)[]) {
+        for(let key of keys) {
+           if(this.props[key] !== prevProps[key]) {
+               console.log(key);
+           }
+        }
         return keys.some(key => this.props[key] !== prevProps[key]);
     }
 
     componentDidUpdate(prevProps: Props) {
+        // if(this.props["assignCluster"]) {
+        //     this.onTrigger(this.brushedNodes);
+        //     //this.setState({brushedNodes: []})
+        //     this.brushedNodes = [];
+        //     this._clusters = this.initializeListOfClusters();
+        //     //this.updateAssignedColor();
+        // }
+        
         if (this.propsDidChange(prevProps, ["brushedBins", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
-            this.redraw();
-            this.forceHover(this.props.hoveredLocation);
+            //if(this.props["brushedBins"] !== this.brushedNodes) {
+                console.log("ININN 1");
+                this.redraw();
+                this.forceHover(this.props.hoveredLocation);
+            //}
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
             this.forceHover(this.props.hoveredLocation);
             this.forceUnhover(prevProps.hoveredLocation);
         } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
+            console.log("ININN 3")
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         }
@@ -287,7 +349,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let rdrScaleRange = (this.props.invertAxis) ?  [PADDING.left, width - PADDING.right] :  [height - PADDING.bottom, PADDING.top];
         return {
             bafScale: d3.scaleLinear()
-                .domain([0.5, 0])
+                .domain([0, 0.5])
                 .range(bafScaleRange),
             rdrScale: d3.scaleLinear()
                 .domain(rdRange)
@@ -303,15 +365,31 @@ export class Scatterplot extends React.Component<Props, State> {
         this.props.onBrushedBinsUpdated(brushedNodes);
     }
 
+    updateAssignedColor() {
+        if(!this._svg) { return; }
+        console.log("Updating Assinged Colors");
+        const {brushedBins, curveState, width, height} = this.props;
+        console.log(brushedBins);
+        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
+        for (const node of brushedBins) {
+            const id = this._circleIdPrefix + node.location.toString();
+            const element = this._svg.getElementById(id);
+            if (element) {
+                const color = (node.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(node.bins[0].CLUSTER))
+                console.log("SETTING COLOR TOOOOO: ", color);
+                element.setAttribute("fill",  color);      
+            }
+        }
+    }
+
     redraw() {
         //console.time("test");
+        console.time("Rendering");
         if (!this._svg) {
             return;
         }
 
         const {width, height, onRecordsHovered, curveState, customColor, assignCluster, invertAxis, brushedBins} = this.props;
-        console.log("WIDHTTHTHTH: ", width);
-        console.log("HEIGHTSTS: ", height);
         let {data} = this.props
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
@@ -396,10 +474,11 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         //console.log("length: ", this.state.brushedNodes.length);
-        const previous_brushed_nodes = brushedBins;
+        let previous_brushed_nodes = brushedBins;
 
         // Add circles
         //console.time("test");
+        
         svg.append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
             .selectAll("circle")
@@ -409,8 +488,8 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
                     .attr("class", function(d : MergedGenomicBin) : string {
                         return "dot " + "test" + String(d.bins[0].CLUSTER);})
-                    .attr("cx", d => xScale(rdOrBaf(d, this.props.invertAxis, true)) || 0)
-                    .attr("cy", d => yScale(rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
+                    .attr("cx", d => xScale(this.rdOrBaf(d, this.props.invertAxis, true)) || 0)
+                    .attr("cy", d => yScale(this.rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", d => CIRCLE_R + Math.sqrt(d.bins.length)) //+ Math.sqrt(d.bins.length))
                     .attr("fill", function(d:MergedGenomicBin) : string {
                         if (previous_brushed_nodes.some(
@@ -425,6 +504,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .on("mouseenter", onRecordsHovered) 
                     .on("mouseleave", () => { onRecordsHovered(null) })
                     .on("click", highlight);
+        
         //console.timeEnd("test");
                     
         /**
@@ -436,64 +516,150 @@ export class Scatterplot extends React.Component<Props, State> {
          * @returns Either the averageRd or averageBaf
          * @author Zubair Lalani
          */
-        function rdOrBaf(m : MergedGenomicBin, invert : boolean, xAxis : boolean) {
-            if (xAxis) {
-                return (invert) ? m.averageRd : m.averageBaf;
-            } else {  
-                return (invert) ?  m.averageBaf :  m.averageRd;
-            }
-        }
+        // function rdOrBaf(m : MergedGenomicBin, invert : boolean, xAxis : boolean) {
+        //     if (xAxis) {
+        //         return (invert) ? m.averageRd : (0.5-m.averageBaf);
+        //     } else {  
+        //         return (invert) ?  (0.5-m.averageBaf) :  m.averageRd;
+        //     }
+        // }
+        
 
         function endBrush() {
-            self.onBrushedBinsUpdated(self.state.brushedNodes);
+            svg.selectAll("." + "brush").remove();
+            self.onBrushedBinsUpdated(self.brushedNodes);
         }
 
         const circleId = this._circleIdPrefix;
         const plot = this._svg;
         const invert = this.props.invertAxis;
         const self = this;
-        let shiftKey : boolean;
+        let shiftKey : boolean = false;
         d3.select(window).on("keydown", function() {
             shiftKey = d3.event.shiftKey;
-            console.log("ShiftKey");
         });
-
         function updatePoints() {
+            if(!self._svg) {return;}
             if (data) {
                 try {
                     const { selection } = d3.event;
-                    brushNodes = visutils.filterInRect(data, selection, (d : MergedGenomicBin) => xScale(rdOrBaf(d, invert, true)), (d : MergedGenomicBin)  => yScale(rdOrBaf(d, invert, false)));
+                    let brushNodes = visutils.filterInRect(data, selection, 
+                        (d : MergedGenomicBin) => xScale(self.rdOrBaf(d, invertAxis, true)), 
+                        (d : MergedGenomicBin)  => yScale(self.rdOrBaf(d, invertAxis, false)));
 
                     if (brushNodes) {
                         for (const node of brushNodes) {
-                            const id = circleId + node.location.toString();
-                            const element = plot.getElementById(id);
+                            const id = self._circleIdPrefix + node.location.toString();
+                            const element = self._svg.getElementById(id);
                             if (element) {
                                 element.setAttribute("fill", customColor);      
                             }
                         }
 
-                        console.log(shiftKey);
                         if(shiftKey) {
-                            brushNodes = _.uniq(brushNodes.concat(previous_brushed_nodes))
+                            let intersection = _.intersection(brushNodes, brushedBins);
+                            console.log("Intersection: ", intersection);
+                            if(intersection.length) {
+                                for(const node of intersection) {
+                                    const id = self._circleIdPrefix + node.location.toString();
+                                    const element = self._svg.getElementById(id);
+                                    if (element) {
+                                        element.setAttribute("fill", (node.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(node.bins[0].CLUSTER)));      
+                                    }
+                                }
+                            }
+                            brushNodes = _.uniq(_.union(brushNodes, brushedBins)).filter(d => !intersection.some(e => d === e));   
                         }
 
-                        self.setState({brushedNodes: brushNodes});
+                        //self.setState({brushedNodes: brushNodes});
+                        self.brushedNodes = brushNodes;
                         //self.onBrushedBinsUpdated(this.state.brushNodes);                
                     } 
-                } catch (error) {
-                    console.log(error);
-                }
+                } catch (error) { console.log(error);}
             }
         }
 
         if(assignCluster) {
-            this.onTrigger(this.state.brushedNodes);
-            this.setState({brushedNodes: []})
+            this.onTrigger(self.brushedNodes);
+            //this.setState({brushedNodes: []})
+            self.brushedNodes = [];
             this._clusters = this.initializeListOfClusters();
         }
         //console.timeEnd("test");
+        console.timeEnd("Rendering");
      }
+
+    endBrush() {
+        if(!this._svg) { return; }
+        //console.log("Ended Brush")
+        d3.select(this._svg).selectAll("." + "brush").remove();
+        this.onBrushedBinsUpdated(this.brushedNodes);
+        //this.createNewBrush();
+    }
+
+    rdOrBaf(m : MergedGenomicBin, invert : boolean, xAxis : boolean) {
+        if (xAxis) {
+            return (invert) ? m.averageRd : (0.5-m.averageBaf);
+        } else {  
+            return (invert) ?  (0.5-m.averageBaf) :  m.averageRd;
+        }
+    }
+
+    // updatePoints() {
+    //     //console.time("Update Points");
+        
+    //     const {width, height, onRecordsHovered, curveState, customColor, assignCluster, invertAxis, brushedBins, data} = this.props;
+    //     const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
+    //     let xScale = bafScale;
+    //     let yScale = rdrScale;
+    //     const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
+    //     if(!this._svg) {return;}
+    //     let shiftKey : boolean = false;
+    //     d3.select(window).on("keydown", function() {
+    //         shiftKey = d3.event.shiftKey;
+    //     });
+
+    //     if (data) {
+    //         try {
+    //             const { selection } = d3.event;
+    //             let brushNodes = visutils.filterInRect(data, selection, 
+    //                 (d : MergedGenomicBin) => xScale(this.rdOrBaf(d, invertAxis, true)), 
+    //                 (d : MergedGenomicBin)  => yScale(this.rdOrBaf(d, invertAxis, false)));
+
+    //             if (brushNodes) {
+    //                 for (const node of brushNodes) {
+    //                     const id = this._circleIdPrefix + node.location.toString();
+    //                     const element = this._svg.getElementById(id);
+    //                     if (element) {
+    //                         element.setAttribute("fill", customColor);      
+    //                     }
+    //                 }
+
+    //                 if(shiftKey) {
+    //                     let intersection = _.intersection(brushNodes, brushedBins);
+    //                     console.log("Intersection: ", intersection);
+    //                     if(intersection.length) {
+    //                         for(const node of intersection) {
+    //                             const id = this._circleIdPrefix + node.location.toString();
+    //                             const element = this._svg.getElementById(id);
+    //                             if (element) {
+    //                                 element.setAttribute("fill", (node.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(node.bins[0].CLUSTER)));      
+    //                             }
+    //                         }
+    //                     }
+    //                     brushNodes = _.uniq(_.union(brushNodes, brushedBins)).filter(d => !intersection.some(e => d === e));   
+    //                 }
+
+    //                 //self.setState({brushedNodes: brushNodes});
+    //                 this.brushedNodes = brushNodes;
+    //                 //self.onBrushedBinsUpdated(this.state.brushNodes);                
+    //             } 
+    //         } catch (error) {
+    //             console.log(error);
+    //         }
+    //     }
+    //     //console.timeEnd("Update Points");
+    // }
 
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
         if (!this._svg || !hoveredLocation) {

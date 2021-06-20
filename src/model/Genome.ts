@@ -60,7 +60,7 @@ export class Genome {
             this._length += chromosome.length;
         }
         
-        console.log("CHR STARTS: ", this._chrStarts);
+        //console.log("CHR STARTS: ", this._chrStarts);
     }
 
     /**

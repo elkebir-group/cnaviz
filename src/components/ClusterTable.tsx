@@ -24,11 +24,6 @@ interface Props {
     onClusterRowsChange : any;
 }
 
-
-const handleChange = (state:any) => {
-    console.log('Selected rows: ', state.selectedRows);
-}
-
 export class MyComponent extends React.Component<Props> {
     private readonly table_data : any;
 
@@ -46,7 +41,6 @@ export class MyComponent extends React.Component<Props> {
     }
 
     render() {
-        console.log("Re rendering");
         return (
             <DataTable
                 columns={columns}

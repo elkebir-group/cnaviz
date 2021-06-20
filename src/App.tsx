@@ -137,7 +137,7 @@ export class App extends React.Component<{}, State> {
         super(props);
         this.state = {
             processingStatus: ProcessingStatus.none,
-            indexedData: new DataWarehouse([], false),
+            indexedData: new DataWarehouse([]),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
@@ -205,7 +205,7 @@ export class App extends React.Component<{}, State> {
         let indexedData = null;
         try {
             const parsed = await parseGenomicBins(contents, this.state.applyLog, this.state.applyClustering);
-            indexedData = new DataWarehouse(parsed, this.state.applyClustering);
+            indexedData = new DataWarehouse(parsed);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -243,6 +243,7 @@ export class App extends React.Component<{}, State> {
     }
 
     handleCallBack() {
+        console.log("Assign cluster: ", this.state.assignCluster);
         this.state.indexedData.updateCluster(Number(this.state.value));
         this.setState({assignCluster: false});
     }
@@ -311,14 +312,14 @@ export class App extends React.Component<{}, State> {
         });
     }
 
-    handleKeyPress = (event : any) => {
-        if(event.key === 'Shift') {
-          console.log('Shift press here! ')
-        }
-    }
+    // handleKeyPress = (event : any) => {
+    //     if(event.key === 'Shift') {
+    //       console.log('Shift press here! ')
+    //     }
+    // }
 
     onClusterRowsChange(state: any) {
-        console.log("Changed!", state.selectedRows);
+        //console.log("Changed!", state.selectedRows);
         this.state.indexedData.setClusterFilters( state.selectedRows.map((d:any)  => String(d.key)));
         this.setState({indexedData: this.state.indexedData});
     }
@@ -361,7 +362,7 @@ export class App extends React.Component<{}, State> {
                                 {chrOptions}
                             </select>
                         
-
+                        
                         <div className="row">
                             <div className = "col" >
                                 <div className="row" style={{paddingTop: 10}}>
@@ -399,6 +400,7 @@ export class App extends React.Component<{}, State> {
         }
 
         const status = this.getStatusCaption();
+        
         return <div className="container-fluid">
             <div className="App-title-bar">
                 <h1>CNA-Viz</h1>
@@ -414,5 +416,6 @@ export class App extends React.Component<{}, State> {
             {status && <div className="App-status-pane">{status}</div>}
             {mainUI}
         </div>;
+        
     }
 }

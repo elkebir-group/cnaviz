@@ -269,10 +269,10 @@ export class RdrBafCircosPlot extends React.PureComponent<Props> {
         let basesInMap: OpenInterval;
         if (chr) {
             basesInMap = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, genome.getLength(chr)));
-            console.log("BasesInMap: ", basesInMap);
+            //console.log("BasesInMap: ", basesInMap);
         } else {
             basesInMap = new OpenInterval(0, genome.getLength());
-            console.log("BasesInMap: ", basesInMap);
+            //console.log("BasesInMap: ", basesInMap);
         }
 
         const circumference = Math.PI * INNER_RADIUS * 2;

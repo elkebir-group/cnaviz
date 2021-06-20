@@ -8,8 +8,28 @@ import { Genome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import { MergedGenomicBin } from "../model/BinMerger";
+import { brush } from "d3";
 
 const SCALES_CLASS_NAME = "linearplot-scale";
+const CLUSTER_COLORS = [
+    "#1b9e77", 
+    "#d95f02", 
+    "#7570b3", 
+    "#e7298a", 
+    "#66a61e", 
+    "#e6ab02", 
+    "#a6761d", 
+    "#666666", 
+    "#fe6794", 
+    "#10b0ff", 
+    "#ac7bff", 
+    "#964c63", 
+    "#cfe589", 
+    "#fdb082", 
+    "#28c2b5"
+];
+const UNCLUSTERED_COLOR = "#999999";
+
 const PADDING = { // For the SVG
     left: 50,
     right: 10,
@@ -34,24 +54,24 @@ interface Props {
     height: number;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null) => void
-
+    brushedBins: MergedGenomicBin[];
     genome: Genome;
     yLabel?: string;
     yMin: number;
     yMax: number;
-    color: string;
+    customColor: string;
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
     static defaultProps = {
         width: 800,
         height: 200,
-        color: "blue",
         onLocationHovered: _.noop
     };
 
     private _svg: SVGSVGElement | null;
     private _canvas: HTMLCanvasElement | null;
+    private _clusters: string[];
     constructor(props: Props) {
         super(props);
         this._svg = null;
@@ -59,6 +79,16 @@ export class LinearPlot extends React.PureComponent<Props> {
         this.getXScale = memoizeOne(this.getXScale);
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
+        this._clusters = this.initializeListOfClusters();
+    }
+
+    initializeListOfClusters() : string[] {
+        let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+        let clusters = [...new Set(this.props.data.map(d => String(d.CLUSTER)))].sort(collator.compare);
+        if(clusters[0] === "-1") {
+            clusters.shift();
+        }
+        return clusters;  
     }
 
     componentDidMount() {
@@ -70,9 +100,10 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["width", "height", "chr"])) {
+        if (this.propsDidChange(prevProps, ["brushedBins", "width", "height", "chr"])) {
             this.redraw();
         } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
+            console.log("Redrawing")
             this.redraw();
         }
     }
@@ -91,10 +122,13 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     redraw() {
+        console.time("Redraw Linear Plot");
         if (!this._svg) {
             return;
         }
-        const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, color} = this.props;
+        const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, customColor, brushedBins} = this.props;
+        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
+
         const xScale = this.getXScale(width, genome, chr);
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
@@ -156,15 +190,16 @@ export class LinearPlot extends React.PureComponent<Props> {
         applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
-        ctx.fillStyle = color;
 
         for (const d of data) {
             const location = GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);
             const x = xScale(range.getCenter());
             const y = yScale(d[dataKeyToPlot]);
+            ctx.fillStyle = (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.CLUSTER)); //color;
             ctx.fillRect(x || 0, y || 0 - 1, 2, 3);
         }
+        console.timeEnd("Redraw Linear Plot");
     }
 
     renderHighlight() {
