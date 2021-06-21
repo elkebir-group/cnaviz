@@ -35,9 +35,13 @@ export class MyComponent extends React.Component<Props> {
         //console.log(this.props.test);
     }
 
+    shouldComponentUpdate(nextProps: Props) {
+        return this.props["test"] !== nextProps["test"];
+    }
+
 
     render() {
-        console.log("Re-rendering", this.props.test)
+
         return (
             <DataTable
                 columns={columns}

@@ -66,6 +66,7 @@ interface Props {
     assignCluster: boolean;
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
+    shiftKey: boolean;
 }
 
 // interface State {
@@ -150,17 +151,13 @@ export class Scatterplot extends React.Component<Props> {
     handleClick() {
         const {curveState, onNewCurveState, width, height} = this.props;
         
-        if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
-            // Create brush and limit it to the scatterplot region
-            
-        }
-        if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
-            onNewCurveState({pickStatus: CurvePickStatus.pickingState1});
-        } else if (curveState.pickStatus === CurvePickStatus.pickingState1) {
-            onNewCurveState({pickStatus: CurvePickStatus.pickingState2});
-        } else if (curveState.pickStatus === CurvePickStatus.pickingState2) {
-            onNewCurveState({pickStatus: CurvePickStatus.picked});
-        }
+        // if (curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
+        //     onNewCurveState({pickStatus: CurvePickStatus.pickingState1});
+        // } else if (curveState.pickStatus === CurvePickStatus.pickingState1) {
+        //     onNewCurveState({pickStatus: CurvePickStatus.pickingState2});
+        // } else if (curveState.pickStatus === CurvePickStatus.pickingState2) {
+        //     onNewCurveState({pickStatus: CurvePickStatus.picked});
+        // }
     }
 
     handleCurveHovered(p: number) {
@@ -291,8 +288,8 @@ export class Scatterplot extends React.Component<Props> {
             <svg
                 ref={node => this._svg = node}
                 width={width} height={height}
-                onMouseMove={this.handleMouseMove}
-                onClick={this.handleClick}
+                //onMouseMove={this.handleMouseMove}
+                //onClick={this.handleClick}
             >
                 <CopyNumberCurveDrawer
                     rdScale={rdrScale}
@@ -330,7 +327,7 @@ export class Scatterplot extends React.Component<Props> {
         
         if (this.propsDidChange(prevProps, ["brushedBins", "width", "height", "invertAxis", "customColor", "assignCluster"])) {
             //if(this.props["brushedBins"] !== this.brushedNodes) {
-                console.log("ININN 1");
+                //console.log("ININN 1");
                 this.redraw();
                 this.forceHover(this.props.hoveredLocation);
             //}
@@ -366,20 +363,20 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     updateAssignedColor() {
-        if(!this._svg) { return; }
-        console.log("Updating Assinged Colors");
-        const {brushedBins, curveState, width, height} = this.props;
-        console.log(brushedBins);
-        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
-        for (const node of brushedBins) {
-            const id = this._circleIdPrefix + node.location.toString();
-            const element = this._svg.getElementById(id);
-            if (element) {
-                const color = (node.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(node.bins[0].CLUSTER))
-                console.log("SETTING COLOR TOOOOO: ", color);
-                element.setAttribute("fill",  color);      
-            }
-        }
+        // if(!this._svg) { return; }
+        // console.log("Updating Assinged Colors");
+        // const {brushedBins, curveState, width, height} = this.props;
+        // console.log(brushedBins);
+        // const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
+        // for (const node of brushedBins) {
+        //     const id = this._circleIdPrefix + node.location.toString();
+        //     const element = this._svg.getElementById(id);
+        //     if (element) {
+        //         const color = (node.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(node.bins[0].CLUSTER))
+        //         console.log("SETTING COLOR TOOOOO: ", color);
+        //         element.setAttribute("fill",  color);      
+        //     }
+        // }
     }
 
     redraw() {
@@ -389,7 +386,8 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
 
-        const {width, height, onRecordsHovered, curveState, customColor, assignCluster, invertAxis, brushedBins} = this.props;
+        const {width, height, onRecordsHovered, curveState, customColor, 
+                assignCluster, invertAxis, brushedBins} = this.props;
         let {data} = this.props
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, width, height);
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
@@ -406,21 +404,20 @@ export class Scatterplot extends React.Component<Props> {
         // Remove previous brush
         svg.selectAll("." + "brush").remove();
 
-        let brushNodes : MergedGenomicBin[] = [];
-        if (!curveState.pickStatus) { // prevents brush from interefering with picking 1|1 state
-            // Create brush and limit it to the scatterplot region
-            const brush = d3.brush()
-            .keyModifiers(false)
-            .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
-                    [width - PADDING.right + 2*CIRCLE_R , height - PADDING.bottom + 2*CIRCLE_R]])
-                    .on("start brush", updatePoints)
-                    .on("end", endBrush);
-
-            // attach the brush to the chart
-            const gBrush = svg.append('g')
-            .attr('class', 'brush')
-            .call(brush);
-        }
+        //let brushNodes : MergedGenomicBin[] = [];
+        
+        // Create brush and limit it to the scatterplot region
+        const brush = d3.brush()
+        .keyModifiers(false)
+        .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
+                [width - PADDING.right + 2*CIRCLE_R , height - PADDING.bottom + 2*CIRCLE_R]])
+                .on("start brush", () => updatePoints(d3.event))
+                .on("end", endBrush);
+                
+        // attach the brush to the chart
+        const gBrush = svg.append('g')
+        .attr('class', 'brush')
+        .call(brush);
         
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
@@ -456,21 +453,21 @@ export class Scatterplot extends React.Component<Props> {
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
 
         let highlight = function (m : MergedGenomicBin) {
-            if(m.bins[0].CLUSTER !== -1) {
-                let selected_cluster = String(m.bins[0].CLUSTER);
+            // if(m.bins[0].CLUSTER !== -1) {
+            //     let selected_cluster = String(m.bins[0].CLUSTER);
                 
-                d3.selectAll(".test" + selected_cluster)
-                    .transition()
-                    .duration(400)
-                    .style("fill", customColor)
+            //     d3.selectAll(".test" + selected_cluster)
+            //         .transition()
+            //         .duration(400)
+            //         .style("fill", customColor)
 
-                let col = colorScale(selected_cluster);
-                for (let i = 0; i < CLUSTER_COLORS.length; i++) {
-                    if (CLUSTER_COLORS[i] == col) {
-                        CLUSTER_COLORS[i] = customColor
-                    }
-                }
-            }
+            //     let col = colorScale(selected_cluster);
+            //     for (let i = 0; i < CLUSTER_COLORS.length; i++) {
+            //         if (CLUSTER_COLORS[i] == col) {
+            //             CLUSTER_COLORS[i] = customColor
+            //         }
+            //     }
+            // }
         }
 
         //console.log("length: ", this.state.brushedNodes.length);
@@ -478,7 +475,7 @@ export class Scatterplot extends React.Component<Props> {
 
         // Add circles
         //console.time("test");
-        
+        console.log("DATA LENGTH: ", data.length);
         svg.append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
             .selectAll("circle")
@@ -500,7 +497,7 @@ export class Scatterplot extends React.Component<Props> {
                         }
                         return (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.bins[0].CLUSTER));
                     })
-                    .attr("fill-opacity", 0.8)
+                    .attr("fill-opacity", 0.7)
                     .on("mouseenter", onRecordsHovered) 
                     .on("mouseleave", () => { onRecordsHovered(null) })
                     .on("click", highlight);
@@ -524,9 +521,9 @@ export class Scatterplot extends React.Component<Props> {
         //     }
         // }
         
-
+        
         function endBrush() {
-            svg.selectAll("." + "brush").remove();
+            //svg.selectAll("." + "brush").remove();
             self.onBrushedBinsUpdated(self.brushedNodes);
         }
 
@@ -534,11 +531,11 @@ export class Scatterplot extends React.Component<Props> {
         const plot = this._svg;
         const invert = this.props.invertAxis;
         const self = this;
-        let shiftKey : boolean = false;
-        d3.select(window).on("keydown", function() {
-            shiftKey = d3.event.shiftKey;
-        });
-        function updatePoints() {
+        // let shiftKey : boolean = false;
+        // d3.select(window).on("keydown", function() {
+        //     shiftKey = d3.event.shiftKey;
+        // });
+        function updatePoints(event : any) {
             if(!self._svg) {return;}
             if (data) {
                 try {
@@ -555,10 +552,9 @@ export class Scatterplot extends React.Component<Props> {
                                 element.setAttribute("fill", customColor);      
                             }
                         }
-
-                        if(shiftKey) {
+                        
+                        if(event.sourceEvent.shiftKey) {
                             let intersection = _.intersection(brushNodes, brushedBins);
-                            console.log("Intersection: ", intersection);
                             if(intersection.length) {
                                 for(const node of intersection) {
                                     const id = self._circleIdPrefix + node.location.toString();
@@ -585,6 +581,70 @@ export class Scatterplot extends React.Component<Props> {
             self.brushedNodes = [];
             this._clusters = this.initializeListOfClusters();
         }
+        //console.timeEnd("test");
+        console.timeEnd("Rendering");
+
+        // function endBrush() {
+        //     svg.selectAll("." + "brush").remove();
+        //     self.onBrushedBinsUpdated(self.brushedNodes);
+        // }
+
+        // const circleId = this._circleIdPrefix;
+        // const plot = this._svg;
+        // const invert = this.props.invertAxis;
+        // const self = this;
+        // let shiftKey : boolean = false;
+        // d3.select(window).on("keydown", function() {
+        //     shiftKey = d3.event.shiftKey;
+        //     console.log("SHIFT: ", shiftKey);
+        //     console.log("EVENT: ", d3.event.shiftKey);
+        // });
+        // function updatePoints() {
+        //     if(!self._svg) {return;}
+        //     if (data) {
+                
+        //         try {
+        //             const { selection} = d3.event;
+        //             let brushNodes = visutils.filterInRect(data, selection, 
+        //                 (d : MergedGenomicBin) => xScale(self.rdOrBaf(d, invertAxis, true)), 
+        //                 (d : MergedGenomicBin)  => yScale(self.rdOrBaf(d, invertAxis, false)));
+
+        //             if (brushNodes) {
+        //                 for (const node of brushNodes) {
+        //                     const id = self._circleIdPrefix + node.location.toString();
+        //                     const element = self._svg.getElementById(id);
+        //                     if (element) {
+        //                         element.setAttribute("fill", customColor);      
+        //                     }
+        //                 }
+        //                 console.log("SHIFT: ", shiftKey);
+        //                 if(shiftKey) {
+        //                     let intersection = _.intersection(brushNodes, brushedBins);
+        //                     console.log("Intersection: ", intersection);
+        //                     if(intersection.length) {
+        //                         for(const node of intersection) {
+        //                             const id = self._circleIdPrefix + node.location.toString();
+        //                             const element = self._svg.getElementById(id);
+        //                             if (element) {
+        //                                 element.setAttribute("fill", (node.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(node.bins[0].CLUSTER)));      
+        //                             }
+        //                         }
+        //                     }
+        //                     brushNodes = _.uniq(_.union(brushNodes, brushedBins)).filter(d => !intersection.some(e => d === e));   
+        //                 }
+
+        //                 self.brushedNodes = brushNodes;               
+        //             } 
+        //         } catch (error) { console.log(error);}
+        //     }
+        // }
+
+        // if(assignCluster) {
+        //     this.onTrigger(self.brushedNodes);
+        //     //this.setState({brushedNodes: []})
+        //     self.brushedNodes = [];
+        //     this._clusters = this.initializeListOfClusters();
+        // }
         //console.timeEnd("test");
         console.timeEnd("Rendering");
      }

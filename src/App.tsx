@@ -18,6 +18,7 @@ import { MergedGenomicBin } from "./model/BinMerger";
 import keydown, { Keys } from "react-keydown";
 import DataTable from "react-data-table-component"
 import {MyComponent} from "./components/ClusterTable";
+import * as d3 from "d3";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -328,6 +329,11 @@ export class App extends React.Component<{}, State> {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster, updatedBins, value} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
+        let shiftKey: boolean = false;
+        // d3.select(window).on("keydown", function() {
+        //     shiftKey = d3.event.shiftKey;
+        // });
+
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
@@ -344,7 +350,8 @@ export class App extends React.Component<{}, State> {
                 onBrushedBinsUpdated: this.updateBrushedBins,
                 parentCallBack: this.handleCallBack,
                 brushedBins: brushedBins,
-                updatedBins: updatedBins
+                updatedBins: updatedBins,
+                shiftKey: shiftKey
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);

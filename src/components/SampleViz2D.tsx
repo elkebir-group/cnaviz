@@ -30,6 +30,7 @@ interface Props {
     onBrushedBinsUpdated: any;
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
+    shiftKey: boolean;
 }
 
 interface State {
@@ -82,7 +83,9 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, width, height, curveState, onNewCurveState, hoveredLocation, invertAxis, customColor, assignCluster, brushedBins, updatedBins} = this.props;
+        const {data, chr, width, height, curveState, onNewCurveState, 
+                hoveredLocation, invertAxis, customColor, assignCluster, 
+                brushedBins, updatedBins, shiftKey} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -120,7 +123,9 @@ export class SampleViz2D extends React.Component<Props, State> {
                     assignCluster= {assignCluster} 
                     onBrushedBinsUpdated= {this.handleUpdatedBrushedBins}
                     brushedBins= {brushedBins}
-                    updatedBins= {updatedBins}/>
+                    updatedBins= {updatedBins}
+                    shiftKey={shiftKey}
+                    />
             </DivWithBullseye>
         </div>;
     }
