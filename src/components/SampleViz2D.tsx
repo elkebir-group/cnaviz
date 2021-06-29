@@ -10,6 +10,7 @@ import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 
 import "./SampleViz.css";
+import { zoom } from "d3-zoom";
 
 interface Props {
     parentCallBack: any;
@@ -24,19 +25,26 @@ interface Props {
     onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null, record?: MergedGenomicBin | null) => void;
+    onSelectedSample: any;
     invertAxis?: boolean;
     customColor: string;
+    colors: string[];
     assignCluster: boolean;
     onBrushedBinsUpdated: any;
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
-    shiftKey: boolean;
 }
 
 interface State {
     selectedSample: string;
-    //selectedCluster: string;
+    displayMode: DisplayMode;
 }
+
+
+export enum DisplayMode {
+    zoom,
+    select
+};
 
 export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
@@ -50,10 +58,9 @@ export class SampleViz2D extends React.Component<Props, State> {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-           // selectedCluster: props.initialSelectedCluster || ""
+            displayMode: DisplayMode.select
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
-        //this.handleSelectedClusterChanged = this.handleSelectedClusterChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleUpdatedBrushedBins = this.handleUpdatedBrushedBins.bind(this);
@@ -61,13 +68,8 @@ export class SampleViz2D extends React.Component<Props, State> {
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedSample: event.target.value});
-        //this.props.data.setSampleFilter(event.target.value);
+        this.props.onSelectedSample(event.target.value);
     }
-
-    // handleSelectedClusterChanged(event: React.ChangeEvent<HTMLSelectElement>) {
-    //     this.setState({selectedCluster: event.target.value});
-    //     this.props.data.setClusterFilters([event.target.value]);
-    // }
 
     handleRecordsHovered(record: MergedGenomicBin | null) {
         const location = record ? record.location : null;
@@ -82,10 +84,11 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.props.onBrushedBinsUpdated(brushedBins);
     }
 
+    
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins, shiftKey} = this.props;
+                brushedBins, updatedBins} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -99,6 +102,8 @@ export class SampleViz2D extends React.Component<Props, State> {
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
+                {this.renderDisplayModeRadioOption(DisplayMode.select)}
+                {this.renderDisplayModeRadioOption(DisplayMode.zoom)}
             </div>
             {/* <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
@@ -120,13 +125,38 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onRecordsHovered={this.handleRecordsHovered}
                     invertAxis= {invertAxis || false} 
                     customColor= {customColor}
+                    colors = {this.props.colors}
                     assignCluster= {assignCluster} 
                     onBrushedBinsUpdated= {this.handleUpdatedBrushedBins}
                     brushedBins= {brushedBins}
                     updatedBins= {updatedBins}
-                    shiftKey={shiftKey}
+                    displayMode = {this.state.displayMode}
                     />
             </DivWithBullseye>
+        </div>;
+    }
+
+    renderDisplayModeRadioOption(mode: DisplayMode) {
+        let label: string;
+        let padding: string;
+        switch (mode) {
+            case DisplayMode.zoom:
+                label = "Zoom";
+                padding= "15px"
+                break;
+            case DisplayMode.select:
+                label = "Select";
+                padding = "10px";
+                break;
+            default:
+                label = "???";
+                padding= "0px"
+        }
+
+        return <div className="row">
+            <div className="col" style={{marginLeft: padding, display: "inline-block"}} onClick={() => this.setState({displayMode: mode})}>
+                {label} <input type="radio" checked={this.state.displayMode === mode} readOnly/>
+            </div>
         </div>;
     }
 }

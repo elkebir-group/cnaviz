@@ -100,6 +100,11 @@ export class DataWarehouse {
         this.brushedBins = [];
 
         this._ndx = crossfilter(rawData);
+
+        // For bins with the same sample, cluster, and chromsome, 
+        // merges together X amount of bins where X is set by the 
+        // binsPerMergeThreshold in the BinMerger constructor
+        // Note: If clustering is not applied, then it just considers all the points as part of the same cluster
         let mergedArr : MergedGenomicBin[] = [];
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -113,6 +118,8 @@ export class DataWarehouse {
             }
         }
 
+        //console.log(_.groupBy(mergedArr, "bins"));
+        console.log("MERGED BINS: ", mergedArr);
         this._locationGroupedMergedData = _.groupBy(mergedArr, "location")
 
         this._merged_ndx = crossfilter(mergedArr);
@@ -124,7 +131,9 @@ export class DataWarehouse {
         this._merged_sample_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].SAMPLE);
         this._merged_cluster_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].CLUSTER);
         this._merged_chr_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.location.chr);
-        
+        // let dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins.length);
+        // console.log(dim.group().all());
+
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE); 
         
@@ -148,9 +157,6 @@ export class DataWarehouse {
         
         this.clusterTableInfo = clone;
         console.timeEnd("Initializing DataWarehouse");
-        
-        //this.getChromosomeList = this.getChromosomeList.bind(this); // Needed for getAllChromosomes() to work
-        //this.getClusterList = this.getClusterList.bind(this);
     }
 
     initializeLocationGroupedData(rawData: GenomicBin[]) {
@@ -164,50 +170,6 @@ export class DataWarehouse {
         }
     }
 
-    initializeBins(rawData: GenomicBin[], merger=new BinMerger()) {
-        this._ndx = crossfilter(rawData);
-        // let mergedArr : MergedGenomicBin[] = [];
-        // const groupedBySample = _.groupBy(rawData, "SAMPLE");
-        // for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
-        //     this._samples.push(sample);
-        //     const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
-        //     this._clusters = _.union(this._clusters, Object.keys(groupedByCluster));
-        //     for (const binsForCluster of Object.values(groupedByCluster)) {
-        //         const groupedByChr = _.groupBy(binsForCluster, "#CHR");
-        //         this._chrs = _.union(this._chrs, Object.keys(groupedByChr));
-        //         mergedArr = mergedArr.concat( _.flatten(Object.values(_.mapValues(groupedByChr, merger.doNeighboringBinsMerge))));
-        //     }
-        // }
-
-        // this._merged_ndx = crossfilter(mergedArr);
-        
-        this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
-        this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
-        this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
-
-        this._merged_sample_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].SAMPLE);
-        this._merged_cluster_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].CLUSTER);
-        this._merged_chr_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.location.chr);
-        
-        this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE); 
-
-        type clusterTableRow =  {key: string, value: number}
-        const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
-        //console.log("Normal values: ", arr);
-        clusterTable.forEach(d => d.value = Number(((d.value/rawData.length) * 100).toFixed(2)));
-
-        let clone : clusterTableRow[] = [];
-        for(const row of clusterTable){
-            let rowClone : clusterTableRow = {key: "", value: 0};
-            rowClone.key = row.key;
-            rowClone.value = row.value;
-            clone.push(rowClone);
-        }
-        
-        
-        this.clusterTableInfo = clone;
-    }
     
     /**
      * @return whether this instance stores any data
@@ -287,10 +249,10 @@ export class DataWarehouse {
     }
 
     setClusterFilters(clusters?: String[]) {
-        if(clusters && (clusters.length === 0 ||(clusters.length === 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY))) {
+        if(clusters && ((clusters.length === 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY))) {
             this._cluster_dim.filterAll();
             this._merged_cluster_dim.filterAll();
-        } else if(clusters && clusters.length > 0) {
+        } else if(clusters) {
             this._cluster_dim.filterAll();
             this._merged_cluster_dim.filterAll();
             this._cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
@@ -323,11 +285,10 @@ export class DataWarehouse {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-        console.time("Updating cluster");
-        let test : MergedGenomicBin[] = this._merged_ndx.all();
-        test = test.filter(d => !this.brushedBins.some(e => d.location.chr === e.location.chr && d.location.start === e.location.start && d.location.start === e.location.start))
         
-        let allUpdatedBins : MergedGenomicBin[]= [];
+        console.time("Updating Clusters");
+        this.clearAllFilters();
+        
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = this.brushedBins[i].location.toString();
             if(this._locationGroupedMergedData[locKey]) {
@@ -336,32 +297,23 @@ export class DataWarehouse {
                         this._locationGroupedMergedData[locKey][j].bins[k].CLUSTER = cluster
                     }
                 }
-
-                allUpdatedBins = allUpdatedBins.concat(this._locationGroupedMergedData[locKey]);
             }
         }
 
-        let newRecords = test.concat(allUpdatedBins);
-        this._merged_ndx.remove();
-        this._merged_ndx.add(newRecords);
-        this.brushedBins = [];
-        
-        // 1. Add all new merged bins
-        // 2. Get all Bins from merged ndx
-        // 3. Loop through and remove old merged bins
-        // 4. Create new merged cross filter w array of records
-        // 5. Create new normal crossfilter using all bins
-
-        const allMergedBins = Object.values(this._locationGroupedMergedData);
-        let allBins : GenomicBin[][] = [];
+        const allMergedBins : MergedGenomicBin[][] = Object.values(this._locationGroupedMergedData);
         let flattenNestedBins : MergedGenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
+        console.log("ALL RECS3: ", flattenNestedBins.length);
+        this._merged_ndx.remove();
+        this._merged_ndx.add(flattenNestedBins);
+        this.brushedBins = [];
+
+        let allBins : GenomicBin[][] = [];
         flattenNestedBins.forEach(d => allBins.push(d.bins));
         const flattenedBins = GenomicBinHelpers.flattenNestedBins(allBins);
         this._ndx.remove();
         this._ndx.add(flattenedBins);
-        
+
         const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
-        //console.log("Normal values: ", arr);
         clusterTable.forEach(d => d.value = Number(((d.value/flattenedBins.length) * 100).toFixed(2)));
 
         let clone : clusterTableRow[] = [];
@@ -372,10 +324,8 @@ export class DataWarehouse {
             clone.push(rowClone);
         }
         
-        
         this.clusterTableInfo = clone;
-
-        console.timeEnd("Updating cluster");
+        console.timeEnd("Updating Clusters");
     }
 
     deleteCluster(cluster: number) {

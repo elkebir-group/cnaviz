@@ -8,6 +8,7 @@ import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveS
 
 import { SampleViz2D } from "./components/SampleViz2D";
 import { SampleViz1D } from "./components/SampleViz1D";
+import {SampleViz} from "./components/SampleViz";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
 import spinner from "./loading-small.gif";
@@ -64,7 +65,22 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
     })
 }
 
+function convertToCSV(arr : any) {
+    const array = [Object.keys(arr[0])].concat(arr)
+  
+    return array.map(it => {
+      return Object.values(it).toString()
+    }).join('\n')
+  }
 
+function downloadCSV(csvStr : string) {
+
+    var hiddenElement = document.createElement('a');
+    hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
+    hiddenElement.target = '_blank';
+    hiddenElement.download = 'output.csv';
+    hiddenElement.click();
+}
 /**
  * Possible states of processing input data.
  */
@@ -109,6 +125,8 @@ interface State {
 
     color: string;
 
+    colors: string[];
+
     assignCluster: boolean;
 
     assigned: boolean;
@@ -122,6 +140,8 @@ interface State {
     value: string;
 
     updatedBins: boolean;
+
+    selectedSample: string;
 
 }
 
@@ -145,14 +165,32 @@ export class App extends React.Component<{}, State> {
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
             sampleAmount: 1,
-            color: '#1b9e77',
+            color: 'blue',
+            colors:  [
+                "#1b9e77", 
+                "#d95f02", 
+                "#7570b3", 
+                "#e7298a", 
+                "#66a61e", 
+                "#e6ab02", 
+                "#a6761d", 
+                "#666666", 
+                "#fe6794", 
+                "#10b0ff", 
+                "#ac7bff", 
+                "#964c63", 
+                "#cfe589", 
+                "#fdb082", 
+                "#28c2b5"
+            ],
             assignCluster: false,
             assigned: false,
             applyLog: false,
             applyClustering: false,
             inputError: false,
             value: "0",
-            updatedBins: false
+            updatedBins: false,
+            selectedSample: ""
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -167,6 +205,8 @@ export class App extends React.Component<{}, State> {
         this.handleClusterAssignmentInput = this.handleClusterAssignmentInput.bind(this);
         this.updateBrushedBins = this.updateBrushedBins.bind(this);
         this.onClusterRowsChange = this.onClusterRowsChange.bind(this);
+        this.onClusterColorChange = this.onClusterColorChange.bind(this);
+        this.onSelectedSample = this.onSelectedSample.bind(this);
     }
 
     componentDidMount() {
@@ -244,7 +284,6 @@ export class App extends React.Component<{}, State> {
     }
 
     handleCallBack() {
-        console.log("Assign cluster: ", this.state.assignCluster);
         this.state.indexedData.updateCluster(Number(this.state.value));
         this.setState({assignCluster: false});
     }
@@ -252,7 +291,7 @@ export class App extends React.Component<{}, State> {
     updateBrushedBins(brushedBins: MergedGenomicBin[]) {
         this.state.indexedData.setbrushedBins(brushedBins);
         this.setState({updatedBins: true});
-        this.forceUpdate();
+        //this.forceUpdate();
     }
 
     handleAxisInvert() {
@@ -313,27 +352,27 @@ export class App extends React.Component<{}, State> {
         });
     }
 
-    // handleKeyPress = (event : any) => {
-    //     if(event.key === 'Shift') {
-    //       console.log('Shift press here! ')
-    //     }
-    // }
-
     onClusterRowsChange(state: any) {
-        //console.log("Changed!", state.selectedRows);
         this.state.indexedData.setClusterFilters( state.selectedRows.map((d:any)  => String(d.key)));
         this.setState({indexedData: this.state.indexedData});
     }
 
+    onClusterColorChange(colors: any) {
+        console.log("SETTING STATE TOOO, ", colors);
+        this.setState({colors: colors})
+        this.forceUpdate();
+        console.log("CURRENT STATE:  ", this.state.colors);
+    }
+
+    onSelectedSample(selectedSample : any) {
+        this.setState({selectedSample : selectedSample})
+    }
+
     render() {
-        const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, sampleAmount, color, assignCluster, updatedBins, value} = this.state;
+        const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
-        let shiftKey: boolean = false;
-        // d3.select(window).on("keydown", function() {
-        //     shiftKey = d3.event.shiftKey;
-        // });
-
+        console.log("RENDERING")
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
@@ -346,12 +385,14 @@ export class App extends React.Component<{}, State> {
                 chr: selectedChr,
                 cluster: selectedCluster,
                 customColor: color,
+                colors: this.state.colors,
                 assignCluster,
                 onBrushedBinsUpdated: this.updateBrushedBins,
                 parentCallBack: this.handleCallBack,
                 brushedBins: brushedBins,
                 updatedBins: updatedBins,
-                shiftKey: shiftKey
+                onSelectedSample: this.onSelectedSample,
+                selectedSample: this.state.selectedSample
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -361,6 +402,7 @@ export class App extends React.Component<{}, State> {
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
+           
             mainUI = (
                 <div id="grid-container">
                     <div className="App-global-controls">
@@ -373,25 +415,25 @@ export class App extends React.Component<{}, State> {
                         <div className="row">
                             <div className = "col" >
                                 <div className="row" style={{paddingTop: 10}}>
-                                    <button onClick={this.handleAxisInvert} style={{marginRight: 10}}> Invert Axes </button>
+                                    {/* <button onClick={this.handleAxisInvert} style={{marginRight: 10}}> Invert Axes </button> */}
                                     <button onClick={this.handleAddSampleClick} style={{marginRight: 10}}> Add Sample </button>
                                     <button onClick={this.handleAssignCluster} style={{marginRight: 10}} > Assign Cluster </button>
                                     <input type="number" style={{marginLeft: 10}} value={value} size={30} min="0" max="14" 
                                             onChange={this.handleClusterAssignmentInput}/>
                                 </div>
                                 
-                                <div className = "row" style={{paddingTop: 10}}>
+                                {/* <div className = "row" style={{paddingTop: 10}}>
                                     <HuePicker width="100%" color={color} onChange={this.handleColorChange}/>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 
-                        <MyComponent test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange}></MyComponent>
+                        <MyComponent test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange} onClusterColorChange={this.onClusterColorChange}></MyComponent>
                         
                     </div>
                     
                     <div className="sampleviz-wrapper">
-                        {_.times(sampleAmount, i => samples.length > i 
+                        {/* {_.times(sampleAmount, i => samples.length > i 
                             && <div className="row"> 
                                     <div className="col"> 
                                         <SampleViz2D key={i} {...scatterplotProps} initialSelectedSample={samples[i]}/> 
@@ -400,7 +442,10 @@ export class App extends React.Component<{}, State> {
                                         <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[i]} /> 
                                     </div>
                                 </div> 
-                            )}
+                            )} */}
+                            {/* <SampleViz {...scatterplotProps}/> */}
+                            {_.times(sampleAmount, i => samples.length > i 
+                            && <SampleViz {...scatterplotProps} initialSelectedSample={samples[i]}></SampleViz>)}
                     </div>
                     
                 </div>);

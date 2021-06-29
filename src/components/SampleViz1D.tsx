@@ -17,6 +17,8 @@ interface Props {
     onLocationHovered?: (location: ChromosomeInterval | null) => void;
     brushedBins: MergedGenomicBin[];
     customColor: string;
+    colors: string[];
+    selectedSample: string;
 }
 
 enum DisplayMode {
@@ -46,10 +48,10 @@ export class SampleViz1D extends React.Component<Props, State> {
 
     render() {
         const {data, chr, hoveredLocation, onLocationHovered, brushedBins, customColor} = this.props;
-        const selectedSample = this.state.selectedSample;
-        const sampleOptions = data.getSampleList().map(sampleName =>
-            <option key={sampleName} value={sampleName}>{sampleName}</option>
-        );
+        const selectedSample = this.props.selectedSample;//this.state.selectedSample;
+        // const sampleOptions = data.getSampleList().map(sampleName =>
+        //     <option key={sampleName} value={sampleName}>{sampleName}</option>
+        // );
 
         const selectedRecords = data.getRecords(selectedSample, chr);
         let visualization: React.ReactNode = null;
@@ -62,7 +64,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} 
                     brushedBins={brushedBins}
-                    customColor={customColor}/>
+                    customColor={customColor}
+                    colors={this.props.colors}/>
                     
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
@@ -71,7 +74,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered}
                     brushedBins={brushedBins} 
-                    customColor={customColor}/>
+                    customColor={customColor}
+                    colors={this.props.colors}/>
             </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {
             visualization = <RdrBafCircosPlot
@@ -83,16 +87,12 @@ export class SampleViz1D extends React.Component<Props, State> {
                 chr={chr} />;
         }
 
-        return <div className="SampleViz">
-            
+        return <div className="SampleViz" style={{marginTop: 80}}>
+             
             <div className="SampleViz-select" >
                 <div className="row" style={{marginLeft: 1}}>
-                    Select sample:  <select value={selectedSample} onChange={this.handleSelectedSampleChanged} >
-                        {sampleOptions}
-                    </select>
-                    {this.renderDisplayModeRadioOption(DisplayMode.linear)}
-                    {this.renderDisplayModeRadioOption(DisplayMode.circos)}
-                    
+                    {/* {this.renderDisplayModeRadioOption(DisplayMode.linear)} */}
+                    {/* {this.renderDisplayModeRadioOption(DisplayMode.circos)} */}
                 </div>
             </div>
             

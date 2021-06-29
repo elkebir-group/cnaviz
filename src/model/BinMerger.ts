@@ -37,7 +37,7 @@ export class BinMerger {
      * @param rdThreshold similarity threshold for read depth ratio
      * @param bafThreshold similarity threshold for b allele frequency
      */
-    constructor(rdThreshold=0.0, bafThreshold=0.0, binsPerMergeThreshold=10) { // originally 0.4, 0.1
+    constructor(rdThreshold=0.0, bafThreshold=0.0, binsPerMergeThreshold=0) { // originally 0.4, 0.1
         this._rdThreshold = rdThreshold
         this._bafThreshold = bafThreshold;
         this._binsPerMergeThreshold = binsPerMergeThreshold;
@@ -107,7 +107,7 @@ export class BinMerger {
             let j = i + 1;
             for (; j < i + this._binsPerMergeThreshold; j++) {
                 const thisBin = bins[j];
-                if(thisBin) {
+                if(thisBin && thisBin.START === binsInCurrentMerge[binsInCurrentMerge.length-1].END) {
                     binsInCurrentMerge.push(thisBin);
                 } else {
                     break;

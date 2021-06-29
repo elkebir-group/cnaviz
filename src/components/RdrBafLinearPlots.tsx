@@ -13,10 +13,11 @@ interface Props {
     onLocationHovered?: (location: ChromosomeInterval | null) => void
     brushedBins: MergedGenomicBin[];
     customColor: string;
+    colors: string[];
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
-    const {data, chr, rdRange, hoveredLocation, onLocationHovered, brushedBins, customColor} = props;
+    const {data, chr, rdRange, hoveredLocation, onLocationHovered, brushedBins, customColor, colors} = props;
 
     return <LinearPlot
         data={data}
@@ -28,11 +29,12 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
         yMin={rdRange[0]}
         yMax={rdRange[1]}
         brushedBins={brushedBins}
-        customColor={customColor}/>;
+        customColor={customColor}
+        colors={colors}/>
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, chr, hoveredLocation, onLocationHovered, brushedBins, customColor} = props;
+    const {data, chr, hoveredLocation, onLocationHovered, brushedBins, customColor, colors} = props;
     return <LinearPlot
         data={data}
         chr={chr}
@@ -43,5 +45,6 @@ export function BAFLinearPlot(props: Props) {
         yMin={0}
         yMax={0.5}
         brushedBins={brushedBins}
-        customColor={customColor} />;
+        customColor={customColor}
+        colors={colors} />;
 }

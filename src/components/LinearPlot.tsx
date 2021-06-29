@@ -60,12 +60,13 @@ interface Props {
     yMin: number;
     yMax: number;
     customColor: string;
+    colors: string[];
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
     static defaultProps = {
         width: 800,
-        height: 200,
+        height: 150,
         onLocationHovered: _.noop
     };
 
@@ -101,6 +102,8 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     componentDidUpdate(prevProps: Props) {
         if (this.propsDidChange(prevProps, ["brushedBins", "width", "height", "chr"])) {
+            if(this.props["brushedBins"].length === 0)
+                this._clusters = this.initializeListOfClusters();
             this.redraw();
         } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
             console.log("Redrawing")
@@ -185,19 +188,24 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         this._canvas.width = 800;
-        this._canvas.height = 200;
+        this._canvas.height = 150;
 
         applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
-
+        
         for (const d of data) {
             const location = GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);
             const x = xScale(range.getCenter());
             const y = yScale(d[dataKeyToPlot]);
-            ctx.fillStyle = (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.CLUSTER)); //color;
-            ctx.fillRect(x || 0, y || 0 - 1, 2, 3);
+            //console.log("color: ", (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.CLUSTER)));
+            ctx.fillStyle = (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.CLUSTER] ? this.props.colors[d.CLUSTER] : colorScale(String(d.CLUSTER))); //color;
+            ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+            // ctx.beginPath();
+            // ctx.ellipse(x || 0, y || 0, 1, 1, 0, 0, 2 * Math.PI);
+            // ctx.fill();
+
         }
         console.timeEnd("Redraw Linear Plot");
     }
@@ -234,6 +242,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         const implicitLocation = xScale.invert(mouseX);
+        //let test =  genome.getChromosomeLocation(implicitLocation);
         onLocationHovered(genome.getChromosomeLocation(implicitLocation));
     }
 
