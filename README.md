@@ -1,5 +1,10 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Quickstart
+1) Run `yarn install` which will download all the required packages. A node_modules folder and yarn.lock file should be in the directory
+2) Run `yarn run start`
+3) Open https://localhost:3000 in the browser
+   
 ## Available Scripts
 
 In the project directory, you can run:
