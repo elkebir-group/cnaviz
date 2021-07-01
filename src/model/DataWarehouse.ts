@@ -387,6 +387,13 @@ export class DataWarehouse {
         return []; //this._ndx.allFiltered();
     }
 
+    getAllRecords() {
+       
+        //this.clearAllFilters();
+        //console.log("TEST: ", this._ndx.all());
+        return this._ndx.all();
+    }
+
     getClusterTableInfo() {
         return this.clusterTableInfo;
     }

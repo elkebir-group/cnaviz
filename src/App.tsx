@@ -20,6 +20,8 @@ import keydown, { Keys } from "react-keydown";
 import DataTable from "react-data-table-component"
 import {MyComponent} from "./components/ClusterTable";
 import * as d3 from "d3";
+import {CSVLink} from "react-csv"
+import {CSV} from "./components/CSVLink"
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -372,6 +374,7 @@ export class App extends React.Component<{}, State> {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
+        const allData = this.state.indexedData.getAllRecords();
         console.log("RENDERING")
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -447,7 +450,7 @@ export class App extends React.Component<{}, State> {
                             {_.times(sampleAmount, i => samples.length > i 
                             && <SampleViz {...scatterplotProps} initialSelectedSample={samples[i]}></SampleViz>)}
                     </div>
-                    
+                    {/* <CSV data={this.state.indexedData.getAllRecords()}> /</CSV> */}
                 </div>);
         }
 
@@ -464,6 +467,7 @@ export class App extends React.Component<{}, State> {
                 <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
                 <span className="App-CheckBox-explanation" style={{marginLeft: 10}}>Apply provided clustering: </span>
                 <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleClustering.bind(this)} />
+                <CSV data={allData}> /</CSV>
             </div>
             {status && <div className="App-status-pane">{status}</div>}
             {mainUI}

@@ -2,7 +2,7 @@ import React from "react"
 import _ from "lodash";
 import DataTable from 'react-data-table-component';
 import {HuePicker} from "react-color";
-
+import {CSVLink} from "react-csv"
 const columns = [
   {
     name: 'Cluster',
@@ -25,8 +25,8 @@ interface Props {
     test : any;
     onClusterRowsChange : any;
     onClusterColorChange: any;
-    
 }
+
 const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
 
 export class MyComponent extends React.Component<Props> {
@@ -91,10 +91,7 @@ export class MyComponent extends React.Component<Props> {
                 onSelectedRowsChange={this.props.onClusterRowsChange}
                 selectableRowSelected={row => row}
                 expandableRows
-                expandableRowsComponent={<ExpandedComponent/>}//(data:any) => <HuePicker width="100%" />}//color={this.colors[data.key]} onChange={c => this.handleColorChange(c, data.key)} />}
-            //     {<div className = "row">
-            //     <HuePicker width="100%" color={this.colors[0]} onChange={this.handleColorChange} />
-            // </div> }
+                expandableRowsComponent={<ExpandedComponent/>}
                 pagination={true}
                 dense={true}
                 paginationPerPage={5}
@@ -103,7 +100,6 @@ export class MyComponent extends React.Component<Props> {
                 noContextMenu={true}
                 noHeader={true}
             />
-            
         )
     }
 };
