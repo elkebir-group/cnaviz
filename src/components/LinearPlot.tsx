@@ -289,7 +289,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             height: "100%",
             backgroundColor: "rgba(255,255,0,0.2)",
             border: "1px solid rgba(255,255,0,0.7)",
-            zIndex: 1
+            zIndex: -1
         }} />
     }
 
@@ -320,13 +320,13 @@ export class LinearPlot extends React.PureComponent<Props> {
             onMouseMove={this.handleMouseMove}
             onMouseLeave={this.handleMouseLeave}
         >
-            
+            {this.renderHighlight()}
             <canvas
                 ref={node => this._canvas = node}
                 width={width}
                 height={height}
                 style={{position: "absolute", zIndex: -1}} />
-            {/* {this.renderHighlight()} */}
+            
             <svg ref={node => this._svg = node} width={width} height={height} />
             
         </div>;

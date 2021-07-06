@@ -349,8 +349,8 @@ export class Scatterplot extends React.Component<Props> {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
-            this.forceHover(this.props.hoveredLocation);
             this.forceUnhover(prevProps.hoveredLocation);
+            this.forceHover(this.props.hoveredLocation); 
         }
          else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
             let data : any = this.props.data;
@@ -462,6 +462,7 @@ export class Scatterplot extends React.Component<Props> {
             .attr("transform", `rotate(-90)`)
             .style("text-anchor", "middle")
             .text(yLabel);
+            
 
         let previous : any = [];
         brushedBins.forEach(d => previous.push(String(d.location)))
@@ -506,14 +507,27 @@ export class Scatterplot extends React.Component<Props> {
             }
         }
 
-        var event_rect = svg.append("rect")
-            .attr("width", width)
-            .attr("height", height)
-            .style("fill", "none")
-            .style("pointer-events", "all")
-            //.attr('transform', 'translate(' + PADDING.left + ',' + PADDING.top + ')')
-            .attr("clip-path", "url(#clip)")
-            .call(zoom);
+        // var event_rect = svg.append("rect")
+        //     //.attr("rectangle")
+        //     .attr("width", width)
+        //     .attr("height", height)
+        //     .style("fill", "none")
+        //     .style("pointer-events", "all")
+        //     //.attr('transform', 'translate(' + PADDING.left + ',' + PADDING.top + ')')
+        //     .attr("clip-path", "url(#clip)")
+        //     .call(zoom);
+        var event_rect = svg
+            .append("g")
+            .classed("eventrect", true)
+            .call(zoom)
+                .append("rect")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .style("fill", "none")
+                    .style("pointer-events", "all")
+                    //.attr('transform', 'translate(' + PADDING.left + ',' + PADDING.top + ')')
+                    .attr("clip-path", "url(#clip)");
+
 
         if(displayMode === DisplayMode.select) {
             //this.createNewBrush();
@@ -609,7 +623,10 @@ export class Scatterplot extends React.Component<Props> {
                     } else {
                         ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (self.props.colors[d.bins[0].CLUSTER] ? self.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER)));
                     }
+                    //ctx.fillStyle = 'rgba(225, 225, 225, 0.5)';
+                    //ctx.globalAlpha = 0.2;
                     ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+                    //ctx.globalAlpha = 1.0;
                 }
             }
         }
@@ -669,7 +686,7 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
-        if (!this._svg || !hoveredLocation) {
+        if (!this._svg || !hoveredLocation || !this._canvas) {
             return [];
         }
 
@@ -681,6 +698,26 @@ export class Scatterplot extends React.Component<Props> {
         }
 
         const results: Element[] = [];
+        let svg = d3.select(this._svg);
+        svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
+        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters);
+        svg.select(".eventrect")
+            .append("g")
+            .classed(CIRCLE_GROUP_CLASS_NAME, true)
+            .selectAll("circle")
+                .data(hoveredRecords)
+                .enter()
+                .append("circle")
+                    .attr("id", d => this._circleIdPrefix + d.location.toString())
+                    .attr("cx", d => this._currXScale(this.rdOrBaf(d, this.props.invertAxis, true)) || 0)
+                    .attr("cy", d => this._currYScale(this.rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
+                    .attr("r", 3)
+                    .attr("fill", d => (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.bins[0].CLUSTER] ? this.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER))))
+                    .attr("fill-opacity", 1)
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "black");
+        
+
         for (const record of hoveredRecords) {
             const id = this._circleIdPrefix + record.location.toString();
             const element = this._svg.getElementById(id);
@@ -693,20 +730,7 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     forceHover(genomeLocation?: ChromosomeInterval) {
-        const elements = this.getElementsForGenomeLocation(genomeLocation);
-        if (elements.length === 0) {
-            return;
-        }
-
-        for (const element of elements) {
-            const parent = element.parentElement!;
-            const r = Number(element.getAttribute("r"));
-            element.remove();
-            element.setAttribute("r", String(r + SELECTED_CIRCLE_R_INCREASE));
-            element.setAttribute("stroke", "black");
-            element.setAttribute("stroke-width", "2");
-            parent.appendChild(element); // Re-add the circle, which moves it to the top.
-        }
+        this.getElementsForGenomeLocation(genomeLocation);
     }
 
     forceUnhover(genomeLocation?: ChromosomeInterval) {
@@ -715,153 +739,17 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
 
-        for (const element of elements) {
-            const r = Number(element.getAttribute("r"));
-            if(r) {
-                const parent = element.parentElement!;
-                element.remove();
-                element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
-                element.removeAttribute("stroke");
-                parent.insertBefore(element, parent.firstChild); // Move the element to the very back
-            }
-        }
+        // for (const element of elements) {
+        //     const r = Number(element.getAttribute("r"));
+        //     if(r) {
+        //         const parent = element.parentElement!;
+        //         element.remove();
+        //         element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
+        //         element.removeAttribute("stroke");
+        //         parent.insertBefore(element, parent.firstChild); // Move the element to the very back
+        //     }
+        // }
+        if(this._svg)
+            d3.select(this._svg).select("." + CIRCLE_GROUP_CLASS_NAME).remove();
     }
 }
-
-
-
-// let brushStartPoint : any = null;
-        // let lastSelection : any = null;
-        // let lastTransform: any = null;
-
-        // function brush_startEvent() {
-        //     // const sourceEvent = d3.event.sourceEvent;
-        //     // const selection = d3.event.selection;
-        //     // if (sourceEvent.type === 'mousedown') {
-        //     //     brushStartPoint = {
-        //     //         mouse: {
-        //     //             x: sourceEvent.screenX,
-        //     //             y: sourceEvent.screenY
-        //     //         },
-        //     //         x: selection[0][0],
-        //     //         y: selection[0][1]
-        //     //     }
-        //     // } else {
-        //     //     brushStartPoint = null;
-        //     // }
-        // }
-
-        // function brush_brushEvent() {
-        //     // if (brushStartPoint !== null) {
-        //     //     const scale = width / height;
-        //     //     const sourceEvent = d3.event.sourceEvent;
-        //     //     const mouse = {
-        //     //         x: sourceEvent.screenX,
-        //     //         y: sourceEvent.screenY
-        //     //     };
-        //     //     if (mouse.x < 0) { mouse.x = 0; }
-        //     //     if (mouse.y < 0) { mouse.y = 0; }
-        //     //     let distance = mouse.y - brushStartPoint.mouse.y;
-        //     //     let yPosition = brushStartPoint.y + distance;
-        //     //     let xCorMulti = 1;
-        
-        //     //     if ((distance < 0 && mouse.x > brushStartPoint.mouse.x) || (distance > 0 && mouse.x < brushStartPoint.mouse.x)) {
-        //     //         xCorMulti = -1;
-        //     //     }
-        
-        //     //     if (yPosition > height) {
-        //     //         distance = height - brushStartPoint.y;
-        //     //         yPosition = height;
-        //     //     } else if (yPosition < 0) {
-        //     //         distance = -brushStartPoint.y;
-        //     //         yPosition = 0;
-        //     //     }
-        
-        //     //     let xPosition = brushStartPoint.x + distance * scale * xCorMulti;
-        //     //     const oldDistance = distance;
-        
-        //     //     if (xPosition > width) {
-        //     //         distance = (width - brushStartPoint.x) / scale;
-        //     //         xPosition = width;
-        //     //     } else if (xPosition < 0) {
-        //     //         distance = brushStartPoint.x / scale;
-        //     //         xPosition = 0;
-        //     //     }
-        
-        //     //     if (oldDistance !== distance) {
-        //     //         distance *= (oldDistance < 0) ? -1 : 1;
-        //     //         yPosition = brushStartPoint.y + distance;
-        //     //     }
-        
-        //     //     const selection = svg.select(".selection");
-        
-        //     //     const posValue = Math.abs(distance);
-        //     //     selection.attr('width', posValue * scale).attr('height', posValue);
-        
-        //     //     if (xPosition < brushStartPoint.x) {
-        //     //         selection.attr('x', xPosition);
-        //     //     }
-        //     //     if (yPosition < brushStartPoint.y) {
-        //     //         selection.attr('y', yPosition);
-        //     //     }
-        
-        //     //     const minX = Math.min(brushStartPoint.x, xPosition);
-        //     //     const maxX = Math.max(brushStartPoint.x, xPosition);
-        //     //     const minY = Math.min(brushStartPoint.y, yPosition);
-        //     //     const maxY = Math.max(brushStartPoint.y, yPosition);
-        
-        //     //     lastSelection = { x1: minX, x2: maxX, y1: minY, y2: maxY };
-        //     // }
-        // }
-
-        // function brush_endEvent() {
-        //     // const s = d3.event.selection;
-        //     // if (!s && lastSelection !== null && lastTransform !== null) {
-        //     //     // Re-scale axis for the last transformation
-        //     //     let zx = lastTransform.rescaleX(xScale);
-        //     //     let zy = lastTransform.rescaleY(yScale);
-        
-        //     //     // Calc distance on Axis-X to use in scale
-        //     //     let totalX = Math.abs(lastSelection.x2 - lastSelection.x1);
-        
-        //     //     // Get current point [x,y] on canvas
-        //     //     const originalPoint = [zx.invert(lastSelection.x1), zy.invert(lastSelection.y1)];
-        //     //     // Calc scale mapping distance AxisX in width * k
-        //     //     // Example: Scale 1, width: 830, totalX: 415
-        //     //     // Result in a zoom of 2
-        //     //     const t = d3.zoomIdentity.scale(((width * lastTransform.k) / totalX));
-        //     //     // Re-scale axis for the new transformation
-        //     //     zx = t.rescaleX(xScale);
-        //     //     zy = t.rescaleY(yScale);
-        //     //     // Call zoomFunction with a new transformation from the new scale and brush position.
-        //     //     // To calculate the brush position we use the originalPoint in the new Axis Scale.
-        //     //     // originalPoint it's always positive (because we're sure it's within the canvas).
-        //     //     // We need to translate this originalPoint to [0,0]. So, we do (0 - position) or (position * -1)
-        //     //     canvas
-        //     //         .transition()
-        //     //         .duration(200)
-        //     //         .ease(d3.easeLinear)
-        //     //         .call(zoom.transform,
-        //     //             d3.zoomIdentity
-        //     //                 .translate(zx(originalPoint[0]) * -1, zy(originalPoint[1]) * -1)
-        //     //                 .scale(t.k));
-        //     //     lastSelection = null;
-        //     // } else {
-        //     //     brushSvg.call(brush.move, null);
-        //     // }
-
-
-        //     const t = d3.zoomIdentity.translate(0, 0).scale(1);
-        //     canvas.transition()
-        //     .duration(200)
-        //     .ease(d3.easeLinear)
-        //     .call(zoom.transform, t)
-
-        //     self._current_transform = self._original_transform;
-        //     const {bafScale, rdrScale} = self.computeScales(rdRange, width, height);
-        //     self._currXScale = bafScale;
-        //     self._currYScale = rdrScale;
-        //     xScale = self._currXScale;
-        //     yScale = self._currYScale; 
-        //     self.redraw();
-        // }
