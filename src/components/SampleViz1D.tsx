@@ -15,6 +15,7 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     initialSelectedSample?: string;
     onLocationHovered?: (location: ChromosomeInterval | null) => void;
+    onBrushedBinsUpdated: any;
     brushedBins: MergedGenomicBin[];
     customColor: string;
     colors: string[];
@@ -48,10 +49,10 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, brushedBins, customColor, yScale} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale} = this.props;
         const selectedSample = this.props.selectedSample;
 
-        const selectedRecords = data.getRecords(selectedSample, chr);
+        const selectedRecords = data.getMergedRecords(selectedSample, chr);//data.getRecords(selectedSample, chr);
         let visualization: React.ReactNode = null;
         if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
@@ -61,6 +62,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     rdRange={data.getRdRange()}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} 
+                    onBrushedBinsUpdated={onBrushedBinsUpdated}
                     brushedBins={brushedBins}
                     customColor={customColor}
                     colors={this.props.colors}
@@ -72,6 +74,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     chr={chr}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered}
+                    onBrushedBinsUpdated={onBrushedBinsUpdated}
                     brushedBins={brushedBins} 
                     customColor={customColor}
                     colors={this.props.colors}
@@ -79,13 +82,13 @@ export class SampleViz1D extends React.Component<Props, State> {
 
             </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {
-            visualization = <RdrBafCircosPlot
-                data={selectedRecords}
-                rdRange={data.getRdRange()}
-                hoveredLocation={hoveredLocation}
-                onLocationHovered={onLocationHovered}
-                genome={hg38}
-                chr={chr} />;
+            // visualization = <RdrBafCircosPlot
+            //     data={selectedRecords}
+            //     rdRange={data.getRdRange()}
+            //     hoveredLocation={hoveredLocation}
+            //     onLocationHovered={onLocationHovered}
+            //     genome={hg38}
+            //     chr={chr} />;
         }
 
         return <div className="SampleViz" style={{marginTop: 30}}>

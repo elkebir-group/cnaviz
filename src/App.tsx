@@ -302,8 +302,8 @@ export class App extends React.Component<{}, State> {
 
     updateBrushedBins(brushedBins: MergedGenomicBin[]) {
         this.state.indexedData.setbrushedBins(brushedBins);
+        console.log("test");
         this.setState({updatedBins: true});
-        //this.forceUpdate();
     }
 
     handleAxisInvert() {

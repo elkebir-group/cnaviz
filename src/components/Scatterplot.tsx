@@ -305,8 +305,6 @@ export class Scatterplot extends React.Component<Props> {
                             ></svg>
                             <div className="Scatterplot-tools">
                                 <button id="reset">Reset</button>
-                                {/* <button id="zoom" className="active">Zoom</button>
-                                <button id="brush">Brush</button> */}
                             </div>
                             {this.renderTooltip()}
                         </div>;
@@ -347,6 +345,7 @@ export class Scatterplot extends React.Component<Props> {
             this._clusters = this.initializeListOfClusters();
             this.redraw();
         } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height", "invertAxis"])) {
+            console.log("Rerendering brushedBins", this.props["brushedBins"]);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -553,9 +552,6 @@ export class Scatterplot extends React.Component<Props> {
                     let newBafRange : [number, number] = [Number(self._currXScale.invert(selection[0][0])), 
                                                             Number(self._currXScale.invert(selection[1][0]))];
                     const {bafScale, rdrScale} = self.computeScales(newRdRange, width, height, newBafRange);
-
-                    console.log("NEW BAF SCALE: ", bafScale.domain());
-                    console.log("NEW RDR SCALE: ", rdrScale.domain());
                     self._currXScale = bafScale;
                     self._currYScale = rdrScale;
                     xAxis.call(d3.axisBottom(self._currXScale))
@@ -634,9 +630,10 @@ export class Scatterplot extends React.Component<Props> {
         if (data) {
             try {
                 const { selection } = d3.event;
-                let rect = [[this._currXScale.invert(selection[0][0]), this._currYScale.invert(selection[1][1])], [this._currXScale.invert(selection[1][0]), this._currYScale.invert(selection[0][1])]];
-                
-
+                let rect = [[this._currXScale.invert(selection[0][0]), 
+                            this._currYScale.invert(selection[1][1])], 
+                            [this._currXScale.invert(selection[1][0]), 
+                            this._currYScale.invert(selection[0][1])]];
                 let brushNodes : MergedGenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,//selection, 
                     (d : MergedGenomicBin) => d.averageBaf, 
                     (d : MergedGenomicBin)  => d.averageRd);
@@ -651,7 +648,6 @@ export class Scatterplot extends React.Component<Props> {
                     this.brushedNodes = new Set(brushNodes);                  
                 } 
             } catch (error) { console.log(error);}
-            console.timeEnd("BRUSHING");
         }
     }
 

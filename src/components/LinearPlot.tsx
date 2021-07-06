@@ -47,7 +47,7 @@ function findChrNumber(chr: string) {
 }
 
 interface Props {
-    data: GenomicBin[];
+    data: MergedGenomicBin[];
     chr: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "BAF">;
     width: number;
@@ -55,6 +55,7 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null) => void
     brushedBins: MergedGenomicBin[];
+    onBrushedBinsUpdated: any;
     genome: Genome;
     yLabel?: string;
     yMin: number;
@@ -73,7 +74,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _svg: SVGSVGElement | null;
     private _canvas: HTMLCanvasElement | null;
     private _clusters: string[];
-    private brushedNodes: Set<GenomicBin>;
+    private brushedNodes: Set<MergedGenomicBin>;
     constructor(props: Props) {
         super(props);
         this._svg = null;
@@ -87,7 +88,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        let clusters = [...new Set(this.props.data.map(d => String(d.CLUSTER)))].sort(collator.compare);
+        let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare);
         if(clusters[0] === "-1") {
             clusters.shift();
         }
@@ -208,27 +209,31 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         this._canvas.width = 800;
         this._canvas.height = 150;
+        let previous : any = [];
+        brushedBins.forEach(d => previous.push(String(d.location)));
+        let previous_brushed_nodes = new Set(previous);
 
         applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
         
         for (const d of data) {
-            const location = GenomicBinHelpers.toChromosomeInterval(d);
+            const location = d.location;//GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);
             const x = xScale(range.getCenter());
-            const y = dataKeyToPlot==="BAF" ? yScale(0.5-d[dataKeyToPlot]) : yScale(d[dataKeyToPlot]);
+            const y = (dataKeyToPlot === "BAF") ? yScale(0.5-d.averageBaf) : yScale(d.averageRd);
             if(x && y && y < yScale.range()[0] && y > yScale.range()[1]) {
-                if (this.brushedNodes.has(d)) {
-                    ctx.fillStyle = "red";
+                if (previous_brushed_nodes.has(String(d.location))) {
+                    ctx.fillStyle = customColor;
                 } else {
-                    ctx.fillStyle = (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.CLUSTER] ? this.props.colors[d.CLUSTER] : colorScale(String(d.CLUSTER))); //color;
+                    ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.bins[0].CLUSTER] ? this.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER))); //color;
                 }
                 ctx.fillRect(x, y - 1, 2, 3);
             }
         }
 
         //this.createNewBrush();
+       
 
         const brush = d3.brush()
         .keyModifiers(true)
@@ -240,19 +245,20 @@ export class LinearPlot extends React.PureComponent<Props> {
                         const { selection, currentTarget } = d3.event;
                         
                         let brushed = visutils.filterInRect(data, selection, 
-                            function(d: GenomicBin){
-                                const location = GenomicBinHelpers.toChromosomeInterval(d);
+                            function(d: MergedGenomicBin){
+                                const location = d.location;
                                 const range = genome.getImplicitCoordinates(location);
                                 return xScale(range.getCenter());
                             }, 
-                            function(d: GenomicBin){
-                                const location = GenomicBinHelpers.toChromosomeInterval(d);
+                            function(d: MergedGenomicBin){
+                                const location = d.location;//GenomicBinHelpers.toChromosomeInterval(d);
                                 //const range = genome.getImplicitCoordinates(location);
-                                return yScale(d[dataKeyToPlot]);
+                                return (dataKeyToPlot === "BAF") ? yScale(0.5-d.averageBaf) : yScale(d.averageRd);
                             });
                         this.brushedNodes = new Set(brushed);
-                        console.log(brushed);
-                        this.redraw();
+                        this.props.onBrushedBinsUpdated([...this.brushedNodes]);
+                        console.log("LINEAR PLOT BRUSHED: ", brushed);
+                        //this.redraw();
                     }catch(error) {
                         console.log(error);
                     }
