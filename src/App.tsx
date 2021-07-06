@@ -1,6 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
-import _, { sample } from "lodash";
+import _, { last, sample } from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
@@ -16,12 +16,11 @@ import {HuePicker} from "react-color";
 import "./App.css";
 import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
-import keydown, { Keys } from "react-keydown";
 import DataTable from "react-data-table-component"
-import {MyComponent} from "./components/ClusterTable";
-import * as d3 from "d3";
-import {CSVLink} from "react-csv"
+import {ClusterTable} from "./components/ClusterTable";
 import {CSV} from "./components/CSVLink"
+import * as d3 from "d3";
+import {Genome} from "./model/Genome";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -35,6 +34,8 @@ function getFileContentsAsString(file: File) {
     });
 }
 
+export let genome : Genome;
+
 function parseGenomicBins(data: string, applyLog: boolean, applyClustering: boolean): Promise<GenomicBin[]> {
     return new Promise((resolve, reject) => {
         parse(data, {
@@ -47,42 +48,51 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 reject(error);
                 return;
             }
-            if(applyLog) {
-                for (const bin of parsed) {
-                    bin.RD = Math.log2(bin.RD);
-                    //console.log("Applying clustering: ", bin.RD);
-                    if (!applyClustering) {
-                        bin.CLUSTER = -1;
-                    }
-                }
-            } else if(!applyClustering) {
-                for (const bin of parsed) {
+            
+            let start = Number(parsed[0].START);
+            let end = 0;
+            let lastChr = parsed[0]["#CHR"];
+            let chrNameLength: any = [];
+
+            for (const bin of parsed) {
+                if(!applyClustering) {
                     bin.CLUSTER = -1;
                 }
-            }
 
+                if(applyLog) { 
+                    bin.RD = Math.log2(bin.RD);
+                }
+
+                if(lastChr !==  bin["#CHR"]) {
+                    chrNameLength.push({name: lastChr, length: (end - start)})
+                    start = Number(bin.START);
+                    lastChr = bin["#CHR"]
+                }
+                end = Number(bin.END);
+            }
+            
+            
+            chrNameLength.push({name: lastChr, length: (end - start)})
+            
+            chrNameLength.sort((a : any, b : any) => (a.name < b.name) ? 1 : -1)
+
+
+            const sortedChrNameLength = chrNameLength.sort((a: any, b : any) => {
+                return a.name.localeCompare(b.name, undefined, {
+                    numeric: true,
+                    sensitivity: 'base'
+                })
+            })
+
+            //console.log(sorted);
+            genome = new Genome(sortedChrNameLength);
+            
             console.log("PARSED: ", parsed);
             resolve(parsed);
         });
     })
 }
 
-function convertToCSV(arr : any) {
-    const array = [Object.keys(arr[0])].concat(arr)
-  
-    return array.map(it => {
-      return Object.values(it).toString()
-    }).join('\n')
-  }
-
-function downloadCSV(csvStr : string) {
-
-    var hiddenElement = document.createElement('a');
-    hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
-    hiddenElement.target = '_blank';
-    hiddenElement.download = 'output.csv';
-    hiddenElement.click();
-}
 /**
  * Possible states of processing input data.
  */
@@ -145,8 +155,14 @@ interface State {
 
     selectedSample: string;
 
+    displayMode: DisplayMode;
 }
 
+
+export enum DisplayMode {
+    zoom,
+    select
+};
 
 /**
  * Top-level container.
@@ -192,7 +208,8 @@ export class App extends React.Component<{}, State> {
             inputError: false,
             value: "0",
             updatedBins: false,
-            selectedSample: ""
+            selectedSample: "",
+            displayMode: DisplayMode.select
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -209,24 +226,17 @@ export class App extends React.Component<{}, State> {
         this.onClusterRowsChange = this.onClusterRowsChange.bind(this);
         this.onClusterColorChange = this.onClusterColorChange.bind(this);
         this.onSelectedSample = this.onSelectedSample.bind(this);
+        let self = this;
+        d3.select("body").on("keypress", function(){
+            if (d3.event.key == "a") {
+                console.log("Test Zooming/Panning")
+                self.setState({displayMode: DisplayMode.zoom})
+            } else if (d3.event.key == "b") {
+                console.log("Test2 Brushing")
+                self.setState({displayMode: DisplayMode.select})
+            }
+        })
     }
-
-    componentDidMount() {
-        document.addEventListener('keydown', this.onCero, false);
-      }
-      
-    componentWillUnmount() {
-        document.removeEventListener('keydown', this.onCero, false);
-    }
-
-    onCero = (e:any) => {
-        //if (e.keyCode === 27 || e.keyCode === 13) {
-        if(e.keyCode === 8) {
-            console.log("CLUSTER DELETED: ", this.state.value);
-            this.state.indexedData.deleteCluster(Number(this.state.value));
-            this.setState({indexedData: this.state.indexedData});
-        }
-    };
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
@@ -375,7 +385,7 @@ export class App extends React.Component<{}, State> {
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
         const allData = this.state.indexedData.getAllRecords();
-        console.log("RENDERING")
+        //indexedData.setRDFilter([1.0, 1.5]);
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const scatterplotProps = {
@@ -395,7 +405,8 @@ export class App extends React.Component<{}, State> {
                 brushedBins: brushedBins,
                 updatedBins: updatedBins,
                 onSelectedSample: this.onSelectedSample,
-                selectedSample: this.state.selectedSample
+                selectedSample: this.state.selectedSample,
+                dispMode: this.state.displayMode
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -418,39 +429,21 @@ export class App extends React.Component<{}, State> {
                         <div className="row">
                             <div className = "col" >
                                 <div className="row" style={{paddingTop: 10}}>
-                                    {/* <button onClick={this.handleAxisInvert} style={{marginRight: 10}}> Invert Axes </button> */}
                                     <button onClick={this.handleAddSampleClick} style={{marginRight: 10}}> Add Sample </button>
                                     <button onClick={this.handleAssignCluster} style={{marginRight: 10}} > Assign Cluster </button>
                                     <input type="number" style={{marginLeft: 10}} value={value} size={30} min="0" max="14" 
                                             onChange={this.handleClusterAssignmentInput}/>
                                 </div>
-                                
-                                {/* <div className = "row" style={{paddingTop: 10}}>
-                                    <HuePicker width="100%" color={color} onChange={this.handleColorChange}/>
-                                </div> */}
                             </div>
                         </div>
 
-                        <MyComponent test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange} onClusterColorChange={this.onClusterColorChange}></MyComponent>
-                        
+                        <ClusterTable test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange} onClusterColorChange={this.onClusterColorChange}></ClusterTable>
                     </div>
                     
                     <div className="sampleviz-wrapper">
-                        {/* {_.times(sampleAmount, i => samples.length > i 
-                            && <div className="row"> 
-                                    <div className="col"> 
-                                        <SampleViz2D key={i} {...scatterplotProps} initialSelectedSample={samples[i]}/> 
-                                    </div>
-                                    <div className="col">
-                                        <SampleViz1D {...scatterplotProps} initialSelectedSample={samples[i]} /> 
-                                    </div>
-                                </div> 
-                            )} */}
-                            {/* <SampleViz {...scatterplotProps}/> */}
                             {_.times(sampleAmount, i => samples.length > i 
                             && <SampleViz {...scatterplotProps} initialSelectedSample={samples[i]}></SampleViz>)}
                     </div>
-                    {/* <CSV data={this.state.indexedData.getAllRecords()}> /</CSV> */}
                 </div>);
         }
 

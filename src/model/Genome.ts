@@ -46,8 +46,8 @@ export class Genome {
      * @param chromosomes - list of chromosomes in the genome
      * @throws {Error} if there are duplicate chromosome names
      */
-    constructor(name: string, chromosomes: Chromosome[]) {
-        this._name = name;
+    constructor(chromosomes: Chromosome[], name?: string) {
+        this._name = name ? name : "";
         this._chromosomes = chromosomes;
         this._chrStarts = {};
         this._length = 0;
@@ -150,7 +150,7 @@ export class Genome {
     }
 }
 
-export const hg38 = new Genome("hg38", [
+export const hg38 = new Genome([
     {name: "chr1", length: 248956422},
     {name: "chr2", length: 242193529},
     {name: "chr3", length: 198295559},
@@ -173,4 +173,4 @@ export const hg38 = new Genome("hg38", [
     {name: "chr20", length: 64444167},
     {name: "chr21", length: 46709983},
     {name: "chr22", length: 50818468}
-]);
+], "hg38");

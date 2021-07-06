@@ -14,3 +14,9 @@
 .SampleViz-separator {
     border: 1px solid lightgrey;
 }
+
+.tools {
+    position: absolute;
+    left: calc(81.5%);
+    visibility: visible;
+}

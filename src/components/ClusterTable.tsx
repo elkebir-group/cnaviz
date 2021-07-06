@@ -29,7 +29,7 @@ interface Props {
 
 const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
 
-export class MyComponent extends React.Component<Props> {
+export class ClusterTable extends React.Component<Props> {
     private readonly table_data : any;
     private colors : any;
     

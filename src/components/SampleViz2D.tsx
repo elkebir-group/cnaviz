@@ -8,6 +8,7 @@ import { CurveState } from "../model/CurveState";
 
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
+import * as d3 from "d3";
 
 import "./SampleViz.css";
 import { zoom } from "d3-zoom";
@@ -33,6 +34,8 @@ interface Props {
     onBrushedBinsUpdated: any;
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
+    dispMode: DisplayMode;
+    onZoom: (newYScale: [number, number]) => void
 }
 
 interface State {
@@ -64,6 +67,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleUpdatedBrushedBins = this.handleUpdatedBrushedBins.bind(this);
+        
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -88,7 +92,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins} = this.props;
+                brushedBins, updatedBins, dispMode, onZoom} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -96,14 +100,22 @@ export class SampleViz2D extends React.Component<Props, State> {
 
         const rdRange = data.getRdRange();
         rdRange[1] += 1; // Add one so it's prettier
-
+        
+        // .on("keypress", function() {
+        //     if (d3.event.key == "a") {
+        //         console.log("Zooming/Panning")
+                
+        //     } else if (d3.event.key == "b") {
+        //         console.log("Brushing")
+        //     }
+        
         return <div className="SampleViz">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
-                {this.renderDisplayModeRadioOption(DisplayMode.select)}
-                {this.renderDisplayModeRadioOption(DisplayMode.zoom)}
+                {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
+                {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>
             {/* <div className="Cluster-select">
                 Select cluster: <select value={selectedCluster} 
@@ -112,6 +124,8 @@ export class SampleViz2D extends React.Component<Props, State> {
                             {clusterOptions}
                 </select>
             </div> */}
+            
+
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}
@@ -130,7 +144,8 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onBrushedBinsUpdated= {this.handleUpdatedBrushedBins}
                     brushedBins= {brushedBins}
                     updatedBins= {updatedBins}
-                    displayMode = {this.state.displayMode}
+                    displayMode = {dispMode}//{this.state.displayMode}
+                    onZoom = {onZoom}
                     />
             </DivWithBullseye>
         </div>;

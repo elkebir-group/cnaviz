@@ -9,7 +9,7 @@ import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { brush } from "d3";
-
+const visutils = require('vis-utils');
 const SCALES_CLASS_NAME = "linearplot-scale";
 const CLUSTER_COLORS = [
     "#1b9e77", 
@@ -73,6 +73,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _svg: SVGSVGElement | null;
     private _canvas: HTMLCanvasElement | null;
     private _clusters: string[];
+    private brushedNodes: Set<GenomicBin>;
     constructor(props: Props) {
         super(props);
         this._svg = null;
@@ -81,6 +82,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
         this._clusters = this.initializeListOfClusters();
+        this.brushedNodes = new Set();
     }
 
     initializeListOfClusters() : string[] {
@@ -101,7 +103,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["brushedBins", "width", "height", "chr"])) {
+        if (this.propsDidChange(prevProps, ["yMin", "yMax", "brushedBins", "width", "height", "chr"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
@@ -124,8 +126,25 @@ export class LinearPlot extends React.PureComponent<Props> {
             .range([PADDING.left, width - PADDING.right]);
     }
 
+    createNewBrush() {
+        const svg = d3.select(this._svg);
+        const brush = d3.brush()
+        .keyModifiers(true)
+        .extent([[PADDING.left, PADDING.top], 
+                [this.props.width - PADDING.right, this.props.height - PADDING.bottom]])
+                .on("end", () => {
+                    svg.selectAll("." + "brush").remove();
+                    
+                });
+                
+        // attach the brush to the chart
+        svg.append('g')
+            .attr('class', 'brush')
+            .call(brush);
+    }
+
     redraw() {
-        console.time("Redraw Linear Plot");
+        //console.time("Redraw Linear Plot");
         if (!this._svg) {
             return;
         }
@@ -198,16 +217,53 @@ export class LinearPlot extends React.PureComponent<Props> {
             const location = GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);
             const x = xScale(range.getCenter());
-            const y = yScale(d[dataKeyToPlot]);
-            //console.log("color: ", (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : colorScale(String(d.CLUSTER)));
-            ctx.fillStyle = (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.CLUSTER] ? this.props.colors[d.CLUSTER] : colorScale(String(d.CLUSTER))); //color;
-            ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-            // ctx.beginPath();
-            // ctx.ellipse(x || 0, y || 0, 1, 1, 0, 0, 2 * Math.PI);
-            // ctx.fill();
-
+            const y = dataKeyToPlot==="BAF" ? yScale(0.5-d[dataKeyToPlot]) : yScale(d[dataKeyToPlot]);
+            if(x && y && y < yScale.range()[0] && y > yScale.range()[1]) {
+                if (this.brushedNodes.has(d)) {
+                    ctx.fillStyle = "red";
+                } else {
+                    ctx.fillStyle = (d.CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.CLUSTER] ? this.props.colors[d.CLUSTER] : colorScale(String(d.CLUSTER))); //color;
+                }
+                ctx.fillRect(x, y - 1, 2, 3);
+            }
         }
-        console.timeEnd("Redraw Linear Plot");
+
+        //this.createNewBrush();
+
+        const brush = d3.brush()
+        .keyModifiers(true)
+        .extent([[PADDING.left, PADDING.top], 
+                [this.props.width - PADDING.right, this.props.height - PADDING.bottom]])
+                .on("end", () => {
+                    svg.selectAll("." + "brush").remove();
+                    try{
+                        const { selection, currentTarget } = d3.event;
+                        
+                        let brushed = visutils.filterInRect(data, selection, 
+                            function(d: GenomicBin){
+                                const location = GenomicBinHelpers.toChromosomeInterval(d);
+                                const range = genome.getImplicitCoordinates(location);
+                                return xScale(range.getCenter());
+                            }, 
+                            function(d: GenomicBin){
+                                const location = GenomicBinHelpers.toChromosomeInterval(d);
+                                //const range = genome.getImplicitCoordinates(location);
+                                return yScale(d[dataKeyToPlot]);
+                            });
+                        this.brushedNodes = new Set(brushed);
+                        console.log(brushed);
+                        this.redraw();
+                    }catch(error) {
+                        console.log(error);
+                    }
+                });
+                
+        // attach the brush to the chart
+        svg.append('g')
+            .attr('class', 'brush')
+            .call(brush);
+
+        //console.timeEnd("Redraw Linear Plot");
     }
 
     renderHighlight() {
@@ -258,13 +314,15 @@ export class LinearPlot extends React.PureComponent<Props> {
             onMouseMove={this.handleMouseMove}
             onMouseLeave={this.handleMouseLeave}
         >
-            {this.renderHighlight()}
+            
             <canvas
                 ref={node => this._canvas = node}
                 width={width}
                 height={height}
                 style={{position: "absolute", zIndex: -1}} />
+            {/* {this.renderHighlight()} */}
             <svg ref={node => this._svg = node} width={width} height={height} />
+            
         </div>;
     }
 }

@@ -11,6 +11,7 @@ import { SampleViz1D } from "./SampleViz1D";
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
+import {DisplayMode} from "./SampleViz2D"
 
 interface Props {
     parentCallBack: any;
@@ -32,10 +33,12 @@ interface Props {
     onBrushedBinsUpdated: any;
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
+    dispMode: DisplayMode;
 }
 
 interface State {
     selectedSample: string;
+    yScale: [number, number] | null;
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -43,26 +46,35 @@ export class SampleViz extends React.Component<Props, State> {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
+            yScale: null
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
+        this.handleZoom = this.handleZoom.bind(this);
 
     }
     
     handleSelectedSampleChanged(selected : string) {
         this.setState({selectedSample: selected});
-        //this.props.onSelectedSample(event.target.value);
+    }
+
+    handleZoom(newYScale: [number, number]) {
+        this.setState({yScale: newYScale})
     }
 
     render() {
+        //console.log("RENDERING")
         const {data, initialSelectedSample} = this.props;
         const samples = data.getSampleList();
         return <div className="sampleviz-wrapper">
              <div className="row"> 
                 <div className="col"> 
-                    <SampleViz2D {...this.props} onSelectedSample={this.handleSelectedSampleChanged} initialSelectedSample={initialSelectedSample}/> 
+                    <SampleViz2D {...this.props} 
+                    onSelectedSample={this.handleSelectedSampleChanged} 
+                    initialSelectedSample={initialSelectedSample}
+                    onZoom={this.handleZoom}/> 
                 </div>
                 <div className="col">
-                    <SampleViz1D {...this.props} selectedSample={this.state.selectedSample} initialSelectedSample={initialSelectedSample} /> 
+                    <SampleViz1D {...this.props}  yScale={this.state.yScale} selectedSample={this.state.selectedSample} initialSelectedSample={initialSelectedSample} /> 
                 </div>
             </div> 
                 
