@@ -80,6 +80,7 @@ export class DataWarehouse {
 
     private clusterTableInfo: any; 
 
+    private allRecords: GenomicBin[];
     
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -169,6 +170,8 @@ export class DataWarehouse {
         
         
         this.clusterTableInfo = clone;
+
+        this.allRecords = this._ndx.all();
         console.timeEnd("Initializing DataWarehouse");
     }
 
@@ -234,6 +237,7 @@ export class DataWarehouse {
             this._cluster_dim.filter((d:string) => clusters.indexOf(d) === -1 ? false : true);
             this._merged_cluster_dim.filter((d:string) => clusters.indexOf(d) === -1 ? false : true);
         }
+
     }
 
     setChrFilter(chr?: string) {
@@ -338,6 +342,7 @@ export class DataWarehouse {
         }
         
         this.clusterTableInfo = clone;
+        this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
         console.timeEnd("Updating Clusters");
     }
 
@@ -394,7 +399,7 @@ export class DataWarehouse {
        
         //this.clearAllFilters();
         //console.log("TEST: ", this._ndx.all());
-        return this._ndx.all()//.filter((d: GenomicBin) => d.CLUSTER !== -2);
+        return this.allRecords; //.filter((d: GenomicBin) => d.CLUSTER !== -2);
     }
 
     getClusterTableInfo() {

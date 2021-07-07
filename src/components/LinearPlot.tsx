@@ -145,7 +145,6 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     redraw() {
-        //console.time("Redraw Linear Plot");
         if (!this._svg) {
             return;
         }
@@ -221,7 +220,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             const location = d.location;//GenomicBinHelpers.toChromosomeInterval(d);
             const range = genome.getImplicitCoordinates(location);
             const x = xScale(range.getCenter());
-            const y = (dataKeyToPlot === "BAF") ? yScale(0.5-d.averageBaf) : yScale(d.averageRd);
+            const y = (dataKeyToPlot === "BAF") ? yScale(d.averageBaf) : yScale(d.averageRd);
             if(x && y && y < yScale.range()[0] && y > yScale.range()[1]) {
                 if (previous_brushed_nodes.has(String(d.location))) {
                     ctx.fillStyle = customColor;
@@ -232,11 +231,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
         }
 
-        //this.createNewBrush();
-       
-
         const brush = d3.brush()
-        .keyModifiers(true)
+        .keyModifiers(false)
         .extent([[PADDING.left, PADDING.top], 
                 [this.props.width - PADDING.right, this.props.height - PADDING.bottom]])
                 .on("end", () => {
@@ -253,8 +249,13 @@ export class LinearPlot extends React.PureComponent<Props> {
                             function(d: MergedGenomicBin){
                                 const location = d.location;//GenomicBinHelpers.toChromosomeInterval(d);
                                 //const range = genome.getImplicitCoordinates(location);
-                                return (dataKeyToPlot === "BAF") ? yScale(0.5-d.averageBaf) : yScale(d.averageRd);
+                                return (dataKeyToPlot === "BAF") ? yScale(d.averageBaf) : yScale(d.averageRd);
                             });
+
+                        if(d3.event.sourceEvent.shiftKey) {
+                            let intersection : MergedGenomicBin[] = _.intersection(brushed, brushedBins);
+                            brushed = _.difference(_.uniq(_.union(brushed, brushedBins)), intersection); //_.uniq(_.union(brushNodes, brushedBins)).filter(d => !intersection.some(e => d === e));   
+                        }
                         this.brushedNodes = new Set(brushed);
                         this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                         console.log("LINEAR PLOT BRUSHED: ", brushed);
@@ -269,7 +270,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr('class', 'brush')
             .call(brush);
 
-        //console.timeEnd("Redraw Linear Plot");
     }
 
     renderHighlight() {

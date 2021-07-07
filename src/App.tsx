@@ -69,6 +69,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     lastChr = bin["#CHR"]
                 }
                 end = Number(bin.END);
+                bin.BAF = 0.5 - bin.BAF;
             }
             
             

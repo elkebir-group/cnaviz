@@ -12,10 +12,7 @@ import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberSta
 import { niceBpCount, getRelativeCoordinates } from "../util";
 import {GenomicBinHelpers} from "../model/GenomicBin";
 import "./Scatterplot.css";
-import { brush } from "d3";
-//import { brush, cluster } from "d3";
 import {DisplayMode} from "./SampleViz2D"
-//import _ from "lodash";
 
 const visutils = require('vis-utils');
 
@@ -124,7 +121,7 @@ interface Props {
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
     displayMode: DisplayMode;
-    onZoom: (newYScale: [number, number]) => void
+    onZoom: (newScales: any) => void
 }
 
 
@@ -148,6 +145,7 @@ export class Scatterplot extends React.Component<Props> {
     private _original_transform: any;
     private _current_transform: any;
     private scatter: any;
+    private zoom: any;
 
     constructor(props: Props) {
         super(props);
@@ -167,6 +165,8 @@ export class Scatterplot extends React.Component<Props> {
         this.switchMode = this.switchMode.bind(this);
         this.brushedNodes = new Set();
         this.onZoom = this.onZoom.bind(this);
+        this.resetZoom = this.resetZoom.bind(this);
+        this.zoom = null;
 
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, props.width, props.height);
         let xScale = bafScale;
@@ -220,11 +220,11 @@ export class Scatterplot extends React.Component<Props> {
 
         const {rdRange, width, height, invertAxis} = this.props;
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
-        const top =  ((this._currYScale(rd) || 0));
+        const top =  (this._currYScale(rd) || 0);
         const left = ((this._currXScale(baf) || 0) + TOOLTIP_OFFSET);
-
         const tooltipHeight = 150;
-        const tooltipWidth = 275
+        const tooltipWidth = 275;
+        
         return <div
             className="Scatterplot-tooltip"
             style={{
@@ -252,34 +252,42 @@ export class Scatterplot extends React.Component<Props> {
         if(hoveredRecords.length === 0) {
             hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation))
         }
+        if(hoveredRecords[0]) {
+            const x = this._currXScale(hoveredRecords[0].averageBaf);
+            const y = this._currYScale(hoveredRecords[0].averageRd);
+            
+            let range = this._currXScale.range();
+            let range2 = this._currYScale.range();
 
-        if (hoveredRecords.length === 1) {
-            const record = hoveredRecords[0];
-            return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
-                <p>
-                    <b>{record.location.toString()}</b><br/>
-                    ({niceBpCount(record.location.getLength())})
-                </p>
-                {/* <div>Number of Bins: {record.bins.length}</div> */}
-                <div> RDR: {record.averageRd.toFixed(2)}</div>
-                <div> BAF: {record.averageBaf.toFixed(2)}</div>
-                <div>Cluster ID:{record.bins[0].CLUSTER}</div>
-            </React.Fragment>);
-        } else if (hoveredRecords.length > 1) {
-            const minBaf = _.minBy(hoveredRecords, "averageBaf")!.averageBaf;
-            const maxBaf = _.maxBy(hoveredRecords, "averageBaf")!.averageBaf;
-            const meanBaf = _.meanBy(hoveredRecords, "averageBaf");
-            const minRd = _.minBy(hoveredRecords, "averageRd")!.averageRd;
-            const maxRd = _.maxBy(hoveredRecords, "averageRd")!.averageRd;
-            const meanRd = _.meanBy(hoveredRecords, "averageRd");
-            return this.renderTooltipAtRdBaf(maxRd, maxBaf, <React.Fragment>
-                <p><b>{hoveredRecords.length} corresponding regions</b></p>
-                <div>Average RDR: {meanRd.toFixed(2)}</div>
-                <div>Average BAF: {meanBaf.toFixed(2)}</div>
-                <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
-                <div>BAF range: [{minBaf.toFixed(2)}, {maxBaf.toFixed(2)}]</div>
-            </React.Fragment>);
+            if (hoveredRecords.length === 1 && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+                const record = hoveredRecords[0];
+                return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
+                    <p>
+                        <b>{record.location.toString()}</b><br/>
+                        ({niceBpCount(record.location.getLength())})
+                    </p>
+                    {/* <div>Number of Bins: {record.bins.length}</div> */}
+                    <div> RDR: {record.averageRd.toFixed(2)}</div>
+                    <div> BAF: {0.5-Number(record.averageBaf.toFixed(2))}</div>
+                    <div>Cluster ID:{record.bins[0].CLUSTER}</div>
+                </React.Fragment>);
+            } 
         }
+        // else if (hoveredRecords.length > 1) {
+        //     const minBaf = _.minBy(hoveredRecords, "averageBaf")!.averageBaf;
+        //     const maxBaf = _.maxBy(hoveredRecords, "averageBaf")!.averageBaf;
+        //     const meanBaf = _.meanBy(hoveredRecords, "averageBaf");
+        //     const minRd = _.minBy(hoveredRecords, "averageRd")!.averageRd;
+        //     const maxRd = _.maxBy(hoveredRecords, "averageRd")!.averageRd;
+        //     const meanRd = _.meanBy(hoveredRecords, "averageRd");
+        //     return this.renderTooltipAtRdBaf(maxRd, maxBaf, <React.Fragment>
+        //         <p><b>{hoveredRecords.length} corresponding regions</b></p>
+        //         <div>Average RDR: {meanRd.toFixed(2)}</div>
+        //         <div>Average BAF: {meanBaf.toFixed(2)}</div>
+        //         <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
+        //         <div>BAF range: [{minBaf.toFixed(2)}, {maxBaf.toFixed(2)}]</div>
+        //     </React.Fragment>);
+        // }
 
         return null;
     }
@@ -304,11 +312,34 @@ export class Scatterplot extends React.Component<Props> {
                                 onDoubleClick={this.switchMode}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                <button id="reset">Reset</button>
+                                <button id="reset" onClick={this.resetZoom}>Reset</button>
                             </div>
                             {this.renderTooltip()}
                         </div>;
         return scatterUI;
+    }
+
+    resetZoom() {
+        if(!this._svg) {
+            return;
+        }
+        let svg = d3.select(this._svg);
+        const {rdRange, width, height, displayMode} = this.props;
+        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
+        this._currXScale = bafScale;
+        this._currYScale = rdrScale;
+        if(displayMode === DisplayMode.zoom) {
+            const t = d3.zoomIdentity.translate(0, 0).scale(1);
+            d3.select(this._canvas).transition()
+            .duration(200)
+            .ease(d3.easeLinear)
+            .call(this.zoom.transform, t)
+        }
+        let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+        console.log("New scales: ", newScales);
+        this.props.onZoom(newScales);
+
+        this.redraw();
     }
 
     createNewBrush() {
@@ -386,8 +417,8 @@ export class Scatterplot extends React.Component<Props> {
         this.props.onBrushedBinsUpdated(brushedNodes);
     }
 
-    onZoom(newYScale: [number, number]) {
-        this.props.onZoom(newYScale);
+    onZoom(newScales: any) {
+        this.props.onZoom(newScales);
     }
 
     redraw() {
@@ -413,26 +444,6 @@ export class Scatterplot extends React.Component<Props> {
         
         const svg = d3.select(this._svg);
         const canvas = d3.select(this._canvas);
-
-        const toolsList = d3.select('.Scatterplot-tools')
-            .style('visibility', 'visible');
-        toolsList.select('#reset').on('click', () => {
-            const t = d3.zoomIdentity.translate(0, 0).scale(1);
-            canvas.transition()
-            .duration(200)
-            .ease(d3.easeLinear)
-            .call(zoom.transform, t)
-
-            const {bafScale, rdrScale} = self.computeScales(rdRange, width, height);
-            self._currXScale = bafScale;
-            self._currYScale = rdrScale;
-            xAxis.call(d3.axisBottom(self._currXScale))
-            yAxis.call(d3.axisLeft(self._currYScale))
-
-            self.redraw();
-
-            self.props.onZoom(self._currYScale.domain());
-        });
 
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
@@ -471,25 +482,63 @@ export class Scatterplot extends React.Component<Props> {
         
 
         const ctx = this._canvas.getContext("2d")!;
-        var zoom : any = d3.zoom()
+        this.zoom = d3.zoom()
+            .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
+            .extent([[0, 0], [width, height]])
+            .on("zoom", () => {
+                //let coords = getRelativeCoordinates(d3.event);
+                
+                const transform = d3.event.transform;
+                //console.log(d3.event.sourceEvent.offsetX);
+                //let relativeTo = d3.event.target;
+                //console.log(relativeTo);
+                this._current_transform = transform;
+                ctx.save();
+                // if(d3.event.sourceEvent) {
+                //     if(d3.event.sourceEvent.offsetX > PADDING.left) {
+                //         //xScale = this._currXScale;
+                //         //yScale = this._currYScale;
+                        
+                //     } else if(d3.event.sourceEvent.offsetX < PADDING.left) {
+                //         //console.log("TEST");
+                        
+                //         zoomAxes(this._current_transform, false, true);
+                //     }
+                // }
+                zoomAxes(this._current_transform, true, true);
+                ctx.restore();
+            });
+        
+        let zoomX : any = d3.zoom()
             .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
             .extent([[0, 0], [width, height]])
             .on("zoom", () => {
                 const transform = d3.event.transform;
                 this._current_transform = transform;
                 ctx.save();
-                updateChart(this._current_transform);
+                zoomAxes(this._current_transform, true, false);
                 ctx.restore();
-            });
+        });
         
+        let zoomY : any= d3.zoom()
+            .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
+            .extent([[0, 0], [width, height]])
+            .on("zoom", () => {
+                const transform = d3.event.transform;
+                this._current_transform = transform;
+                ctx.save();
+                zoomAxes(this._current_transform, false, true);
+                ctx.restore();
+        });
+
         this._canvas.width = width;
         this._canvas.height = height;
-
+            
+        
+        
         //applyRetinaFix(this._canvas);
        
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
-        console.log("REDRAW NEW BAF SCALE: ", this._currXScale.domain());
-        console.log("REDRAW NEW RDR SCALE: ", this._currYScale.domain());
         for (const d of data) {
             const x = this._currXScale(d.averageBaf);
             const y = this._currYScale(d.averageRd);
@@ -507,27 +556,59 @@ export class Scatterplot extends React.Component<Props> {
             }
         }
 
-        // var event_rect = svg.append("rect")
-        //     //.attr("rectangle")
-        //     .attr("width", width)
-        //     .attr("height", height)
-        //     .style("fill", "none")
-        //     .style("pointer-events", "all")
-        //     //.attr('transform', 'translate(' + PADDING.left + ',' + PADDING.top + ')')
-        //     .attr("clip-path", "url(#clip)")
-        //     .call(zoom);
+        // function zoom() {
+        //     // Rescale axis during zoom
+        //     yScale.transition()
+        //             .duration(50)
+        //             .call(yaxis.scale(d3.event.transform.rescaleY(y)))
+        
+        //     // re-draw circles using new y-axis scale
+        //       var new_y = d3.event.transform.rescaleY(y);
+        
+        //       d3.selectAll('circle').attr('cy', function(d) { return new_y(d[1])})
+        // }
+
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
-            .call(zoom)
+            .on("mouseenter", () => { 
+                xScale = this._currXScale;
+                yScale = this._currYScale;
+            })
+            .call(this.zoom)
                 .append("rect")
-                    .attr("width", width)
-                    .attr("height", height)
+                    //.attr("x", PADDING.left)
+                    //.attr("y", PADDING.top)
+                    .attr("width", width)// - PADDING.right-PADDING.left)
+                    .attr("height", height)//-PADDING.bottom-PADDING.top)
                     .style("fill", "none")
                     .style("pointer-events", "all")
-                    //.attr('transform', 'translate(' + PADDING.left + ',' + PADDING.top + ')')
+                    .attr("clip-path", "url(#clip)");
+                    
+
+        var event_rectY = svg
+            .append("g")
+            .classed("eventrectY", true)
+            .call(zoomY)
+                .append("rect")
+                    .attr("width", PADDING.left)
+                    .attr("height", height-PADDING.bottom)
+                    .style("fill", "none")
+                    .style("pointer-events", "all")
                     .attr("clip-path", "url(#clip)");
 
+        // var event_rectX = svg
+        //     .append("g")
+        //     .classed("eventrectX", true)
+        //     .call(zoomX)
+        //         .append("rect")
+        //             .attr("x", PADDING.left)
+        //             .attr("y", height-PADDING.bottom)
+        //             .attr("width", width)
+        //             .attr("height", PADDING.bottom)
+        //             .style("fill", "none")
+        //             .style("pointer-events", "all")
+        //             .attr("clip-path", "url(#clip)");
 
         if(displayMode === DisplayMode.select) {
             //this.createNewBrush();
@@ -590,8 +671,9 @@ export class Scatterplot extends React.Component<Props> {
                             ctx.fillRect(x, y - 1, 2, 3);
                         }
                     }
-                    
-                    self.props.onZoom(self._currYScale.domain());
+                    let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+                    console.log("New scales: ", newScales);
+                    self.props.onZoom(newScales);
                 } catch (error) { console.log(error);}
             }
         }
@@ -599,9 +681,9 @@ export class Scatterplot extends React.Component<Props> {
         
         // A function that updates the chart when the user zoom and thus new boundaries are available
         let self = this;
-        function updateChart(transform : any) {
-            var newX = transform.rescaleX(xScale);
-            var newY = transform.rescaleY(yScale);
+        function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
+            var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
+            var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
             self._currXScale = newX;
             self._currYScale = newY;
 
@@ -623,10 +705,7 @@ export class Scatterplot extends React.Component<Props> {
                     } else {
                         ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (self.props.colors[d.bins[0].CLUSTER] ? self.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER)));
                     }
-                    //ctx.fillStyle = 'rgba(225, 225, 225, 0.5)';
-                    //ctx.globalAlpha = 0.2;
                     ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-                    //ctx.globalAlpha = 1.0;
                 }
             }
         }
@@ -734,21 +813,8 @@ export class Scatterplot extends React.Component<Props> {
     }
 
     forceUnhover(genomeLocation?: ChromosomeInterval) {
-        const elements = this.getElementsForGenomeLocation(genomeLocation);
-        if (elements.length === 0) {
-            return;
-        }
+        //const elements = this.getElementsForGenomeLocation(genomeLocation);
 
-        // for (const element of elements) {
-        //     const r = Number(element.getAttribute("r"));
-        //     if(r) {
-        //         const parent = element.parentElement!;
-        //         element.remove();
-        //         element.setAttribute("r", String(r - SELECTED_CIRCLE_R_INCREASE));
-        //         element.removeAttribute("stroke");
-        //         parent.insertBefore(element, parent.firstChild); // Move the element to the very back
-        //     }
-        // }
         if(this._svg)
             d3.select(this._svg).select("." + CIRCLE_GROUP_CLASS_NAME).remove();
     }

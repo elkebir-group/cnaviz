@@ -21,6 +21,7 @@ interface Props {
     colors: string[];
     selectedSample: string;
     yScale: [number, number] | null;
+    xScale: [number, number] | null;
 }
 
 enum DisplayMode {
@@ -49,7 +50,7 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale} = this.props;
         const selectedSample = this.props.selectedSample;
 
         const selectedRecords = data.getMergedRecords(selectedSample, chr);//data.getRecords(selectedSample, chr);
@@ -66,7 +67,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     brushedBins={brushedBins}
                     customColor={customColor}
                     colors={this.props.colors}
-                    yScale= {yScale}/>
+                    yScale= {yScale}
+                    xScale= {xScale}/>
                     
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
@@ -78,7 +80,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     brushedBins={brushedBins} 
                     customColor={customColor}
                     colors={this.props.colors}
-                    yScale={yScale}/>
+                    yScale={yScale}
+                    xScale= {xScale}/>
 
             </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {

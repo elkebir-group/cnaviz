@@ -39,6 +39,8 @@ interface Props {
 interface State {
     selectedSample: string;
     yScale: [number, number] | null;
+    xScale: [number, number] | null;
+    scales: {xScale: [number, number] | null, yScale: [number, number] | null};
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -46,7 +48,9 @@ export class SampleViz extends React.Component<Props, State> {
         super(props);
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            yScale: null
+            yScale: null,
+            xScale: null,
+            scales: {xScale: null, yScale: null}
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
@@ -57,8 +61,9 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({selectedSample: selected});
     }
 
-    handleZoom(newYScale: [number, number]) {
-        this.setState({yScale: newYScale})
+    handleZoom(newScales: any) {
+        console.log(newScales)
+        this.setState({scales: newScales})
     }
 
     render() {
@@ -74,7 +79,7 @@ export class SampleViz extends React.Component<Props, State> {
                     onZoom={this.handleZoom}/> 
                 </div>
                 <div className="col">
-                    <SampleViz1D {...this.props}  yScale={this.state.yScale} selectedSample={this.state.selectedSample} initialSelectedSample={initialSelectedSample} /> 
+                    <SampleViz1D {...this.props}  yScale={this.state.scales.yScale} xScale={this.state.scales.xScale} selectedSample={this.state.selectedSample} initialSelectedSample={initialSelectedSample} /> 
                 </div>
             </div> 
                 

@@ -17,6 +17,7 @@ interface Props {
     customColor: string;
     colors: string[];
     yScale: [number, number] | null;
+    xScale: [number, number] | null;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
@@ -38,7 +39,7 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors} = props;
+    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, xScale} = props;
     return <LinearPlot
         data={data}
         chr={chr}
@@ -47,8 +48,8 @@ export function BAFLinearPlot(props: Props) {
         hoveredLocation={hoveredLocation}
         onLocationHovered={onLocationHovered}
         onBrushedBinsUpdated= {onBrushedBinsUpdated}
-        yMin={0}
-        yMax={0.5}
+        yMin={xScale ? xScale[0] : 0}
+        yMax={xScale ? xScale[1] : 0.5}
         yLabel={"0.5 - BAF"}
         brushedBins={brushedBins}
         customColor={customColor}

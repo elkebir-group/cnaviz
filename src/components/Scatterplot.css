@@ -9,7 +9,7 @@
     position: absolute;
     top: calc(0%);
     left: calc(85%);
-    visibility: hidden;
+    visibility: visible;
 }
 
 .Scatterplot-tools button {
