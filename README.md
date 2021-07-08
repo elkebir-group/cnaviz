@@ -20,7 +20,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
    
 ### Using the mousewheel
 1) To use mousewheel zooming, click the key `z`. Now if your scroll the mouse wheel (or sliding 2 fingers on mac), the scatterplot will zoom with respect to the mouse cursor. In this mode, you can also pan by clicking and dragging on the scatterplot
-2)  To reset any zooming/panning that has been done, click the reset button in the top right corner of the scatterplot. At the moment, you may have to click twice in some scenarios (still trying to work this out).
+2) To reset any zooming/panning that has been done, click the reset button in the top right corner of the scatterplot. At the moment, you may have to click twice in some scenarios (still trying to work this out).
+3) Note: This type of zoom can be quite slow on large datasets when drawing using canvas because you have to constantly redraw. I'm currently looking for a faster approach. If it is too slow, just use the bounding box zoom.
 
 ### Zooming along y-axis only
 1) Regardless of which mode you are in, you can zoom along the y axis by hovering over the y axis and using the mouse wheel (added this recently and so there may be a few small bugs).
