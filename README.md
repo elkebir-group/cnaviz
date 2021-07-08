@@ -3,47 +3,36 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 ## Quickstart
 1) Run `yarn install` which will download all the required packages. A node_modules folder and yarn.lock file should be in the directory
 2) Run `yarn run start`
-3) Open https://localhost:3000 in the browser
+3) Open https://localhost:3000 in the browser (I have only tested the app on google chrome)
+4) You should also be able to use npm, but I usually use yarn. In that case, it would be `npm install` and `npm start`
+
+## Controls
+1) First choose a file from the data directory (or any other Hatchet .bbc file of your choosing)
+2) There are two modes: Bounding box mode and mouse wheel mode
    
-## Available Scripts
+### Using the Bounding Box
+1) To go into bounding box mode, click the key `b`. Now if you click and drag on the scatterplot, a bounding box should appear.
+2) Without holding down any other keys, the bounding box will select points and highlight them a blue color. 
+3) Holding down shift while selecting new points will add to your current selection. 
+4) Holding down shift while boxing in already selected points will remove points from your current selection.
+5) The above method of selection applies to both the scatterplot and the linear plot.
+6) If you hold down the metakey (command on mac or control on windows), then the scatterplot will zoom to the bounding box. (Note: This hasn't yet been tested on windows but it should work)
+   
+### Using the mousewheel
+1) To use mousewheel zooming, click the key `z`. Now if your scroll the mouse wheel (or sliding 2 fingers on mac), the scatterplot will zoom with respect to the mouse cursor. In this mode, you can also pan by clicking and dragging on the scatterplot
+2)  To reset any zooming/panning that has been done, click the reset button in the top right corner of the scatterplot. At the moment, you may have to click twice in some scenarios (still trying to work this out).
 
-In the project directory, you can run:
+### Zooming along y-axis only
+1) Regardless of which mode you are in, you can zoom along the y axis by hovering over the y axis and using the mouse wheel (added this recently and so there may be a few small bugs).
 
-### `npm start`
+### Saving progress
+1) To save your progress, download to csv. If you want to reload that saved data, you have to remove the quotes and replace commas with tabs (I will attempt to automate this later).  One way to do this using unix/linux commands is to run `tr ',' '\t' < ClusteredBins.txt > ClusteredBins2.txt` and `tr -d \" < ClusteredBins2.txt > ClusteredBins3.txt` in the terminal. Then ClusteredBins3.txt should contain the properly formatted save file. 
+2) Note: Make sure to confirm that the saved file actually works in another session, before closing out the session with your clustering. 
+3) As of yet, I haven't run into any bugs that completely crash the program, but it might still be worth it to download to csv periodically to prevent all your progress being lost.
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Assigning to a cluster
+1)  To assign points to a cluster, you will have to first select points using the bounding box. 
+2)  Then, you pick a cluster id using the number input to the right of the Assign Cluster button. If you are adding to an existing cluster, use that that cluster's id. If you are creating a new cluster, you will have to choose a cluster id that hasn't been used before (will try to make this easier in the future).
+3)  Click Assign Cluster
+4)  Assigning points to cluster -2 will prevent those points from being exported when you download to csv
+5)  Points under cluster -1 are considered unclustered

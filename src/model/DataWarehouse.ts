@@ -172,6 +172,9 @@ export class DataWarehouse {
         this.clusterTableInfo = clone;
 
         this.allRecords = this._ndx.all();
+        for(let i=0; i < this.allRecords.length; i++) {
+            this.allRecords[i].BAF = 0.5-this.allRecords[i].BAF;
+        }
         console.timeEnd("Initializing DataWarehouse");
     }
 
@@ -276,8 +279,6 @@ export class DataWarehouse {
             this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
         }
         
-        // console.log(this._ndx.allFiltered());
-        // console.log(this._merged_ndx.allFiltered());
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE); 
     }
@@ -343,6 +344,10 @@ export class DataWarehouse {
         
         this.clusterTableInfo = clone;
         this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
+        for(let i=0; i < this.allRecords.length; i++) {
+            this.allRecords[i].BAF = 0.5-this.allRecords[i].BAF;
+        }
+        console.log("FILTER", this.allRecords);
         console.timeEnd("Updating Clusters");
     }
 
@@ -396,10 +401,7 @@ export class DataWarehouse {
     }
 
     getAllRecords() {
-       
-        //this.clearAllFilters();
-        //console.log("TEST: ", this._ndx.all());
-        return this.allRecords; //.filter((d: GenomicBin) => d.CLUSTER !== -2);
+        return this.allRecords;
     }
 
     getClusterTableInfo() {

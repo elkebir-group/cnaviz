@@ -229,11 +229,9 @@ export class App extends React.Component<{}, State> {
         this.onSelectedSample = this.onSelectedSample.bind(this);
         let self = this;
         d3.select("body").on("keypress", function(){
-            if (d3.event.key == "a") {
-                console.log("Test Zooming/Panning")
+            if (d3.event.key == "z") {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if (d3.event.key == "b") {
-                console.log("Test2 Brushing")
                 self.setState({displayMode: DisplayMode.select})
             }
         })
@@ -432,7 +430,7 @@ export class App extends React.Component<{}, State> {
                                 <div className="row" style={{paddingTop: 10}}>
                                     <button onClick={this.handleAddSampleClick} style={{marginRight: 10}}> Add Sample </button>
                                     <button onClick={this.handleAssignCluster} style={{marginRight: 10}} > Assign Cluster </button>
-                                    <input type="number" style={{marginLeft: 10}} value={value} size={30} min="0" max="14" 
+                                    <input type="number" style={{marginLeft: 10}} value={value} size={30} min="-2" max="100"
                                             onChange={this.handleClusterAssignmentInput}/>
                                 </div>
                             </div>

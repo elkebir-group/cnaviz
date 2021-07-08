@@ -16,7 +16,7 @@ export interface GenomicBin {
     readonly ALPHA: number;
     readonly BETA: number;
     /** B allele frequency */
-    readonly BAF: number;
+    BAF: number;
     /** Cluster ID */
     CLUSTER: number;
 }

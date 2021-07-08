@@ -1,8 +1,9 @@
 import {CSVLink} from "react-csv"
 import React from "react"
+import { GenomicBin} from "../model/GenomicBin";
 
 interface Props {
-    data : any;
+    data : GenomicBin[];
 }
 
 export class CSV extends React.Component<Props> {
@@ -15,6 +16,8 @@ export class CSV extends React.Component<Props> {
     }
 
     render() {
-        return <CSVLink data={this.props.data} filename={"ClusteredBins"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
+        
+
+        return <CSVLink data={this.props.data}  filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
     }
 }

@@ -9,8 +9,9 @@ import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { CurveState, CurvePickStatus } from "../model/CurveState";
 import { CopyNumberCurve } from "../model/CopyNumberCurve";
 import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberState";
-import { niceBpCount, getRelativeCoordinates } from "../util";
+//import { niceBpCount, getRelativeCoordinates } from "../util";
 import {GenomicBinHelpers} from "../model/GenomicBin";
+import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "./SampleViz2D"
 
@@ -76,6 +77,7 @@ const data4 : any = [{location: null, x: 1.68453, y: 0.309973, bins: []},
                     {location: null, x: 1.09656033333331, y: 0.4353606666667, bins: []}]
 
 const UNCLUSTERED_COLOR = "#999999";
+const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 
 const CLUSTER_COLORS = [
     "#1b9e77", 
@@ -328,13 +330,13 @@ export class Scatterplot extends React.Component<Props> {
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         this._currXScale = bafScale;
         this._currYScale = rdrScale;
-        if(displayMode === DisplayMode.zoom) {
-            const t = d3.zoomIdentity.translate(0, 0).scale(1);
-            d3.select(this._canvas).transition()
-            .duration(200)
-            .ease(d3.easeLinear)
-            .call(this.zoom.transform, t)
-        }
+        // if(displayMode === DisplayMode.zoom) {
+        //     const t = d3.zoomIdentity.translate(0, 0).scale(1);
+        //     d3.select(this._canvas).transition()
+        //     .duration(200)
+        //     .ease(d3.easeLinear)
+        //     .call(this.zoom.transform, t)
+        // }
         let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
         console.log("New scales: ", newScales);
         this.props.onZoom(newScales);
@@ -398,7 +400,7 @@ export class Scatterplot extends React.Component<Props> {
     computeScales(rdRange: [number, number], width: number, height: number, bafRange?: [number, number]) {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
-        let baf = bafRange ? bafRange : [0, 0.5]
+        let baf = bafRange ? bafRange : [-.0001, 0.5] // .0001 allows for points exactly on the axis to still be seen
         return {
             bafScale: d3.scaleLinear()
                 .domain(baf)
@@ -427,7 +429,7 @@ export class Scatterplot extends React.Component<Props> {
         if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
-
+        let self = this;
         const {width, height, onRecordsHovered, customColor, 
                 assignCluster, invertAxis, brushedBins, data, rdRange} = this.props;
         let {displayMode} = this.props;
@@ -474,37 +476,19 @@ export class Scatterplot extends React.Component<Props> {
             .style("text-anchor", "middle")
             .text(yLabel);
             
-
         let previous : any = [];
         brushedBins.forEach(d => previous.push(String(d.location)))
         let previous_brushed_nodes = new Set(previous);
         
-        
-
         const ctx = this._canvas.getContext("2d")!;
         this.zoom = d3.zoom()
             .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
             .extent([[0, 0], [width, height]])
             .on("zoom", () => {
-                //let coords = getRelativeCoordinates(d3.event);
-                
+ 
                 const transform = d3.event.transform;
-                //console.log(d3.event.sourceEvent.offsetX);
-                //let relativeTo = d3.event.target;
-                //console.log(relativeTo);
                 this._current_transform = transform;
                 ctx.save();
-                // if(d3.event.sourceEvent) {
-                //     if(d3.event.sourceEvent.offsetX > PADDING.left) {
-                //         //xScale = this._currXScale;
-                //         //yScale = this._currYScale;
-                        
-                //     } else if(d3.event.sourceEvent.offsetX < PADDING.left) {
-                //         //console.log("TEST");
-                        
-                //         zoomAxes(this._current_transform, false, true);
-                //     }
-                // }
                 zoomAxes(this._current_transform, true, true);
                 ctx.restore();
             });
@@ -535,8 +519,8 @@ export class Scatterplot extends React.Component<Props> {
         this._canvas.height = height;
             
         
-        
-        //applyRetinaFix(this._canvas);
+        console.time("DRAWING POINTS")
+        applyRetinaFix(this._canvas);
        
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
         for (const d of data) {
@@ -547,14 +531,11 @@ export class Scatterplot extends React.Component<Props> {
             let range2 = this._currYScale.range();
 
             if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                if ( previous_brushed_nodes.has(String(d.location))) {
-                    ctx.fillStyle = customColor;
-                } else {
-                    ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.bins[0].CLUSTER] ? this.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER)));
-                }
+                ctx.fillStyle = chooseColor(d);
                 ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
             }
         }
+        console.timeEnd("DRAWING POINTS")
 
         // function zoom() {
         //     // Rescale axis during zoom
@@ -577,10 +558,10 @@ export class Scatterplot extends React.Component<Props> {
             })
             .call(this.zoom)
                 .append("rect")
-                    //.attr("x", PADDING.left)
-                    //.attr("y", PADDING.top)
-                    .attr("width", width)// - PADDING.right-PADDING.left)
-                    .attr("height", height)//-PADDING.bottom-PADDING.top)
+                    .attr("x", PADDING.left)
+                    .attr("y", PADDING.top)
+                    .attr("width", width - PADDING.right - PADDING.left)
+                    .attr("height", height - PADDING.bottom - PADDING.top)
                     .style("fill", "none")
                     .style("pointer-events", "all")
                     .attr("clip-path", "url(#clip)");
@@ -620,10 +601,10 @@ export class Scatterplot extends React.Component<Props> {
                     .on("start brush", () => this.updatePoints(d3.event))
                     .on("end", () => {
                         svg.selectAll("." + "brush").remove();
-                        if(d3.event.sourceEvent.shiftKey) {
-                            this.onBrushedBinsUpdated([...this.brushedNodes]);
-                        } else {
+                        if(d3.event.sourceEvent.metaKey) {
                             brush_endEvent();
+                        } else {
+                            this.onBrushedBinsUpdated([...this.brushedNodes]);
                         }
                     });
                     
@@ -663,11 +644,7 @@ export class Scatterplot extends React.Component<Props> {
                         let range2 = self._currYScale.range();
 
                         if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                            if ( previous_brushed_nodes.has(String(d.location))) {
-                                ctx.fillStyle = customColor;
-                            } else {
-                                ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (self.props.colors[d.bins[0].CLUSTER] ? self.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER)));
-                            }
+                            ctx.fillStyle = chooseColor(d);
                             ctx.fillRect(x, y - 1, 2, 3);
                         }
                     }
@@ -680,8 +657,9 @@ export class Scatterplot extends React.Component<Props> {
         
         
         // A function that updates the chart when the user zoom and thus new boundaries are available
-        let self = this;
+        
         function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
+            console.time("Zoom");
             var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
             var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
             self._currXScale = newX;
@@ -700,16 +678,26 @@ export class Scatterplot extends React.Component<Props> {
                 let range2 = newY.range();
 
                 if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                    if(previous_brushed_nodes.has(String(d.location))) {
-                          ctx.fillStyle = customColor;
-                    } else {
-                        ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (self.props.colors[d.bins[0].CLUSTER] ? self.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER)));
-                    }
+                    ctx.fillStyle = chooseColor(d);
                     ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
                 }
             }
+            console.timeEnd("Zoom");
         }
         
+        function chooseColor(d: MergedGenomicBin) {
+            if(previous_brushed_nodes.has(String(d.location))) {
+                return customColor;
+            } else if (d.bins[0].CLUSTER == -1){
+                return UNCLUSTERED_COLOR;
+            } else if(d.bins[0].CLUSTER == -2){
+                return DELETED_COLOR;
+            } else if(self.props.colors[d.bins[0].CLUSTER]) {
+                return self.props.colors[d.bins[0].CLUSTER];
+            } else {
+                return colorScale(String(d.bins[0].CLUSTER));
+            }
+        }
 
         if(assignCluster) {
             this.onTrigger([...this.brushedNodes]);
@@ -791,7 +779,19 @@ export class Scatterplot extends React.Component<Props> {
                     .attr("cx", d => this._currXScale(this.rdOrBaf(d, this.props.invertAxis, true)) || 0)
                     .attr("cy", d => this._currYScale(this.rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", 3)
-                    .attr("fill", d => (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.bins[0].CLUSTER] ? this.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER))))
+                    .attr("fill", d => {
+                        if(this.brushedNodes.has(d)) {
+                            return this.props.customColor;
+                        } else if (d.bins[0].CLUSTER == -1){
+                            return UNCLUSTERED_COLOR;
+                        } else if(d.bins[0].CLUSTER == -2){
+                            return DELETED_COLOR;
+                        } else if(this.props.colors[d.bins[0].CLUSTER]) {
+                            return this.props.colors[d.bins[0].CLUSTER];
+                        } else {
+                            return colorScale(String(d.bins[0].CLUSTER));
+                        }
+                    })
                     .attr("fill-opacity", 1)
                     .attr("stroke-width", 2)
                     .attr("stroke", "black");
