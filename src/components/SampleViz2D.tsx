@@ -35,7 +35,9 @@ interface Props {
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
-    onZoom: (newYScale: [number, number]) => void
+    onZoom: (newYScale: [number, number]) => void;
+    onRemovePlot: any;
+    plotId: number;
 }
 
 interface State {
@@ -67,7 +69,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
         this.handleCallBack = this.handleCallBack.bind(this);
         this.handleUpdatedBrushedBins = this.handleUpdatedBrushedBins.bind(this);
-        
+        this.onRemovePlot = this.onRemovePlot.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -88,6 +90,9 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.props.onBrushedBinsUpdated(brushedBins);
     }
 
+    onRemovePlot() {
+        this.props.onRemovePlot(this.props.plotId);
+    }
     
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
@@ -109,23 +114,17 @@ export class SampleViz2D extends React.Component<Props, State> {
         //         console.log("Brushing")
         //     }
         
+
         return <div className="SampleViz">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
+                <button onClick={this.onRemovePlot} style={{marginLeft: 10}}> Remove plot </button>
                 {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>
-            {/* <div className="Cluster-select">
-                Select cluster: <select value={selectedCluster} 
-                                        onChange={this.handleSelectedClusterChanged} 
-                                        >
-                            {clusterOptions}
-                </select>
-            </div> */}
             
-
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}

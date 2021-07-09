@@ -56,7 +56,6 @@ export class SampleViz extends React.Component<Props, State> {
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
-        this.onRemovePlot = this.onRemovePlot.bind(this);
     }
     
     handleSelectedSampleChanged(selected : string) {
@@ -68,14 +67,9 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({scales: newScales})
     }
 
-    onRemovePlot() {
-        this.props.onRemovePlot(this.props.plotId);
-    }
-
     render() {
         const {data, initialSelectedSample} = this.props;
         return <div className="sampleviz-wrapper">
-            <button onClick={this.onRemovePlot}> Remove plot </button>
              <div className="row"> 
                 <div className="col"> 
                     <SampleViz2D 
