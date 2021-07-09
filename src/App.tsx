@@ -157,6 +157,8 @@ interface State {
     selectedSample: string;
 
     displayMode: DisplayMode;
+
+    showComponents: boolean[];
 }
 
 
@@ -184,6 +186,7 @@ export class App extends React.Component<{}, State> {
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
             sampleAmount: 1,
+            showComponents: [true],
             color: 'blue',
             colors:  [
                 "#1b9e77", 
@@ -210,7 +213,7 @@ export class App extends React.Component<{}, State> {
             value: "0",
             updatedBins: false,
             selectedSample: "",
-            displayMode: DisplayMode.select
+            displayMode: DisplayMode.select,  
         };
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
@@ -227,6 +230,7 @@ export class App extends React.Component<{}, State> {
         this.onClusterRowsChange = this.onClusterRowsChange.bind(this);
         this.onClusterColorChange = this.onClusterColorChange.bind(this);
         this.onSelectedSample = this.onSelectedSample.bind(this);
+        this.handleRemovePlot = this.handleRemovePlot.bind(this);
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
@@ -310,7 +314,18 @@ export class App extends React.Component<{}, State> {
     }
 
     handleAddSampleClick() {
+        console.log("Add same click");
+        const newShowComponents = this.state.showComponents.concat([true]);
+        this.setState({showComponents: newShowComponents})
         this.setState({sampleAmount: this.state.sampleAmount + 1});
+    }
+
+    handleRemovePlot(plotId: number) {
+        console.log("Test remove plot");
+        let newShowComponents = [...this.state.showComponents];
+        newShowComponents.splice(plotId, 1);
+        this.setState({showComponents: newShowComponents});
+        this.setState({sampleAmount: this.state.sampleAmount - 1});
     }
 
     handleAssignCluster() {
@@ -405,7 +420,8 @@ export class App extends React.Component<{}, State> {
                 updatedBins: updatedBins,
                 onSelectedSample: this.onSelectedSample,
                 selectedSample: this.state.selectedSample,
-                dispMode: this.state.displayMode
+                dispMode: this.state.displayMode,
+                onRemovePlot: this.handleRemovePlot
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -436,12 +452,21 @@ export class App extends React.Component<{}, State> {
                             </div>
                         </div>
 
-                        <ClusterTable test={indexedData.getClusterTableInfo()} onClusterRowsChange={this.onClusterRowsChange} onClusterColorChange={this.onClusterColorChange}></ClusterTable>
+                        <ClusterTable 
+                            test={indexedData.getClusterTableInfo()} 
+                            onClusterRowsChange={this.onClusterRowsChange} 
+                            onClusterColorChange={this.onClusterColorChange}
+                        ></ClusterTable>
                     </div>
                     
                     <div className="sampleviz-wrapper">
                             {_.times(sampleAmount, i => samples.length > i 
-                            && <SampleViz {...scatterplotProps} initialSelectedSample={samples[i]}></SampleViz>)}
+                            && this.state.showComponents[i] 
+                            && <SampleViz 
+                                    {...scatterplotProps} 
+                                    initialSelectedSample={samples[i]} 
+                                    plotId={i}
+                                ></SampleViz>)}
                     </div>
                 </div>);
         }

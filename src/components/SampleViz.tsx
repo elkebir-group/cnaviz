@@ -34,6 +34,8 @@ interface Props {
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
+    onRemovePlot: any;
+    plotId: number;
 }
 
 interface State {
@@ -54,7 +56,7 @@ export class SampleViz extends React.Component<Props, State> {
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
-
+        this.onRemovePlot = this.onRemovePlot.bind(this);
     }
     
     handleSelectedSampleChanged(selected : string) {
@@ -66,20 +68,29 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({scales: newScales})
     }
 
+    onRemovePlot() {
+        this.props.onRemovePlot(this.props.plotId);
+    }
+
     render() {
-        //console.log("RENDERING")
         const {data, initialSelectedSample} = this.props;
-        const samples = data.getSampleList();
         return <div className="sampleviz-wrapper">
+            <button onClick={this.onRemovePlot}> Remove plot </button>
              <div className="row"> 
                 <div className="col"> 
-                    <SampleViz2D {...this.props} 
+                    <SampleViz2D 
+                    {...this.props} 
                     onSelectedSample={this.handleSelectedSampleChanged} 
                     initialSelectedSample={initialSelectedSample}
                     onZoom={this.handleZoom}/> 
                 </div>
                 <div className="col">
-                    <SampleViz1D {...this.props}  yScale={this.state.scales.yScale} xScale={this.state.scales.xScale} selectedSample={this.state.selectedSample} initialSelectedSample={initialSelectedSample} /> 
+                    <SampleViz1D 
+                    {...this.props}  
+                    yScale={this.state.scales.yScale} 
+                    xScale={this.state.scales.xScale} 
+                    selectedSample={this.state.selectedSample} 
+                    initialSelectedSample={initialSelectedSample} /> 
                 </div>
             </div> 
                 
