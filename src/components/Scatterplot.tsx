@@ -175,7 +175,6 @@ export class Scatterplot extends React.Component<Props> {
         let yScale = rdrScale;
         this._currXScale = xScale;
         this._currYScale = yScale;
-        console.time("Quadtree creation")
         let data : any = props.data;
         this.quadTree = d3
             .quadtree()
@@ -270,7 +269,7 @@ export class Scatterplot extends React.Component<Props> {
                     </p>
                     {/* <div>Number of Bins: {record.bins.length}</div> */}
                     <div> RDR: {record.averageRd.toFixed(2)}</div>
-                    <div> BAF: {0.5-Number(record.averageBaf.toFixed(2))}</div>
+                    <div> BAF: {Number(0.5-record.averageBaf).toFixed(2)}</div>
                     <div>Cluster ID:{record.bins[0].CLUSTER}</div>
                 </React.Fragment>);
             } 
@@ -436,7 +435,7 @@ export class Scatterplot extends React.Component<Props> {
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters);
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
 
-        let xScale = this._currXScale//bafScale;
+        let xScale = this._currXScale;
         let yScale = this._currYScale;
         let xLabel = "0.5 - BAF";
         let yLabel = "RDR";
@@ -482,7 +481,7 @@ export class Scatterplot extends React.Component<Props> {
         
         const ctx = this._canvas.getContext("2d")!;
         this.zoom = d3.zoom()
-            .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
+            .scaleExtent([0, 100])
             .extent([[0, 0], [width, height]])
             .on("zoom", () => {
  
@@ -493,19 +492,8 @@ export class Scatterplot extends React.Component<Props> {
                 ctx.restore();
             });
         
-        let zoomX : any = d3.zoom()
-            .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
-            .extent([[0, 0], [width, height]])
-            .on("zoom", () => {
-                const transform = d3.event.transform;
-                this._current_transform = transform;
-                ctx.save();
-                zoomAxes(this._current_transform, true, false);
-                ctx.restore();
-        });
-        
         let zoomY : any= d3.zoom()
-            .scaleExtent([0, 100])  // This control how much you can unzoom (x0.5) and zoom (x20)
+            .scaleExtent([0, 100])
             .extent([[0, 0], [width, height]])
             .on("zoom", () => {
                 const transform = d3.event.transform;
@@ -514,40 +502,40 @@ export class Scatterplot extends React.Component<Props> {
                 zoomAxes(this._current_transform, false, true);
                 ctx.restore();
         });
-
+        
         this._canvas.width = width;
         this._canvas.height = height;
-            
-        
-        console.time("DRAWING POINTS")
+
         applyRetinaFix(this._canvas);
-       
-        ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
-        for (const d of data) {
-            const x = this._currXScale(d.averageBaf);
-            const y = this._currYScale(d.averageRd);
+
+        drawAllGenomicBins();
+
+        function drawAllGenomicBins() {
+            ctx.clearRect(0, 0, width, height);
+            for (const d of data) {
+                if(!previous_brushed_nodes.has(String(d.location))) {
+                    drawGenomicBin(d);
+                }
+            }
+            for (const d of data) {
+                if(previous_brushed_nodes.has(String(d.location))) {
+                    drawGenomicBin(d);
+                }
+            }
+        }
+
+        function drawGenomicBin(d : MergedGenomicBin) {
+            const x = self._currXScale(d.averageBaf);
+            const y = self._currYScale(d.averageRd);
             
-            let range = this._currXScale.range();
-            let range2 = this._currYScale.range();
+            let range = self._currXScale.range();
+            let range2 = self._currYScale.range();
 
             if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
                 ctx.fillStyle = chooseColor(d);
                 ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
             }
         }
-        console.timeEnd("DRAWING POINTS")
-
-        // function zoom() {
-        //     // Rescale axis during zoom
-        //     yScale.transition()
-        //             .duration(50)
-        //             .call(yaxis.scale(d3.event.transform.rescaleY(y)))
-        
-        //     // re-draw circles using new y-axis scale
-        //       var new_y = d3.event.transform.rescaleY(y);
-        
-        //       d3.selectAll('circle').attr('cy', function(d) { return new_y(d[1])})
-        // }
 
         var event_rect = svg
             .append("g")
@@ -577,19 +565,6 @@ export class Scatterplot extends React.Component<Props> {
                     .style("fill", "none")
                     .style("pointer-events", "all")
                     .attr("clip-path", "url(#clip)");
-
-        // var event_rectX = svg
-        //     .append("g")
-        //     .classed("eventrectX", true)
-        //     .call(zoomX)
-        //         .append("rect")
-        //             .attr("x", PADDING.left)
-        //             .attr("y", height-PADDING.bottom)
-        //             .attr("width", width)
-        //             .attr("height", PADDING.bottom)
-        //             .style("fill", "none")
-        //             .style("pointer-events", "all")
-        //             .attr("clip-path", "url(#clip)");
 
         if(displayMode === DisplayMode.select) {
             //this.createNewBrush();
@@ -635,19 +610,8 @@ export class Scatterplot extends React.Component<Props> {
                     
                     self.redraw();
 
-                    ctx.clearRect(0, 0, width, height);
-                    for (const d of data) {
-                        const x = self._currXScale(d.averageBaf);
-                        const y = self._currYScale(d.averageRd);
-                        
-                        let range = self._currXScale.range();
-                        let range2 = self._currYScale.range();
+                    drawAllGenomicBins();
 
-                        if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                            ctx.fillStyle = chooseColor(d);
-                            ctx.fillRect(x, y - 1, 2, 3);
-                        }
-                    }
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     console.log("New scales: ", newScales);
                     self.props.onZoom(newScales);
@@ -659,7 +623,6 @@ export class Scatterplot extends React.Component<Props> {
         // A function that updates the chart when the user zoom and thus new boundaries are available
         
         function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
-            console.time("Zoom");
             var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
             var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
             self._currXScale = newX;
@@ -670,18 +633,19 @@ export class Scatterplot extends React.Component<Props> {
             yAxis.call(d3.axisLeft(newY))
         
             // update circle position
-            ctx.clearRect(0, 0, width, height);
-            for (const d of data) {
-                const x = newX(d.averageBaf);
-                const y = newY(d.averageRd);
-                let range = newX.range();
-                let range2 = newY.range();
+            // ctx.clearRect(0, 0, width, height);
+            // for (const d of data) {
+            //     const x = newX(d.averageBaf);
+            //     const y = newY(d.averageRd);
+            //     let range = newX.range();
+            //     let range2 = newY.range();
 
-                if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                    ctx.fillStyle = chooseColor(d);
-                    ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-                }
-            }
+            //     if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+            //         ctx.fillStyle = chooseColor(d);
+            //         ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+            //     }
+            // }
+            drawAllGenomicBins();
             console.timeEnd("Zoom");
         }
         

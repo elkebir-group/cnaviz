@@ -25,6 +25,7 @@ interface Props {
     test : any;
     onClusterRowsChange : any;
     onClusterColorChange: any;
+    currentFilters: String[];
 }
 
 const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
@@ -56,7 +57,6 @@ export class ClusterTable extends React.Component<Props> {
 
         this.handleColorChange = this.handleColorChange.bind(this);
         this.getTest = this.getTest.bind(this);
-        //console.log(this.props.test);
     }
 
     shouldComponentUpdate(nextProps: Props) {
@@ -89,13 +89,13 @@ export class ClusterTable extends React.Component<Props> {
                 data={this.props.test}
                 selectableRows
                 onSelectedRowsChange={this.props.onClusterRowsChange}
-                selectableRowSelected={row => row}
+                selectableRowSelected={row => row}//(this.props.currentFilters.length !== 0) ? this.props.currentFilters.includes(row.key) : row}
                 expandableRows
                 expandableRowsComponent={<ExpandedComponent/>}
                 pagination={true}
                 dense={true}
                 paginationPerPage={5}
-                paginationComponentOptions={{rowsPerPageText: 'Rows', selectAllRowsItem: true}}
+                paginationComponentOptions={{rowsPerPageText: '', selectAllRowsItem: true}}
                 paginationRowsPerPageOptions={[5, 10, 15, 20]}
                 noContextMenu={true}
                 noHeader={true}

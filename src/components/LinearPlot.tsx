@@ -29,7 +29,7 @@ const CLUSTER_COLORS = [
     "#28c2b5"
 ];
 const UNCLUSTERED_COLOR = "#999999";
-
+const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 const PADDING = { // For the SVG
     left: 50,
     right: 10,
@@ -148,6 +148,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._svg) {
             return;
         }
+        let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, customColor, brushedBins} = this.props;
         const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
 
@@ -223,20 +224,36 @@ export class LinearPlot extends React.PureComponent<Props> {
             const x = xScale(range.getCenter());
             const y = (dataKeyToPlot === "BAF") ? yScale(d.averageBaf) : yScale(d.averageRd);
             if(x && y && y < yScale.range()[0] && y > yScale.range()[1]) {
-                if (previous_brushed_nodes.has(String(d.location))) {
-                    ctx.fillStyle = customColor;
-                } else {
-                    ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.bins[0].CLUSTER] ? this.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER))); //color;
-                }
+                // if (previous_brushed_nodes.has(String(d.location))) {
+                //     ctx.fillStyle = customColor;
+                // } else {
+                //     ctx.fillStyle = (d.bins[0].CLUSTER == -1) ? UNCLUSTERED_COLOR : (this.props.colors[d.bins[0].CLUSTER] ? this.props.colors[d.bins[0].CLUSTER] : colorScale(String(d.bins[0].CLUSTER))); //color;
+                // }
+                ctx.fillStyle = chooseColor(d);
                 ctx.fillRect(x, y - 1, 2, 3);
             }
         }
+        
+        function chooseColor(d: MergedGenomicBin) {
+            if(previous_brushed_nodes.has(String(d.location))) {
+                return customColor;
+            } else if (d.bins[0].CLUSTER == -1){
+                return UNCLUSTERED_COLOR;
+            } else if(d.bins[0].CLUSTER == -2){
+                return DELETED_COLOR;
+            } else if(self.props.colors[d.bins[0].CLUSTER]) {
+                return self.props.colors[d.bins[0].CLUSTER];
+            } else {
+                return colorScale(String(d.bins[0].CLUSTER));
+            }
+        }
+
         console.timeEnd("Linear plot DRAWING POINTS")
 
         const brush = d3.brush()
         .keyModifiers(false)
         .extent([[PADDING.left, PADDING.top], 
-                [this.props.width - PADDING.right, this.props.height - PADDING.bottom]])
+                [this.props.width, this.props.height - PADDING.bottom]])
                 .on("end", () => {
                     svg.selectAll("." + "brush").remove();
                     try{

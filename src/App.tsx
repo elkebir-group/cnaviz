@@ -22,6 +22,10 @@ import {CSV} from "./components/CSVLink"
 import * as d3 from "d3";
 import {Genome} from "./model/Genome";
 
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import "./App.css";
+
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -434,13 +438,17 @@ export class App extends React.Component<{}, State> {
            
             mainUI = (
                 <div id="grid-container">
+                    
                     <div className="App-global-controls">
                             <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
-                            <select name="Select Chromosome" id="Select Chromosome" value={selectedChr} onChange={this.handleChrSelected} >
+                            <select name="Select Chromosome" 
+                                id="Select Chromosome" 
+                                value={selectedChr}
+                                onChange={this.handleChrSelected} >
                                 {chrOptions}
                             </select>
                         
-                        
+
                         <div className="row">
                             <div className = "col" >
                                 <div className="row" style={{paddingTop: 10}}>
@@ -456,6 +464,7 @@ export class App extends React.Component<{}, State> {
                             test={indexedData.getClusterTableInfo()} 
                             onClusterRowsChange={this.onClusterRowsChange} 
                             onClusterColorChange={this.onClusterColorChange}
+                            currentFilters={indexedData.getFilteredClusters()}
                         ></ClusterTable>
                     </div>
                     
@@ -468,6 +477,21 @@ export class App extends React.Component<{}, State> {
                                     plotId={i}
                                 ></SampleViz>)}
                     </div>
+                    <>
+
+                        <Router>
+                            <Sidebar 
+                                selectedChr={selectedChr} 
+                                onChrSelected={this.handleChrSelected} 
+                                chrOptions={chrOptions}
+                                onAddSample={this.handleAddSampleClick}
+                                onAssignCluster={this.handleAssignCluster}
+                                tableData={indexedData.getClusterTableInfo()}
+                                onClusterRowsChange={this.onClusterRowsChange}
+                                onClusterColorChange={this.onClusterColorChange}
+                                currentClusterFilters={indexedData.getFilteredClusters()} />
+                        </Router>
+                    </>
                 </div>);
         }
 

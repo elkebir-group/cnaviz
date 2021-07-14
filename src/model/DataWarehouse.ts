@@ -82,6 +82,7 @@ export class DataWarehouse {
 
     private allRecords: GenomicBin[];
     
+    private _cluster_filters: String[];
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -106,8 +107,10 @@ export class DataWarehouse {
         this._clusters = [];
         this.brushedBins = [];
 
-        this._ndx = crossfilter(rawData);
+        this._cluster_filters = [];
 
+        this._ndx = crossfilter(rawData);
+        
         // For bins with the same sample, cluster, and chromsome, 
         // merges together X amount of bins where X is set by the 
         // binsPerMergeThreshold in the BinMerger constructor
@@ -278,7 +281,11 @@ export class DataWarehouse {
             this._cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
             this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
         }
+        if(clusters) {
+            this._cluster_filters = clusters;
+        }
         
+
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE); 
     }
@@ -305,7 +312,7 @@ export class DataWarehouse {
         }
         
         console.time("Updating Clusters");
-        this.clearAllFilters();
+        //this.clearAllFilters();
         
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = this.brushedBins[i].location.toString();
@@ -406,6 +413,11 @@ export class DataWarehouse {
 
     getClusterTableInfo() {
         return this.clusterTableInfo;
+    }
+
+    getFilteredClusters() {
+
+        return this._cluster_filters;
     }
     // getRecords(): GenomicBin[] {
     //     return this._sample_dim.top(Infinity);

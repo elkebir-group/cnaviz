@@ -17,7 +17,7 @@ export class CSV extends React.Component<Props> {
 
     render() {
         
-
-        return <CSVLink data={this.props.data}  filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
+        const separator = "\t"
+        return <CSVLink data={this.props.data} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
     }
 }
