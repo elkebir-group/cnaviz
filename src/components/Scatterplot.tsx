@@ -189,6 +189,9 @@ export class Scatterplot extends React.Component<Props> {
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
         let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
+        if(clusters[0] === "-2") {
+            clusters.shift();
+        }
         if(clusters[0] === "-1") {
             clusters.shift();
         }
@@ -430,9 +433,9 @@ export class Scatterplot extends React.Component<Props> {
         }
         let self = this;
         const {width, height, onRecordsHovered, customColor, 
-                assignCluster, invertAxis, brushedBins, data, rdRange} = this.props;
+                assignCluster, invertAxis, brushedBins, data, rdRange, colors} = this.props;
         let {displayMode} = this.props;
-        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters);
+        const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
 
         let xScale = this._currXScale;
@@ -656,8 +659,8 @@ export class Scatterplot extends React.Component<Props> {
                 return UNCLUSTERED_COLOR;
             } else if(d.bins[0].CLUSTER == -2){
                 return DELETED_COLOR;
-            } else if(self.props.colors[d.bins[0].CLUSTER]) {
-                return self.props.colors[d.bins[0].CLUSTER];
+            //} else if(self.props.colors[d.bins[0].CLUSTER]) {
+                //return self.props.colors[d.bins[0].CLUSTER];
             } else {
                 return colorScale(String(d.bins[0].CLUSTER));
             }

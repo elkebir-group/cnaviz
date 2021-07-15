@@ -89,6 +89,9 @@ export class LinearPlot extends React.PureComponent<Props> {
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
         let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare);
+        if(clusters[0] === "-2") {
+            clusters.shift();
+        }
         if(clusters[0] === "-1") {
             clusters.shift();
         }
@@ -149,8 +152,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             return;
         }
         let self = this;
-        const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, customColor, brushedBins} = this.props;
-        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters)
+        const {data, width, height, genome, chr, dataKeyToPlot, yMin, yMax, yLabel, customColor, brushedBins, colors} = this.props;
+        const colorScale = d3.scaleOrdinal(colors).domain(this._clusters)
 
         const xScale = this.getXScale(width, genome, chr);
         const yScale = d3.scaleLinear()
@@ -241,8 +244,8 @@ export class LinearPlot extends React.PureComponent<Props> {
                 return UNCLUSTERED_COLOR;
             } else if(d.bins[0].CLUSTER == -2){
                 return DELETED_COLOR;
-            } else if(self.props.colors[d.bins[0].CLUSTER]) {
-                return self.props.colors[d.bins[0].CLUSTER];
+            //} else if(self.props.colors[d.bins[0].CLUSTER]) {
+                //return self.props.colors[d.bins[0].CLUSTER];
             } else {
                 return colorScale(String(d.bins[0].CLUSTER));
             }
