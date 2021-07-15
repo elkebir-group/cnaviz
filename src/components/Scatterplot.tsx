@@ -164,7 +164,6 @@ export class Scatterplot extends React.Component<Props> {
         this._clusters = this.initializeListOfClusters();
         this.createNewBrush = this.createNewBrush.bind(this);
         this.rdOrBaf = this.rdOrBaf.bind(this);
-        this.switchMode = this.switchMode.bind(this);
         this.brushedNodes = new Set();
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
@@ -210,6 +209,8 @@ export class Scatterplot extends React.Component<Props> {
         if( hoveredRdBaf.baf > this._currXScale.domain()[0] && hoveredRdBaf.baf < this._currXScale.domain()[1] && hoveredRdBaf.rd > this._currYScale.domain()[0] && hoveredRdBaf.rd < this._currYScale.domain()[1] ) {
             const radius = Math.abs(this._currXScale.invert(x) - this._currXScale.invert(x - 20));
             this.props.onRecordsHovered(this.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius) || null);
+        } else {
+            this.props.onRecordsHovered(null);
         }
     }
 
@@ -236,7 +237,8 @@ export class Scatterplot extends React.Component<Props> {
                 top: top - tooltipHeight, // Alternatively, this could be 0.5 - baf
                 left:  left,
                 width: tooltipWidth,
-                height: tooltipHeight
+                height: tooltipHeight,
+                pointerEvents: "none"
             }}
         >
             {contents}
@@ -296,13 +298,10 @@ export class Scatterplot extends React.Component<Props> {
         return null;
     }
 
-    switchMode(event: any) {
-        console.log("TESTLAHJSDLKJASLDKJASLKJDLKASJDLKASJLKDJASKLJDKLASJLKDJALKSJD");
-    }
-
     render() {
         
         const {width, height, rdRange} = this.props;
+        //console.log("Rendering")
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{position: "relative"}}>
                             <canvas
                                 ref={node => this._canvas = node}
@@ -313,7 +312,6 @@ export class Scatterplot extends React.Component<Props> {
                                 ref={node => this._svg = node}
                                 width={width} height={height}
                                 onMouseMove={this.handleMouseMove}
-                                onDoubleClick={this.switchMode}
                             ></svg>
                             <div className="Scatterplot-tools">
                                 <button id="reset" onClick={this.resetZoom}>Reset</button>
@@ -635,19 +633,6 @@ export class Scatterplot extends React.Component<Props> {
             xAxis.call(d3.axisBottom(newX))
             yAxis.call(d3.axisLeft(newY))
         
-            // update circle position
-            // ctx.clearRect(0, 0, width, height);
-            // for (const d of data) {
-            //     const x = newX(d.averageBaf);
-            //     const y = newY(d.averageRd);
-            //     let range = newX.range();
-            //     let range2 = newY.range();
-
-            //     if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-            //         ctx.fillStyle = chooseColor(d);
-            //         ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-            //     }
-            // }
             drawAllGenomicBins();
             console.timeEnd("Zoom");
         }
@@ -659,8 +644,6 @@ export class Scatterplot extends React.Component<Props> {
                 return UNCLUSTERED_COLOR;
             } else if(d.bins[0].CLUSTER == -2){
                 return DELETED_COLOR;
-            //} else if(self.props.colors[d.bins[0].CLUSTER]) {
-                //return self.props.colors[d.bins[0].CLUSTER];
             } else {
                 return colorScale(String(d.bins[0].CLUSTER));
             }
