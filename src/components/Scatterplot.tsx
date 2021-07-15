@@ -668,15 +668,15 @@ export class Scatterplot extends React.Component<Props> {
                             this._currYScale.invert(selection[1][1])], 
                             [this._currXScale.invert(selection[1][0]), 
                             this._currYScale.invert(selection[0][1])]];
-                let brushNodes : MergedGenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,//selection, 
+                let brushNodes : MergedGenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
                     (d : MergedGenomicBin) => d.averageBaf, 
-                    (d : MergedGenomicBin)  => d.averageRd);
+                    (d : MergedGenomicBin)  => d.averageRd); // The new points selected
              
                 if (brushNodes) {
-                    
                     if(event.sourceEvent.shiftKey) {
-                        let intersection : MergedGenomicBin[] = _.intersection(brushNodes, brushedBins);
-                        brushNodes = _.difference(_.uniq(_.union(brushNodes, brushedBins)), intersection); //_.uniq(_.union(brushNodes, brushedBins)).filter(d => !intersection.some(e => d === e));   
+                        brushNodes = _.uniq(_.union(brushNodes, brushedBins));  
+                    } else if(event.sourceEvent.altKey) {
+                        brushNodes = _.difference(brushedBins, brushNodes);
                     }
 
                     this.brushedNodes = new Set(brushNodes);                  
