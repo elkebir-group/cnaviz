@@ -1,4 +1,4 @@
-import {CSVLink} from "react-csv"
+import {CSVLink, CSVDownload} from "react-csv"
 import React from "react"
 import { GenomicBin} from "../model/GenomicBin";
 
@@ -18,6 +18,8 @@ export class CSV extends React.Component<Props> {
     render() {
         
         const separator = "\t"
-        return <CSVLink data={this.props.data} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
+        const enclosing_char = "'";
+        return <CSVLink data={this.props.data} onClick={()=> console.log("LAST RECORDS LENGTH: ", this.props.data.length)} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
+        //<CSVDownload data={this.props.data} filename={"ClusteredBins.txt"} separator={separator}></CSVDownload> //
     }
 }

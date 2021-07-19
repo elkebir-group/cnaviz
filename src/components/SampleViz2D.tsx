@@ -103,9 +103,11 @@ export class SampleViz2D extends React.Component<Props, State> {
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
 
-        const rdRange = data.getRdRange();
+        const rdRange = data.getRdRange(this.props.plotId);//data.getRdRange();
         rdRange[1] += 1; // Add one so it's prettier
         
+        //const testRdRange = data.getRdRange(this.props.plotId);
+        //console.log("TEST RD RANGE for plotId "+ String(this.props.plotId) + " : ", rdRange);
         // .on("keypress", function() {
         //     if (d3.event.key == "a") {
         //         console.log("Zooming/Panning")

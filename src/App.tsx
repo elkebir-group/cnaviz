@@ -57,6 +57,8 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];
+            //const nameLengthMap : Map<string, number> = new Map();
+            //nameLengthMap.set(lastChr, 0);
 
             for (const bin of parsed) {
                 if(!applyClustering) {
@@ -68,29 +70,40 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 }
 
                 if(lastChr !==  bin["#CHR"]) {
+                    console.log("GOING FROM " + lastChr + " TO " + bin["#CHR"]);
                     chrNameLength.push({name: lastChr, length: (end - start)})
+                    console.log("LENGTH: ", chrNameLength.length);
                     start = Number(bin.START);
                     lastChr = bin["#CHR"]
+                   // nameLengthMap.set(lastChr, 0);
+                } else {
+                    
+                    
                 }
                 end = Number(bin.END);
+                //let currentCount = nameLengthMap.get(lastChr);
+                //let binLen = end-Number(bin.START);
+
+                //console.log("BINLEN: ", binLen);
+                //nameLengthMap.set(bin["#CHR"], currentCount ? (currentCount + binLen) : binLen);
                 bin.BAF = 0.5 - bin.BAF;
             }
             
             
             chrNameLength.push({name: lastChr, length: (end - start)})
-            
-            chrNameLength.sort((a : any, b : any) => (a.name < b.name) ? 1 : -1)
-
-
+            console.log("Name length: ", chrNameLength);
+            //chrNameLength.sort((a : any, b : any) => (a.name < b.name) ? 1 : -1)
+            //console.log("Name length2: ", chrNameLength);
+            //console.log("Name length MAP: ", nameLengthMap);
             const sortedChrNameLength = chrNameLength.sort((a: any, b : any) => {
                 return a.name.localeCompare(b.name, undefined, {
                     numeric: true,
                     sensitivity: 'base'
                 })
             })
-
+            console.log("Name length3: ", sortedChrNameLength);
             //console.log(sorted);
-            genome = new Genome(sortedChrNameLength);
+            genome = new Genome(chrNameLength);
             
             console.log("PARSED: ", parsed);
             resolve(parsed);
@@ -255,6 +268,8 @@ export class App extends React.Component<{}, State> {
         let contents = "";
         try {
             contents = await getFileContentsAsString(files[0]);
+            
+            //console.log("CONTENTS: ",contents);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -318,14 +333,12 @@ export class App extends React.Component<{}, State> {
     }
 
     handleAddSampleClick() {
-        console.log("Add same click");
         const newShowComponents = this.state.showComponents.concat([true]);
         this.setState({showComponents: newShowComponents})
         this.setState({sampleAmount: this.state.sampleAmount + 1});
     }
 
     handleRemovePlot(plotId: number) {
-        console.log("Test remove plot");
         let newShowComponents = [...this.state.showComponents];
         newShowComponents.splice(plotId, 1);
         this.setState({showComponents: newShowComponents});
@@ -402,7 +415,7 @@ export class App extends React.Component<{}, State> {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
-        const allData = this.state.indexedData.getAllRecords();
+        const allData = indexedData.getAllRecords();
         //indexedData.setRDFilter([1.0, 1.5]);
         let mainUI = null;
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -510,7 +523,7 @@ export class App extends React.Component<{}, State> {
                 {samples.length === 0 &&
                     <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
                 }
-                
+
                 <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
                 <span className="App-CheckBox-explanation">Apply log to RD: </span>
                 <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />

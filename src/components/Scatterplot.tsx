@@ -52,30 +52,6 @@ const testGenomicBin: any = {
     CLUSTER: 0
 }
 
-const data3 : MergedGenomicBin[] = [{location: new ChromosomeInterval("1", 0, 1000), averageRd: 1.68453, averageBaf: 0.309973, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 1.0241125, averageBaf: 0.353924875, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 0.990544, averageBaf: 0.31243, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 0.75482, averageBaf: 0.293103, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 0.978867666666668, averageBaf: 0.3831903333333, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 0.7759375, averageBaf: 0.3858975, bins: [testGenomicBin]} , 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 0.924388, averageBaf: 0.342105, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 1.1374833333332, averageBaf: 0.382878333333334, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 1.09714, averageBaf: 0.37202966666667, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 1.1807133333333, averageBaf: 0.407038666666666, bins: [testGenomicBin]}, 
-                    {location: new ChromosomeInterval("1", 0, 1000), averageRd: 1.09656033333331, averageBaf: 0.4353606666667, bins: [testGenomicBin]}]
-
-const data4 : any = [{location: null, x: 1.68453, y: 0.309973, bins: []}, 
-                    {location: null, x: 1.0241125, y: 0.353924875, bins: []}, 
-                    {location: null, x: 0.990544, y: 0.31243, bins: []}, 
-                    {location: null, x: 0.75482, y: 0.293103, bins: []}, 
-                    {location: null, x: 0.978867666666668, y: 0.3831903333333, bins: []}, 
-                    {location: null, x: 0.7759375, y: 0.3858975, bins: []} , 
-                    {location: null, x: 0.924388, y: 0.342105, bins: []}, 
-                    {location: null, x: 1.1374833333332, y: 0.382878333333334, bins: []}, 
-                    {location: null, x: 1.09714, y: 0.37202966666667, bins: []}, 
-                    {location: null, x: 1.1807133333333, y: 0.407038666666666, bins: []}, 
-                    {location: null, x: 1.09656033333331, y: 0.4353606666667, bins: []}]
-
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 
@@ -163,7 +139,6 @@ export class Scatterplot extends React.Component<Props> {
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.createNewBrush = this.createNewBrush.bind(this);
-        this.rdOrBaf = this.rdOrBaf.bind(this);
         this.brushedNodes = new Set();
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
@@ -545,6 +520,7 @@ export class Scatterplot extends React.Component<Props> {
                 xScale = this._currXScale;
                 yScale = this._currYScale;
             })
+            .on("wheel", () => {console.log("wheeled")})
             .call(this.zoom)
                 .append("rect")
                     .attr("x", PADDING.left)
@@ -554,8 +530,15 @@ export class Scatterplot extends React.Component<Props> {
                     .style("fill", "none")
                     .style("pointer-events", "all")
                     .attr("clip-path", "url(#clip)");
+        // svg
+        //     .on("wheel", () => {console.log("wheeled")})
+        //     .call(this.zoom)
+            // .call(this.zoom.transform, d3.zoomIdentity
+            //     .translate(width / 2, height / 2)
+            //     .scale(0.5)
+            //     .translate(-width / 2, -height / 2));
                     
-
+        
         var event_rectY = svg
             .append("g")
             .classed("eventrectY", true)
@@ -685,23 +668,6 @@ export class Scatterplot extends React.Component<Props> {
         }
     }
 
-    /**
-     * Based on which values are on the x/y axes and which axis the caller is requesting, 
-     * gives the relevant data (rdr or baf)
-     * @param m Data that the average read depth ratio and average baf are taken from
-     * @param invert Indicates which value is on the x-axis and which is on the y (True: baf is on the x-axis)
-     * @param xAxis True if it should return the x-axis value
-     * @returns Either the averageRd or averageBaf
-     * @author Zubair Lalani
-     */
-    rdOrBaf(m : MergedGenomicBin, invert : boolean, xAxis : boolean) {
-        if (xAxis) {
-            return (invert) ? m.averageRd : (m.averageBaf);
-        } else {  
-            return (invert) ?  (m.averageBaf) :  m.averageRd;
-        }
-    }
-
     getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
         if (!this._svg || !hoveredLocation || !this._canvas) {
             return [];
@@ -726,8 +692,8 @@ export class Scatterplot extends React.Component<Props> {
                 .enter()
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + d.location.toString())
-                    .attr("cx", d => this._currXScale(this.rdOrBaf(d, this.props.invertAxis, true)) || 0)
-                    .attr("cy", d => this._currYScale(this.rdOrBaf(d, this.props.invertAxis, false)) || 0) // Alternatively, this could be 0.5 - baf
+                    .attr("cx", d => this._currXScale(d.averageBaf))
+                    .attr("cy", d => this._currYScale(d.averageRd)) // Alternatively, this could be 0.5 - baf
                     .attr("r", 3)
                     .attr("fill", d => {
                         if(this.brushedNodes.has(d)) {

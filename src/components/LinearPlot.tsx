@@ -216,7 +216,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         brushedBins.forEach(d => previous.push(String(d.location)));
         let previous_brushed_nodes = new Set(previous);
         
-        console.time("Linear plot DRAWING POINTS")
+        //console.time("Linear plot DRAWING POINTS")
         applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
@@ -251,7 +251,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
         }
 
-        console.timeEnd("Linear plot DRAWING POINTS")
+        //console.timeEnd("Linear plot DRAWING POINTS")
 
         const brush = d3.brush()
         .keyModifiers(false)
