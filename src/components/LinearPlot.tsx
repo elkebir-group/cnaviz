@@ -275,13 +275,13 @@ export class LinearPlot extends React.PureComponent<Props> {
                             });
 
                         if(d3.event.sourceEvent.shiftKey) {
-                            let intersection : MergedGenomicBin[] = _.intersection(brushed, brushedBins);
-                            brushed = _.difference(_.uniq(_.union(brushed, brushedBins)), intersection); //_.uniq(_.union(brushNodes, brushedBins)).filter(d => !intersection.some(e => d === e));   
+                            brushed = _.uniq(_.union(brushed, brushedBins));  
+                        } else if(d3.event.sourceEvent.altKey) {
+                            brushed = _.difference(brushedBins, brushed);
                         }
+                        
                         this.brushedNodes = new Set(brushed);
                         this.props.onBrushedBinsUpdated([...this.brushedNodes]);
-                        console.log("LINEAR PLOT BRUSHED: ", brushed);
-                        //this.redraw();
                     }catch(error) {
                         console.log(error);
                     }
