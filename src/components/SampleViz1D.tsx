@@ -22,6 +22,8 @@ interface Props {
     selectedSample: string;
     yScale: [number, number] | null;
     xScale: [number, number] | null;
+    rdRange: [number, number];
+    clusterTableData: any;
 }
 
 enum DisplayMode {
@@ -50,7 +52,7 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale, rdRange, clusterTableData} = this.props;
         const selectedSample = this.props.selectedSample;
 
         const selectedRecords = data.getMergedRecords(selectedSample, chr);//data.getRecords(selectedSample, chr);
@@ -60,7 +62,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                 <RDLinearPlot
                     data={selectedRecords}
                     chr={chr}
-                    rdRange={data.getRdRange()}
+                    rdRange={rdRange}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} 
                     onBrushedBinsUpdated={onBrushedBinsUpdated}
@@ -68,7 +70,9 @@ export class SampleViz1D extends React.Component<Props, State> {
                     customColor={customColor}
                     colors={this.props.colors}
                     yScale= {yScale}
-                    xScale= {xScale}/>
+                    xScale= {xScale}
+                    clusterTableData={clusterTableData}
+                    />
                     
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
@@ -81,7 +85,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     customColor={customColor}
                     colors={this.props.colors}
                     yScale={yScale}
-                    xScale= {xScale}/>
+                    xScale= {xScale}
+                    clusterTableData={clusterTableData}/>
 
             </DivWithBullseye>;
         } else if (this.state.displayMode === DisplayMode.circos) {

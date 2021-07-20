@@ -18,10 +18,11 @@ interface Props {
     colors: string[];
     yScale: [number, number] | null;
     xScale: [number, number] | null;
+    clusterTableData: any;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
-    const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, yScale} = props;
+    const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, yScale, clusterTableData} = props;
     return <LinearPlot
         data={data}
         dataKeyToPlot="RD"
@@ -35,11 +36,12 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
         yLabel={"RDR"}
         brushedBins={brushedBins}
         customColor={customColor}
-        colors={colors}/>
+        colors={colors}
+        clusterTableData={clusterTableData}/>
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, xScale} = props;
+    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, xScale, clusterTableData} = props;
     return <LinearPlot
         data={data}
         chr={chr}
@@ -53,5 +55,6 @@ export function BAFLinearPlot(props: Props) {
         yLabel={"0.5 - BAF"}
         brushedBins={brushedBins}
         customColor={customColor}
-        colors={colors} />;
+        colors={colors} 
+        clusterTableData={clusterTableData}/>;
 }

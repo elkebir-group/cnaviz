@@ -37,7 +37,9 @@ interface Props {
     dispMode: DisplayMode;
     onZoom: (newYScale: [number, number]) => void;
     onRemovePlot: any;
+    rdRange: [number, number];
     plotId: number;
+    clusterTableData: any;
 }
 
 interface State {
@@ -97,14 +99,14 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins, dispMode, onZoom} = this.props;
+                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData} = this.props;
         const selectedSample = this.state.selectedSample;
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
 
-        const rdRange = data.getRdRange(this.props.plotId);//data.getRdRange();
-        rdRange[1] += 1; // Add one so it's prettier
+        //const rdRange = data.getRdRange(this.props.plotId);//data.getRdRange();
+        //rdRange[1] += 1; // Add one so it's prettier
         
         //const testRdRange = data.getRdRange(this.props.plotId);
         //console.log("TEST RD RANGE for plotId "+ String(this.props.plotId) + " : ", rdRange);
@@ -147,6 +149,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     updatedBins= {updatedBins}
                     displayMode = {dispMode}//{this.state.displayMode}
                     onZoom = {onZoom}
+                    clusterTableData = {clusterTableData}
                     />
             </DivWithBullseye>
         </div>;

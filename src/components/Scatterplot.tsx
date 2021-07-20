@@ -99,7 +99,8 @@ interface Props {
     brushedBins: MergedGenomicBin[];
     updatedBins: boolean;
     displayMode: DisplayMode;
-    onZoom: (newScales: any) => void
+    onZoom: (newScales: any) => void;
+    clusterTableData: any;
 }
 
 
@@ -127,6 +128,8 @@ export class Scatterplot extends React.Component<Props> {
 
     constructor(props: Props) {
         super(props);
+        console.log("Scatter plot cluster tbale data: ", props.clusterTableData);
+        
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
@@ -162,13 +165,31 @@ export class Scatterplot extends React.Component<Props> {
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
-        if(clusters[0] === "-2") {
-            clusters.shift();
+        // let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
+        // if(clusters[0] === "-2") {
+        //     clusters.shift();
+        // }
+        // if(clusters[0] === "-1") {
+        //     clusters.shift();
+        // }
+
+        let clusterTableData = this.props.clusterTableData;
+        clusterTableData.sort((a : any, b : any) => {
+            if (a.value > b.value) return -1;
+            if (a.value < b.value) return 1;
+            return 0;
+        })
+
+        let clusters : string[] = [];
+        for(const obj of clusterTableData) {
+            clusters.push(obj.key);
         }
-        if(clusters[0] === "-1") {
-            clusters.shift();
-        }
+        console.log(clusters);
+        // clusterTableData = clusterTableData.filter((cluster : any) => cluster.key === "-1" || cluster.key === "-2")
+        // console.log(clusterTableData);
+        // console.log("CLUSTER TABLE DATA: ", clusterTableData);
+        // const clusters = Object.keys(clusterTableData);
+        // console.log("INITIALIZING CLUSTERS: ", clusters);
         return clusters;
     }
 
@@ -466,6 +487,10 @@ export class Scatterplot extends React.Component<Props> {
                 ctx.save();
                 zoomAxes(this._current_transform, true, true);
                 ctx.restore();
+            }).on("end", () => {
+                let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+                console.log("New scales: ", newScales);
+                self.props.onZoom(newScales);
             });
         
         let zoomY : any= d3.zoom()
@@ -476,8 +501,12 @@ export class Scatterplot extends React.Component<Props> {
                 this._current_transform = transform;
                 ctx.save();
                 zoomAxes(this._current_transform, false, true);
-                ctx.restore();
-        });
+                ctx.restore();})
+            .on("end", () => {
+                let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+                console.log("New scales: ", newScales);
+                self.props.onZoom(newScales);
+            });
         
         this._canvas.width = width;
         this._canvas.height = height;
@@ -628,7 +657,9 @@ export class Scatterplot extends React.Component<Props> {
             } else if(d.bins[0].CLUSTER == -2){
                 return DELETED_COLOR;
             } else {
-                return colorScale(String(d.bins[0].CLUSTER));
+                const cluster = d.bins[0].CLUSTER;
+                const col_index = cluster % colors.length;
+                return colors[col_index];//colorScale(String(d.bins[0].CLUSTER));
             }
         }
 

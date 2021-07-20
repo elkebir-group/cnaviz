@@ -36,6 +36,7 @@ interface Props {
     dispMode: DisplayMode;
     onRemovePlot: any;
     plotId: number;
+    clusterTableData: any;
 }
 
 interface State {
@@ -68,7 +69,9 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, initialSelectedSample} = this.props;
+        const {data, initialSelectedSample, plotId} = this.props;
+        const rdRange = data.getRdRange(plotId);
+        rdRange[1] += 0.5;
         return <div className="sampleviz-wrapper">
              <div className="row"> 
                 <div className="col"> 
@@ -76,7 +79,8 @@ export class SampleViz extends React.Component<Props, State> {
                     {...this.props} 
                     onSelectedSample={this.handleSelectedSampleChanged} 
                     initialSelectedSample={initialSelectedSample}
-                    onZoom={this.handleZoom}/> 
+                    onZoom={this.handleZoom}
+                    rdRange={rdRange}/> 
                 </div>
                 <div className="col">
                     <SampleViz1D 
@@ -84,7 +88,8 @@ export class SampleViz extends React.Component<Props, State> {
                     yScale={this.state.scales.yScale} 
                     xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
-                    initialSelectedSample={initialSelectedSample} /> 
+                    initialSelectedSample={initialSelectedSample}
+                    rdRange={rdRange} /> 
                 </div>
             </div> 
                 

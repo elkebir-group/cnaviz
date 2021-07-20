@@ -70,9 +70,9 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 }
 
                 if(lastChr !==  bin["#CHR"]) {
-                    console.log("GOING FROM " + lastChr + " TO " + bin["#CHR"]);
+                    //console.log("GOING FROM " + lastChr + " TO " + bin["#CHR"]);
                     chrNameLength.push({name: lastChr, length: (end - start)})
-                    console.log("LENGTH: ", chrNameLength.length);
+                    //console.log("LENGTH: ", chrNameLength.length);
                     start = Number(bin.START);
                     lastChr = bin["#CHR"]
                    // nameLengthMap.set(lastChr, 0);
@@ -418,7 +418,14 @@ export class App extends React.Component<{}, State> {
         const allData = indexedData.getAllRecords();
         //indexedData.setRDFilter([1.0, 1.5]);
         let mainUI = null;
+        
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
+            const clusterTableData = indexedData.getClusterTableInfo();
+            clusterTableData.sort((a : any, b : any) => {
+                if (a.value > b.value) return -1;
+                if (a.value < b.value) return 1;
+                return 0;
+            })
             const scatterplotProps = {
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
@@ -438,7 +445,8 @@ export class App extends React.Component<{}, State> {
                 onSelectedSample: this.onSelectedSample,
                 selectedSample: this.state.selectedSample,
                 dispMode: this.state.displayMode,
-                onRemovePlot: this.handleRemovePlot
+                onRemovePlot: this.handleRemovePlot,
+                clusterTableData: clusterTableData
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -448,7 +456,9 @@ export class App extends React.Component<{}, State> {
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
-           
+            
+
+            //console.log("CLUSTER TABLE DATA: ", clusterTableData);
             mainUI = (
                 <div id="grid-container">
                     
@@ -474,7 +484,7 @@ export class App extends React.Component<{}, State> {
                         </div>
 
                         <ClusterTable 
-                            test={indexedData.getClusterTableInfo()} 
+                            test={clusterTableData} 
                             onClusterRowsChange={this.onClusterRowsChange} 
                             onClusterColorChange={this.onClusterColorChange}
                             currentFilters={indexedData.getFilteredClusters()}
@@ -499,7 +509,7 @@ export class App extends React.Component<{}, State> {
                                 chrOptions={chrOptions}
                                 onAddSample={this.handleAddSampleClick}
                                 onAssignCluster={this.handleAssignCluster}
-                                tableData={indexedData.getClusterTableInfo()}
+                                tableData={clusterTableData}
                                 onClusterRowsChange={this.onClusterRowsChange}
                                 onClusterColorChange={this.onClusterColorChange}
                                 currentClusterFilters={indexedData.getFilteredClusters()} />

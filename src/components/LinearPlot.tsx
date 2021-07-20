@@ -62,6 +62,7 @@ interface Props {
     yMax: number;
     customColor: string;
     colors: string[];
+    clusterTableData: any;
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -77,6 +78,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     private brushedNodes: Set<MergedGenomicBin>;
     constructor(props: Props) {
         super(props);
+        console.log("Linear plot cluster tbale data: ", props.clusterTableData);
         this._svg = null;
         this._canvas = null;
         this.getXScale = memoizeOne(this.getXScale);
@@ -247,7 +249,10 @@ export class LinearPlot extends React.PureComponent<Props> {
             //} else if(self.props.colors[d.bins[0].CLUSTER]) {
                 //return self.props.colors[d.bins[0].CLUSTER];
             } else {
-                return colorScale(String(d.bins[0].CLUSTER));
+                const cluster = d.bins[0].CLUSTER;
+                const col_index = cluster % colors.length;
+                return colors[col_index];
+                //return colorScale(String(d.bins[0].CLUSTER));
             }
         }
 
@@ -279,7 +284,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         } else if(d3.event.sourceEvent.altKey) {
                             brushed = _.difference(brushedBins, brushed);
                         }
-                        
+
                         this.brushedNodes = new Set(brushed);
                         this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                     }catch(error) {
