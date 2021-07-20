@@ -311,6 +311,28 @@ export class Scatterplot extends React.Component<Props> {
                             ></svg>
                             <div className="Scatterplot-tools">
                                 <button id="reset" onClick={this.resetZoom}>Reset</button>
+                                <button id="new-cluster" >New</button>
+                                <button id="assign-cluster" >Assign</button>
+                                <select
+                                    name="Select Cluster" 
+                                    id="Select Cluster"
+                                    value={"Test 1"}
+                                    //onChange={props.onChrSelected} >
+                                    >
+                                    <option>
+                                        Test 1
+                                    </option>
+                                    <option>
+                                        Test 2
+                                    </option>
+                                    <option>
+                                        Test 3
+                                    </option>
+                                    <option>
+                                        Test 4
+                                    </option>
+                                        {/* {["Test 1", "Test 2", "Test 3", "Test 4"]} */}
+                                </select>
                             </div>
                             {this.renderTooltip()}
                         </div>;

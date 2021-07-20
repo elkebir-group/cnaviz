@@ -4,6 +4,7 @@
     left: -400px;
     width: 400px;
     height: 100%;
+    
     background-color: rgb(219, 171, 223);
     transition: left 300ms ease-out;
   }
@@ -58,3 +59,20 @@
   .sidebar.active .hamburger div {
     transform: scale(0);
   }
+
+  .contents {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    /* justify-content: space-evenly; */
+    /* flex: 1 1 0; */
+  }
+
+  .row-contents {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    margin-bottom: 10px;
+    flex: 1 1 0;
+  }
+

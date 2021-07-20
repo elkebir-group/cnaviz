@@ -421,11 +421,11 @@ export class App extends React.Component<{}, State> {
         
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
-            clusterTableData.sort((a : any, b : any) => {
-                if (a.value > b.value) return -1;
-                if (a.value < b.value) return 1;
-                return 0;
-            })
+            // clusterTableData.sort((a : any, b : any) => {
+            //     if (a.value > b.value) return -1;
+            //     if (a.value < b.value) return 1;
+            //     return 0;
+            // })
             const scatterplotProps = {
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,

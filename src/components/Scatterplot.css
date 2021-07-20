@@ -8,17 +8,25 @@
 .Scatterplot-tools {
     position: absolute;
     top: calc(0%);
-    left: calc(85%);
+    right: calc(0%);
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: flex-end;
+    /* left: calc(85%); */
+    align-items: center;
     visibility: visible;
 }
 
 .Scatterplot-tools button {
     background-color: #e7e7e7;
-    border: none;
     color: #000000;
+    border: black;
+    border-radius: 2px;
     cursor: pointer;
     display: block;
     margin-bottom: 5px;
+    margin-left: 10px;
     padding: 5px 10px;
     outline: 0;
 }

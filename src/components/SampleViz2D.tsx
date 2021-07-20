@@ -124,7 +124,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.onRemovePlot} style={{marginLeft: 10}}> Remove plot </button>
+                <button onClick={this.onRemovePlot} style={{marginLeft: 10}}> Remove Sample </button>
                 {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>
