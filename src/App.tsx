@@ -512,7 +512,9 @@ export class App extends React.Component<{}, State> {
                                 tableData={clusterTableData}
                                 onClusterRowsChange={this.onClusterRowsChange}
                                 onClusterColorChange={this.onClusterColorChange}
-                                currentClusterFilters={indexedData.getFilteredClusters()} />
+                                currentClusterFilters={indexedData.getFilteredClusters()}
+                                handleClusterAssignmentInput={this.handleClusterAssignmentInput}
+                                value={value} />
                         </Router>
                     </>
                 </div>);
