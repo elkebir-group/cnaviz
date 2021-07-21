@@ -533,15 +533,14 @@ export class App extends React.Component<{}, State> {
                 {samples.length === 0 &&
                     <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
                 }
-
+                    
                 <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
                 <span className="App-CheckBox-explanation">Apply log to RD: </span>
                 <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
-                <span className="App-CheckBox-explanation" style={{marginLeft: 10}}>Apply provided clustering: </span>
-                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleClustering.bind(this)}  />
+                <span className="App-CheckBox-explanation">Apply provided clustering: </span>
+                <input type="checkbox" onClick={this.toggleClustering.bind(this)}  />
                 
                 <CSV data={allData}> /</CSV>
-                
             </div>
             {status && <div className="App-status-pane">{status}</div>}
             {mainUI}

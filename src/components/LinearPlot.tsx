@@ -285,11 +285,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                             brushed = _.difference(brushedBins, brushed);
                         }
 
-                        this.brushedNodes = new Set(brushed);
-                        this.props.onBrushedBinsUpdated([...this.brushedNodes]);
+                        this.brushedNodes = new Set(brushed);  
                     }catch(error) {
                         console.log(error);
                     }
+                    this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                 });
                 
         // attach the brush to the chart

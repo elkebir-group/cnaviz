@@ -13,6 +13,14 @@ body {
     margin-right: 50px;
 }
 
+.App-row-contents {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    margin-bottom: 10px;
+    flex: 1 1 0;
+}
+
 .App-file-upload-explanation {
     margin-right: 10px;
 }

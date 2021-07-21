@@ -17,40 +17,12 @@ import {DisplayMode} from "./SampleViz2D"
 
 const visutils = require('vis-utils');
 
-const annotations = [{
-  note: {
-    label: "Longer text to show text wrapping",
-    bgPadding: 20,
-    title: "Annotations :)"
-  },
-  //can use x, y directly instead of data
-  data: { date: "18-Sep-09", close: 185.02 },
-  className: "show-bg",
-  dy: 137,
-  dx: 162
-}]
-
 const PADDING = { // For the SVG
     left: 60,
     right: 20,
     top: 20,
     bottom: 60,
 };
-const testGenomicBin: any = {
-    "#CHR": "chr1", // Despite this key implying that it is a number, it can contain values like "chr3"
-    START: 0,
-    END: 1000,
-    SAMPLE: "Tumor1",
-    
-    RD: 1.68453,
-    "#SNPS": 0,
-    COV: 0,
-    ALPHA: 0,
-    BETA: 0,
-    BAF: 0.309973,
-    /** Cluster ID */
-    CLUSTER: 0
-}
 
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";

@@ -16,9 +16,11 @@ interface Props {
     currentClusterFilters: String[];
 }
 
+
 function Sidebar(props: Props) {
   const [sidebar, setSidebar] = useState(false);
-  
+  const [value] = useState("");
+
   const showSidebar = () => setSidebar(!sidebar);
   return (
     <nav className={sidebar ? "sidebar active" : "sidebar"}>
@@ -41,15 +43,17 @@ function Sidebar(props: Props) {
         <div className="row-contents">
           <button onClick={props.onAddSample}> Add Sample </button>
           <button onClick={props.onAssignCluster}> Assign Cluster </button>
-          <input type="number" size={30} min="-2" max="100"/>
+          <input type="number" value={value} size={30} min="-2" max="100"/>
         </div>
-        
-        <ClusterTable 
-            test={props.tableData} 
-            onClusterRowsChange={props.onClusterRowsChange} 
-            onClusterColorChange={props.onClusterColorChange}
-            currentFilters={props.currentClusterFilters}
-        ></ClusterTable>      
+        <div style={{margin: 10}}>
+          <ClusterTable 
+              test={props.tableData} 
+              onClusterRowsChange={props.onClusterRowsChange} 
+              onClusterColorChange={props.onClusterColorChange}
+              currentFilters={props.currentClusterFilters}
+          ></ClusterTable>
+        </div>
+          
         
         {/* <div className="row">
             <div className = "row" >
