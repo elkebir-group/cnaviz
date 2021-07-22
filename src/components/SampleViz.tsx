@@ -56,11 +56,16 @@ export class SampleViz extends React.Component<Props, State> {
             scales: {xScale: null, yScale: null}
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
+        this.handleSelectedSampleChange = this.handleSelectedSampleChange.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
     }
     
     handleSelectedSampleChanged(selected : string) {
         this.setState({selectedSample: selected});
+    }
+
+    handleSelectedSampleChange(event : any) {
+        this.setState({selectedSample: event.target.value});
     }
 
     handleZoom(newScales: any) {
@@ -70,14 +75,28 @@ export class SampleViz extends React.Component<Props, State> {
 
     render() {
         const {data, initialSelectedSample, plotId} = this.props;
-        const rdRange = data.getRdRange(plotId);
+        const selectedSample = this.state.selectedSample;
+        const rdRange = data.getRdRange(selectedSample);
+        //console.log("NEW RD RANGE: ", rdRange);
+        const sampleOptions = data.getSampleList().map(sampleName =>
+            <option key={sampleName} value={sampleName}>{sampleName}</option>
+        );
         rdRange[1] += 0.5;
         return <div className="sampleviz-wrapper">
+            <div className="SampleViz-select">
+                Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
+                    {sampleOptions}
+                </select>
+                <button onClick={this.props.onRemovePlot} style={{marginLeft: 10}}> Remove Sample </button>
+                {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
+                {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
+            </div>
              <div className="row"> 
                 <div className="col"> 
                     <SampleViz2D 
                     {...this.props} 
-                    onSelectedSample={this.handleSelectedSampleChanged} 
+                    onSelectedSample={this.handleSelectedSampleChanged}
+                    selectedSample={selectedSample}
                     initialSelectedSample={initialSelectedSample}
                     onZoom={this.handleZoom}
                     rdRange={rdRange}/> 

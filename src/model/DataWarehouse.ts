@@ -51,7 +51,7 @@ export class DataWarehouse {
     //private _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
     /** The range of read depth ratios represented in this data set.  First number is min, second is max. */
     private readonly _rdRange: [number, number];
-    private readonly _rdRanges: [[number, number]];
+    private readonly _rdRanges: SampleIndexedData<[number, number]>;
     private _locationGroupedData: LocationIndexedData<GenomicBin[]>;
     private _locationGroupedMergedData: LocationIndexedData<MergedGenomicBin[]>;
     private _clusterGroupedData: ClusterIndexedData<GenomicBin[]>;
@@ -102,7 +102,7 @@ export class DataWarehouse {
         this._clusterGroupedData = {};
         
         this._rdRange = [0, 0];
-        this._rdRanges = [[0,0]];
+        this._rdRanges = {};
         this._samples = [];
         this._chrs = [];
         this._clusters = [];
@@ -112,10 +112,7 @@ export class DataWarehouse {
 
         this._ndx = crossfilter(rawData);
         
-        // For bins with the same sample, cluster, and chromsome, 
-        // merges together X amount of bins where X is set by the 
-        // binsPerMergeThreshold in the BinMerger constructor
-        // Note: If clustering is not applied, then it just considers all the points as part of the same cluster
+        
         let mergedArr : MergedGenomicBin[] = [];
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -129,7 +126,6 @@ export class DataWarehouse {
             }
         }
 
-        //console.log(_.groupBy(mergedArr, "bins"));
         console.log("MERGED BINS: ", mergedArr);
         this._locationGroupedMergedData = _.groupBy(mergedArr, "location")
 
@@ -152,16 +148,15 @@ export class DataWarehouse {
         this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE); 
         
         if (rawData.length > 0) {
-            this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
-            this._rdRanges.pop();
+            //this._rdRange = [_.minBy(rawData, "RD")!.RD, _.maxBy(rawData, "RD")!.RD];
+            //this._rdRanges.pop();
             for(const sample of this._samples) {
                 let currentSampleBins = this._sampleGroupedData[sample];
                 let currentRdRange : [number, number] = [_.minBy(currentSampleBins, "RD")!.RD, _.maxBy(currentSampleBins, "RD")!.RD];
-                this._rdRanges.push(currentRdRange);
+                this._rdRanges[sample] = currentRdRange;
             }
         }
-        console.log("SAMPLE GROUPED DATA: ", this._sampleGroupedData);
-        console.log("SAMPLE GROUPED DATA: ", this._samples);
+
         console.log("RD RANGES: ", this._rdRanges);
 
         const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
@@ -212,11 +207,19 @@ export class DataWarehouse {
      * 
      * @return the range of read depth ratios represented in this data set
      */
-    getRdRange(plotId?:number): [number, number] {
-        if(typeof plotId !== 'undefined') {
-            return [this._rdRanges[plotId][0], this._rdRanges[plotId][1]];
-        }
-        return [this._rdRange[0], this._rdRange[1]]; // Make a copy
+    getRdRange(sample : string): [number, number] {
+        // if(typeof plotId !== 'undefined') {
+        //     return [this._rdRanges[plotId][0], this._rdRanges[plotId][1]];
+        // }
+        // return [this._rdRange[0], this._rdRange[1]]; // Make a copy
+        //return [thi]
+        const rdRange = this._rdRanges[sample];
+        // if(!rdRange) {
+            
+        // } else {
+
+        // }
+        return [rdRange[0], rdRange[1]];
     }
 
     /**
@@ -308,19 +311,13 @@ export class DataWarehouse {
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
     }
-    // getClusterList(sample: string): string[] {
-    //     const nameList = Object.keys(this._indexedData[sample] || {});
-    //     return nameList.filter(name => name !== DataWarehouse.ALL_CLUSTERS_KEY); // Remove the special ALL_CHRS_KEY
-    // }
 
     updateCluster(cluster: number) {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-        
-        //console.time("Updating Clusters");
+
         //this.clearAllFilters();
-        
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = this.brushedBins[i].location.toString();
             if(this._locationGroupedMergedData[locKey]) {
@@ -346,7 +343,6 @@ export class DataWarehouse {
         let allBins : GenomicBin[][] = [];
         flattenNestedBins.forEach(d => allBins.push(d.bins));
         const flattenedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allBins);
-        console.log("TEST1: ", flattenedBins[0]["#CHR"].substr(3));
         flattenedBins.sort((binOne : GenomicBin, binTwo : GenomicBin) => {
             let chrNumb = Number(binOne["#CHR"].substr(3));
             let chrNumb2 = Number(binTwo["#CHR"].substr(3));

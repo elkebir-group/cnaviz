@@ -93,6 +93,9 @@ export class Scatterplot extends React.Component<Props> {
     private _canvas: HTMLCanvasElement | null;
     private _currXScale: any;
     private _currYScale: any;
+    private _original_XScale: any;
+    private _original_YScale: any;
+
     private _original_transform: any;
     private _current_transform: any;
     private scatter: any;
@@ -118,12 +121,13 @@ export class Scatterplot extends React.Component<Props> {
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
         this.zoom = null;
-
+        
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, props.width, props.height);
-        let xScale = bafScale;
-        let yScale = rdrScale;
-        this._currXScale = xScale;
-        this._currYScale = yScale;
+        this._currXScale = bafScale;
+        this._currYScale = rdrScale;
+        this._original_XScale = this._currXScale;
+        this._original_YScale = this._currYScale;
+
         let data : any = props.data;
         this.quadTree = d3
             .quadtree()
@@ -315,20 +319,11 @@ export class Scatterplot extends React.Component<Props> {
         if(!this._svg) {
             return;
         }
-        let svg = d3.select(this._svg);
         const {rdRange, width, height, displayMode} = this.props;
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         this._currXScale = bafScale;
         this._currYScale = rdrScale;
-        // if(displayMode === DisplayMode.zoom) {
-        //     const t = d3.zoomIdentity.translate(0, 0).scale(1);
-        //     d3.select(this._canvas).transition()
-        //     .duration(200)
-        //     .ease(d3.easeLinear)
-        //     .call(this.zoom.transform, t)
-        // }
-        let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
-        console.log("New scales: ", newScales);
+        const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
         this.props.onZoom(newScales);
 
         this.redraw();
@@ -367,7 +362,7 @@ export class Scatterplot extends React.Component<Props> {
             this.brushedNodes = new Set();
             this._clusters = this.initializeListOfClusters();
             this.redraw();
-        } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height", "invertAxis"])) {
+        } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height"])) {
             console.log("Rerendering brushedBins", this.props["brushedBins"]);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
@@ -376,6 +371,19 @@ export class Scatterplot extends React.Component<Props> {
             this.forceHover(this.props.hoveredLocation); 
         }
          else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
+            const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
+            if(this._currXScale === this._original_XScale 
+                    && this._currYScale === this._original_YScale) {
+                this._currXScale = bafScale;
+                this._currYScale = rdrScale;
+                this._original_XScale = this._currXScale;
+                this._original_YScale = this._currYScale;
+            } else {
+                this._original_XScale = bafScale;
+                this._original_YScale = rdrScale;
+            }
+
+
             let data : any = this.props.data;
             this.quadTree = d3
                 .quadtree()
@@ -424,15 +432,16 @@ export class Scatterplot extends React.Component<Props> {
                 assignCluster, invertAxis, brushedBins, data, rdRange, colors} = this.props;
         let {displayMode} = this.props;
         const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
+        console.log("NEW RD RANGE@: ", rdRange);
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
 
         let xScale = this._currXScale;
         let yScale = this._currYScale;
         let xLabel = "0.5 - BAF";
         let yLabel = "RDR";
-        if (invertAxis) {
-            [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "RDR", "0.5 - BAF"];
-        }
+        // if (invertAxis) {
+        //     [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "RDR", "0.5 - BAF"];
+        // }
         
         const svg = d3.select(this._svg);
         const canvas = d3.select(this._canvas);

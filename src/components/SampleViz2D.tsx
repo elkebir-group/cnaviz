@@ -26,6 +26,7 @@ interface Props {
     onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null, record?: MergedGenomicBin | null) => void;
+    selectedSample: string;
     onSelectedSample: any;
     invertAxis?: boolean;
     customColor: string;
@@ -99,11 +100,11 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData} = this.props;
-        const selectedSample = this.state.selectedSample;
-        const sampleOptions = data.getSampleList().map(sampleName =>
-            <option key={sampleName} value={sampleName}>{sampleName}</option>
-        );
+                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample} = this.props;
+        // const selectedSample = this.state.selectedSample;
+        // const sampleOptions = data.getSampleList().map(sampleName =>
+        //     <option key={sampleName} value={sampleName}>{sampleName}</option>
+        // );
 
         //const rdRange = data.getRdRange(this.props.plotId);//data.getRdRange();
         //rdRange[1] += 1; // Add one so it's prettier
@@ -120,14 +121,15 @@ export class SampleViz2D extends React.Component<Props, State> {
         
 
         return <div className="SampleViz">
-            <div className="SampleViz-select">
+            {/* <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}
                 </select>
                 <button onClick={this.onRemovePlot} style={{marginLeft: 10}}> Remove Sample </button>
-                {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
+                
+            </div> */}
+            {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
-            </div>
             
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
