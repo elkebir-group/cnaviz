@@ -120,7 +120,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         //     }
         
 
-        return <div className="SampleViz">
+        return <div className="SampleViz-scatter">
             {/* <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
                     {sampleOptions}

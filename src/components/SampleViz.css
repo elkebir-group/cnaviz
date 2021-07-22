@@ -1,5 +1,5 @@
 .SampleViz {
-    margin: 10px;
+    /* margin: 10px; */
 }
 
 .SampleViz-select {
@@ -19,4 +19,27 @@
     position: absolute;
     left: calc(81.5%);
     visibility: visible;
+}
+
+.SampleViz-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 20px;
+}
+
+.SampleViz-plots {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.SampleViz-scatter {
+    margin-right: 10px;
+}
+
+.SampleViz-linear {
+    margin-left: 10px;
 }

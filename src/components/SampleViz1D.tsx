@@ -99,15 +99,15 @@ export class SampleViz1D extends React.Component<Props, State> {
             //     chr={chr} />;
         }
 
-        return <div className="SampleViz" style={{marginTop: 30}}>
+        return <div className="SampleViz-linear" >
              
-            <div className="SampleViz-select" >
+            {/* <div className="SampleViz-select" >
                 <div className="row" style={{marginLeft: 1}}>
-                    {/* {this.renderDisplayModeRadioOption(DisplayMode.linear)} */}
-                    {/* {this.renderDisplayModeRadioOption(DisplayMode.circos)} */}
+                    
                 </div>
-            </div>
-            
+            </div> */}
+            {/* {this.renderDisplayModeRadioOption(DisplayMode.linear)} */}
+                    {/* {this.renderDisplayModeRadioOption(DisplayMode.circos)} */}
             {visualization}
         </div>;
     }

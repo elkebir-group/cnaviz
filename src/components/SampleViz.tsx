@@ -82,7 +82,7 @@ export class SampleViz extends React.Component<Props, State> {
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
         rdRange[1] += 0.5;
-        return <div className="sampleviz-wrapper">
+        return <div className="SampleViz-wrapper">
             <div className="SampleViz-select">
                 Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
@@ -91,7 +91,24 @@ export class SampleViz extends React.Component<Props, State> {
                 {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>
-             <div className="row"> 
+            <div className="SampleViz-plots">
+                <SampleViz2D 
+                        {...this.props} 
+                        onSelectedSample={this.handleSelectedSampleChanged}
+                        selectedSample={selectedSample}
+                        initialSelectedSample={initialSelectedSample}
+                        onZoom={this.handleZoom}
+                        rdRange={rdRange}/> 
+                <SampleViz1D 
+                    {...this.props}  
+                    yScale={this.state.scales.yScale} 
+                    xScale={this.state.scales.xScale} 
+                    selectedSample={this.state.selectedSample} 
+                    initialSelectedSample={initialSelectedSample}
+                    rdRange={rdRange} />
+            </div>
+            
+             {/* <div className="row"> 
                 <div className="col"> 
                     <SampleViz2D 
                     {...this.props} 
@@ -110,7 +127,7 @@ export class SampleViz extends React.Component<Props, State> {
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange} /> 
                 </div>
-            </div> 
+            </div>  */}
                 
         </div>
     }
