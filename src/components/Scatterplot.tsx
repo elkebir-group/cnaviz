@@ -66,6 +66,7 @@ interface Props {
     onRecordsHovered: (record: MergedGenomicBin | null) => void;
     onBrushedBinsUpdated: any;
     customColor: string;
+    col: string;
     colors: string[];
     assignCluster: boolean;
     brushedBins: MergedGenomicBin[];
@@ -104,7 +105,7 @@ export class Scatterplot extends React.Component<Props> {
 
     constructor(props: Props) {
         super(props);
-        console.log("Scatter plot cluster tbale data: ", props.clusterTableData);
+        //console.log("Scatter plot cluster tbale data: ", props.clusterTableData);
         
         this._svg = null;
         this._canvas = null;
@@ -161,7 +162,7 @@ export class Scatterplot extends React.Component<Props> {
         for(const obj of clusterTableData) {
             clusters.push(obj.key);
         }
-        console.log(clusters);
+        //console.log(clusters);
         // clusterTableData = clusterTableData.filter((cluster : any) => cluster.key === "-1" || cluster.key === "-2")
         // console.log(clusterTableData);
         // console.log("CLUSTER TABLE DATA: ", clusterTableData);
@@ -364,7 +365,6 @@ export class Scatterplot extends React.Component<Props> {
             this._clusters = this.initializeListOfClusters();
             this.redraw();
         } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height"])) {
-            console.log("Rerendering brushedBins", this.props["brushedBins"]);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
@@ -383,7 +383,6 @@ export class Scatterplot extends React.Component<Props> {
                 this._original_XScale = bafScale;
                 this._original_YScale = rdrScale;
             }
-
 
             let data : any = this.props.data;
             this.quadTree = d3
@@ -434,7 +433,7 @@ export class Scatterplot extends React.Component<Props> {
                 assignCluster, invertAxis, brushedBins, data, rdRange, colors} = this.props;
         let {displayMode} = this.props;
         const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
-        console.log("NEW RD RANGE@: ", rdRange);
+        //console.log("NEW RD RANGE@: ", rdRange);
         const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
 
         let xScale = this._currXScale;
@@ -494,7 +493,7 @@ export class Scatterplot extends React.Component<Props> {
                 ctx.restore();
             }).on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                console.log("New scales: ", newScales);
+                //console.log("New scales: ", newScales);
                 self.props.onZoom(newScales);
             });
         
@@ -509,7 +508,7 @@ export class Scatterplot extends React.Component<Props> {
                 ctx.restore();})
             .on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                console.log("New scales: ", newScales);
+                //console.log("New scales: ", newScales);
                 self.props.onZoom(newScales);
             });
         
@@ -615,7 +614,7 @@ export class Scatterplot extends React.Component<Props> {
                     const { selection } = d3.event;
                     let rect = [[self._currXScale.invert(selection[0][0]), self._currYScale.invert(selection[1][1])], // bottom left (x y)
                                 [self._currXScale.invert(selection[1][0]), self._currYScale.invert(selection[0][1])]]; // top right (x y)
-                    console.log("RECT: ", rect);
+                    //console.log("RECT: ", rect);
                     let newRdRange : [number, number] = [Number(self._currYScale.invert(selection[1][1])), 
                                                         Number(self._currYScale.invert(selection[0][1]))];
                     let newBafRange : [number, number] = [Number(self._currXScale.invert(selection[0][0])), 
@@ -631,7 +630,7 @@ export class Scatterplot extends React.Component<Props> {
                     drawAllGenomicBins();
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                    console.log("New scales: ", newScales);
+                    //console.log("New scales: ", newScales);
                     self.props.onZoom(newScales);
                 } catch (error) { console.log(error);}
             }

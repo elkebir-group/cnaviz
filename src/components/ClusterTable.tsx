@@ -64,19 +64,21 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     handleColorChange(color : any, index: any) {
-       console.log(index);
+       //console.log(index);
         this.colors[index] = color.hex;
-        console.log(this.colors)
-        this.props.onClusterColorChange(this.colors);
+        const tempColors = _.cloneDeep(this.colors);
+        this.colors = tempColors
+        //console.log(this.colors)
+        this.props.onClusterColorChange(tempColors);
         this.forceUpdate();
         
-        console.log(this.colors[index])
+        //console.log(this.colors[index])
     }
 
     getTest(data : any) {
-        console.log(data.data.key);
-        console.log(data["key"]);
-        console.log(Object.values(data));
+        //console.log(data.data.key);
+        //console.log(data["key"]);
+        //console.log(Object.values(data));
         return <pre>{JSON.stringify(data, null, 2)}</pre>;
     }
 

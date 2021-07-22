@@ -157,7 +157,7 @@ export class DataWarehouse {
             }
         }
 
-        console.log("RD RANGES: ", this._rdRanges);
+        //console.log("RD RANGES: ", this._rdRanges);
 
         const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
         //console.log("Normal values: ", arr);
@@ -178,7 +178,7 @@ export class DataWarehouse {
         for(let i=0; i < this.allRecords.length; i++) {
             this.allRecords[i].BAF = 0.5-this.allRecords[i].BAF;
         }
-        console.log("RECORDS LENGTH: ", this.allRecords.length);
+        //console.log("RECORDS LENGTH: ", this.allRecords.length);
         console.timeEnd("Initializing DataWarehouse");
     }
 
@@ -376,7 +376,7 @@ export class DataWarehouse {
         
         this.clusterTableInfo = clone;
         this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
-        console.log("RECORDS LENGTH: ", this.allRecords.length);
+        //console.log("RECORDS LENGTH: ", this.allRecords.length);
         //console.timeEnd("Updating Clusters");
     }
 

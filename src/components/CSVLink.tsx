@@ -19,7 +19,7 @@ export class CSV extends React.Component<Props> {
         
         const separator = "\t"
         const enclosing_char = "'";
-        return <CSVLink data={this.props.data} onClick={()=> console.log("LAST RECORDS LENGTH: ", this.props.data.length)} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
+        return <CSVLink data={this.props.data} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
         //<CSVDownload data={this.props.data} filename={"ClusteredBins.txt"} separator={separator}></CSVDownload> //
     }
 }

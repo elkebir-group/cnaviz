@@ -35,6 +35,7 @@ interface Props {
     updatedBins: boolean;
     dispMode: DisplayMode;
     onRemovePlot: any;
+    onAddSample: any;
     plotId: number;
     clusterTableData: any;
     applyLog: boolean;
@@ -70,7 +71,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleZoom(newScales: any) {
-        console.log(newScales)
+        //console.log(newScales)
         this.setState({scales: newScales})
     }
 
@@ -83,12 +84,14 @@ export class SampleViz extends React.Component<Props, State> {
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
         rdRange[1] += 0.5;
+        
         return <div className="SampleViz-wrapper">
             <div className="SampleViz-select">
-                Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
+                Sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.props.onRemovePlot} style={{marginLeft: 10}}> Remove Sample </button>
+                <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
+                <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
                 {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>
@@ -108,28 +111,6 @@ export class SampleViz extends React.Component<Props, State> {
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange} />
             </div>
-            
-             {/* <div className="row"> 
-                <div className="col"> 
-                    <SampleViz2D 
-                    {...this.props} 
-                    onSelectedSample={this.handleSelectedSampleChanged}
-                    selectedSample={selectedSample}
-                    initialSelectedSample={initialSelectedSample}
-                    onZoom={this.handleZoom}
-                    rdRange={rdRange}/> 
-                </div>
-                <div className="col">
-                    <SampleViz1D 
-                    {...this.props}  
-                    yScale={this.state.scales.yScale} 
-                    xScale={this.state.scales.xScale} 
-                    selectedSample={this.state.selectedSample} 
-                    initialSelectedSample={initialSelectedSample}
-                    rdRange={rdRange} /> 
-                </div>
-            </div>  */}
-                
         </div>
     }
 }

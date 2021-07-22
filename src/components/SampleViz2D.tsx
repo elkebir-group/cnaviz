@@ -146,6 +146,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     invertAxis= {invertAxis || false} 
                     customColor= {customColor}
                     colors = {this.props.colors}
+                    col = {this.props.colors[0]}
                     assignCluster= {assignCluster} 
                     onBrushedBinsUpdated= {this.handleUpdatedBrushedBins}
                     brushedBins= {brushedBins}

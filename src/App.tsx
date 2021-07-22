@@ -91,7 +91,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             
             
             chrNameLength.push({name: lastChr, length: (end - start)})
-            console.log("Name length: ", chrNameLength);
+            //console.log("Name length: ", chrNameLength);
             //chrNameLength.sort((a : any, b : any) => (a.name < b.name) ? 1 : -1)
             //console.log("Name length2: ", chrNameLength);
             //console.log("Name length MAP: ", nameLengthMap);
@@ -101,11 +101,11 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     sensitivity: 'base'
                 })
             })
-            console.log("Name length3: ", sortedChrNameLength);
+            //console.log("Name length3: ", sortedChrNameLength);
             //console.log(sorted);
             genome = new Genome(chrNameLength);
             
-            console.log("PARSED: ", parsed);
+            //console.log("PARSED: ", parsed);
             resolve(parsed);
         });
     })
@@ -324,7 +324,7 @@ export class App extends React.Component<{}, State> {
 
     updateBrushedBins(brushedBins: MergedGenomicBin[]) {
         this.state.indexedData.setbrushedBins(brushedBins);
-        console.log("test");
+        //console.log("test");
         this.setState({updatedBins: true});
     }
 
@@ -400,11 +400,15 @@ export class App extends React.Component<{}, State> {
         this.setState({indexedData: this.state.indexedData});
     }
 
-    onClusterColorChange(colors: any) {
-        console.log("SETTING STATE TOOO, ", colors);
-        this.setState({colors: colors})
-        this.forceUpdate();
-        console.log("CURRENT STATE:  ", this.state.colors);
+    onClusterColorChange(colors: string[]) {
+        //console.log("SETTING STATE TOOO, ", colors);
+        let newColors = [];
+        for(const col of colors) {
+            newColors.push(col);
+        }
+        this.setState({colors: newColors})
+        //this.forceUpdate();
+        //console.log("CURRENT STATE:  ", this.state.colors);
     }
 
     onSelectedSample(selectedSample : any) {
@@ -446,6 +450,7 @@ export class App extends React.Component<{}, State> {
                 selectedSample: this.state.selectedSample,
                 dispMode: this.state.displayMode,
                 onRemovePlot: this.handleRemovePlot,
+                onAddSample: this.handleAddSampleClick,
                 clusterTableData: clusterTableData,
                 applyLog: this.state.applyLog
             };

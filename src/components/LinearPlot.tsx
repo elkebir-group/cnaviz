@@ -78,7 +78,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     private brushedNodes: Set<MergedGenomicBin>;
     constructor(props: Props) {
         super(props);
-        console.log("Linear plot cluster tbale data: ", props.clusterTableData);
+        //console.log("Linear plot cluster tbale data: ", props.clusterTableData);
         this._svg = null;
         this._canvas = null;
         this.getXScale = memoizeOne(this.getXScale);
@@ -109,12 +109,12 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.propsDidChange(prevProps, ["yMin", "yMax", "brushedBins", "width", "height", "chr"])) {
+        if (this.propsDidChange(prevProps, ["yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
         } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
-            console.log("Redrawing")
+            //console.log("Redrawing")
             this.redraw();
         }
     }
