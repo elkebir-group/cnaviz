@@ -125,7 +125,7 @@ export class DataWarehouse {
                 mergedArr = mergedArr.concat( _.flatten(Object.values(_.mapValues(groupedByChr, merger.doNeighboringBinsMerge))));
             }
         }
-
+        this._cluster_filters = this._clusters;
         console.log("MERGED BINS: ", mergedArr);
         this._locationGroupedMergedData = _.groupBy(mergedArr, "location")
 
@@ -376,7 +376,12 @@ export class DataWarehouse {
         
         this.clusterTableInfo = clone;
         this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
-        //console.log("RECORDS LENGTH: ", this.allRecords.length);
+        
+        //this._cluster_filters = this.clusterTableInfo.map((row : any) => String(row.key));
+        if(!this._cluster_filters.includes(String(cluster))) {
+            this._cluster_filters.push(String(cluster));
+        }
+
         //console.timeEnd("Updating Clusters");
     }
 

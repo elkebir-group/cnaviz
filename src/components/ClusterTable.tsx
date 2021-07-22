@@ -91,7 +91,11 @@ export class ClusterTable extends React.Component<Props> {
                 data={this.props.test}
                 selectableRows
                 onSelectedRowsChange={this.props.onClusterRowsChange}
-                selectableRowSelected={row => row}//(this.props.currentFilters.length !== 0) ? this.props.currentFilters.includes(row.key) : row}
+                selectableRowSelected={row => {
+                    if(this.props.currentFilters.includes(String(row.key))) {
+                        return row;
+                    }
+                }}
                 expandableRows
                 expandableRowsComponent={<ExpandedComponent/>}
                 pagination={true}
