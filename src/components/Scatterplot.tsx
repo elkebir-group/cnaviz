@@ -322,10 +322,12 @@ export class Scatterplot extends React.Component<Props> {
             return;
         }
         const {rdRange, width, height, displayMode} = this.props;
-        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
-        this._currXScale = bafScale;
-        this._currYScale = rdrScale;
+        //const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
+
+        this._currXScale = this._original_XScale;
+        this._currYScale = this._original_YScale;
         const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+        //d3.select(this._svg).call(this.zoom.transform, d3.zoomIdentity.scale(1))
         this.props.onZoom(newScales);
 
         this.redraw();
@@ -545,7 +547,7 @@ export class Scatterplot extends React.Component<Props> {
                 ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
             }
         }
-
+        
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
@@ -563,9 +565,9 @@ export class Scatterplot extends React.Component<Props> {
                     .style("fill", "none")
                     .style("pointer-events", "all")
                     .attr("clip-path", "url(#clip)");
-        // svg
-        //     .on("wheel", () => {console.log("wheeled")})
-        //     .call(this.zoom)
+
+        
+        
             // .call(this.zoom.transform, d3.zoomIdentity
             //     .translate(width / 2, height / 2)
             //     .scale(0.5)
@@ -575,6 +577,10 @@ export class Scatterplot extends React.Component<Props> {
         var event_rectY = svg
             .append("g")
             .classed("eventrectY", true)
+            .on("mouseenter", () => { 
+                xScale = this._currXScale;
+                yScale = this._currYScale;
+            })
             .call(zoomY)
                 .append("rect")
                     .attr("width", PADDING.left)
@@ -600,12 +606,19 @@ export class Scatterplot extends React.Component<Props> {
                         }
                     });
                     
-            // attach the brush to the chart
+            // // attach the brush to the chart
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
+        } else {
+            svg
+                .on("mouseenter", () => { 
+                    xScale = this._currXScale;
+                    yScale = this._currYScale;
+                })
+                .call(this.zoom)
         }
-        
+
         function brush_endEvent() {
             if(!self._svg) {return;}
             const {data} = self.props;
@@ -650,7 +663,6 @@ export class Scatterplot extends React.Component<Props> {
             yAxis.call(d3.axisLeft(newY))
         
             drawAllGenomicBins();
-            console.timeEnd("Zoom");
         }
         
         function chooseColor(d: MergedGenomicBin) {
