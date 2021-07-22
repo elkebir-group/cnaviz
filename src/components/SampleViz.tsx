@@ -37,6 +37,7 @@ interface Props {
     onRemovePlot: any;
     plotId: number;
     clusterTableData: any;
+    applyLog: boolean;
 }
 
 interface State {

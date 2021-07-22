@@ -446,7 +446,8 @@ export class App extends React.Component<{}, State> {
                 selectedSample: this.state.selectedSample,
                 dispMode: this.state.displayMode,
                 onRemovePlot: this.handleRemovePlot,
-                clusterTableData: clusterTableData
+                clusterTableData: clusterTableData,
+                applyLog: this.state.applyLog
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);

@@ -73,6 +73,7 @@ interface Props {
     displayMode: DisplayMode;
     onZoom: (newScales: any) => void;
     clusterTableData: any;
+    applyLog: boolean;
 }
 
 
@@ -398,13 +399,14 @@ export class Scatterplot extends React.Component<Props> {
     computeScales(rdRange: [number, number], width: number, height: number, bafRange?: [number, number]) {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
+        const rdLowerBound = (this.props.applyLog) ? -2 : 0;
         let baf = bafRange ? bafRange : [-.0001, 0.5] // .0001 allows for points exactly on the axis to still be seen
         return {
             bafScale: d3.scaleLinear()
                 .domain(baf)
                 .range(bafScaleRange),
             rdrScale: d3.scaleLinear()
-                .domain(rdRange)
+                .domain([rdLowerBound, rdRange[1]])
                 .range(rdrScaleRange)
         };
     }

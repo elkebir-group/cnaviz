@@ -41,6 +41,7 @@ interface Props {
     rdRange: [number, number];
     plotId: number;
     clusterTableData: any;
+    applyLog: boolean;
 }
 
 interface State {
@@ -100,7 +101,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample} = this.props;
+                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog} = this.props;
         // const selectedSample = this.state.selectedSample;
         // const sampleOptions = data.getSampleList().map(sampleName =>
         //     <option key={sampleName} value={sampleName}>{sampleName}</option>
@@ -152,6 +153,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     displayMode = {dispMode}//{this.state.displayMode}
                     onZoom = {onZoom}
                     clusterTableData = {clusterTableData}
+                    applyLog = {applyLog}
                     />
             </DivWithBullseye>
         </div>;
