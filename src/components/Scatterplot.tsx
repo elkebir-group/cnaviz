@@ -659,7 +659,7 @@ export class Scatterplot extends React.Component<Props> {
                     const { selection } = d3.event;
                     let rect = [[self._currXScale.invert(selection[0][0]), self._currYScale.invert(selection[1][1])], // bottom left (x y)
                                 [self._currXScale.invert(selection[1][0]), self._currYScale.invert(selection[0][1])]]; // top right (x y)
-                    //console.log("RECT: ", rect);
+                                
                     let newRdRange : [number, number] = [Number(self._currYScale.invert(selection[1][1])), 
                                                         Number(self._currYScale.invert(selection[0][1]))];
                     let newBafRange : [number, number] = [Number(self._currXScale.invert(selection[0][0])), 

@@ -249,6 +249,8 @@ export class App extends React.Component<{}, State> {
         this.onClusterColorChange = this.onClusterColorChange.bind(this);
         this.onSelectedSample = this.onSelectedSample.bind(this);
         this.handleRemovePlot = this.handleRemovePlot.bind(this);
+        this.setDisplayMode = this.setDisplayMode.bind(this);
+        
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
@@ -434,6 +436,11 @@ export class App extends React.Component<{}, State> {
         this.setState({selectedSample : selectedSample})
     }
 
+    setDisplayMode(mode: DisplayMode) {
+        console.log("MODE: ", mode);
+        this.setState({displayMode: mode});
+    }
+
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
@@ -539,7 +546,9 @@ export class App extends React.Component<{}, State> {
                                 onClusterColorChange={this.onClusterColorChange}
                                 currentClusterFilters={indexedData.getFilteredClusters()}
                                 handleClusterAssignmentInput={this.handleClusterAssignmentInput}
-                                value={value} />
+                                value={value}
+                                setDisplayMode={this.setDisplayMode}
+                                currentDisplayMode={this.state.displayMode} />
                         </Router>
                     </>
                 </div>);

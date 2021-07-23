@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Sidebar.css";
 import {ClusterTable} from "./ClusterTable";
+import {DisplayMode} from "../App";
 
 interface Props {
     selectedChr : string;
@@ -16,6 +17,8 @@ interface Props {
     currentClusterFilters: String[];
     handleClusterAssignmentInput: any;
     value: string;
+    setDisplayMode: any;
+    currentDisplayMode: DisplayMode;
 }
 
 
@@ -25,6 +28,30 @@ function Sidebar(props: Props) {
 
   const showSidebar = () => setSidebar(!sidebar);
   const handleClusterAssignmentInput = (event: any) => {setValue(event.target.value)};
+  const renderDisplayModeRadioOption = (mode: DisplayMode) => {
+    let label: string;
+    let padding: string;
+    switch (mode) {
+        case DisplayMode.zoom:
+            label = "Zoom";
+            padding= "15px"
+            break;
+        case DisplayMode.select:
+            label = "Select";
+            padding = "15px";
+            break;
+        default:
+            label = "???";
+            padding= "0px"
+    }
+
+    return <div className="row-contents">
+        <div onClick={() => props.setDisplayMode(mode)}>
+            {label} <input type="radio" checked={props.currentDisplayMode === mode} readOnly/>
+        </div>
+    </div>;
+  }
+
   return (
     <nav className={sidebar ? "sidebar active" : "sidebar"}>
       <button className="hamburger" type="button" onClick={showSidebar}>
@@ -47,6 +74,10 @@ function Sidebar(props: Props) {
           <button onClick={props.onAddSample}> Add Sample </button>
           <button onClick={props.onAssignCluster}> Assign Cluster </button>
           <input type="number" value={props.value} size={30} min="-2" max="100" onChange={props.handleClusterAssignmentInput}/>
+        </div>
+        <div>
+          {renderDisplayModeRadioOption(DisplayMode.select)}
+          {renderDisplayModeRadioOption(DisplayMode.zoom)}
         </div>
         <div style={{margin: 10}}>
           <ClusterTable 
