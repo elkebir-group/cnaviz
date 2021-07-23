@@ -14,6 +14,7 @@ import {GenomicBinHelpers} from "../model/GenomicBin";
 import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
+import {ClusterTable} from "./ClusterTable";
 
 const visutils = require('vis-utils');
 
@@ -118,7 +119,7 @@ export class Scatterplot extends React.Component<Props> {
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
-        this.createNewBrush = this.createNewBrush.bind(this);
+        // this.createNewBrush = this.createNewBrush.bind(this);
         this.brushedNodes = new Set();
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
@@ -292,6 +293,8 @@ export class Scatterplot extends React.Component<Props> {
         
         const {width, height, rdRange} = this.props;
         //console.log("Rendering")
+        let newTableData : any = [];
+        const groupedByCluster = _.groupBy(this.props.brushedBins, "SAMPLE");
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{position: "relative"}}>
                             <canvas
                                 ref={node => this._canvas = node}
@@ -328,10 +331,33 @@ export class Scatterplot extends React.Component<Props> {
                                         {/* {["Test 1", "Test 2", "Test 3", "Test 4"]} */}
                                 </select>
                             </div>
+
+                            {/* <ClusterTable 
+                                test={this.props.clusterTableData} 
+                                onClusterRowsChange={() => {}} 
+                                onClusterColorChange={() => {}}
+                                currentFilters={["-1"]}
+                            ></ClusterTable> */}
                             {this.renderTooltip()}
                         </div>;
         return scatterUI;
     }
+
+    // onClusterRowsChange(state: any) {
+    //     this.state.indexedData.setClusterFilters( state.selectedRows.map((d:any)  => String(d.key)));
+    //     this.setState({indexedData: this.state.indexedData});
+    // }
+
+    // onClusterColorChange(colors: string[]) {
+    //     //console.log("SETTING STATE TOOO, ", colors);
+    //     let newColors = [];
+    //     for(const col of colors) {
+    //         newColors.push(col);
+    //     }
+    //     this.setState({colors: newColors})
+    //     //this.forceUpdate();
+    //     //console.log("CURRENT STATE:  ", this.state.colors);
+    // }
 
     resetZoom() {
         if(!this._svg) {
@@ -349,23 +375,23 @@ export class Scatterplot extends React.Component<Props> {
         this.redraw();
     }
 
-    createNewBrush() {
-        const svg = d3.select(this._svg);
-        const brush = d3.brush()
-        .keyModifiers(false)
-        .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
-                [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
-                .on("start brush", () => this.updatePoints(d3.event))
-                .on("end", () => {
-                    svg.selectAll("." + "brush").remove();
-                    this.onBrushedBinsUpdated([...this.brushedNodes]);
-                });
+    // createNewBrush() {
+    //     const svg = d3.select(this._svg);
+    //     const brush = d3.brush()
+    //     .keyModifiers(false)
+    //     .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
+    //             [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
+    //             .on("start brush", () => this.updatePoints(d3.event))
+    //             .on("end", () => {
+    //                 svg.selectAll("." + "brush").remove();
+    //                 this.onBrushedBinsUpdated([...this.brushedNodes]);
+    //             });
                 
-        // attach the brush to the chart
-        svg.append('g')
-            .attr('class', 'brush')
-            .call(brush);
-    }
+    //     // attach the brush to the chart
+    //     svg.append('g')
+    //         .attr('class', 'brush')
+    //         .call(brush);
+    // }
 
     componentDidMount() { 
         this.redraw();
@@ -616,11 +642,12 @@ export class Scatterplot extends React.Component<Props> {
                     .on("start brush", () => this.updatePoints(d3.event))
                     .on("end", () => {
                         svg.selectAll("." + "brush").remove();
-                        if(d3.event.sourceEvent.metaKey) {
-                            brush_endEvent();
-                        } else {
-                            this.onBrushedBinsUpdated([...this.brushedNodes]);
-                        }
+                        // if(d3.event.sourceEvent.metaKey) {
+                        //     brush_endEvent();
+                        // } else {
+                        //     this.onBrushedBinsUpdated([...this.brushedNodes]);
+                        // }
+                        this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
                     
             // // attach the brush to the chart

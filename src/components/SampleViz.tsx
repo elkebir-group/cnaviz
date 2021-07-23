@@ -12,6 +12,7 @@ import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
 import {DisplayMode} from "../App"
+import {ClusterTable} from "./ClusterTable";
 
 interface Props {
     parentCallBack: any;
@@ -111,6 +112,12 @@ export class SampleViz extends React.Component<Props, State> {
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange} />
             </div>
+            <ClusterTable 
+                test={data.brushedTableData()} 
+                onClusterRowsChange={() => {}} 
+                onClusterColorChange={() => {}}
+                currentFilters={["-1"]}
+            ></ClusterTable>
         </div>
     }
 }

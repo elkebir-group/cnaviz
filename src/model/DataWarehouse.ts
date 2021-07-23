@@ -56,6 +56,9 @@ export class DataWarehouse {
     private _locationGroupedMergedData: LocationIndexedData<MergedGenomicBin[]>;
     private _clusterGroupedData: ClusterIndexedData<GenomicBin[]>;
     private brushedBins: MergedGenomicBin[];
+    private brushedCrossfilter: any;
+    private brushedClusterDim: any;
+
     private _merged_ndx: any;
     private _ndx: any;
 
@@ -107,6 +110,8 @@ export class DataWarehouse {
         this._chrs = [];
         this._clusters = [];
         this.brushedBins = [];
+        this.brushedCrossfilter = crossfilter(this.brushedBins);
+        this.brushedClusterDim = this.brushedCrossfilter.dimension((d:MergedGenomicBin) => d.bins[0].CLUSTER);
 
         this._cluster_filters = [];
 
@@ -339,6 +344,7 @@ export class DataWarehouse {
         this._merged_chr_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.location.chr);
 
         this.brushedBins = [];
+        this.brushedCrossfilter.remove();
 
         let allBins : GenomicBin[][] = [];
         flattenNestedBins.forEach(d => allBins.push(d.bins));
@@ -385,6 +391,20 @@ export class DataWarehouse {
         //console.timeEnd("Updating Clusters");
     }
 
+    brushedTableData() {
+        const clusterTable : clusterTableRow[] = this.brushedClusterDim.group().all();
+        const clusterTable2 : clusterTableRow[] = this._cluster_dim.group().all();
+        //console.log("Normal values: ", arr);
+        let sampleAmount = this._samples.length;
+        var result = clusterTable2.reduce(function(map : any, obj : clusterTableRow) {
+            map[obj.key] = obj.value / sampleAmount;
+            return map;
+        }, {});
+        console.log(result);
+        clusterTable.forEach(d => d.value = Number(((d.value/result[d.key]) * 100).toFixed(2)));
+        return clusterTable;
+        //this.brushedBins.map(item => item.bins[0].CLUSTER);
+    }
     /**
      * Gets a list of chromosome names found in one sample.  If the sample is not in this data set, returns an empty
      * list.
@@ -470,6 +490,8 @@ export class DataWarehouse {
 
     setbrushedBins(brushedBins: MergedGenomicBin[]) {
         this.brushedBins = brushedBins;
+        this.brushedCrossfilter = crossfilter(brushedBins);
+        this.brushedClusterDim = this.brushedCrossfilter.dimension((d:MergedGenomicBin) => d.bins[0].CLUSTER);
     }
 
     getBrushedBins() {
