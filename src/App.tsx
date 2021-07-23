@@ -181,7 +181,8 @@ interface State {
 
 export enum DisplayMode {
     zoom,
-    select
+    select,
+    boxzoom
 };
 
 /**
@@ -254,6 +255,24 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if (d3.event.key == "b") {
                 self.setState({displayMode: DisplayMode.select})
+            } else if(d3.event.key == "a") {
+                self.setState({displayMode: DisplayMode.boxzoom})
+            }
+        })
+
+        d3.select("body").on("keydown", function(){
+            //console.log(d3.event);
+            if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
+               // console.log("holding down shift key")
+                self.setState({displayMode: DisplayMode.boxzoom})
+            }
+        })
+
+        d3.select("body").on("keyup", function(){
+            //console.log(d3.event);
+            if (self.state.displayMode === DisplayMode.boxzoom && d3.event.key == "Shift") {
+                //console.log("Releasing shift key")
+                self.setState({displayMode: DisplayMode.zoom})
             }
         })
     }

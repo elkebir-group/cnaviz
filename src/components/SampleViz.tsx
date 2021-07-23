@@ -11,7 +11,7 @@ import { SampleViz1D } from "./SampleViz1D";
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
-import {DisplayMode} from "./SampleViz2D"
+import {DisplayMode} from "../App"
 
 interface Props {
     parentCallBack: any;

@@ -13,7 +13,7 @@ import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberSta
 import {GenomicBinHelpers} from "../model/GenomicBin";
 import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import "./Scatterplot.css";
-import {DisplayMode} from "./SampleViz2D"
+import {DisplayMode} from "../App"
 
 const visutils = require('vis-utils');
 
@@ -139,6 +139,22 @@ export class Scatterplot extends React.Component<Props> {
 
         this._original_transform = d3.zoomIdentity.translate(0, 0).scale(1);
         this._current_transform = this._original_transform;
+        let self = this;
+        // d3.select("body").on("keypress", function(){
+        //     // if (d3.event.key == "z") {
+        //     //     //self.setState({displayMode: DisplayMode.zoom})
+        //     // } else if (d3.event.key == "b") {
+        //     //     //self.setState({displayMode: DisplayMode.select})
+        //     // }
+        //     if (d3.event.key == "q") {
+                
+        //         if(self._svg) {
+        //             if(props.displayMode === DisplayMode.zoom) {
+        //                 d3.select(self._svg).selectAll("." + "brush").remove();
+        //             }
+        //         }
+        //     }
+        // })
     }
 
     initializeListOfClusters() : string[] {
@@ -397,11 +413,12 @@ export class Scatterplot extends React.Component<Props> {
         }
     }
 
-    computeScales(rdRange: [number, number], width: number, height: number, bafRange?: [number, number]) {
+    computeScales(rdRange: [number, number], width: number, height: number, bafRange?: [number, number], useLowerBound?: boolean) {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
-        const rdLowerBound = (this.props.applyLog) ? -2 : 0;
+        const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
         let baf = bafRange ? bafRange : [-.0001, 0.5] // .0001 allows for points exactly on the axis to still be seen
+        
         return {
             bafScale: d3.scaleLinear()
                 .domain(baf)
@@ -434,9 +451,9 @@ export class Scatterplot extends React.Component<Props> {
         const {width, height, onRecordsHovered, customColor, 
                 assignCluster, invertAxis, brushedBins, data, rdRange, colors} = this.props;
         let {displayMode} = this.props;
-        const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
+        //const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
         //console.log("NEW RD RANGE@: ", rdRange);
-        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
+        //const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
 
         let xScale = this._currXScale;
         let yScale = this._currYScale;
@@ -610,13 +627,28 @@ export class Scatterplot extends React.Component<Props> {
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
-        } else {
+        } else if(displayMode === DisplayMode.zoom) {
             svg
                 .on("mouseenter", () => { 
                     xScale = this._currXScale;
                     yScale = this._currYScale;
                 })
-                .call(this.zoom)
+                .call(this.zoom) 
+        } else if(displayMode === DisplayMode.boxzoom) {
+            const brush = d3.brush()
+            .keyModifiers(false)
+            .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
+                    [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
+                    .on("start brush", () => this.updatePoints(d3.event))
+                    .on("end", () => {
+                        svg.selectAll("." + "brush").remove();
+                        brush_endEvent();
+                });
+               
+            // // attach the brush to the chart
+            svg.append('g')
+                .attr('class', 'brush')
+                .call(brush);
         }
 
         function brush_endEvent() {
@@ -632,7 +664,7 @@ export class Scatterplot extends React.Component<Props> {
                                                         Number(self._currYScale.invert(selection[0][1]))];
                     let newBafRange : [number, number] = [Number(self._currXScale.invert(selection[0][0])), 
                                                             Number(self._currXScale.invert(selection[1][0]))];
-                    const {bafScale, rdrScale} = self.computeScales(newRdRange, width, height, newBafRange);
+                    const {bafScale, rdrScale} = self.computeScales(newRdRange, width, height, newBafRange, true);
                     self._currXScale = bafScale;
                     self._currYScale = rdrScale;
                     xAxis.call(d3.axisBottom(self._currXScale))

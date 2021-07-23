@@ -12,6 +12,7 @@ import * as d3 from "d3";
 
 import "./SampleViz.css";
 import { zoom } from "d3-zoom";
+import {DisplayMode} from "../App"
 
 interface Props {
     parentCallBack: any;
@@ -48,12 +49,6 @@ interface State {
     selectedSample: string;
     displayMode: DisplayMode;
 }
-
-
-export enum DisplayMode {
-    zoom,
-    select
-};
 
 export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
