@@ -516,10 +516,14 @@ export class App extends React.Component<{}, State> {
                         </div>
 
                         <ClusterTable 
-                            test={clusterTableData} 
+                            data={clusterTableData} 
                             onClusterRowsChange={this.onClusterRowsChange} 
                             onClusterColorChange={this.onClusterColorChange}
                             currentFilters={indexedData.getFilteredClusters()}
+                            colOneName={"Cluster"}
+                            colTwoName={"Percent of total # of Bins(%)"}
+                            expandable={true}
+                            selectable={true}
                         ></ClusterTable>
                     </div>
                     

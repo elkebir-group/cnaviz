@@ -3,29 +3,18 @@ import _ from "lodash";
 import DataTable from 'react-data-table-component';
 import {HuePicker} from "react-color";
 import {CSVLink} from "react-csv"
-const columns = [
-  {
-    name: 'Cluster',
-    selector: 'key',
-    sortable: true,
-    compact: true,
-    wrap: true,
-  },
-  {
-    name: 'Percent of total # of Bins(%)',
-    selector: 'value',
-    sortable: true,
-    right: true,
-    compact: true,
-    wrap: true,
-  },
-];
+
+
 
 interface Props {
-    test : any;
+    data : any;
     onClusterRowsChange : any;
     onClusterColorChange: any;
     currentFilters: String[];
+    selectable ?: boolean;
+    expandable ?: boolean;
+    colOneName : string;
+    colTwoName: string;
 }
 
 const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
@@ -36,7 +25,7 @@ export class ClusterTable extends React.Component<Props> {
     
     constructor(props: Props) {
         super(props);
-        this.table_data = props.test;
+        this.table_data = props.data;
         this.colors = [
             "#1b9e77", 
             "#d95f02", 
@@ -56,39 +45,63 @@ export class ClusterTable extends React.Component<Props> {
         ];
 
         this.handleColorChange = this.handleColorChange.bind(this);
-        this.getTest = this.getTest.bind(this);
     }
 
     shouldComponentUpdate(nextProps: Props) {
-        return this.props["test"] !== nextProps["test"];
+        return this.props["data"] !== nextProps["data"];
     }
 
     handleColorChange(color : any, index: any) {
-       //console.log(index);
         this.colors[index] = color.hex;
         const tempColors = _.cloneDeep(this.colors);
         this.colors = tempColors
-        //console.log(this.colors)
         this.props.onClusterColorChange(tempColors);
         this.forceUpdate();
-        
-        //console.log(this.colors[index])
-    }
-
-    getTest(data : any) {
-        //console.log(data.data.key);
-        //console.log(data["key"]);
-        //console.log(Object.values(data));
-        return <pre>{JSON.stringify(data, null, 2)}</pre>;
     }
 
     render() {
+        const {colOneName, colTwoName, data, expandable, selectable} = this.props;
         const ExpandedComponent =(data:any) => <HuePicker width="100%" color={this.colors[data.data.key]} onChange={c => this.handleColorChange(c, data.data.key)} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
+        // Cluster
+        // Percent of total # of Bins(%)
+        const columns = [
+            {
+              name: colOneName,
+              selector: 'key',
+              sortable: true,
+              compact: true,
+              wrap: true,
+            },
+            {
+              name: colTwoName,
+              selector: 'value',
+              sortable: true,
+              right: true,
+              compact: true,
+              wrap: true,
+            },
+        ];
+
+        if(!expandable && !selectable) {
+            return (
+                <DataTable
+                    columns={columns}
+                    data={data}
+                    pagination={true}
+                    dense={true}
+                    paginationPerPage={3}
+                    paginationComponentOptions={{rowsPerPageText: '', selectAllRowsItem: true}}
+                    paginationRowsPerPageOptions={[3, 5, 10, 20]}
+                    noContextMenu={true}
+                    noHeader={true}
+                />
+            )
+        }
 
         return (
             <DataTable
                 columns={columns}
-                data={this.props.test}
+                data={data}
                 selectableRows
                 onSelectedRowsChange={this.props.onClusterRowsChange}
                 selectableRowSelected={row => {

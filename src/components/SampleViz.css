@@ -43,3 +43,8 @@
 .SampleViz-linear {
     margin-left: 10px;
 }
+
+.SampleViz-clusters {
+    align-items: left;
+    width: 33%;
+}

@@ -81,10 +81,14 @@ function Sidebar(props: Props) {
         </div>
         <div style={{margin: 10}}>
           <ClusterTable 
-              test={props.tableData} 
+              data={props.tableData} 
               onClusterRowsChange={props.onClusterRowsChange} 
               onClusterColorChange={props.onClusterColorChange}
               currentFilters={props.currentClusterFilters}
+              colOneName={"Cluster"}
+              colTwoName={"Percent of total # of Bins(%)"}
+              expandable={true}
+              selectable={true}
           ></ClusterTable>
         </div>
       </div>

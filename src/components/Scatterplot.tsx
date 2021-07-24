@@ -333,7 +333,7 @@ export class Scatterplot extends React.Component<Props> {
                             </div>
 
                             {/* <ClusterTable 
-                                test={this.props.clusterTableData} 
+                                data={this.props.clusterTableData} 
                                 onClusterRowsChange={() => {}} 
                                 onClusterColorChange={() => {}}
                                 currentFilters={["-1"]}

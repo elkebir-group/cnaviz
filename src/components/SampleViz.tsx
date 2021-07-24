@@ -112,12 +112,19 @@ export class SampleViz extends React.Component<Props, State> {
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange} />
             </div>
-            <ClusterTable 
-                test={data.brushedTableData()} 
-                onClusterRowsChange={() => {}} 
-                onClusterColorChange={() => {}}
-                currentFilters={["-1"]}
-            ></ClusterTable>
+            <div className="SampleViz-clusters">
+                <ClusterTable 
+                    data={data.brushedTableData()} 
+                    onClusterRowsChange={() => {}} 
+                    onClusterColorChange={() => {}}
+                    currentFilters={["-1"]}
+                    colOneName={"Cluster"}
+                    colTwoName={"Percent of Cluster (%)"}
+                    expandable={false}
+                    selectable={false}
+                ></ClusterTable>
+            </div>
+            
         </div>
     }
 }
