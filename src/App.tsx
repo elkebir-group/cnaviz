@@ -524,6 +524,7 @@ export class App extends React.Component<{}, State> {
                             colTwoName={"Percent of total # of Bins(%)"}
                             expandable={true}
                             selectable={true}
+                            colors={this.state.colors}
                         ></ClusterTable>
                     </div>
                     
@@ -552,7 +553,8 @@ export class App extends React.Component<{}, State> {
                                 handleClusterAssignmentInput={this.handleClusterAssignmentInput}
                                 value={value}
                                 setDisplayMode={this.setDisplayMode}
-                                currentDisplayMode={this.state.displayMode} />
+                                currentDisplayMode={this.state.displayMode} 
+                                colors={this.state.colors}/>
                         </Router>
                     </>
                 </div>);

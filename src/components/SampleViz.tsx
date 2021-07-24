@@ -122,6 +122,7 @@ export class SampleViz extends React.Component<Props, State> {
                     colTwoName={"Percent of Cluster (%)"}
                     expandable={false}
                     selectable={false}
+                    colors={this.props.colors}
                 ></ClusterTable>
             </div>
             

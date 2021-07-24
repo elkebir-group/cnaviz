@@ -19,6 +19,7 @@ interface Props {
     value: string;
     setDisplayMode: any;
     currentDisplayMode: DisplayMode;
+    colors: string[];
 }
 
 
@@ -89,6 +90,7 @@ function Sidebar(props: Props) {
               colTwoName={"Percent of total # of Bins(%)"}
               expandable={true}
               selectable={true}
+              colors={props.colors}
           ></ClusterTable>
         </div>
       </div>

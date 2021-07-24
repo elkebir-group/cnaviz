@@ -4,7 +4,8 @@ import DataTable from 'react-data-table-component';
 import {HuePicker} from "react-color";
 import {CSVLink} from "react-csv"
 
-
+const UNCLUSTERED_COLOR = "#999999";
+const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 
 interface Props {
     data : any;
@@ -15,6 +16,7 @@ interface Props {
     expandable ?: boolean;
     colOneName : string;
     colTwoName: string;
+    colors : string[];
 }
 
 const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
@@ -26,29 +28,11 @@ export class ClusterTable extends React.Component<Props> {
     constructor(props: Props) {
         super(props);
         this.table_data = props.data;
-        this.colors = [
-            "#1b9e77", 
-            "#d95f02", 
-            "#7570b3", 
-            "#e7298a", 
-            "#66a61e", 
-            "#e6ab02", 
-            "#a6761d", 
-            "#666666", 
-            "#fe6794", 
-            "#10b0ff", 
-            "#ac7bff", 
-            "#964c63", 
-            "#cfe589", 
-            "#fdb082", 
-            "#28c2b5"
-        ];
-
         this.handleColorChange = this.handleColorChange.bind(this);
     }
 
     shouldComponentUpdate(nextProps: Props) {
-        return this.props["data"] !== nextProps["data"];
+        return this.props["data"] !== nextProps["data"] ||  this.props["colors"] !== nextProps["colors"];
     }
 
     handleColorChange(color : any, index: any) {
@@ -60,10 +44,18 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, data, expandable, selectable} = this.props;
+        const {colOneName, colTwoName, data, expandable, selectable, colors} = this.props;
         const ExpandedComponent =(data:any) => <HuePicker width="100%" color={this.colors[data.data.key]} onChange={c => this.handleColorChange(c, data.data.key)} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
-        // Cluster
-        // Percent of total # of Bins(%)
+
+        const conditionalRowStyles : any = [
+            {
+              when: (row:any) => row,
+              style: (row:any) => ({
+                backgroundColor: (Number(row.key)===-1) ? UNCLUSTERED_COLOR : colors[Number(row.key) % colors.length]
+              }),
+            }
+          ];
+
         const columns = [
             {
               name: colOneName,
@@ -94,6 +86,7 @@ export class ClusterTable extends React.Component<Props> {
                     paginationRowsPerPageOptions={[3, 5, 10, 20]}
                     noContextMenu={true}
                     noHeader={true}
+                    conditionalRowStyles={conditionalRowStyles}
                 />
             )
         }
@@ -118,6 +111,7 @@ export class ClusterTable extends React.Component<Props> {
                 paginationRowsPerPageOptions={[5, 10, 15, 20]}
                 noContextMenu={true}
                 noHeader={true}
+                conditionalRowStyles={conditionalRowStyles}
             />
         )
     }
