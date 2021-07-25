@@ -734,7 +734,7 @@ export class Scatterplot extends React.Component<Props> {
             } else {
                 const cluster = d.bins[0].CLUSTER;
                 const col_index = cluster % colors.length;
-                return colors[col_index];//colorScale(String(d.bins[0].CLUSTER));
+                return colors[col_index];
             }
         }
 

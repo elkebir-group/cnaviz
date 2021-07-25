@@ -23,7 +23,7 @@ const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) =
 
 export class ClusterTable extends React.Component<Props> {
     private readonly table_data : any;
-    private colors : any;
+    //private colors : any;
     
     constructor(props: Props) {
         super(props);
@@ -36,16 +36,16 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     handleColorChange(color : any, index: any) {
-        this.colors[index] = color.hex;
-        const tempColors = _.cloneDeep(this.colors);
-        this.colors = tempColors
+        this.props.colors[index] = color.hex;
+        const tempColors = _.cloneDeep(this.props.colors);
+        //this.colors = tempColors
         this.props.onClusterColorChange(tempColors);
         this.forceUpdate();
     }
 
     render() {
         const {colOneName, colTwoName, data, expandable, selectable, colors} = this.props;
-        const ExpandedComponent =(data:any) => <HuePicker width="100%" color={this.colors[data.data.key]} onChange={c => this.handleColorChange(c, data.data.key)} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
+        const ExpandedComponent =(data:any) => <HuePicker width="100%" color={this.props.colors[data.data.key]} onChange={c => this.handleColorChange(c, data.data.key)} />;
 
         const conditionalRowStyles : any = [
             {
