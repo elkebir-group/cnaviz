@@ -16,6 +16,7 @@ import "./Scatterplot.css";
 import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { start } from "repl";
+import { cluster } from "d3";
 
 const visutils = require('vis-utils');
 
@@ -113,9 +114,7 @@ export class Scatterplot extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         //console.log("Scatter plot cluster tbale data: ", props.clusterTableData);
-        this.state = {
-            selectedCluster: "0"
-        }
+        
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
@@ -127,12 +126,15 @@ export class Scatterplot extends React.Component<Props, State> {
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
+        this.state = {
+            selectedCluster: this._clusters[0]
+        }
         // this.createNewBrush = this.createNewBrush.bind(this);
         this.brushedNodes = new Set();
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
         this.zoom = null;
-        //this.selectedCluster = "0";
+       
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, props.width, props.height);
         this._currXScale = bafScale;
         this._currYScale = rdrScale;
@@ -148,22 +150,6 @@ export class Scatterplot extends React.Component<Props, State> {
 
         this._original_transform = d3.zoomIdentity.translate(0, 0).scale(1);
         this._current_transform = this._original_transform;
-        let self = this;
-        // d3.select("body").on("keypress", function(){
-        //     // if (d3.event.key == "z") {
-        //     //     //self.setState({displayMode: DisplayMode.zoom})
-        //     // } else if (d3.event.key == "b") {
-        //     //     //self.setState({displayMode: DisplayMode.select})
-        //     // }
-        //     if (d3.event.key == "q") {
-                
-        //         if(self._svg) {
-        //             if(props.displayMode === DisplayMode.zoom) {
-        //                 d3.select(self._svg).selectAll("." + "brush").remove();
-        //             }
-        //         }
-        //     }
-        // })
     }
 
     initializeListOfClusters() : string[] {
@@ -303,10 +289,19 @@ export class Scatterplot extends React.Component<Props, State> {
         //console.log("Rendering")
         let newTableData : any = [];
         //const groupedByCluster = _.groupBy(this.props.brushedBins, "SAMPLE");
-        const clusterOptions = this._clusters.map(clusterName =>
-            <option key={clusterName} value={clusterName}>{clusterName}</option>
+        let clusterOptions = this._clusters.map(clusterName =>
+            <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
+        
+        if(!this._clusters.includes("-1")) {
+            clusterOptions.unshift(<option key={"-1"} value={"-1"} >{"-1"}</option>);
+        }
 
+        if(!this._clusters.includes("-2")) {
+            clusterOptions.unshift(<option key={"-2"} value={"-2"} >{"-2"}</option>);
+        }
+        
+        
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{position: "relative"}}>
                             <canvas
                                 ref={node => this._canvas = node}
@@ -321,9 +316,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             <div className="Scatterplot-tools">
                                 <button id="reset" onClick={this.resetZoom}>Reset</button>
                                 <button id="new-cluster" onClick={()=>{
-                                    // for(const i=0; i < this._clusters.length; i++) {
-                                    //     if(this._clusters[i])
-                                    // }
+                                    
                                     const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
                                     console.log(this._clusters);
                                     console.log("HIGHeST CURRENT: ", highestCurrentCluster);
@@ -337,8 +330,10 @@ export class Scatterplot extends React.Component<Props, State> {
                                     }
 
                                     console.log("START INDEX: ", startIndex);
-                                    for(let i = startIndex; i < this._clusters.length - (startIndex + 1); i++) {
-                                        if(Number(this._clusters[i]) !== i){
+                                    for(let i = 0; i < this._clusters.length; i++) {
+                                        if(Number(this._clusters[i + startIndex]) !== i){
+                                            console.log(this._clusters[i + startIndex]);
+                                            console.log(i);
                                             nextAvailable = i;
                                             break;
                                         }
