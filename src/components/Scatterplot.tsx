@@ -357,12 +357,6 @@ export class Scatterplot extends React.Component<Props, State> {
                                 </select>
                             </div>
 
-                            {/* <ClusterTable 
-                                data={this.props.clusterTableData} 
-                                onClusterRowsChange={() => {}} 
-                                onClusterColorChange={() => {}}
-                                currentFilters={["-1"]}
-                            ></ClusterTable> */}
                             {this.renderTooltip()}
                         </div>;
         return scatterUI;
@@ -761,12 +755,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 return colors[col_index];
             }
         }
-
-        // if(assignCluster) {
-        //     this.onTrigger([...this.brushedNodes]);
-        //     this.brushedNodes = new Set();
-        //     this._clusters = this.initializeListOfClusters();
-        // }
         
         console.timeEnd("Rendering");
      }

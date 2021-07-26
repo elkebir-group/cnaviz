@@ -262,8 +262,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         .keyModifiers(false)
         .extent([[PADDING.left, PADDING.top], 
                 [this.props.width, this.props.height - PADDING.bottom]])
-                .on("end", () => {
-                    svg.selectAll("." + "brush").remove();
+                .on("start brush", () => {
                     try{
                         const { selection, currentTarget } = d3.event;
                         
@@ -289,6 +288,34 @@ export class LinearPlot extends React.PureComponent<Props> {
                     }catch(error) {
                         console.log(error);
                     }
+                })
+                .on("end", () => {
+                    svg.selectAll("." + "brush").remove();
+                    //try{
+                      //  const { selection, currentTarget } = d3.event;
+                        
+                    //     let brushed = visutils.filterInRect(data, selection, 
+                    //         function(d: MergedGenomicBin){
+                    //             const location = d.location;
+                    //             const range = genome.getImplicitCoordinates(location);
+                    //             return xScale(range.getCenter());
+                    //         }, 
+                    //         function(d: MergedGenomicBin){
+                    //             const location = d.location;//GenomicBinHelpers.toChromosomeInterval(d);
+                    //             //const range = genome.getImplicitCoordinates(location);
+                    //             return (dataKeyToPlot === "BAF") ? yScale(d.averageBaf) : yScale(d.averageRd);
+                    //         });
+
+                    //     if(d3.event.sourceEvent.shiftKey) {
+                    //         brushed = _.uniq(_.union(brushed, brushedBins));  
+                    //     } else if(d3.event.sourceEvent.altKey) {
+                    //         brushed = _.difference(brushedBins, brushed);
+                    //     }
+
+                    //     this.brushedNodes = new Set(brushed);  
+                    // }catch(error) {
+                    //     console.log(error);
+                    // }
                     this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                 });
                 
