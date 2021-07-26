@@ -392,7 +392,7 @@ export class App extends React.Component<{}, State> {
         this.setState({value: event.target.value})
     }
 
-    handleCallBack(selectedCluster: string) {
+    handleCallBack(selectedCluster: string | number) {
         console.log(selectedCluster);
         this.state.indexedData.updateCluster(Number(selectedCluster));
         this.setState({assignCluster: false});

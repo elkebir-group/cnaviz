@@ -15,6 +15,7 @@ import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
+import { start } from "repl";
 
 const visutils = require('vis-utils');
 
@@ -319,11 +320,38 @@ export class Scatterplot extends React.Component<Props, State> {
                             ></svg>
                             <div className="Scatterplot-tools">
                                 <button id="reset" onClick={this.resetZoom}>Reset</button>
-                                <button id="new-cluster" >New</button>
-                                <button id="assign-cluster" onClick={() => {
+                                <button id="new-cluster" onClick={()=>{
+                                    // for(const i=0; i < this._clusters.length; i++) {
+                                    //     if(this._clusters[i])
+                                    // }
+                                    const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
+                                    console.log(this._clusters);
+                                    console.log("HIGHeST CURRENT: ", highestCurrentCluster);
+                                    let nextAvailable = highestCurrentCluster + 1;
+                                    let startIndex = 0;
+                                    // Assumes the clusters are sorted least to greatest
+                                    for(let i = 0; i < 2; i++) {
+                                        if(this._clusters[i] === "-1" || this._clusters[i] === "-2") {
+                                            startIndex++;
+                                        }
+                                    }
+
+                                    console.log("START INDEX: ", startIndex);
+                                    for(let i = startIndex; i < this._clusters.length - (startIndex + 1); i++) {
+                                        if(Number(this._clusters[i]) !== i){
+                                            nextAvailable = i;
+                                            break;
+                                        }
+                                    }
+                                    console.log("NEXT AVAILABLE: ", nextAvailable)
+                                    this.onTrigger(nextAvailable);
                                     this.brushedNodes = new Set();
                                     this._clusters = this.initializeListOfClusters();
-                                    this.onTrigger();
+                                }} >New</button>
+                                <button id="assign-cluster" onClick={() => {
+                                    this.onTrigger(this.state.selectedCluster);
+                                    this.brushedNodes = new Set();
+                                    this._clusters = this.initializeListOfClusters();
                                 }}>Assign</button>
                                 <select
                                     name="Select Cluster" 
@@ -406,7 +434,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
     componentDidUpdate(prevProps: Props) {
         if(this.props["assignCluster"]) {
-            this.onTrigger();
+            this.onTrigger(this.state.selectedCluster);
             this.brushedNodes = new Set();
             this._clusters = this.initializeListOfClusters();
         } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height"])) {
@@ -456,8 +484,8 @@ export class Scatterplot extends React.Component<Props, State> {
         };
     }
 
-    onTrigger = () => {
-        this.props.parentCallBack(this.state.selectedCluster);
+    onTrigger = (selectedCluster: string | number) => {
+        this.props.parentCallBack(selectedCluster);
     }
 
     onBrushedBinsUpdated = (brushedNodes: MergedGenomicBin[]) => {
