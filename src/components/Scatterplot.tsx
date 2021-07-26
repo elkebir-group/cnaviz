@@ -76,10 +76,14 @@ interface Props {
     onZoom: (newScales: any) => void;
     clusterTableData: any;
     applyLog: boolean;
+    onClusterSelected: any;
 }
 
+interface State {
+    selectedCluster: string;
+}
 
-export class Scatterplot extends React.Component<Props> {
+export class Scatterplot extends React.Component<Props, State> {
     static defaultProps = {
         width: 400,
         height: 302,
@@ -103,11 +107,14 @@ export class Scatterplot extends React.Component<Props> {
     private _current_transform: any;
     private scatter: any;
     private zoom: any;
+    //private selectedCluster: string;
 
     constructor(props: Props) {
         super(props);
         //console.log("Scatter plot cluster tbale data: ", props.clusterTableData);
-        
+        this.state = {
+            selectedCluster: "0"
+        }
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
@@ -124,7 +131,7 @@ export class Scatterplot extends React.Component<Props> {
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
         this.zoom = null;
-        
+        //this.selectedCluster = "0";
         const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, props.width, props.height);
         this._currXScale = bafScale;
         this._currYScale = rdrScale;
@@ -160,7 +167,7 @@ export class Scatterplot extends React.Component<Props> {
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        // let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
+        let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
         // if(clusters[0] === "-2") {
         //     clusters.shift();
         // }
@@ -168,17 +175,17 @@ export class Scatterplot extends React.Component<Props> {
         //     clusters.shift();
         // }
 
-        let clusterTableData = this.props.clusterTableData;
-        clusterTableData.sort((a : any, b : any) => {
-            if (a.value > b.value) return -1;
-            if (a.value < b.value) return 1;
-            return 0;
-        })
+        // let clusterTableData = this.props.clusterTableData;
+        // clusterTableData.sort((a : any, b : any) => {
+        //     if (a.value > b.value) return -1;
+        //     if (a.value < b.value) return 1;
+        //     return 0;
+        // })
 
-        let clusters : string[] = [];
-        for(const obj of clusterTableData) {
-            clusters.push(obj.key);
-        }
+        // let clusters : string[] = [];
+        // for(const obj of clusterTableData) {
+        //     clusters.push(obj.key);
+        // }
         //console.log(clusters);
         // clusterTableData = clusterTableData.filter((cluster : any) => cluster.key === "-1" || cluster.key === "-2")
         // console.log(clusterTableData);
@@ -294,7 +301,11 @@ export class Scatterplot extends React.Component<Props> {
         const {width, height, rdRange} = this.props;
         //console.log("Rendering")
         let newTableData : any = [];
-        const groupedByCluster = _.groupBy(this.props.brushedBins, "SAMPLE");
+        //const groupedByCluster = _.groupBy(this.props.brushedBins, "SAMPLE");
+        const clusterOptions = this._clusters.map(clusterName =>
+            <option key={clusterName} value={clusterName}>{clusterName}</option>
+        );
+
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{position: "relative"}}>
                             <canvas
                                 ref={node => this._canvas = node}
@@ -309,26 +320,17 @@ export class Scatterplot extends React.Component<Props> {
                             <div className="Scatterplot-tools">
                                 <button id="reset" onClick={this.resetZoom}>Reset</button>
                                 <button id="new-cluster" >New</button>
-                                <button id="assign-cluster" >Assign</button>
+                                <button id="assign-cluster" onClick={() => {
+                                    this.brushedNodes = new Set();
+                                    this._clusters = this.initializeListOfClusters();
+                                    this.onTrigger();
+                                }}>Assign</button>
                                 <select
                                     name="Select Cluster" 
                                     id="Select Cluster"
-                                    value={"Test 1"}
-                                    //onChange={props.onChrSelected} >
-                                    >
-                                    <option>
-                                        Test 1
-                                    </option>
-                                    <option>
-                                        Test 2
-                                    </option>
-                                    <option>
-                                        Test 3
-                                    </option>
-                                    <option>
-                                        Test 4
-                                    </option>
-                                        {/* {["Test 1", "Test 2", "Test 3", "Test 4"]} */}
+                                    value={this.state.selectedCluster}
+                                    onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
+                                    {clusterOptions}
                                 </select>
                             </div>
 
@@ -404,10 +406,9 @@ export class Scatterplot extends React.Component<Props> {
 
     componentDidUpdate(prevProps: Props) {
         if(this.props["assignCluster"]) {
-            this.onTrigger([...this.brushedNodes]);
+            this.onTrigger();
             this.brushedNodes = new Set();
             this._clusters = this.initializeListOfClusters();
-            this.redraw();
         } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height"])) {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
@@ -455,8 +456,8 @@ export class Scatterplot extends React.Component<Props> {
         };
     }
 
-    onTrigger = (brushedNodes : MergedGenomicBin[]) => {
-        this.props.parentCallBack(brushedNodes);
+    onTrigger = () => {
+        this.props.parentCallBack(this.state.selectedCluster);
     }
 
     onBrushedBinsUpdated = (brushedNodes: MergedGenomicBin[]) => {
@@ -738,11 +739,11 @@ export class Scatterplot extends React.Component<Props> {
             }
         }
 
-        if(assignCluster) {
-            this.onTrigger([...this.brushedNodes]);
-            this.brushedNodes = new Set();
-            this._clusters = this.initializeListOfClusters();
-        }
+        // if(assignCluster) {
+        //     this.onTrigger([...this.brushedNodes]);
+        //     this.brushedNodes = new Set();
+        //     this._clusters = this.initializeListOfClusters();
+        // }
         
         console.timeEnd("Rendering");
      }

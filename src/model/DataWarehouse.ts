@@ -400,7 +400,7 @@ export class DataWarehouse {
             map[obj.key] = obj.value / sampleAmount;
             return map;
         }, {});
-        console.log(result);
+        //console.log(result);
         clusterTable.forEach(d => d.value = Number(((d.value/result[d.key]) * 100).toFixed(2)));
         return clusterTable;
         //this.brushedBins.map(item => item.bins[0].CLUSTER);
@@ -431,10 +431,6 @@ export class DataWarehouse {
         const firstRecord = this.getRecords(firstSample, DataWarehouse.ALL_CHRS_KEY, DataWarehouse.ALL_CLUSTERS_KEY)[0];
         return firstRecord.END - firstRecord.START;
     }
-
-    // getMergedRecords() {
-
-    // }
 
     /**
      * Performs a query for records matching a sample and a chromosome.  To get all records matching a sample,

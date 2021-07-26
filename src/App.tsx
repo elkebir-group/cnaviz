@@ -38,7 +38,7 @@ function getFileContentsAsString(file: File) {
     });
 }
 
-const d3_category437 = [
+const CLUSTER_COLORS = [
     "#18c61a", "#9817ff", "#d31911", "#24b7f1", "#fa82ce", "#736c31", "#1263e2", "#18c199", "#ed990a", 
     "#f2917f", "#7b637c", "#a8b311", "#a438c0", "#d00d5e", "#1e7b1d", "#05767b", "#aaa1f9", "#a5aea1", 
     "#a75312", "#026eb8", "#94b665", "#91529e", "#caa74f", "#c90392", "#a84e5d", "#6a4cf1", "#1ac463", 
@@ -259,7 +259,7 @@ export class App extends React.Component<{}, State> {
             sampleAmount: 1,
             showComponents: [true],
             color: 'blue',
-            colors:  d3_category437,
+            colors:  CLUSTER_COLORS,
             // [
             //     "#1b9e77", 
             //     "#d95f02", 
@@ -392,8 +392,9 @@ export class App extends React.Component<{}, State> {
         this.setState({value: event.target.value})
     }
 
-    handleCallBack() {
-        this.state.indexedData.updateCluster(Number(this.state.value));
+    handleCallBack(selectedCluster: string) {
+        console.log(selectedCluster);
+        this.state.indexedData.updateCluster(Number(selectedCluster));
         this.setState({assignCluster: false});
     }
 
@@ -532,7 +533,8 @@ export class App extends React.Component<{}, State> {
                 onRemovePlot: this.handleRemovePlot,
                 onAddSample: this.handleAddSampleClick,
                 clusterTableData: clusterTableData,
-                applyLog: this.state.applyLog
+                applyLog: this.state.applyLog,
+                onClusterSelected: this.handleClusterSelected
             };
 
             const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);

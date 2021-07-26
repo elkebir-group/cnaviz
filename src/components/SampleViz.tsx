@@ -40,6 +40,7 @@ interface Props {
     plotId: number;
     clusterTableData: any;
     applyLog: boolean;
+    onClusterSelected: any;
 }
 
 interface State {

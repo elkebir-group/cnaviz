@@ -43,6 +43,7 @@ interface Props {
     plotId: number;
     clusterTableData: any;
     applyLog: boolean;
+    onClusterSelected: any;
 }
 
 interface State {
@@ -150,6 +151,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onZoom = {onZoom}
                     clusterTableData = {clusterTableData}
                     applyLog = {applyLog}
+                    onClusterSelected ={this.props.onClusterSelected}
                     />
             </DivWithBullseye>
         </div>;
