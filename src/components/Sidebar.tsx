@@ -27,7 +27,10 @@ function Sidebar(props: Props) {
   const [sidebar, setSidebar] = useState(false);
   const [value, setValue] = useState("");
 
-  const showSidebar = () => setSidebar(!sidebar);
+  const showSidebar = () => {
+    console.log("Show sidebar")
+    setSidebar(!sidebar)
+  };
   const handleClusterAssignmentInput = (event: any) => {setValue(event.target.value)};
   const renderDisplayModeRadioOption = (mode: DisplayMode) => {
     let label: string;
@@ -54,11 +57,14 @@ function Sidebar(props: Props) {
   }
 
   return (
-    <nav className={sidebar ? "sidebar active" : "sidebar"}>
+    <div className={sidebar ? "sidebar active" : "sidebar"}>
+      
       <button className="hamburger" type="button" onClick={showSidebar}>
-        <div></div>
-      </button>
+          <div> </div>
+        </button>
+      
       <div className="contents">
+        
         <h1>CNA-Viz</h1>
         <div className= "row-contents">
           <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
@@ -97,7 +103,7 @@ function Sidebar(props: Props) {
       <div>
         <h2>Directions</h2>
       </div>
-    </nav>
+    </div>
   );
 }
 

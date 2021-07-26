@@ -1,30 +1,22 @@
 .sidebar {
-    position: fixed;
-    top: 0;
-    left: -400px;
-    width: 400px;
+    /* position: fixed;
+    top: 0; */
+    /* left: -400px;
+    width: 400px; */
+    /* left: -400px; */
+    /* max-width: 0px;
+    min-width: 0px; */
     height: 100%;
-    
+    max-width: 400px;
+    min-width: 400px;
     background-color: white;
-    transition: left 300ms ease-out;
+    /* transition: left 300ms ease-out; */
   }
   .sidebar.active {
-    left: 0;
-  }
-  
-  .sidebar ul {
-    margin: 0;
-    padding: 0;
-  }
-  .sidebar li {
-    list-style: none;
-  }
-  .sidebar li a {
-    font-size: 18px;
-    text-decoration: none;
-    padding: 10px;
-    display: block;
-    color: #fff;
+    margin-left: -500px;
+    
+    /* left: 0px; */
+    background-color: aqua;
   }
   
   .hamburger {
@@ -32,7 +24,9 @@
     outline: 0;
     width: 50px;
     position: absolute;
-    right: -50px;
+    left: 0px;
+    top: 0px;
+
     background-color: white;
   }
   

@@ -503,7 +503,8 @@ export class App extends React.Component<{}, State> {
         const allData = indexedData.getAllRecords();
         //indexedData.setRDFilter([1.0, 1.5]);
         let mainUI = null;
-        
+        let clusterTableData = indexedData.getClusterTableInfo();
+        let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             // clusterTableData.sort((a : any, b : any) => {
@@ -537,7 +538,7 @@ export class App extends React.Component<{}, State> {
                 onClusterSelected: this.handleClusterSelected
             };
 
-            const chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
+            chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
 
             const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
@@ -593,55 +594,69 @@ export class App extends React.Component<{}, State> {
                                     plotId={i}
                                 ></SampleViz>)}
                     </div>
-                    <>
-
-                        <Router>
-                            <Sidebar 
-                                selectedChr={selectedChr} 
-                                onChrSelected={this.handleChrSelected} 
-                                chrOptions={chrOptions}
-                                onAddSample={this.handleAddSampleClick}
-                                onAssignCluster={this.handleAssignCluster}
-                                tableData={clusterTableData}
-                                onClusterRowsChange={this.onClusterRowsChange}
-                                onClusterColorChange={this.onClusterColorChange}
-                                currentClusterFilters={indexedData.getFilteredClusters()}
-                                handleClusterAssignmentInput={this.handleClusterAssignmentInput}
-                                value={value}
-                                setDisplayMode={this.setDisplayMode}
-                                currentDisplayMode={this.state.displayMode} 
-                                colors={this.state.colors}/>
-                        </Router>
-                    </>
+                    
+                    {/* <Sidebar 
+                        selectedChr={selectedChr} 
+                        onChrSelected={this.handleChrSelected} 
+                        chrOptions={chrOptions}
+                        onAddSample={this.handleAddSampleClick}
+                        onAssignCluster={this.handleAssignCluster}
+                        tableData={clusterTableData}
+                        onClusterRowsChange={this.onClusterRowsChange}
+                        onClusterColorChange={this.onClusterColorChange}
+                        currentClusterFilters={indexedData.getFilteredClusters()}
+                        handleClusterAssignmentInput={this.handleClusterAssignmentInput}
+                        value={value}
+                        setDisplayMode={this.setDisplayMode}
+                        currentDisplayMode={this.state.displayMode} 
+                        colors={this.state.colors}
+                    /> */}
                 </div>);
         }
 
         const status = this.getStatusCaption();
-        const topBar = (
-            <div className="col">
-                <span className="App-CheckBox-explanation">Apply log to RD: </span>
-                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
-                <span className="App-CheckBox-explanation" style={{marginLeft: 10}}>Apply provided clustering: </span>
-                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleClustering.bind(this)}  />
-            </div>
-        )
+        
         return <div className="container-fluid">
-            <div className="App-title-bar">
-                <h1>CNA-Viz</h1>
-                {samples.length === 0 &&
-                    <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
-                }
-                    
-                <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
-                <span className="App-CheckBox-explanation">Apply log to RD: </span>
-                <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
-                <span className="App-CheckBox-explanation">Apply provided clustering: </span>
-                <input type="checkbox" onClick={this.toggleClustering.bind(this)}  />
-                
-                <CSV data={allData}> /</CSV>
+            <div>
+                <Sidebar 
+                    selectedChr={selectedChr} 
+                    onChrSelected={this.handleChrSelected} 
+                    chrOptions={chrOptions}
+                    onAddSample={this.handleAddSampleClick}
+                    onAssignCluster={this.handleAssignCluster}
+                    tableData={clusterTableData}
+                    onClusterRowsChange={this.onClusterRowsChange}
+                    onClusterColorChange={this.onClusterColorChange}
+                    currentClusterFilters={indexedData.getFilteredClusters()}
+                    handleClusterAssignmentInput={this.handleClusterAssignmentInput}
+                    value={value}
+                    setDisplayMode={this.setDisplayMode}
+                    currentDisplayMode={this.state.displayMode} 
+                    colors={this.state.colors}
+                />
             </div>
-            {status && <div className="App-status-pane">{status}</div>}
-            {mainUI}
+            {/* <div style={{width: 450}}>
+                
+            </div> */}
+            <div className="content">
+                <div className="App-title-bar">
+                    <h1>CNA-Viz</h1>
+                    {samples.length === 0 &&
+                        <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
+                    }
+                        
+                    <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
+                    <span className="App-CheckBox-explanation">Apply log to RD: </span>
+                    <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
+                    <span className="App-CheckBox-explanation">Apply provided clustering: </span>
+                    <input type="checkbox" onClick={this.toggleClustering.bind(this)}  />
+                    
+                    <CSV data={allData}> /</CSV>
+                </div>
+                {status && <div className="App-status-pane">{status}</div>}
+                {mainUI}
+            </div>
+            
         </div>;
         
     }
