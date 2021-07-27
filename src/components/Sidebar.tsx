@@ -78,11 +78,11 @@ function Sidebar(props: Props) {
           </select>
         </div>
 
-        <div className="row-contents">
+        {/* <div className="row-contents">
           <button onClick={props.onAddSample}> Add Sample </button>
           <button onClick={props.onAssignCluster}> Assign Cluster </button>
           <input type="number" value={props.value} size={30} min="-2" max="100" onChange={props.handleClusterAssignmentInput}/>
-        </div>
+        </div> */}
         <div>
           {renderDisplayModeRadioOption(DisplayMode.select)}
           {renderDisplayModeRadioOption(DisplayMode.zoom)}
