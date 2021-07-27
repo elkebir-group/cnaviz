@@ -20,15 +20,16 @@ interface Props {
     setDisplayMode: any;
     currentDisplayMode: DisplayMode;
     colors: string[];
+    onSidebarChange: any;
 }
 
 
 function Sidebar(props: Props) {
-  const [sidebar, setSidebar] = useState(false);
+  const [sidebar, setSidebar] = useState(true);
   const [value, setValue] = useState("");
 
   const showSidebar = () => {
-    console.log("Show sidebar")
+    props.onSidebarChange(!sidebar)
     setSidebar(!sidebar)
   };
   const handleClusterAssignmentInput = (event: any) => {setValue(event.target.value)};

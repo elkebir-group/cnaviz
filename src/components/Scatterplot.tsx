@@ -318,8 +318,8 @@ export class Scatterplot extends React.Component<Props, State> {
                                 <button id="new-cluster" onClick={()=>{
                                     
                                     const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
-                                    console.log(this._clusters);
-                                    console.log("HIGHeST CURRENT: ", highestCurrentCluster);
+                                    //console.log(this._clusters);
+                                    //console.log("HIGHeST CURRENT: ", highestCurrentCluster);
                                     let nextAvailable = highestCurrentCluster + 1;
                                     let startIndex = 0;
                                     // Assumes the clusters are sorted least to greatest
@@ -329,7 +329,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                         }
                                     }
 
-                                    console.log("START INDEX: ", startIndex);
+                                    //console.log("START INDEX: ", startIndex);
                                     for(let i = 0; i < this._clusters.length; i++) {
                                         if(Number(this._clusters[i + startIndex]) !== i){
                                             console.log(this._clusters[i + startIndex]);
@@ -338,7 +338,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                             break;
                                         }
                                     }
-                                    console.log("NEXT AVAILABLE: ", nextAvailable)
+                                    //console.log("NEXT AVAILABLE: ", nextAvailable)
                                     this.onTrigger(nextAvailable);
                                     this.brushedNodes = new Set();
                                     this._clusters = this.initializeListOfClusters();

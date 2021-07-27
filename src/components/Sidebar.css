@@ -1,4 +1,9 @@
 .sidebar {
+  position: fixed;
+  top: 0;
+  width: 400px;
+  left: -400px;
+  height: 100%;
     /* position: fixed;
     top: 0; */
     /* left: -400px;
@@ -6,17 +11,17 @@
     /* left: -400px; */
     /* max-width: 0px;
     min-width: 0px; */
-    height: 100%;
+    /* height: 100%;
     max-width: 400px;
-    min-width: 400px;
+    min-width: 400px; */
     background-color: white;
     /* transition: left 300ms ease-out; */
   }
   .sidebar.active {
-    margin-left: -500px;
-    
+    /* margin-left: -500px; */
+    left: 0;
     /* left: 0px; */
-    background-color: aqua;
+    /* background-color: aqua; */
   }
   
   .hamburger {
@@ -24,9 +29,9 @@
     outline: 0;
     width: 50px;
     position: absolute;
-    left: 0px;
-    top: 0px;
-
+    /* left: 0px;
+    top: 0px; */
+    right: -50px;
     background-color: white;
   }
   

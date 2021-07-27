@@ -223,6 +223,8 @@ interface State {
     displayMode: DisplayMode;
 
     showComponents: boolean[];
+
+    sidebar: boolean;
 }
 
 
@@ -286,7 +288,9 @@ export class App extends React.Component<{}, State> {
             updatedBins: false,
             selectedSample: "",
             displayMode: DisplayMode.select,  
+            sidebar: true
         };
+
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
@@ -304,7 +308,8 @@ export class App extends React.Component<{}, State> {
         this.onSelectedSample = this.onSelectedSample.bind(this);
         this.handleRemovePlot = this.handleRemovePlot.bind(this);
         this.setDisplayMode = this.setDisplayMode.bind(this);
-        
+        this.onSideBarChange = this.onSideBarChange.bind(this);
+
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
@@ -482,18 +487,22 @@ export class App extends React.Component<{}, State> {
         for(const col of colors) {
             newColors.push(col);
         }
-        this.setState({colors: newColors})
+        this.setState({colors: newColors});
         //this.forceUpdate();
         //console.log("CURRENT STATE:  ", this.state.colors);
     }
 
     onSelectedSample(selectedSample : any) {
-        this.setState({selectedSample : selectedSample})
+        this.setState({selectedSample : selectedSample});
     }
 
     setDisplayMode(mode: DisplayMode) {
         console.log("MODE: ", mode);
         this.setState({displayMode: mode});
+    }
+
+    onSideBarChange(sidebar: boolean) {
+        this.setState({sidebar: sidebar});
     }
 
     render() {
@@ -552,16 +561,16 @@ export class App extends React.Component<{}, State> {
                 <div id="grid-container">
                     
                     <div className="App-global-controls">
-                            <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
+                            {/* <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
                             <select name="Select Chromosome" 
                                 id="Select Chromosome" 
                                 value={selectedChr}
                                 onChange={this.handleChrSelected} >
                                 {chrOptions}
-                            </select>
+                            </select> */}
                         
 
-                        <div className="row">
+                        {/* <div className="row">
                             <div className = "col" >
                                 <div className="row" style={{paddingTop: 10}}>
                                     <button onClick={this.handleAddSampleClick} style={{marginRight: 10}}> Add Sample </button>
@@ -582,7 +591,7 @@ export class App extends React.Component<{}, State> {
                             expandable={true}
                             selectable={true}
                             colors={this.state.colors}
-                        ></ClusterTable>
+                        ></ClusterTable> */}
                     </div>
                     
                     <div className="sampleviz-wrapper">
@@ -594,23 +603,6 @@ export class App extends React.Component<{}, State> {
                                     plotId={i}
                                 ></SampleViz>)}
                     </div>
-                    
-                    {/* <Sidebar 
-                        selectedChr={selectedChr} 
-                        onChrSelected={this.handleChrSelected} 
-                        chrOptions={chrOptions}
-                        onAddSample={this.handleAddSampleClick}
-                        onAssignCluster={this.handleAssignCluster}
-                        tableData={clusterTableData}
-                        onClusterRowsChange={this.onClusterRowsChange}
-                        onClusterColorChange={this.onClusterColorChange}
-                        currentClusterFilters={indexedData.getFilteredClusters()}
-                        handleClusterAssignmentInput={this.handleClusterAssignmentInput}
-                        value={value}
-                        setDisplayMode={this.setDisplayMode}
-                        currentDisplayMode={this.state.displayMode} 
-                        colors={this.state.colors}
-                    /> */}
                 </div>);
         }
 
@@ -633,12 +625,13 @@ export class App extends React.Component<{}, State> {
                     setDisplayMode={this.setDisplayMode}
                     currentDisplayMode={this.state.displayMode} 
                     colors={this.state.colors}
+                    onSidebarChange={this.onSideBarChange}
                 />
             </div>
             {/* <div style={{width: 450}}>
                 
             </div> */}
-            <div className="content">
+            <div className={this.state.sidebar ? "marginContent" : "content"}>
                 <div className="App-title-bar">
                     <h1>CNA-Viz</h1>
                     {samples.length === 0 &&

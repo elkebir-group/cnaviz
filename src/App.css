@@ -45,10 +45,12 @@ body {
 }
 
 #grid-container {
-    display: grid;
+    display: flex;
     /* grid-template-columns: repeat(2, auto); */
-    grid-auto-rows: auto;
+    /* grid-auto-rows: auto; */
     justify-content: center;
+    flex-direction: row;
+    
 }
 
 #sampleviz-container {
@@ -56,12 +58,16 @@ body {
 }
 
 .container-fluid {
-    display: flex;
-    justify-content: center;
+    /* display: flex;
+    justify-content: center; */
    
 }
 
 .content {
-    display: flex;
-    flex-direction: column;
+    /* display: flex;
+    flex-direction: column; */
+}
+
+.marginContent {
+    margin-left: 410px;
 }
