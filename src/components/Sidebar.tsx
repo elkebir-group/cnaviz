@@ -32,19 +32,13 @@ interface Props {
 
 
 function Sidebar(props: Props) {
-  const [sidebar, setSidebar] = useState(true);
+  // const [sidebar, setSidebar] = useState(true);
   const [value, setValue] = useState("");
 
   const showSidebar = () => {
-    props.onSidebarChange(!sidebar)
-    setSidebar(!sidebar)
+    props.onSidebarChange(!props.show)
   };
-  
-  if(props.show !== sidebar) {
-    setSidebar(props.show);
-  }
 
-  const handleClusterAssignmentInput = (event: any) => {setValue(event.target.value)};
   const renderDisplayModeRadioOption = (mode: DisplayMode) => {
     let label: string;
     let padding: string;
@@ -70,7 +64,7 @@ function Sidebar(props: Props) {
   }
 
   return (
-    <div className={sidebar ? "sidebar active" : "sidebar"}>
+    <div className={props.show ? "sidebar active" : "sidebar"}>
       
       <button className="hamburger" type="button" onClick={showSidebar}>
           <div> </div>
@@ -142,8 +136,8 @@ function Sidebar(props: Props) {
               onClusterRowsChange={props.onClusterRowsChange} 
               onClusterColorChange={props.onClusterColorChange}
               currentFilters={props.currentClusterFilters}
-              colOneName={"Cluster"}
-              colTwoName={"Percent of total # of Bins(%)"}
+              colOneName={"Cluster ID"}
+              colTwoName={"Bins (%)"}
               expandable={true}
               selectable={true}
               colors={props.colors}

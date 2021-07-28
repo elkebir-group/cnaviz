@@ -141,8 +141,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];
-            //const nameLengthMap : Map<string, number> = new Map();
-            //nameLengthMap.set(lastChr, 0);
 
             for (const bin of parsed) {
                 if(!applyClustering) {
@@ -154,42 +152,24 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 }
 
                 if(lastChr !==  bin["#CHR"]) {
-                    //console.log("GOING FROM " + lastChr + " TO " + bin["#CHR"]);
                     chrNameLength.push({name: lastChr, length: (end - start)})
-                    //console.log("LENGTH: ", chrNameLength.length);
                     start = Number(bin.START);
                     lastChr = bin["#CHR"]
-                   // nameLengthMap.set(lastChr, 0);
-                } else {
-                    
-                    
                 }
                 end = Number(bin.END);
-                //let currentCount = nameLengthMap.get(lastChr);
-                //let binLen = end-Number(bin.START);
-
-                //console.log("BINLEN: ", binLen);
-                //nameLengthMap.set(bin["#CHR"], currentCount ? (currentCount + binLen) : binLen);
                 bin.BAF = 0.5 - bin.BAF;
             }
             
             
             chrNameLength.push({name: lastChr, length: (end - start)})
-            //console.log("Name length: ", chrNameLength);
-            //chrNameLength.sort((a : any, b : any) => (a.name < b.name) ? 1 : -1)
-            //console.log("Name length2: ", chrNameLength);
-            //console.log("Name length MAP: ", nameLengthMap);
             const sortedChrNameLength = chrNameLength.sort((a: any, b : any) => {
                 return a.name.localeCompare(b.name, undefined, {
                     numeric: true,
                     sensitivity: 'base'
                 })
             })
-            //console.log("Name length3: ", sortedChrNameLength);
-            //console.log(sorted);
+
             genome = new Genome(chrNameLength);
-            
-            //console.log("PARSED: ", parsed);
             resolve(parsed);
         });
     })
@@ -305,7 +285,7 @@ export class App extends React.Component<{}, State> {
             updatedBins: false,
             selectedSample: "",
             displayMode: DisplayMode.select,  
-            sidebar: true,
+            sidebar:  true,
             chosenFile: ""
         };
 
@@ -330,7 +310,6 @@ export class App extends React.Component<{}, State> {
 
         let self = this;
         d3.select("body").on("keypress", function(){
-            //console.log(d3.event.key);
             if (d3.event.key == "z") {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if (d3.event.key == "b") {
@@ -338,7 +317,7 @@ export class App extends React.Component<{}, State> {
             } else if(d3.event.key == "a") {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.keyCode == 32) {
-                self.setState({sidebar: !self.state.sidebar})
+                self.onSideBarChange(!self.state.sidebar);
             }
         })
 
@@ -366,8 +345,6 @@ export class App extends React.Component<{}, State> {
         let contents = "";
         try {
             contents = await getFileContentsAsString(files[0]);
-            
-            //console.log("CONTENTS: ",contents);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -416,14 +393,12 @@ export class App extends React.Component<{}, State> {
     }
 
     handleCallBack(selectedCluster: string | number) {
-        console.log(selectedCluster);
         this.state.indexedData.updateCluster(Number(selectedCluster));
         this.setState({assignCluster: false});
     }
 
     updateBrushedBins(brushedBins: MergedGenomicBin[]) {
         this.state.indexedData.setbrushedBins(brushedBins);
-        //console.log("test");
         this.setState({updatedBins: true});
     }
 
@@ -500,14 +475,11 @@ export class App extends React.Component<{}, State> {
     }
 
     onClusterColorChange(colors: string[]) {
-        //console.log("SETTING STATE TOOO, ", colors);
         let newColors = [];
         for(const col of colors) {
             newColors.push(col);
         }
         this.setState({colors: newColors});
-        //this.forceUpdate();
-        //console.log("CURRENT STATE:  ", this.state.colors);
     }
 
     onSelectedSample(selectedSample : any) {
@@ -515,7 +487,6 @@ export class App extends React.Component<{}, State> {
     }
 
     setDisplayMode(mode: DisplayMode) {
-        console.log("MODE: ", mode);
         this.setState({displayMode: mode});
     }
 
@@ -572,9 +543,7 @@ export class App extends React.Component<{}, State> {
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
-            
 
-            //console.log("CLUSTER TABLE DATA: ", clusterTableData);
             mainUI = (
                 <div id="grid-container">
                     

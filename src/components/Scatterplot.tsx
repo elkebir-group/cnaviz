@@ -285,10 +285,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
     render() {
         
-        const {width, height, rdRange} = this.props;
-        //console.log("Rendering")
-        let newTableData : any = [];
-        //const groupedByCluster = _.groupBy(this.props.brushedBins, "SAMPLE");
+        const {width, height, rdRange, displayMode} = this.props;
         let clusterOptions = this._clusters.map(clusterName =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
@@ -314,12 +311,11 @@ export class Scatterplot extends React.Component<Props, State> {
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                <button id="reset" onClick={this.resetZoom}>Reset</button>
-                                <button id="new-cluster" onClick={()=>{
+                                {(displayMode==DisplayMode.zoom || displayMode==DisplayMode.boxzoom) && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
+                                {(displayMode==DisplayMode.select) && <button id="new-cluster" onClick={()=>{
                                     
                                     const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
-                                    //console.log(this._clusters);
-                                    //console.log("HIGHeST CURRENT: ", highestCurrentCluster);
+                                    
                                     let nextAvailable = highestCurrentCluster + 1;
                                     let startIndex = 0;
                                     // Assumes the clusters are sorted least to greatest
@@ -342,19 +338,21 @@ export class Scatterplot extends React.Component<Props, State> {
                                     this.onTrigger(nextAvailable);
                                     this.brushedNodes = new Set();
                                     this._clusters = this.initializeListOfClusters();
-                                }} >New</button>
+                                }} >New Cluster</button>}
+                                {(displayMode==DisplayMode.select) &&
                                 <button id="assign-cluster" onClick={() => {
                                     this.onTrigger(this.state.selectedCluster);
                                     this.brushedNodes = new Set();
                                     this._clusters = this.initializeListOfClusters();
-                                }}>Assign</button>
+                                }}>Assign Cluster</button>}
+                                {(displayMode==DisplayMode.select) &&
                                 <select
                                     name="Select Cluster" 
                                     id="Select Cluster"
                                     value={this.state.selectedCluster}
                                     onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
                                     {clusterOptions}
-                                </select>
+                                </select>}
                             </div>
 
                             {this.renderTooltip()}
