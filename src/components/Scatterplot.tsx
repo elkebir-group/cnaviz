@@ -23,7 +23,7 @@ const visutils = require('vis-utils');
 const PADDING = { // For the SVG
     left: 60,
     right: 20,
-    top: 20,
+    top: 35,
     bottom: 60,
 };
 
@@ -311,7 +311,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                {(displayMode==DisplayMode.zoom || displayMode==DisplayMode.boxzoom) && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
+                                {(displayMode==DisplayMode.zoom || displayMode==DisplayMode.boxzoom || displayMode==DisplayMode.select) && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
                                 {(displayMode==DisplayMode.select) && <button id="new-cluster" onClick={()=>{
                                     
                                     const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
@@ -360,22 +360,6 @@ export class Scatterplot extends React.Component<Props, State> {
         return scatterUI;
     }
 
-    // onClusterRowsChange(state: any) {
-    //     this.state.indexedData.setClusterFilters( state.selectedRows.map((d:any)  => String(d.key)));
-    //     this.setState({indexedData: this.state.indexedData});
-    // }
-
-    // onClusterColorChange(colors: string[]) {
-    //     //console.log("SETTING STATE TOOO, ", colors);
-    //     let newColors = [];
-    //     for(const col of colors) {
-    //         newColors.push(col);
-    //     }
-    //     this.setState({colors: newColors})
-    //     //this.forceUpdate();
-    //     //console.log("CURRENT STATE:  ", this.state.colors);
-    // }
-
     resetZoom() {
         if(!this._svg) {
             return;
@@ -391,24 +375,6 @@ export class Scatterplot extends React.Component<Props, State> {
 
         this.redraw();
     }
-
-    // createNewBrush() {
-    //     const svg = d3.select(this._svg);
-    //     const brush = d3.brush()
-    //     .keyModifiers(false)
-    //     .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
-    //             [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
-    //             .on("start brush", () => this.updatePoints(d3.event))
-    //             .on("end", () => {
-    //                 svg.selectAll("." + "brush").remove();
-    //                 this.onBrushedBinsUpdated([...this.brushedNodes]);
-    //             });
-                
-    //     // attach the brush to the chart
-    //     svg.append('g')
-    //         .attr('class', 'brush')
-    //         .call(brush);
-    // }
 
     componentDidMount() { 
         this.redraw();

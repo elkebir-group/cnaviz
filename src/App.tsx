@@ -147,9 +147,9 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     bin.CLUSTER = -1;
                 }
 
-                if(applyLog) { 
-                    bin.RD = Math.log2(bin.RD);
-                }
+                //if(applyLog) { 
+                bin.logRD = Math.log2(bin.RD);
+                //}
 
                 if(lastChr !==  bin["#CHR"]) {
                     chrNameLength.push({name: lastChr, length: (end - start)})

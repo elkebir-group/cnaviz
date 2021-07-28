@@ -55,7 +55,11 @@ export class ClusterTable extends React.Component<Props> {
               }),
             }
           ];
-
+        const customStyle : any = {
+            rows: {
+                //outerWidth: 200
+            }
+        }
         const columns = [
             {
               name: colOneName,
@@ -112,6 +116,7 @@ export class ClusterTable extends React.Component<Props> {
                 noContextMenu={true}
                 noHeader={true}
                 conditionalRowStyles={conditionalRowStyles}
+                customStyles={customStyle}
             />
         )
     }

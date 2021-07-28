@@ -11,14 +11,24 @@ export interface GenomicBin {
     readonly SAMPLE: string;
     /** Read depth ratio */
     readonly RD: number;
+    readonly logRD: number;
     readonly "#SNPS": number;
     readonly COV: number;
     readonly ALPHA: number;
     readonly BETA: number;
+    
     /** B allele frequency */
     BAF: number;
+
     /** Cluster ID */
     CLUSTER: number;
+
+    readonly cn_normal: number;
+    readonly u_normal: number;
+    readonly cn_clone1: number;
+    readonly u_clone1: number;
+    readonly cn_clone2: number;
+    readonly u_clone2: number;
 }
 
 export const GenomicBinHelpers = {

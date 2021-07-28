@@ -120,17 +120,11 @@ function Sidebar(props: Props) {
           <input type="checkbox" />
         </div>
         
-
-        {/* <div className="row-contents">
-          <button onClick={props.onAddSample}> Add Sample </button>
-          <button onClick={props.onAssignCluster}> Assign Cluster </button>
-          <input type="number" value={props.value} size={30} min="-2" max="100" onChange={props.handleClusterAssignmentInput}/>
-        </div> */}
         <div>
           {renderDisplayModeRadioOption(DisplayMode.select)}
           {renderDisplayModeRadioOption(DisplayMode.zoom)}
         </div>
-        <div style={{margin: 10}}>
+        <div >
           <ClusterTable 
               data={props.tableData} 
               onClusterRowsChange={props.onClusterRowsChange} 
