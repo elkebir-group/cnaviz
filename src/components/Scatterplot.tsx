@@ -496,16 +496,11 @@ export class Scatterplot extends React.Component<Props, State> {
                 assignCluster, invertAxis, brushedBins, data, rdRange, colors} = this.props;
         let {displayMode} = this.props;
         //const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
-        //console.log("NEW RD RANGE@: ", rdRange);
-        //const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
 
         let xScale = this._currXScale;
         let yScale = this._currYScale;
         let xLabel = "0.5 - BAF";
         let yLabel = "RDR";
-        // if (invertAxis) {
-        //     [xScale, yScale, xLabel, yLabel] = [rdrScale, bafScale, "RDR", "0.5 - BAF"];
-        // }
         
         const svg = d3.select(this._svg);
         const canvas = d3.select(this._canvas);
@@ -548,7 +543,9 @@ export class Scatterplot extends React.Component<Props, State> {
             .scaleExtent([0, 100])
             .extent([[0, 0], [width, height]])
             .on("zoom", () => {
- 
+                if (displayMode === DisplayMode.select) {
+                    return null;
+                }
                 const transform = d3.event.transform;
                 this._current_transform = transform;
                 ctx.save();
@@ -556,7 +553,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 ctx.restore();
             }).on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                //console.log("New scales: ", newScales);
                 self.props.onZoom(newScales);
             });
         
@@ -672,6 +668,12 @@ export class Scatterplot extends React.Component<Props, State> {
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
+            svg
+                .on("mouseenter", () => { 
+                    xScale = this._currXScale;
+                    yScale = this._currYScale;
+                })
+                .call(this.zoom) 
         } else if(displayMode === DisplayMode.zoom) {
             svg
                 .on("mouseenter", () => { 
