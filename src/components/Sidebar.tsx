@@ -6,6 +6,7 @@ import {ClusterTable} from "./ClusterTable";
 import {DisplayMode} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
+import * as d3 from "d3";
 
 interface Props {
     selectedChr : string;
@@ -26,6 +27,7 @@ interface Props {
     data: GenomicBin[];
     onFileChosen: any;
     chosenFile: string;
+    show: boolean;
 }
 
 
@@ -37,6 +39,11 @@ function Sidebar(props: Props) {
     props.onSidebarChange(!sidebar)
     setSidebar(!sidebar)
   };
+  
+  if(props.show !== sidebar) {
+    setSidebar(props.show);
+  }
+
   const handleClusterAssignmentInput = (event: any) => {setValue(event.target.value)};
   const renderDisplayModeRadioOption = (mode: DisplayMode) => {
     let label: string;

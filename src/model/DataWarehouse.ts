@@ -184,6 +184,7 @@ export class DataWarehouse {
             this.allRecords[i].BAF = 0.5-this.allRecords[i].BAF;
         }
         //console.log("RECORDS LENGTH: ", this.allRecords.length);
+        console.log("RAW DATA: ", rawData)
         console.timeEnd("Initializing DataWarehouse");
     }
 

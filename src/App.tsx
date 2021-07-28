@@ -283,11 +283,6 @@ export class App extends React.Component<{}, State> {
     
     constructor(props: {}) {
         super(props);
-        // let strColors : string[] = [];
-        // //strColors.push("red");
-        // for (const col of d3_category437) {
-        //     strColors.push("#" + String(col).substr(2));
-        // }
         
         this.state = {
             processingStatus: ProcessingStatus.none,
@@ -301,23 +296,6 @@ export class App extends React.Component<{}, State> {
             showComponents: [true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
-            // [
-            //     "#1b9e77", 
-            //     "#d95f02", 
-            //     "#7570b3", 
-            //     "#e7298a", 
-            //     "#66a61e", 
-            //     "#e6ab02", 
-            //     "#a6761d", 
-            //     "#666666", 
-            //     "#fe6794", 
-            //     "#10b0ff", 
-            //     "#ac7bff", 
-            //     "#964c63", 
-            //     "#cfe589", 
-            //     "#fdb082", 
-            //     "#28c2b5"
-            // ],
             assignCluster: false,
             assigned: false,
             applyLog: false,
@@ -352,12 +330,15 @@ export class App extends React.Component<{}, State> {
 
         let self = this;
         d3.select("body").on("keypress", function(){
+            //console.log(d3.event.key);
             if (d3.event.key == "z") {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if (d3.event.key == "b") {
                 self.setState({displayMode: DisplayMode.select})
             } else if(d3.event.key == "a") {
                 self.setState({displayMode: DisplayMode.boxzoom})
+            } else if(d3.event.keyCode == 32) {
+                self.setState({sidebar: !self.state.sidebar})
             }
         })
 
@@ -635,21 +616,22 @@ export class App extends React.Component<{}, State> {
                     data={allData}
                     onFileChosen={this.handleFileChoosen}
                     chosenFile={this.state.chosenFile}
+                    show={this.state.sidebar}
                 />
             </div>
 
             <div className={this.state.sidebar ? "marginContent" : "content"}>
                 <div className="App-title-bar">
                     <h1>CNA-Viz</h1>
-                    {samples.length === 0 &&
+                    {/* {samples.length === 0 &&
                         <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
-                    }
+                    } */}
                         
                     {/* <input type="file" id="fileUpload" onChange={this.handleFileChoosen} /> */}
                     <span className="App-CheckBox-explanation">Apply log to RD: </span>
                     <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
-                    <span className="App-CheckBox-explanation">Apply provided clustering: </span>
-                    <input type="checkbox" onClick={this.toggleClustering.bind(this)}  />
+                    {/* <span className="App-CheckBox-explanation">Apply provided clustering: </span>
+                    <input type="checkbox" onClick={this.toggleClustering.bind(this)}  /> */}
                 </div>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
