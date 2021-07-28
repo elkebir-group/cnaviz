@@ -62,7 +62,7 @@
   .contents {
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: center;
     /* justify-content: space-evenly; */
     /* flex: 1 1 0; */
   }
@@ -73,5 +73,22 @@
     justify-content: space-evenly;
     margin-bottom: 10px;
     flex: 1 1 0;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .custom-file-upload {
+    /* border: 1px solid #ccc; */
+    display: inline-block;
+    /* padding: 6px 12px; */
+    cursor: pointer;
+    background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+    border: 1px solid #afafaf
+  }
+
+  .title-bar {
+    border-top: 2px solid black;
   }
 

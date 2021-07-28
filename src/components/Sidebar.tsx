@@ -24,6 +24,8 @@ interface Props {
     colors: string[];
     onSidebarChange: any;
     data: GenomicBin[];
+    onFileChosen: any;
+    chosenFile: string;
 }
 
 
@@ -68,9 +70,40 @@ function Sidebar(props: Props) {
         </button>
       
       <div className="contents">
-        
-        <h1>CNA-Viz</h1>
-        <CSV data={props.data}> /</CSV>
+        <div>
+          <h1>CNA-Viz</h1>
+          <h2 className="title-bar">Import/Export</h2>
+        </div>
+        {/* <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span> */}
+        <div>Chosen File: {props.chosenFile}</div>
+        <div className="contents">
+          <div>
+            <label className="custom-file-upload">
+              <input type="file" id="fileUpload" onChange={
+                (event: any) =>
+                props.onFileChosen(event, false)
+              } />
+              Import TSV
+            </label>
+          </div>
+          
+          <div>
+            <label className="custom-file-upload">
+              <input type="file" id="fileUpload" onChange={
+                (event: any) =>
+                props.onFileChosen(event, true)
+              }/>
+              Import TSV with Clustering
+            </label>
+          </div>
+          
+
+          <CSV data={props.data}></CSV>
+        </div>
+        <div>
+          <h2 className="title-bar">Display Settings</h2>
+        </div>
+
         <div className= "row-contents">
           <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
           <select
@@ -81,6 +114,11 @@ function Sidebar(props: Props) {
                   {props.chrOptions}
           </select>
         </div>
+        <div className= "row-contents">
+          <span className="App-CheckBox-explanation">Apply log to RD: </span>
+          <input type="checkbox" />
+        </div>
+        
 
         {/* <div className="row-contents">
           <button onClick={props.onAddSample}> Add Sample </button>
@@ -106,7 +144,7 @@ function Sidebar(props: Props) {
         </div>
       </div>
       <div>
-        <h2>Directions</h2>
+        <h2 className="title-bar">Directions</h2>
       </div>
     </div>
   );

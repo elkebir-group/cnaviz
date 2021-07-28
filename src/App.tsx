@@ -262,6 +262,8 @@ interface State {
     showComponents: boolean[];
 
     sidebar: boolean;
+
+    chosenFile: string;
 }
 
 
@@ -325,7 +327,8 @@ export class App extends React.Component<{}, State> {
             updatedBins: false,
             selectedSample: "",
             displayMode: DisplayMode.select,  
-            sidebar: true
+            sidebar: true,
+            chosenFile: ""
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -371,12 +374,13 @@ export class App extends React.Component<{}, State> {
         })
     }
 
-    async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>) {
+    async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>, applyClustering: boolean) {
         const files = event.target.files;
         if (!files || !files[0]) {
             return;
         }
 
+        this.setState({chosenFile: files[0].name})
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
         try {
@@ -392,7 +396,7 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.processing});
         let indexedData = null;
         try {
-            const parsed = await parseGenomicBins(contents, this.state.applyLog, this.state.applyClustering);
+            const parsed = await parseGenomicBins(contents, this.state.applyLog, applyClustering);
             indexedData = new DataWarehouse(parsed);
         } catch (error) {
             console.error(error);
@@ -594,37 +598,6 @@ export class App extends React.Component<{}, State> {
                 <div id="grid-container">
                     
                     <div className="App-global-controls">
-                            {/* <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
-                            <select name="Select Chromosome" 
-                                id="Select Chromosome" 
-                                value={selectedChr}
-                                onChange={this.handleChrSelected} >
-                                {chrOptions}
-                            </select> */}
-                        
-
-                        {/* <div className="row">
-                            <div className = "col" >
-                                <div className="row" style={{paddingTop: 10}}>
-                                    <button onClick={this.handleAddSampleClick} style={{marginRight: 10}}> Add Sample </button>
-                                    <button onClick={this.handleAssignCluster} style={{marginRight: 10}} > Assign Cluster </button>
-                                    <input type="number" style={{marginLeft: 10}} value={value} size={30} min="-2" max="100"
-                                            onChange={this.handleClusterAssignmentInput}/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <ClusterTable 
-                            data={clusterTableData} 
-                            onClusterRowsChange={this.onClusterRowsChange} 
-                            onClusterColorChange={this.onClusterColorChange}
-                            currentFilters={indexedData.getFilteredClusters()}
-                            colOneName={"Cluster"}
-                            colTwoName={"Percent of total # of Bins(%)"}
-                            expandable={true}
-                            selectable={true}
-                            colors={this.state.colors}
-                        ></ClusterTable> */}
                     </div>
                     
                     <div className="sampleviz-wrapper">
@@ -660,6 +633,8 @@ export class App extends React.Component<{}, State> {
                     colors={this.state.colors}
                     onSidebarChange={this.onSideBarChange}
                     data={allData}
+                    onFileChosen={this.handleFileChoosen}
+                    chosenFile={this.state.chosenFile}
                 />
             </div>
 
@@ -670,7 +645,7 @@ export class App extends React.Component<{}, State> {
                         <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
                     }
                         
-                    <input type="file" id="fileUpload" onChange={this.handleFileChoosen} />
+                    {/* <input type="file" id="fileUpload" onChange={this.handleFileChoosen} /> */}
                     <span className="App-CheckBox-explanation">Apply log to RD: </span>
                     <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
                     <span className="App-CheckBox-explanation">Apply provided clustering: </span>
