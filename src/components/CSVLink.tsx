@@ -39,7 +39,7 @@ export class CSV extends React.Component<Props> {
                 className="hidden"
                 ref={(r:any) => this.csvLink = r}
                 target="_blank" />
-            <button type="button" onClick={(e) => this.csvLink.link.click()}>Download</button>
+            <button type="button" onClick={(e) => this.csvLink.link.click()}>Export to CSV</button>
         </div>
         return csvButton;
         // return <CSVLink data={this.props.data} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>

@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import "./Sidebar.css";
 import {ClusterTable} from "./ClusterTable";
 import {DisplayMode} from "../App";
+import {CSV} from "./CSVLink"
+import { GenomicBin} from "../model/GenomicBin";
 
 interface Props {
     selectedChr : string;
@@ -21,6 +23,7 @@ interface Props {
     currentDisplayMode: DisplayMode;
     colors: string[];
     onSidebarChange: any;
+    data: GenomicBin[];
 }
 
 
@@ -67,6 +70,7 @@ function Sidebar(props: Props) {
       <div className="contents">
         
         <h1>CNA-Viz</h1>
+        <CSV data={props.data}> /</CSV>
         <div className= "row-contents">
           <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
           <select

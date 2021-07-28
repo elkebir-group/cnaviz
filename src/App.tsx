@@ -359,17 +359,13 @@ export class App extends React.Component<{}, State> {
         })
 
         d3.select("body").on("keydown", function(){
-            //console.log(d3.event);
             if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
-               // console.log("holding down shift key")
                 self.setState({displayMode: DisplayMode.boxzoom})
             }
         })
 
         d3.select("body").on("keyup", function(){
-            //console.log(d3.event);
             if (self.state.displayMode === DisplayMode.boxzoom && d3.event.key == "Shift") {
-                //console.log("Releasing shift key")
                 self.setState({displayMode: DisplayMode.zoom})
             }
         })
@@ -663,11 +659,10 @@ export class App extends React.Component<{}, State> {
                     currentDisplayMode={this.state.displayMode} 
                     colors={this.state.colors}
                     onSidebarChange={this.onSideBarChange}
+                    data={allData}
                 />
             </div>
-            {/* <div style={{width: 450}}>
-                
-            </div> */}
+
             <div className={this.state.sidebar ? "marginContent" : "content"}>
                 <div className="App-title-bar">
                     <h1>CNA-Viz</h1>
@@ -680,8 +675,6 @@ export class App extends React.Component<{}, State> {
                     <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
                     <span className="App-CheckBox-explanation">Apply provided clustering: </span>
                     <input type="checkbox" onClick={this.toggleClustering.bind(this)}  />
-                    
-                    <CSV data={allData}> /</CSV>
                 </div>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
