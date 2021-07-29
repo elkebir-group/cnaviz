@@ -50,8 +50,8 @@ export class DataWarehouse {
     /** Indexed, pre-aggregated GenomicBin for supporting fast queries. */
     //private _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
     /** The range of read depth ratios represented in this data set.  First number is min, second is max. */
-    private readonly _rdRange: [number, number];
     private readonly _rdRanges: SampleIndexedData<[number, number]>;
+    private readonly _logRdRanges: SampleIndexedData<[number, number]>;
     private _locationGroupedData: LocationIndexedData<GenomicBin[]>;
     private brushedBins: GenomicBin[];
     private brushedCrossfilter: any;
@@ -60,8 +60,6 @@ export class DataWarehouse {
     private _sample_dim: any;
     private _cluster_dim: any;
     private _chr_dim: any;
-    private _baf_dim: any;
-    private _rd_dim: any;
     private _samples: string[];
     private _clusters: string[];
     private _chrs: string[];
@@ -82,8 +80,8 @@ export class DataWarehouse {
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
         this._sampleGroupedData = {};
-        this._rdRange = [0, 0];
         this._rdRanges = {};
+        this._logRdRanges = {};
         this._samples = [];
         this._chrs = [];
         this._clusters = [];
@@ -111,8 +109,6 @@ export class DataWarehouse {
         this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
-        this._baf_dim = this._ndx.dimension((d:GenomicBin) => d.BAF);
-        this._rd_dim = this._ndx.dimension((d:GenomicBin) => d.RD);
 
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         
@@ -120,10 +116,13 @@ export class DataWarehouse {
             for(const sample of this._samples) {
                 let currentSampleBins = this._sampleGroupedData[sample];
                 let currentRdRange : [number, number] = [_.minBy(currentSampleBins, "RD")!.RD, _.maxBy(currentSampleBins, "RD")!.RD];
+                let currentLogRdRange : [number, number] = [_.minBy(currentSampleBins, "logRD")!.logRD, _.maxBy(currentSampleBins, "logRD")!.logRD];
                 this._rdRanges[sample] = currentRdRange;
+                this._logRdRanges[sample] = currentLogRdRange;
             }
         }
-
+        console.log("RD RANGES: ", this._rdRanges);
+        console.log("LOG RD RANGES: ", this._logRdRanges);
         const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
         clusterTable.forEach(d => d.value = Number(((d.value/rawData.length) * 100).toFixed(2)));
 
@@ -167,18 +166,8 @@ export class DataWarehouse {
      * 
      * @return the range of read depth ratios represented in this data set
      */
-    getRdRange(sample : string): [number, number] {
-        // if(typeof plotId !== 'undefined') {
-        //     return [this._rdRanges[plotId][0], this._rdRanges[plotId][1]];
-        // }
-        // return [this._rdRange[0], this._rdRange[1]]; // Make a copy
-        //return [thi]
-        const rdRange = this._rdRanges[sample];
-        // if(!rdRange) {
-            
-        // } else {
-
-        // }
+    getRdRange(sample : string, log?: boolean): [number, number] {
+        const rdRange = (log) ? this._logRdRanges[sample] : this._rdRanges[sample];
         return [rdRange[0], rdRange[1]];
     }
 
@@ -228,16 +217,6 @@ export class DataWarehouse {
             //this._merged_chr_dim.filterAll();
         }
         
-        this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        //this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
-    }
-
-    setRDFilter(rdRange: [number, number]) {
-        this._rd_dim.filterAll();
-        this._rd_dim.filter((d: number) => d > rdRange[0] && d < rdRange[1]);
-
-        //this._merged_rd_dim.filterAll();
-        //this._merged_rd_dim.filter((d: number) => d > rdRange[0] && d < rdRange[1]);
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         //this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
     }

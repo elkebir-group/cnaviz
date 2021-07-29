@@ -79,9 +79,9 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, initialSelectedSample, plotId} = this.props;
+        const {data, initialSelectedSample, plotId, applyLog} = this.props;
         const selectedSample = this.state.selectedSample;
-        const rdRange = data.getRdRange(selectedSample);
+        const rdRange = data.getRdRange(selectedSample, applyLog);
         //console.log("NEW RD RANGE: ", rdRange);
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>

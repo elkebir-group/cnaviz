@@ -147,10 +147,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     bin.CLUSTER = -1;
                 }
 
-                if(applyLog) { 
-                    bin.RD = Math.log2(bin.RD);
-                }
-                bin.logRD = bin.RD;
+                bin.logRD = Math.log2(bin.RD);
 
                 if(lastChr !==  bin["#CHR"]) {
                     chrNameLength.push({name: lastChr, length: (end - start)})
@@ -309,6 +306,7 @@ export class App extends React.Component<{}, State> {
         this.handleRemovePlot = this.handleRemovePlot.bind(this);
         this.setDisplayMode = this.setDisplayMode.bind(this);
         this.onSideBarChange = this.onSideBarChange.bind(this);
+        this.toggleLog = this.toggleLog.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -587,6 +585,7 @@ export class App extends React.Component<{}, State> {
                     onFileChosen={this.handleFileChoosen}
                     chosenFile={this.state.chosenFile}
                     show={this.state.sidebar}
+                    onToggleLog = {this.toggleLog}
                 />
             </div>
 
@@ -598,8 +597,8 @@ export class App extends React.Component<{}, State> {
                     } */}
                         
                     {/* <input type="file" id="fileUpload" onChange={this.handleFileChoosen} /> */}
-                    <span className="App-CheckBox-explanation">Apply log to RD: </span>
-                    <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} />
+                    {/* <span className="App-CheckBox-explanation">Apply log to RD: </span>
+                    <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} /> */}
                     {/* <span className="App-CheckBox-explanation">Apply provided clustering: </span>
                     <input type="checkbox" onClick={this.toggleClustering.bind(this)}  /> */}
                 </div>

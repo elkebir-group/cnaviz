@@ -49,7 +49,7 @@ function findChrNumber(chr: string) {
 interface Props {
     data: GenomicBin[];
     chr: string;
-    dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "reverseBAF">;
+    dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF">;
     width: number;
     height: number;
     hoveredLocation?: ChromosomeInterval;
@@ -113,8 +113,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
-        } else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
+        } else if(!(_.isEqual(this.props["data"], prevProps["data"])) || this.props["dataKeyToPlot"] !== prevProps["dataKeyToPlot"]) {
             //console.log("Redrawing")
+            console.log("REDRAWING");
             this.redraw();
         }
     }

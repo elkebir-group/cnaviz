@@ -28,6 +28,7 @@ interface Props {
     onFileChosen: any;
     chosenFile: string;
     show: boolean;
+    onToggleLog: () => void;
 }
 
 
@@ -117,7 +118,7 @@ function Sidebar(props: Props) {
         </div>
         <div className= "row-contents">
           <span className="App-CheckBox-explanation">Apply log to RD: </span>
-          <input type="checkbox" />
+          <input type="checkbox" onClick={props.onToggleLog}/>
         </div>
         
         <div>

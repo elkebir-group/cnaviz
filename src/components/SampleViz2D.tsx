@@ -124,6 +124,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onZoom = {onZoom}
                     clusterTableData = {clusterTableData}
                     applyLog = {applyLog}
+                    yAxisToPlot = {applyLog ? "logRD" : "RD"}
                     onClusterSelected ={this.props.onClusterSelected}
                     />
             </DivWithBullseye>

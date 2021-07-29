@@ -44,6 +44,7 @@ interface Props {
     parentCallBack: any;
     data: GenomicBin[];
     rdRange: [number, number];
+    yAxisToPlot: keyof Pick<GenomicBin, "RD" | "logRD">;
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
@@ -125,7 +126,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.quadTree = d3
             .quadtree<GenomicBin>()
             .x((d : GenomicBin) => d.reverseBAF)
-            .y((d : GenomicBin)  => d.RD)
+            .y((d : GenomicBin)  => d[props.yAxisToPlot])
             .addAll(data)
 
         this._original_transform = d3.zoomIdentity.translate(0, 0).scale(1);
@@ -187,7 +188,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     renderTooltip() {
-        const {data, hoveredLocation, curveState} = this.props;
+        const {data, hoveredLocation, yAxisToPlot} = this.props;
 
         if (!hoveredLocation) {
             return null;
@@ -204,7 +205,7 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         if(hoveredRecords[0]) {
             const x = this._currXScale(hoveredRecords[0].reverseBAF);
-            const y = this._currYScale(hoveredRecords[0].RD);
+            const y = this._currYScale(hoveredRecords[0][yAxisToPlot]);
             
             let range = this._currXScale.range();
             let range2 = this._currYScale.range();
@@ -212,12 +213,12 @@ export class Scatterplot extends React.Component<Props, State> {
             if (hoveredRecords.length === 1 && x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
                 const record = hoveredRecords[0];
                 const recordLocation = GenomicBinHelpers.toChromosomeInterval(record);
-                return this.renderTooltipAtRdBaf(record.RD, record.reverseBAF, <React.Fragment>
+                return this.renderTooltipAtRdBaf(record[yAxisToPlot], record.reverseBAF, <React.Fragment>
                     <p>
                         <b>{recordLocation.toString()}</b><br/>
                         ({niceBpCount(recordLocation.getLength())})
                     </p>
-                    <div> RDR: {record.RD.toFixed(2)}</div>
+                    <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
                 </React.Fragment>);
@@ -334,7 +335,7 @@ export class Scatterplot extends React.Component<Props, State> {
             this.forceUnhover();
             this.forceHover(this.props.hoveredLocation); 
         }
-         else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
+         else if(!(_.isEqual(this.props["data"], prevProps["data"])) || this.props.yAxisToPlot !== prevProps.yAxisToPlot) {
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
             if(this._currXScale === this._original_XScale 
                     && this._currYScale === this._original_YScale) {
@@ -346,13 +347,16 @@ export class Scatterplot extends React.Component<Props, State> {
                 this._original_XScale = bafScale;
                 this._original_YScale = rdrScale;
             }
-
+            
             let data : GenomicBin[] = this.props.data;
             this.quadTree = d3
                 .quadtree<GenomicBin>()
                 .x((d : GenomicBin) => d.reverseBAF)
-                .y((d : GenomicBin)  => d.RD)
+                .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
                 .addAll(data)
+                
+            let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+            this.props.onZoom(newScales);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         }
@@ -394,7 +398,7 @@ export class Scatterplot extends React.Component<Props, State> {
             return;
         }
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors} = this.props;
+        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot} = this.props;
         let {displayMode} = this.props;
         let xScale = this._currXScale;
         let yScale = this._currYScale;
@@ -492,7 +496,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
         function drawGenomicBin(d : GenomicBin) {
             const x = self._currXScale(d.reverseBAF);
-            const y = self._currYScale(d.RD);
+            const y = self._currYScale(d[yAxisToPlot]);
             
             let range = self._currXScale.range();
             let range2 = self._currYScale.range();
@@ -656,7 +660,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
      updatePoints(event : any) {
         if(!this._svg) {return;}
-        const {brushedBins, data} = this.props;
+        const {brushedBins, data, yAxisToPlot} = this.props;
         if (data) {
             try {
                 const { selection } = d3.event;
@@ -666,7 +670,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             this._currYScale.invert(selection[0][1])]];
                 let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
                     (d : GenomicBin) => d.reverseBAF, 
-                    (d : GenomicBin)  => d.RD); // The new points selected
+                    (d : GenomicBin)  => d[yAxisToPlot]); // The new points selected
              
                 if (brushNodes) {
                     if(event.sourceEvent.shiftKey) {
@@ -685,7 +689,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!this._svg || !hoveredLocation || !this._canvas) {
             return [];
         }
-        const {data} = this.props;
+        const {data, yAxisToPlot} = this.props;
 
         let hoveredRecords : GenomicBin[] = [];
         hoveredRecords = data.filter(record => {
@@ -709,7 +713,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 .append("circle")
                     .attr("id", d => this._circleIdPrefix + GenomicBinHelpers.toChromosomeInterval(d).toString())
                     .attr("cx", d => this._currXScale(d.reverseBAF) || 0)
-                    .attr("cy", d => this._currYScale(d.RD) || 0) // Alternatively, this could be 0.5 - baf
+                    .attr("cy", d => this._currYScale(d[yAxisToPlot]) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", 3)
                     .attr("fill", d => {
                         if(this.brushedNodes.has(d)) {

@@ -25,6 +25,7 @@ interface Props {
     xScale: [number, number] | null;
     rdRange: [number, number];
     clusterTableData: any;
+    applyLog: boolean;
 }
 
 enum DisplayMode {
@@ -53,10 +54,11 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale, rdRange, clusterTableData} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale, rdRange, clusterTableData, applyLog} = this.props;
         const selectedSample = this.props.selectedSample;
 
         const selectedRecords = data.getRecords(selectedSample, chr);
+        
         let visualization: React.ReactNode = null;
         if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
@@ -73,6 +75,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     yScale= {yScale}
                     xScale= {xScale}
                     clusterTableData={clusterTableData}
+                    applyLog={applyLog}
                     />
                     
                 <div className="SampleViz-separator" />
@@ -87,7 +90,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     colors={this.props.colors}
                     yScale={yScale}
                     xScale= {xScale}
-                    clusterTableData={clusterTableData}/>
+                    clusterTableData={clusterTableData}
+                    applyLog={applyLog}/>
 
             </DivWithBullseye>;
         }

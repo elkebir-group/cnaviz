@@ -19,19 +19,22 @@ interface Props {
     yScale: [number, number] | null;
     xScale: [number, number] | null;
     clusterTableData: any;
+    applyLog: boolean;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
-    const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, yScale, clusterTableData} = props;
+    const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
+        brushedBins, customColor, colors, yScale, clusterTableData, applyLog} = props;
+
     return <LinearPlot
         data={data}
-        dataKeyToPlot="RD"
+        dataKeyToPlot={applyLog ? "logRD" : "RD"}
         genome={genome}
         chr={chr}
         hoveredLocation={hoveredLocation}
         onLocationHovered={onLocationHovered}
         onBrushedBinsUpdated={onBrushedBinsUpdated}
-        yMin={yScale ? yScale[0] : rdRange[0]}
+        yMin={yScale ? yScale[0] : (applyLog ? -2 : 0)}
         yMax={yScale ? yScale[1] : rdRange[1]}
         yLabel={"RDR"}
         brushedBins={brushedBins}
