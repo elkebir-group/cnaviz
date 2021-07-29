@@ -53,8 +53,8 @@ export function BAFLinearPlot(props: Props) {
         hoveredLocation={hoveredLocation}
         onLocationHovered={onLocationHovered}
         onBrushedBinsUpdated= {onBrushedBinsUpdated}
-        yMin={xScale ? xScale[0] : 0}
-        yMax={xScale ? xScale[1] : 0.5}
+        yMin={xScale ? xScale[1] : 0}
+        yMax={xScale ? xScale[0] : 0.5}
         yLabel={"0.5 - BAF"}
         brushedBins={brushedBins}
         customColor={customColor}

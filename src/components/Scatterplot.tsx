@@ -82,6 +82,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private _circleIdPrefix: number;
     private _clusters : string[];
     private brushedNodes: Set<GenomicBin>;
+    private previous_brushed_nodes: Set<string>;
     private quadTree: d3.Quadtree<GenomicBin>;
     private _canvas: HTMLCanvasElement | null;
     private _currXScale: d3.ScaleLinear<number, number>;
@@ -112,6 +113,7 @@ export class Scatterplot extends React.Component<Props, State> {
             selectedCluster: this._clusters[0]
         }
         this.brushedNodes = new Set();
+        this.previous_brushed_nodes = new Set();
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
         this.zoom = null;
@@ -140,15 +142,16 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
-        const {rdRange, width, height, curveState, onNewCurveState, invertAxis} = this.props;
+        // const {rdRange, width, height, curveState, onNewCurveState, invertAxis} = this.props;
         const {x, y} = getRelativeCoordinates(event);
-        const {rdrScale, bafScale} = this.computeScales(rdRange, width, height);
         const hoveredRdBaf = {
             rd: this._currYScale.invert(y),
             baf: this._currXScale.invert(x)
         };
-    
-        if( hoveredRdBaf.baf > this._currXScale.domain()[0] && hoveredRdBaf.baf < this._currXScale.domain()[1] && hoveredRdBaf.rd > this._currYScale.domain()[0] && hoveredRdBaf.rd < this._currYScale.domain()[1] ) {
+
+        if( hoveredRdBaf.baf < this._currXScale.domain()[0] && hoveredRdBaf.baf > this._currXScale.domain()[1] 
+            && hoveredRdBaf.rd > this._currYScale.domain()[0] && hoveredRdBaf.rd < this._currYScale.domain()[1] ) {
+            
             const radius = Math.abs(this._currXScale.invert(x) - this._currXScale.invert(x - 20));
             this.props.onRecordsHovered(this.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius) || null);
         } else {
@@ -268,7 +271,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
                                     // Assumes the clusters are sorted least to greatest
                                     for(let i = 0; i < 2; i++) {
-                                        if(this._clusters[i] === "-1" || this._clusters[i] === "-2") {
+                                        if(this._clusters[i] === UNCLUSTERED_ID || this._clusters[i] === DELETED_ID) {
                                             startIndex++;
                                         }
                                     }
@@ -354,7 +357,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 .x((d : GenomicBin) => d.reverseBAF)
                 .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
                 .addAll(data)
-                
+
             let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
             this.props.onZoom(newScales);
             this.redraw();
@@ -367,7 +370,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
         const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
-        let baf = bafRange ? bafRange : [-.0001, 0.5] // .0001 allows for points exactly on the axis to still be seen
+        let baf = bafRange ? bafRange : [0.5001, -.0001] // .0001 allows for points exactly on the axis to still be seen
         
         return {
             bafScale: d3.scaleLinear()
@@ -438,8 +441,9 @@ export class Scatterplot extends React.Component<Props, State> {
             
         let previous : string[] = [];
         brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()))
-        const previous_brushed_nodes = new Set(previous);
-        
+        this.previous_brushed_nodes = new Set(previous);
+        const previous_brushed_nodes = this.previous_brushed_nodes;
+
         const ctx = this._canvas.getContext("2d")!;
         this.zoom = d3.zoom()
             .scaleExtent([0, 100])
@@ -664,9 +668,9 @@ export class Scatterplot extends React.Component<Props, State> {
         if (data) {
             try {
                 const { selection } = d3.event;
-                let rect = [[this._currXScale.invert(selection[0][0]), 
+                let rect = [[this._currXScale.invert(selection[1][0]), 
                             this._currYScale.invert(selection[1][1])], 
-                            [this._currXScale.invert(selection[1][0]), 
+                            [this._currXScale.invert(selection[0][0]), 
                             this._currYScale.invert(selection[0][1])]];
                 let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
                     (d : GenomicBin) => d.reverseBAF, 
@@ -716,7 +720,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("cy", d => this._currYScale(d[yAxisToPlot]) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", 3)
                     .attr("fill", d => {
-                        if(this.brushedNodes.has(d)) {
+                        if(this.previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                             return this.props.customColor;
                         } else if (d.CLUSTER == -1){
                             return UNCLUSTERED_COLOR;
