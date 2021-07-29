@@ -8,12 +8,12 @@ import { GenomicBin } from "../model/GenomicBin";
 import { MergedGenomicBin } from "../model/BinMerger";
 
 interface Props {
-    data: MergedGenomicBin[];
+    data: GenomicBin[];
     chr: string;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered?: (location: ChromosomeInterval | null) => void
-    onBrushedBinsUpdated: any;
-    brushedBins: MergedGenomicBin[];
+    onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
+    brushedBins: GenomicBin[];
     customColor: string;
     colors: string[];
     yScale: [number, number] | null;
@@ -45,7 +45,7 @@ export function BAFLinearPlot(props: Props) {
     return <LinearPlot
         data={data}
         chr={chr}
-        dataKeyToPlot="BAF"
+        dataKeyToPlot="reverseBAF"
         genome={genome}
         hoveredLocation={hoveredLocation}
         onLocationHovered={onLocationHovered}

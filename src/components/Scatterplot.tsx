@@ -10,7 +10,7 @@ import { CurveState, CurvePickStatus } from "../model/CurveState";
 import { CopyNumberCurve } from "../model/CopyNumberCurve";
 import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberState";
 //import { niceBpCount, getRelativeCoordinates } from "../util";
-import {GenomicBinHelpers} from "../model/GenomicBin";
+import {GenomicBin, GenomicBinHelpers} from "../model/GenomicBin";
 import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
@@ -29,24 +29,8 @@ const PADDING = { // For the SVG
 
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
-
-const CLUSTER_COLORS = [
-    "#1b9e77", 
-    "#d95f02", 
-    "#7570b3", 
-    "#e7298a", 
-    "#66a61e", 
-    "#e6ab02", 
-    "#a6761d", 
-    "#666666", 
-    "#fe6794", 
-    "#10b0ff",
-    "#ac7bff", 
-    "#964c63", 
-    "#cfe589", 
-    "#fdb082", 
-    "#28c2b5"
-];
+const UNCLUSTERED_ID = "-1";
+const DELETED_ID = "-2";
 //const HIGHLIGHT_COLOR = "red";
 
 const SCALES_CLASS_NAME = "scatterplot-scale";
@@ -58,7 +42,7 @@ let nextCircleIdPrefix = 0;
 
 interface Props {
     parentCallBack: any;
-    data: MergedGenomicBin[];
+    data: GenomicBin[];
     rdRange: [number, number];
     hoveredLocation?: ChromosomeInterval;
     width: number;
@@ -66,13 +50,13 @@ interface Props {
     curveState: CurveState;
     invertAxis: boolean;
     onNewCurveState: (state: Partial<CurveState>) => void;
-    onRecordsHovered: (record: MergedGenomicBin | null) => void;
-    onBrushedBinsUpdated: any;
+    onRecordsHovered: (record: GenomicBin | null) => void;
+    onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
     customColor: string;
     col: string;
     colors: string[];
     assignCluster: boolean;
-    brushedBins: MergedGenomicBin[];
+    brushedBins: GenomicBin[];
     updatedBins: boolean;
     displayMode: DisplayMode;
     onZoom: (newScales: any) => void;
@@ -91,19 +75,18 @@ export class Scatterplot extends React.Component<Props, State> {
         height: 302,
         onNewCurveState: _.noop,
         onRecordHovered: _.noop,
-        customColor: CLUSTER_COLORS[0]
     };
 
     private _svg: SVGSVGElement | null;
     private _circleIdPrefix: number;
     private _clusters : string[];
-    private brushedNodes: Set<MergedGenomicBin>;
-    private quadTree: any;
+    private brushedNodes: Set<GenomicBin>;
+    private quadTree: d3.Quadtree<GenomicBin>;
     private _canvas: HTMLCanvasElement | null;
-    private _currXScale: any;
-    private _currYScale: any;
-    private _original_XScale: any;
-    private _original_YScale: any;
+    private _currXScale: d3.ScaleLinear<number, number>;
+    private _currYScale: d3.ScaleLinear<number, number>;
+    private _original_XScale: d3.ScaleLinear<number, number>;
+    private _original_YScale: d3.ScaleLinear<number, number>;
 
     private _original_transform: any;
     private _current_transform: any;
@@ -112,9 +95,7 @@ export class Scatterplot extends React.Component<Props, State> {
     //private selectedCluster: string;
 
     constructor(props: Props) {
-        super(props);
-        //console.log("Scatter plot cluster tbale data: ", props.clusterTableData);
-        
+        super(props);   
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
@@ -129,7 +110,6 @@ export class Scatterplot extends React.Component<Props, State> {
         this.state = {
             selectedCluster: this._clusters[0]
         }
-        // this.createNewBrush = this.createNewBrush.bind(this);
         this.brushedNodes = new Set();
         this.onZoom = this.onZoom.bind(this);
         this.resetZoom = this.resetZoom.bind(this);
@@ -141,11 +121,11 @@ export class Scatterplot extends React.Component<Props, State> {
         this._original_XScale = this._currXScale;
         this._original_YScale = this._currYScale;
 
-        let data : any = props.data;
+        let data : GenomicBin[] = props.data;
         this.quadTree = d3
-            .quadtree()
-            .x((d : any) => d.averageBaf)
-            .y((d : any)  => d.averageRd)
+            .quadtree<GenomicBin>()
+            .x((d : GenomicBin) => d.reverseBAF)
+            .y((d : GenomicBin)  => d.RD)
             .addAll(data)
 
         this._original_transform = d3.zoomIdentity.translate(0, 0).scale(1);
@@ -154,31 +134,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        let clusters = [...new Set(this.props.data.map(d => String(d.bins[0].CLUSTER)))].sort(collator.compare); 
-        // if(clusters[0] === "-2") {
-        //     clusters.shift();
-        // }
-        // if(clusters[0] === "-1") {
-        //     clusters.shift();
-        // }
-
-        // let clusterTableData = this.props.clusterTableData;
-        // clusterTableData.sort((a : any, b : any) => {
-        //     if (a.value > b.value) return -1;
-        //     if (a.value < b.value) return 1;
-        //     return 0;
-        // })
-
-        // let clusters : string[] = [];
-        // for(const obj of clusterTableData) {
-        //     clusters.push(obj.key);
-        // }
-        //console.log(clusters);
-        // clusterTableData = clusterTableData.filter((cluster : any) => cluster.key === "-1" || cluster.key === "-2")
-        // console.log(clusterTableData);
-        // console.log("CLUSTER TABLE DATA: ", clusterTableData);
-        // const clusters = Object.keys(clusterTableData);
-        // console.log("INITIALIZING CLUSTERS: ", clusters);
+        let clusters = [...new Set(this.props.data.map(d => String(d.CLUSTER)))].sort(collator.compare); 
         return clusters;
     }
 
@@ -236,66 +192,54 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!hoveredLocation) {
             return null;
         }
-        let hoveredRecords : MergedGenomicBin[] = [];
-        hoveredRecords = data.filter(record => record.location.chr === hoveredLocation.chr 
-                                                && hoveredLocation.start === record.location.start 
-                                                && hoveredLocation.end === record.location.end) //record.location.hasOverlap(hoveredLocation));
+        let hoveredRecords : GenomicBin[] = [];
+        hoveredRecords = data.filter(record => {
+            let currLoc = GenomicBinHelpers.toChromosomeInterval(record);
+            return (hoveredLocation.chr === currLoc.chr
+            && hoveredLocation.start === currLoc.start 
+            && hoveredLocation.end === currLoc.end)}) //record.location.hasOverlap(hoveredLocation));
+        
         if(hoveredRecords.length === 0) {
-            hoveredRecords = data.filter(record => record.location.hasOverlap(hoveredLocation))
+            hoveredRecords = data.filter(record => GenomicBinHelpers.toChromosomeInterval(record).hasOverlap(hoveredLocation))
         }
         if(hoveredRecords[0]) {
-            const x = this._currXScale(hoveredRecords[0].averageBaf);
-            const y = this._currYScale(hoveredRecords[0].averageRd);
+            const x = this._currXScale(hoveredRecords[0].reverseBAF);
+            const y = this._currYScale(hoveredRecords[0].RD);
             
             let range = this._currXScale.range();
             let range2 = this._currYScale.range();
 
-            if (hoveredRecords.length === 1 && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+            if (hoveredRecords.length === 1 && x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
                 const record = hoveredRecords[0];
-                return this.renderTooltipAtRdBaf(record.averageRd, record.averageBaf, <React.Fragment>
+                const recordLocation = GenomicBinHelpers.toChromosomeInterval(record);
+                return this.renderTooltipAtRdBaf(record.RD, record.reverseBAF, <React.Fragment>
                     <p>
-                        <b>{record.location.toString()}</b><br/>
-                        ({niceBpCount(record.location.getLength())})
+                        <b>{recordLocation.toString()}</b><br/>
+                        ({niceBpCount(recordLocation.getLength())})
                     </p>
-                    {/* <div>Number of Bins: {record.bins.length}</div> */}
-                    <div> RDR: {record.averageRd.toFixed(2)}</div>
-                    <div> BAF: {Number(0.5-record.averageBaf).toFixed(2)}</div>
-                    <div>Cluster ID:{record.bins[0].CLUSTER}</div>
+                    <div> RDR: {record.RD.toFixed(2)}</div>
+                    <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
+                    <div> Cluster ID: {record.CLUSTER}</div>
                 </React.Fragment>);
             } 
         }
-        // else if (hoveredRecords.length > 1) {
-        //     const minBaf = _.minBy(hoveredRecords, "averageBaf")!.averageBaf;
-        //     const maxBaf = _.maxBy(hoveredRecords, "averageBaf")!.averageBaf;
-        //     const meanBaf = _.meanBy(hoveredRecords, "averageBaf");
-        //     const minRd = _.minBy(hoveredRecords, "averageRd")!.averageRd;
-        //     const maxRd = _.maxBy(hoveredRecords, "averageRd")!.averageRd;
-        //     const meanRd = _.meanBy(hoveredRecords, "averageRd");
-        //     return this.renderTooltipAtRdBaf(maxRd, maxBaf, <React.Fragment>
-        //         <p><b>{hoveredRecords.length} corresponding regions</b></p>
-        //         <div>Average RDR: {meanRd.toFixed(2)}</div>
-        //         <div>Average BAF: {meanBaf.toFixed(2)}</div>
-        //         <div>RDR range: [{minRd.toFixed(2)}, {maxRd.toFixed(2)}]</div>
-        //         <div>BAF range: [{minBaf.toFixed(2)}, {maxBaf.toFixed(2)}]</div>
-        //     </React.Fragment>);
-        // }
 
         return null;
     }
 
     render() {
         
-        const {width, height, rdRange, displayMode} = this.props;
+        const {width, height, displayMode} = this.props;
         let clusterOptions = this._clusters.map(clusterName =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
         
-        if(!this._clusters.includes("-1")) {
-            clusterOptions.unshift(<option key={"-1"} value={"-1"} >{"-1"}</option>);
+        if(!this._clusters.includes(UNCLUSTERED_ID)) {
+            clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         }
 
-        if(!this._clusters.includes("-2")) {
-            clusterOptions.unshift(<option key={"-2"} value={"-2"} >{"-2"}</option>);
+        if(!this._clusters.includes(DELETED_ID)) {
+            clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
         }
         
         
@@ -311,13 +255,16 @@ export class Scatterplot extends React.Component<Props, State> {
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                {(displayMode==DisplayMode.zoom || displayMode==DisplayMode.boxzoom || displayMode==DisplayMode.select) && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
-                                {(displayMode==DisplayMode.select) && <button id="new-cluster" onClick={()=>{
-                                    
+                                {(displayMode==DisplayMode.zoom 
+                                    || displayMode==DisplayMode.boxzoom 
+                                    || displayMode==DisplayMode.select) 
+                                    && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
+                                {(displayMode==DisplayMode.select) 
+                                    && <button id="new-cluster" onClick={()=>{
                                     const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
-                                    
                                     let nextAvailable = highestCurrentCluster + 1;
                                     let startIndex = 0;
+
                                     // Assumes the clusters are sorted least to greatest
                                     for(let i = 0; i < 2; i++) {
                                         if(this._clusters[i] === "-1" || this._clusters[i] === "-2") {
@@ -325,34 +272,31 @@ export class Scatterplot extends React.Component<Props, State> {
                                         }
                                     }
 
-                                    //console.log("START INDEX: ", startIndex);
                                     for(let i = 0; i < this._clusters.length; i++) {
                                         if(Number(this._clusters[i + startIndex]) !== i){
-                                            console.log(this._clusters[i + startIndex]);
-                                            console.log(i);
                                             nextAvailable = i;
                                             break;
                                         }
                                     }
-                                    //console.log("NEXT AVAILABLE: ", nextAvailable)
+                                    
                                     this.onTrigger(nextAvailable);
                                     this.brushedNodes = new Set();
                                     this._clusters = this.initializeListOfClusters();
                                 }} >New Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
-                                <button id="assign-cluster" onClick={() => {
-                                    this.onTrigger(this.state.selectedCluster);
-                                    this.brushedNodes = new Set();
-                                    this._clusters = this.initializeListOfClusters();
-                                }}>Assign Cluster</button>}
+                                    <button id="assign-cluster" onClick={() => {
+                                        this.onTrigger(this.state.selectedCluster);
+                                        this.brushedNodes = new Set();
+                                        this._clusters = this.initializeListOfClusters();
+                                    }}>Assign Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
-                                <select
-                                    name="Select Cluster" 
-                                    id="Select Cluster"
-                                    value={this.state.selectedCluster}
-                                    onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
-                                    {clusterOptions}
-                                </select>}
+                                    <select
+                                        name="Select Cluster" 
+                                        id="Select Cluster"
+                                        value={this.state.selectedCluster}
+                                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
+                                        {clusterOptions}
+                                    </select>}
                             </div>
 
                             {this.renderTooltip()}
@@ -361,18 +305,11 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     resetZoom() {
-        if(!this._svg) {
-            return;
-        }
-        const {rdRange, width, height, displayMode} = this.props;
-        //const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
-
+        if(!this._svg) { return; }
         this._currXScale = this._original_XScale;
         this._currYScale = this._original_YScale;
         const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
-        //d3.select(this._svg).call(this.zoom.transform, d3.zoomIdentity.scale(1))
         this.props.onZoom(newScales);
-
         this.redraw();
     }
 
@@ -394,7 +331,7 @@ export class Scatterplot extends React.Component<Props, State> {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
-            this.forceUnhover(prevProps.hoveredLocation);
+            this.forceUnhover();
             this.forceHover(this.props.hoveredLocation); 
         }
          else if(!(_.isEqual(this.props["data"], prevProps["data"]))) {
@@ -410,18 +347,19 @@ export class Scatterplot extends React.Component<Props, State> {
                 this._original_YScale = rdrScale;
             }
 
-            let data : any = this.props.data;
+            let data : GenomicBin[] = this.props.data;
             this.quadTree = d3
-                .quadtree()
-                .x((d : any) => d.averageBaf)
-                .y((d : any)  => d.averageRd)
+                .quadtree<GenomicBin>()
+                .x((d : GenomicBin) => d.reverseBAF)
+                .y((d : GenomicBin)  => d.RD)
                 .addAll(data)
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
         }
     }
 
-    computeScales(rdRange: [number, number], width: number, height: number, bafRange?: [number, number], useLowerBound?: boolean) {
+    computeScales(rdRange: [number, number], width: number, height: number, 
+                    bafRange?: [number, number], useLowerBound?: boolean) {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
         const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
@@ -441,7 +379,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.props.parentCallBack(selectedCluster);
     }
 
-    onBrushedBinsUpdated = (brushedNodes: MergedGenomicBin[]) => {
+    onBrushedBinsUpdated = (brushedNodes: GenomicBin[]) => {
         this.props.onBrushedBinsUpdated(brushedNodes);
     }
 
@@ -456,18 +394,14 @@ export class Scatterplot extends React.Component<Props, State> {
             return;
         }
         let self = this;
-        const {width, height, onRecordsHovered, customColor, 
-                assignCluster, invertAxis, brushedBins, data, rdRange, colors} = this.props;
+        const {width, height, customColor, brushedBins, data, colors} = this.props;
         let {displayMode} = this.props;
-        //const colorScale = d3.scaleOrdinal(colors).domain(this._clusters);
-
         let xScale = this._currXScale;
         let yScale = this._currYScale;
         let xLabel = "0.5 - BAF";
         let yLabel = "RDR";
         
         const svg = d3.select(this._svg);
-        const canvas = d3.select(this._canvas);
 
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
@@ -498,9 +432,9 @@ export class Scatterplot extends React.Component<Props, State> {
             .style("text-anchor", "middle")
             .text(yLabel);
             
-        let previous : any = [];
-        brushedBins.forEach(d => previous.push(String(d.location)))
-        let previous_brushed_nodes = new Set(previous);
+        let previous : string[] = [];
+        brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()))
+        const previous_brushed_nodes = new Set(previous);
         
         const ctx = this._canvas.getContext("2d")!;
         this.zoom = d3.zoom()
@@ -520,7 +454,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 self.props.onZoom(newScales);
             });
         
-        let zoomY : any= d3.zoom()
+        let zoomY : any = d3.zoom()
             .scaleExtent([0, 100])
             .extent([[0, 0], [width, height]])
             .on("zoom", () => {
@@ -545,25 +479,25 @@ export class Scatterplot extends React.Component<Props, State> {
         function drawAllGenomicBins() {
             ctx.clearRect(0, 0, width, height);
             for (const d of data) {
-                if(!previous_brushed_nodes.has(String(d.location))) {
+                if(!previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                     drawGenomicBin(d);
                 }
             }
             for (const d of data) {
-                if(previous_brushed_nodes.has(String(d.location))) {
+                if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                     drawGenomicBin(d);
                 }
             }
         }
 
-        function drawGenomicBin(d : MergedGenomicBin) {
-            const x = self._currXScale(d.averageBaf);
-            const y = self._currYScale(d.averageRd);
+        function drawGenomicBin(d : GenomicBin) {
+            const x = self._currXScale(d.reverseBAF);
+            const y = self._currYScale(d.RD);
             
             let range = self._currXScale.range();
             let range2 = self._currYScale.range();
 
-            if(x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+            if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
                 ctx.fillStyle = chooseColor(d);
                 ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
             }
@@ -620,11 +554,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .on("start brush", () => this.updatePoints(d3.event))
                     .on("end", () => {
                         svg.selectAll("." + "brush").remove();
-                        // if(d3.event.sourceEvent.metaKey) {
-                        //     brush_endEvent();
-                        // } else {
-                        //     this.onBrushedBinsUpdated([...this.brushedNodes]);
-                        // }
+                        console.log([...this.brushedNodes])
                         this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
                     
@@ -686,7 +616,6 @@ export class Scatterplot extends React.Component<Props, State> {
                     drawAllGenomicBins();
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                    //console.log("New scales: ", newScales);
                     self.props.onZoom(newScales);
                 } catch (error) { console.log(error);}
             }
@@ -708,15 +637,15 @@ export class Scatterplot extends React.Component<Props, State> {
             drawAllGenomicBins();
         }
         
-        function chooseColor(d: MergedGenomicBin) {
-            if(previous_brushed_nodes.has(String(d.location))) {
+        function chooseColor(d: GenomicBin) {
+            if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 return customColor;
-            } else if (d.bins[0].CLUSTER == -1){
+            } else if (d.CLUSTER == -1){
                 return UNCLUSTERED_COLOR;
-            } else if(d.bins[0].CLUSTER == -2){
+            } else if(d.CLUSTER == -2){
                 return DELETED_COLOR;
             } else {
-                const cluster = d.bins[0].CLUSTER;
+                const cluster = d.CLUSTER;
                 const col_index = cluster % colors.length;
                 return colors[col_index];
             }
@@ -735,9 +664,9 @@ export class Scatterplot extends React.Component<Props, State> {
                             this._currYScale.invert(selection[1][1])], 
                             [this._currXScale.invert(selection[1][0]), 
                             this._currYScale.invert(selection[0][1])]];
-                let brushNodes : MergedGenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
-                    (d : MergedGenomicBin) => d.averageBaf, 
-                    (d : MergedGenomicBin)  => d.averageRd); // The new points selected
+                let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
+                    (d : GenomicBin) => d.reverseBAF, 
+                    (d : GenomicBin)  => d.RD); // The new points selected
              
                 if (brushNodes) {
                     if(event.sourceEvent.shiftKey) {
@@ -752,22 +681,25 @@ export class Scatterplot extends React.Component<Props, State> {
         }
     }
 
-    getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval): Element[] {
+    getElementsForGenomeLocation(hoveredLocation?: ChromosomeInterval) {
         if (!this._svg || !hoveredLocation || !this._canvas) {
             return [];
         }
+        const {data} = this.props;
 
-        let hoveredRecords = this.props.data.filter(record => record.location.chr === hoveredLocation.chr 
-                                                && hoveredLocation.start === record.location.start 
-                                                && hoveredLocation.end === record.location.end)//record.location.hasOverlap(hoveredLocation));
+        let hoveredRecords : GenomicBin[] = [];
+        hoveredRecords = data.filter(record => {
+            let currLoc = GenomicBinHelpers.toChromosomeInterval(record);
+            return (hoveredLocation.chr === currLoc.chr
+            && hoveredLocation.start === currLoc.start 
+            && hoveredLocation.end === currLoc.end)}) //record.location.hasOverlap(hoveredLocation));
+        
         if(hoveredRecords.length === 0) {
-            hoveredRecords = this.props.data.filter(record => record.location.hasOverlap(hoveredLocation))
+            hoveredRecords = data.filter(record => GenomicBinHelpers.toChromosomeInterval(record).hasOverlap(hoveredLocation))
         }
 
-        const results: Element[] = [];
         let svg = d3.select(this._svg);
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
-        const colorScale = d3.scaleOrdinal(CLUSTER_COLORS).domain(this._clusters);
         svg.select(".eventrect")
             .append("g")
             .classed(CIRCLE_GROUP_CLASS_NAME, true)
@@ -775,47 +707,36 @@ export class Scatterplot extends React.Component<Props, State> {
                 .data(hoveredRecords)
                 .enter()
                 .append("circle")
-                    .attr("id", d => this._circleIdPrefix + d.location.toString())
-                    .attr("cx", d => this._currXScale(d.averageBaf))
-                    .attr("cy", d => this._currYScale(d.averageRd)) // Alternatively, this could be 0.5 - baf
+                    .attr("id", d => this._circleIdPrefix + GenomicBinHelpers.toChromosomeInterval(d).toString())
+                    .attr("cx", d => this._currXScale(d.reverseBAF) || 0)
+                    .attr("cy", d => this._currYScale(d.RD) || 0) // Alternatively, this could be 0.5 - baf
                     .attr("r", 3)
                     .attr("fill", d => {
                         if(this.brushedNodes.has(d)) {
                             return this.props.customColor;
-                        } else if (d.bins[0].CLUSTER == -1){
+                        } else if (d.CLUSTER == -1){
                             return UNCLUSTERED_COLOR;
-                        } else if(d.bins[0].CLUSTER == -2){
+                        } else if(d.CLUSTER == -2){
                             return DELETED_COLOR;
-                        } else if(this.props.colors[d.bins[0].CLUSTER]) {
-                            return this.props.colors[d.bins[0].CLUSTER];
                         } else {
-                            return colorScale(String(d.bins[0].CLUSTER));
+                            const cluster = d.CLUSTER;
+                            const col_index = cluster % this.props.colors.length;
+                            return this.props.colors[col_index];
                         }
+                        
                     })
                     .attr("fill-opacity", 1)
                     .attr("stroke-width", 2)
                     .attr("stroke", "black");
-        
-
-        for (const record of hoveredRecords) {
-            const id = this._circleIdPrefix + record.location.toString();
-            const element = this._svg.getElementById(id);
-            if (element) {
-                results.push(element);
-            }
-        }
-
-        return results;
     }
 
     forceHover(genomeLocation?: ChromosomeInterval) {
         this.getElementsForGenomeLocation(genomeLocation);
     }
 
-    forceUnhover(genomeLocation?: ChromosomeInterval) {
-        //const elements = this.getElementsForGenomeLocation(genomeLocation);
-
-        if(this._svg)
+    forceUnhover() {
+        if(this._svg) {
             d3.select(this._svg).select("." + CIRCLE_GROUP_CLASS_NAME).remove();
+        }
     }
 }

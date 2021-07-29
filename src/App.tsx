@@ -147,9 +147,10 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     bin.CLUSTER = -1;
                 }
 
-                //if(applyLog) { 
-                bin.logRD = Math.log2(bin.RD);
-                //}
+                if(applyLog) { 
+                    bin.RD = Math.log2(bin.RD);
+                }
+                bin.logRD = bin.RD;
 
                 if(lastChr !==  bin["#CHR"]) {
                     chrNameLength.push({name: lastChr, length: (end - start)})
@@ -157,7 +158,8 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                     lastChr = bin["#CHR"]
                 }
                 end = Number(bin.END);
-                bin.BAF = 0.5 - bin.BAF;
+                //bin.BAF = 0.5 - bin.BAF;
+                bin.reverseBAF = 0.5 - bin.BAF;
             }
             
             
@@ -384,8 +386,7 @@ export class App extends React.Component<{}, State> {
             return;
         }
 
-        //const binSize = this.state.indexedData.guessBinSize();
-        this.setState({hoveredLocation: location}); //.endsRoundedToMultiple(binSize)
+        this.setState({hoveredLocation: location});
     }
 
     handleClusterAssignmentInput(event: any) {
@@ -397,7 +398,7 @@ export class App extends React.Component<{}, State> {
         this.setState({assignCluster: false});
     }
 
-    updateBrushedBins(brushedBins: MergedGenomicBin[]) {
+    updateBrushedBins(brushedBins: GenomicBin[]) {
         this.state.indexedData.setbrushedBins(brushedBins);
         this.setState({updatedBins: true});
     }

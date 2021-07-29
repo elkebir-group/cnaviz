@@ -13,6 +13,7 @@ import * as d3 from "d3";
 import "./SampleViz.css";
 import { zoom } from "d3-zoom";
 import {DisplayMode} from "../App"
+import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 
 interface Props {
     parentCallBack: any;
@@ -26,15 +27,15 @@ interface Props {
     curveState: CurveState;
     onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
-    onLocationHovered: (location: ChromosomeInterval | null, record?: MergedGenomicBin | null) => void;
+    onLocationHovered: (location: ChromosomeInterval | null, record?: GenomicBin | null) => void;
     selectedSample: string;
     onSelectedSample: any;
     invertAxis?: boolean;
     customColor: string;
     colors: string[];
     assignCluster: boolean;
-    onBrushedBinsUpdated: any;
-    brushedBins: MergedGenomicBin[];
+    onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
+    brushedBins: GenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
     onZoom: (newYScale: [number, number]) => void;
@@ -77,16 +78,16 @@ export class SampleViz2D extends React.Component<Props, State> {
         this.props.onSelectedSample(event.target.value);
     }
 
-    handleRecordsHovered(record: MergedGenomicBin | null) {
-        const location = record ? record.location : null;
+    handleRecordsHovered(record: GenomicBin | null) {
+        const location = record ? GenomicBinHelpers.toChromosomeInterval(record) : null;
         this.props.onLocationHovered(location);
     }
 
-    handleCallBack = (childData : MergedGenomicBin[]) => {
+    handleCallBack = (childData : GenomicBin[]) => {
         this.props.parentCallBack(childData);
     }
 
-    handleUpdatedBrushedBins(brushedBins: MergedGenomicBin[]) {
+    handleUpdatedBrushedBins(brushedBins: GenomicBin[]) {
         this.props.onBrushedBinsUpdated(brushedBins);
     }
 
@@ -98,40 +99,12 @@ export class SampleViz2D extends React.Component<Props, State> {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog} = this.props;
-        // const selectedSample = this.state.selectedSample;
-        // const sampleOptions = data.getSampleList().map(sampleName =>
-        //     <option key={sampleName} value={sampleName}>{sampleName}</option>
-        // );
-
-        //const rdRange = data.getRdRange(this.props.plotId);//data.getRdRange();
-        //rdRange[1] += 1; // Add one so it's prettier
         
-        //const testRdRange = data.getRdRange(this.props.plotId);
-        //console.log("TEST RD RANGE for plotId "+ String(this.props.plotId) + " : ", rdRange);
-        // .on("keypress", function() {
-        //     if (d3.event.key == "a") {
-        //         console.log("Zooming/Panning")
-                
-        //     } else if (d3.event.key == "b") {
-        //         console.log("Brushing")
-        //     }
-        
-
         return <div className="SampleViz-scatter">
-            {/* <div className="SampleViz-select">
-                Select sample: <select value={selectedSample} onChange={this.handleSelectedSampleChanged}>
-                    {sampleOptions}
-                </select>
-                <button onClick={this.onRemovePlot} style={{marginLeft: 10}}> Remove Sample </button>
-                
-            </div> */}
-            {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
-                {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
-            
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}
-                    data={data.getMergedRecords(selectedSample, chr)}
+                    data={data.getRecords(selectedSample, chr)}
                     rdRange={rdRange}
                     width={width}
                     height={height}

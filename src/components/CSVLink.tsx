@@ -16,15 +16,6 @@ export class CSV extends React.Component<Props> {
     shouldComponentUpdate(nextProps: Props) {
         return this.props["data"] !== nextProps["data"];
     }
-    // fetchData = () => {
-    //     fetch('/mydata/'+this.props.id).then(data => {
-    //         console.log(data);
-    //       this.setState({ data:data }, () => {
-    //         // click the CSVLink component to trigger the CSV download
-    //         this.csvLink.current.link.click()
-    //       })
-    //     })
-    //   }
 
     render() {
         
@@ -45,7 +36,5 @@ export class CSV extends React.Component<Props> {
             <button type="button" onClick={(e) => this.csvLink.link.click()}>Export to CSV</button>
         </div>
         return csvButton;
-        // return <CSVLink data={this.props.data} separator={separator} filename={"ClusteredBins.txt"} style={{marginLeft: 100}}> Download to CSV</CSVLink>
-        //<CSVDownload data={this.props.data} filename={"ClusteredBins.txt"} separator={separator}></CSVDownload> //
     }
 }

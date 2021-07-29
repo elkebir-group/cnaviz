@@ -18,7 +18,7 @@ export interface GenomicBin {
     readonly BETA: number;
     
     /** B allele frequency */
-    BAF: number;
+    readonly BAF: number;
 
     /** Cluster ID */
     CLUSTER: number;
@@ -29,6 +29,8 @@ export interface GenomicBin {
     readonly u_clone1: number;
     readonly cn_clone2: number;
     readonly u_clone2: number;
+    
+    reverseBAF: number;
 }
 
 export const GenomicBinHelpers = {
@@ -40,10 +42,6 @@ export const GenomicBinHelpers = {
      */
     toChromosomeInterval: function(bin: GenomicBin): ChromosomeInterval {
         return new ChromosomeInterval(bin["#CHR"], bin.START, bin.END);
-    },
-
-    getLocationKey: function(bin: GenomicBin): string {
-        return bin["#CHR"]+"|"+bin.START+"|"+bin.END;
     },
 
     flattenNestedBins: function(arr : any, result : any[] = []) : any[] {

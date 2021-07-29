@@ -13,6 +13,7 @@ import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
 import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
+import { GenomicBin } from "../model/GenomicBin";
 
 interface Props {
     parentCallBack: any;
@@ -26,13 +27,13 @@ interface Props {
     curveState: CurveState;
     onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
-    onLocationHovered: (location: ChromosomeInterval | null, record?: MergedGenomicBin | null) => void;
+    onLocationHovered: (location: ChromosomeInterval | null, record?: GenomicBin | null) => void;
     invertAxis?: boolean;
     customColor: string;
     colors: string[];
     assignCluster: boolean;
     onBrushedBinsUpdated: any;
-    brushedBins: MergedGenomicBin[];
+    brushedBins: GenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
     onRemovePlot: any;
