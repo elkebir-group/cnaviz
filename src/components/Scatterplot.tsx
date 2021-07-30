@@ -260,8 +260,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             ></svg>
                             <div className="Scatterplot-tools">
                                 {(displayMode==DisplayMode.zoom 
-                                    || displayMode==DisplayMode.boxzoom 
-                                    || displayMode==DisplayMode.select) 
+                                    || displayMode==DisplayMode.boxzoom) 
                                     && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
                                 {(displayMode==DisplayMode.select) 
                                     && <button id="new-cluster" onClick={()=>{
@@ -340,13 +339,15 @@ export class Scatterplot extends React.Component<Props, State> {
         }
          else if(!(_.isEqual(this.props["data"], prevProps["data"])) || this.props.yAxisToPlot !== prevProps.yAxisToPlot) {
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
-            if(this._currXScale === this._original_XScale 
-                    && this._currYScale === this._original_YScale) {
+            if((this._currXScale === this._original_XScale 
+                    && this._currYScale === this._original_YScale) || (this.props.yAxisToPlot !== prevProps.yAxisToPlot)) { 
+                console.log("Test 2");
                 this._currXScale = bafScale;
                 this._currYScale = rdrScale;
                 this._original_XScale = this._currXScale;
                 this._original_YScale = this._currYScale;
-            } else {
+            } else { // If zoom is applied, then update original scales
+                console.log("Test 1");
                 this._original_XScale = bafScale;
                 this._original_YScale = rdrScale;
             }
@@ -359,6 +360,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 .addAll(data)
 
             let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+            console.log("New scales: ", newScales);
             this.props.onZoom(newScales);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
@@ -453,11 +455,20 @@ export class Scatterplot extends React.Component<Props, State> {
                     return null;
                 }
                 const transform = d3.event.transform;
+                
                 this._current_transform = transform;
                 ctx.save();
-                zoomAxes(this._current_transform, true, true);
+                if(d3.event.sourceEvent && d3.event.sourceEvent.layerX < PADDING.left) {
+                    console.log("Y-AXIS ZOOM");
+                    zoomAxes(this._current_transform, false, true);
+                } else {
+                    console.log("BOTH AXIS ZOOM");
+                    zoomAxes(this._current_transform, true, true);
+                }
+                //zoomAxes(this._current_transform, true, true);
                 ctx.restore();
             }).on("end", () => {
+                console.log(d3.event.transform);
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                 self.props.onZoom(newScales);
             });
@@ -514,43 +525,22 @@ export class Scatterplot extends React.Component<Props, State> {
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
-            .on("mouseenter", () => { 
-                xScale = this._currXScale;
-                yScale = this._currYScale;
-            })
-            .on("wheel", () => {console.log("wheeled")})
-            .call(this.zoom)
-                .append("rect")
-                    .attr("x", PADDING.left)
-                    .attr("y", PADDING.top)
-                    .attr("width", width - PADDING.right - PADDING.left)
-                    .attr("height", height - PADDING.bottom - PADDING.top)
-                    .style("fill", "none")
-                    .style("pointer-events", "all")
-                    .attr("clip-path", "url(#clip)");
+            // .on("mouseenter", () => { 
+            //     xScale = this._currXScale;
+            //     yScale = this._currYScale;
+            // })
+            // .on("wheel", () => {console.log("wheeled")})
+            // .call(this.zoom)
+            .append("rect")
+                .attr("x", PADDING.left)
+                .attr("y", PADDING.top)
+                .attr("width", width - PADDING.right - PADDING.left)
+                .attr("height", height - PADDING.bottom - PADDING.top)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .attr("clip-path", "url(#clip)");
 
         
-        
-            // .call(this.zoom.transform, d3.zoomIdentity
-            //     .translate(width / 2, height / 2)
-            //     .scale(0.5)
-            //     .translate(-width / 2, -height / 2));
-                    
-        
-        var event_rectY = svg
-            .append("g")
-            .classed("eventrectY", true)
-            .on("mouseenter", () => { 
-                xScale = this._currXScale;
-                yScale = this._currYScale;
-            })
-            .call(zoomY)
-                .append("rect")
-                    .attr("width", PADDING.left)
-                    .attr("height", height-PADDING.bottom)
-                    .style("fill", "none")
-                    .style("pointer-events", "all")
-                    .attr("clip-path", "url(#clip)");
 
         if(displayMode === DisplayMode.select) {
             //this.createNewBrush();
@@ -577,12 +567,17 @@ export class Scatterplot extends React.Component<Props, State> {
                 })
                 .call(this.zoom) 
         } else if(displayMode === DisplayMode.zoom) {
+            svg.selectAll("." + "brush").remove();
             svg
-                .on("mouseenter", () => { 
-                    xScale = this._currXScale;
-                    yScale = this._currYScale;
-                })
-                .call(this.zoom) 
+                // .on("mouseenter", () => { 
+                //     xScale = this._currXScale;
+                //     yScale = this._currYScale;
+                // })
+                .call(this.zoom)
+                .call(this.zoom.transform, d3.zoomIdentity
+                    .translate(width / 2, height / 2)
+                    .scale(1)
+                    .translate(-width / 2, -height / 2));
         } else if(displayMode === DisplayMode.boxzoom) {
             const brush = d3.brush()
             .keyModifiers(false)
@@ -599,6 +594,21 @@ export class Scatterplot extends React.Component<Props, State> {
                 .attr('class', 'brush')
                 .call(brush);
         }
+
+        // var event_rectY = svg
+        //     .append("g")
+        //     .classed("eventrectY", true)
+        //     // .on("mouseenter", () => { 
+        //     //     xScale = this._currXScale;
+        //     //     yScale = this._currYScale;
+        //     // })
+        //     .call(zoomY)
+        //         .append("rect")
+        //             .attr("width", PADDING.left)
+        //             .attr("height", height-PADDING.bottom)
+        //             .style("fill", "none")
+        //             .style("pointer-events", "all")
+        //             .attr("clip-path", "url(#clip)");
 
         function brush_endEvent() {
             if(!self._svg) {return;}
@@ -633,10 +643,14 @@ export class Scatterplot extends React.Component<Props, State> {
         // A function that updates the chart when the user zoom and thus new boundaries are available
         
         function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
+            // console.log(self._currXScale.domain());
+            // console.log(self._currYScale.domain());
+
             var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
             var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
             self._currXScale = newX;
             self._currYScale = newY;
+
 
             // update axes with these new boundaries
             xAxis.call(d3.axisBottom(newX))

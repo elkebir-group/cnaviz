@@ -588,10 +588,13 @@ export class App extends React.Component<{}, State> {
                     onToggleLog = {this.toggleLog}
                 />
             </div>
-
+            
             <div className={this.state.sidebar ? "marginContent" : "content"}>
-                {/* <div className="App-title-bar">
-                    <h1>CNA-Viz</h1> */}
+            
+                <div className="App-title-bar">
+                
+                    {/* <h1>CNA-Viz</h1> */}
+                    {/* <input style= {{marginLeft: 200}} type="checkbox" data-toggle="toggle" data-on="Ready" data-off="Not Ready" data-onstyle="success" data-offstyle="danger"/> */}
                     {/* {samples.length === 0 &&
                         <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
                     } */}
@@ -601,7 +604,7 @@ export class App extends React.Component<{}, State> {
                     <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} /> */}
                     {/* <span className="App-CheckBox-explanation">Apply provided clustering: </span>
                     <input type="checkbox" onClick={this.toggleClustering.bind(this)}  /> */}
-                {/* </div> */}
+                </div>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
             </div>
