@@ -16,7 +16,7 @@ import "./Scatterplot.css";
 import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { start } from "repl";
-import { cluster } from "d3";
+import { cluster, ContainerElement } from "d3";
 
 const visutils = require('vis-utils');
 
@@ -264,6 +264,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                     && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
                                 {(displayMode==DisplayMode.select) 
                                     && <button id="new-cluster" onClick={()=>{
+                                    
                                     const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
                                     let nextAvailable = highestCurrentCluster + 1;
                                     let startIndex = 0;
@@ -411,15 +412,15 @@ export class Scatterplot extends React.Component<Props, State> {
         let yLabel = "RDR";
         
         const svg = d3.select(this._svg);
-
+        
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
-        // X axis stuff
-        let xAxis = svg.append("g")
-            .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-            .call(d3.axisBottom(this._currXScale));
+    //     // X axis stuff
+    //     let xAxis = svg.append("g")
+    //         .classed(SCALES_CLASS_NAME, true)
+    //         .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+    //         .call(d3.axisBottom(this._currXScale));
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
@@ -428,11 +429,11 @@ export class Scatterplot extends React.Component<Props, State> {
             .style("text-anchor", "middle")
             .text(xLabel);
 
-        // Y axis stuff
-       let yAxis = svg.append("g")
-            .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `translate(${PADDING.left}, 0)`)
-            .call(d3.axisLeft(this._currYScale));
+    // // Y axis stuff
+    //    let yAxis = svg.append("g")
+    //         .classed(SCALES_CLASS_NAME, true)
+    //         .attr("transform", `translate(${PADDING.left}, 0)`)
+    //         .call(d3.axisLeft(this._currYScale));
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("y", PADDING.left-40)
@@ -440,60 +441,145 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("transform", `rotate(-90)`)
             .style("text-anchor", "middle")
             .text(yLabel);
+        
+        let xAx = (g : any, scale : any) => g
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+            .call(d3.axisBottom(scale))
+        
+        let yAx = (g : any, scale : any) => g
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("transform", `translate(${PADDING.left}, 0)`)
+            .call(d3.axisLeft(scale))
             
+        const ctx = this._canvas.getContext("2d")!;  
+
         let previous : string[] = [];
         brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()))
         this.previous_brushed_nodes = new Set(previous);
         const previous_brushed_nodes = this.previous_brushed_nodes;
 
-        const ctx = this._canvas.getContext("2d")!;
-        this.zoom = d3.zoom()
-            .scaleExtent([0, 100])
-            .extent([[0, 0], [width, height]])
-            .on("zoom", () => {
-                if (displayMode === DisplayMode.select) {
-                    return null;
-                }
-                const transform = d3.event.transform;
-                
-                this._current_transform = transform;
-                ctx.save();
-                if(d3.event.sourceEvent && d3.event.sourceEvent.layerX < PADDING.left) {
-                    console.log("Y-AXIS ZOOM");
-                    zoomAxes(this._current_transform, false, true);
-                } else {
-                    console.log("BOTH AXIS ZOOM");
-                    zoomAxes(this._current_transform, true, true);
-                }
-                //zoomAxes(this._current_transform, true, true);
-                ctx.restore();
-            }).on("end", () => {
-                console.log(d3.event.transform);
-                let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                self.props.onZoom(newScales);
-            });
+        const gx = svg.append("g");
+        const gy = svg.append("g");
+        let z = d3.zoomIdentity;
+        const zoomX : any = d3.zoom().scaleExtent([0, 100]);
+        const zoomY : any = d3.zoom().scaleExtent([0, 100]);
+        const tx = () => d3.zoomTransform(gx.node() as Element);
+        const ty = () => d3.zoomTransform(gy.node() as Element);
+        gx.call(zoomX).attr("pointer-events", "none");
+        gy.call(zoomY).attr("pointer-events", "none");
         
-        let zoomY : any = d3.zoom()
-            .scaleExtent([0, 100])
-            .extent([[0, 0], [width, height]])
-            .on("zoom", () => {
-                const transform = d3.event.transform;
-                this._current_transform = transform;
-                ctx.save();
-                zoomAxes(this._current_transform, false, true);
-                ctx.restore();})
-            .on("end", () => {
+        const zoom : any = d3.zoom().on("zoom", () => {
+            try {
+                const t = d3.event.transform;
+                const k = t.k / z.k;
+                const point = center(d3.event);
+
+                // is it on an axis?
+                const doX = point[0] > xScale.range()[0];
+                const doY = point[1] < yScale.range()[0];
+                if(displayMode === DisplayMode.zoom || !(doX && doY)) {
+                    if (k === 1) {
+                    // pure translation?
+                    doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
+                    doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
+                    } else {
+                    // if not, we're zooming on a fixed point
+                    doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
+                    doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
+                    }
+                }
+            
+                z = t;
+                redraw();
+            } catch(error) {
+                console.log("DisplayMode: ", displayMode + " " + DisplayMode.select);
+                console.log("TEST: ", error);
+            }
+          }).on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                //console.log("New scales: ", newScales);
                 self.props.onZoom(newScales);
-            });
+            }
+        );
+        
+        function center(event : any) {
+            if (event.sourceEvent) {
+                return [event.sourceEvent.layerX, event.sourceEvent.layerY];
+            }
+            return [width / 2, height / 2];
+        }
+
+        function redraw() {
+            const xr = tx().rescaleX(xScale);
+            const yr = ty().rescaleY(yScale);
+        
+            gx.call(xAx , xr);
+            gy.call(yAx, yr);
+            
+            ctx.clearRect(0, 0, width, height);
+            let range = self._currXScale.range();
+            let range2 = self._currYScale.range();
+            self._currXScale = xr;
+            self._currYScale = yr;
+            for (const d of data) {
+                let x = xr(d.reverseBAF);
+                let y = yr(d[yAxisToPlot]);
+
+                if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+                    ctx.fillStyle = chooseColor(d);
+                    ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+                }
+            }
+            
+        }
+
+        // this.zoom = d3.zoom()
+        //     .scaleExtent([0, 100])
+        //     .extent([[0, 0], [width, height]])
+        //     .on("zoom", () => {
+        //         if (displayMode === DisplayMode.select) {
+        //             return null;
+        //         }
+        //         const transform = d3.event.transform;
+                
+        //         this._current_transform = transform;
+        //         ctx.save();
+        //         if(d3.event.sourceEvent && d3.event.sourceEvent.layerX < PADDING.left) {
+        //             console.log("Y-AXIS ZOOM");
+        //             zoomAxes(this._current_transform, false, true);
+        //         } else {
+        //             console.log("BOTH AXIS ZOOM");
+        //             zoomAxes(this._current_transform, true, true);
+        //         }
+        //         //zoomAxes(this._current_transform, true, true);
+        //         ctx.restore();
+        //     }).on("end", () => {
+        //         console.log(d3.event.transform);
+        //         let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+        //         self.props.onZoom(newScales);
+        //     });
+        
+        // let zoomY : any = d3.zoom()
+        //     .scaleExtent([0, 100])
+        //     .extent([[0, 0], [width, height]])
+        //     .on("zoom", () => {
+        //         const transform = d3.event.transform;
+        //         this._current_transform = transform;
+        //         ctx.save();
+        //         zoomAxes(this._current_transform, false, true);
+        //         ctx.restore();})
+        //     .on("end", () => {
+        //         let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+        //         //console.log("New scales: ", newScales);
+        //         self.props.onZoom(newScales);
+        //     });
         
         this._canvas.width = width;
         this._canvas.height = height;
 
         applyRetinaFix(this._canvas);
 
-        drawAllGenomicBins();
+        // drawAllGenomicBins();
 
         function drawAllGenomicBins() {
             ctx.clearRect(0, 0, width, height);
@@ -521,16 +607,12 @@ export class Scatterplot extends React.Component<Props, State> {
                 ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
             }
         }
+        redraw();
+
         
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
-            // .on("mouseenter", () => { 
-            //     xScale = this._currXScale;
-            //     yScale = this._currYScale;
-            // })
-            // .on("wheel", () => {console.log("wheeled")})
-            // .call(this.zoom)
             .append("rect")
                 .attr("x", PADDING.left)
                 .attr("y", PADDING.top)
@@ -556,28 +638,13 @@ export class Scatterplot extends React.Component<Props, State> {
                         this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
                     
-            // // attach the brush to the chart
+            // attach the brush to the chart
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
-            svg
-                .on("mouseenter", () => { 
-                    xScale = this._currXScale;
-                    yScale = this._currYScale;
-                })
-                .call(this.zoom) 
         } else if(displayMode === DisplayMode.zoom) {
             svg.selectAll("." + "brush").remove();
-            svg
-                // .on("mouseenter", () => { 
-                //     xScale = this._currXScale;
-                //     yScale = this._currYScale;
-                // })
-                .call(this.zoom)
-                .call(this.zoom.transform, d3.zoomIdentity
-                    .translate(width / 2, height / 2)
-                    .scale(1)
-                    .translate(-width / 2, -height / 2));
+            
         } else if(displayMode === DisplayMode.boxzoom) {
             const brush = d3.brush()
             .keyModifiers(false)
@@ -589,26 +656,13 @@ export class Scatterplot extends React.Component<Props, State> {
                         brush_endEvent();
                 });
                
-            // // attach the brush to the chart
+            // attach the brush to the chart
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
         }
 
-        // var event_rectY = svg
-        //     .append("g")
-        //     .classed("eventrectY", true)
-        //     // .on("mouseenter", () => { 
-        //     //     xScale = this._currXScale;
-        //     //     yScale = this._currYScale;
-        //     // })
-        //     .call(zoomY)
-        //         .append("rect")
-        //             .attr("width", PADDING.left)
-        //             .attr("height", height-PADDING.bottom)
-        //             .style("fill", "none")
-        //             .style("pointer-events", "all")
-        //             .attr("clip-path", "url(#clip)");
+        svg.call(zoom).call(zoom.transform, d3.zoomIdentity.scale(1.0));
 
         function brush_endEvent() {
             if(!self._svg) {return;}
@@ -626,12 +680,13 @@ export class Scatterplot extends React.Component<Props, State> {
                     const {bafScale, rdrScale} = self.computeScales(newRdRange, width, height, newBafRange, true);
                     self._currXScale = bafScale;
                     self._currYScale = rdrScale;
-                    xAxis.call(d3.axisBottom(self._currXScale))
-                    yAxis.call(d3.axisLeft(self._currYScale))
+                    //xAx.call(d3.axisBottom(self._currXScale))
+                    //yAx.call(d3.axisLeft(self._currYScale))
                     
                     self.redraw();
 
                     drawAllGenomicBins();
+                    //redraw();
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     self.props.onZoom(newScales);
@@ -642,22 +697,22 @@ export class Scatterplot extends React.Component<Props, State> {
         
         // A function that updates the chart when the user zoom and thus new boundaries are available
         
-        function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
-            // console.log(self._currXScale.domain());
-            // console.log(self._currYScale.domain());
+        // function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
+        //     // console.log(self._currXScale.domain());
+        //     // console.log(self._currYScale.domain());
 
-            var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
-            var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
-            self._currXScale = newX;
-            self._currYScale = newY;
+        //     var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
+        //     var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
+        //     self._currXScale = newX;
+        //     self._currYScale = newY;
 
 
-            // update axes with these new boundaries
-            xAxis.call(d3.axisBottom(newX))
-            yAxis.call(d3.axisLeft(newY))
+        //     // update axes with these new boundaries
+        //     xAxis.call(d3.axisBottom(newX))
+        //     yAxis.call(d3.axisLeft(newY))
         
-            drawAllGenomicBins();
-        }
+        //     drawAllGenomicBins();
+        // }
         
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
