@@ -103,9 +103,8 @@ export class DataWarehouse {
                 this._chrs = _.union(this._chrs, Object.keys(groupedByChr));
             }
         }
-        console.log("TEST 3");
+
         this._cluster_filters = this._clusters;
-        
         this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
@@ -262,10 +261,7 @@ export class DataWarehouse {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
                 for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
-                    this._locationGroupedData[locKey][j].CLUSTER = cluster
-                    // for(let k =0; k < this._locationGroupedData[locKey][j].bins.length; k++) {
-                    //     this._locationGroupedMergedData[locKey][j].bins[k].CLUSTER = cluster
-                    // }
+                    this._locationGroupedData[locKey][j].CLUSTER = cluster;
                 }
             }
         }
@@ -278,35 +274,8 @@ export class DataWarehouse {
         this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
-        // this._merged_sample_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].SAMPLE);
-        // this._merged_cluster_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.bins[0].CLUSTER);
-        // this._merged_chr_dim = this._merged_ndx.dimension((d:MergedGenomicBin) => d.location.chr);
-
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
-
-        // let allBins : GenomicBin[][] = [];
-        // flattenNestedBins.forEach(d => allBins.push(d.bins));
-        // const flattenedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allBins);
-        // flattenedBins.sort((binOne : GenomicBin, binTwo : GenomicBin) => {
-        //     let chrNumb = Number(binOne["#CHR"].substr(3));
-        //     let chrNumb2 = Number(binTwo["#CHR"].substr(3));
-            
-        //     if(chrNumb > chrNumb2) return 1;
-        //     if(chrNumb < chrNumb2) return -1;
-
-        //     if(binOne.START > binTwo.START) return 1;
-        //     if(binOne.START < binTwo.START) return -1;
-
-        //     return 0;
-        // })
-        
-        //this._ndx.remove();
-        //this._ndx.add(flattenedBins);
-        // this._ndx = crossfilter(flattenedBins);
-        // this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
-        // this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
-        // this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
 
         const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
         clusterTable.forEach(d => d.value = Number(((d.value/flattenNestedBins.length) * 100).toFixed(2)));

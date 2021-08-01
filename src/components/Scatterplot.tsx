@@ -110,7 +110,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.state = {
-            selectedCluster: this._clusters[0]
+            selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID
         }
         this.brushedNodes = new Set();
         this.previous_brushed_nodes = new Set();
@@ -136,9 +136,28 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     initializeListOfClusters() : string[] {
-        let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        let clusters = [...new Set(this.props.data.map(d => String(d.CLUSTER)))].sort(collator.compare); 
-        return clusters;
+        //let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+        //let clusters = [...new Set(this.props.data.map(d => String(d.CLUSTER)))].sort(collator.compare); 
+        let clusterTableData = this.props.clusterTableData;
+        clusterTableData.sort((a : any, b : any) => {
+            if (a.key > b.key) return 1;
+            if (a.key < b.key) return -1;
+            return 0;
+        })
+        console.log("INITIALIZED CLUSTERS: ", clusterTableData);
+
+        this._clusters = [];
+        for(const obj of clusterTableData) {
+            this._clusters.push(obj.key);
+        }
+        console.log("INITIALIZED CLUSTERS2: ", this._clusters);
+
+        while(this._clusters.length > 0 && (this._clusters[0] == UNCLUSTERED_ID || this._clusters[0] == DELETED_ID)) {
+            //console.log("REMOVING");
+            this._clusters.shift();
+        }
+        console.log("INITIALIZED CLUSTERS3: ", this._clusters);
+        return this._clusters;
     }
 
     handleMouseMove(event: React.MouseEvent<SVGSVGElement>) {
@@ -238,13 +257,16 @@ export class Scatterplot extends React.Component<Props, State> {
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
         
-        if(!this._clusters.includes(UNCLUSTERED_ID)) {
-            clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
-        }
-
-        if(!this._clusters.includes(DELETED_ID)) {
-            clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
-        }
+        // if(this._clusters.indexOf(UNCLUSTERED_ID) > -1) {
+        //     console.log("DOESN'T have -1");
+        //     console.log(this._clusters);
+            
+        // }
+        clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
+        clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
+        // if(this._clusters.indexOf(DELETED_ID) <= -1) {
+            
+        // }
         
         
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{position: "relative"}}>
@@ -264,34 +286,40 @@ export class Scatterplot extends React.Component<Props, State> {
                                     && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
                                 {(displayMode==DisplayMode.select) 
                                     && <button id="new-cluster" onClick={()=>{
+                                    console.log(this.props.clusterTableData);
                                     
-                                    const highestCurrentCluster = Number(this._clusters[this._clusters.length-1]);
+                                    let clusters = this._clusters;
+                                    
+                                    
+
+                                    const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
                                     let nextAvailable = highestCurrentCluster + 1;
                                     let startIndex = 0;
 
                                     // Assumes the clusters are sorted least to greatest
-                                    for(let i = 0; i < 2; i++) {
-                                        if(this._clusters[i] === UNCLUSTERED_ID || this._clusters[i] === DELETED_ID) {
-                                            startIndex++;
-                                        }
-                                    }
+                                    // for(let i = 0; i < 2; i++) {
+                                    //     if(clusters[i] === UNCLUSTERED_ID || clusters[i] === DELETED_ID) {
+                                    //         startIndex++;
+                                    //     }
+                                    // }
 
-                                    for(let i = 0; i < this._clusters.length; i++) {
-                                        if(Number(this._clusters[i + startIndex]) !== i){
+                                    for(let i = 0; i < clusters.length; i++) {
+                                        if(Number(clusters[i]) !== i){
                                             nextAvailable = i;
                                             break;
                                         }
                                     }
-                                    
+                                    console.log(nextAvailable);
                                     this.onTrigger(nextAvailable);
                                     this.brushedNodes = new Set();
-                                    this._clusters = this.initializeListOfClusters();
+                                    //this._clusters = this.initializeListOfClusters();
                                 }} >New Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
                                     <button id="assign-cluster" onClick={() => {
+                                        console.log("SELECTED CLUSTER: ", this.state.selectedCluster);
                                         this.onTrigger(this.state.selectedCluster);
                                         this.brushedNodes = new Set();
-                                        this._clusters = this.initializeListOfClusters();
+                                        //this._clusters = this.initializeListOfClusters();
                                     }}>Assign Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
                                     <select
@@ -330,7 +358,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
             this.brushedNodes = new Set();
-            this._clusters = this.initializeListOfClusters();
+            //this._clusters = this.initializeListOfClusters();
         } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height"])) {
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
@@ -342,13 +370,11 @@ export class Scatterplot extends React.Component<Props, State> {
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
             if((this._currXScale === this._original_XScale 
                     && this._currYScale === this._original_YScale) || (this.props.yAxisToPlot !== prevProps.yAxisToPlot)) { 
-                console.log("Test 2");
                 this._currXScale = bafScale;
                 this._currYScale = rdrScale;
                 this._original_XScale = this._currXScale;
                 this._original_YScale = this._currYScale;
             } else { // If zoom is applied, then update original scales
-                console.log("Test 1");
                 this._original_XScale = bafScale;
                 this._original_YScale = rdrScale;
             }
@@ -365,6 +391,10 @@ export class Scatterplot extends React.Component<Props, State> {
             this.props.onZoom(newScales);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
+        }
+
+        if(this.props.clusterTableData !== prevProps.clusterTableData) {
+            this.initializeListOfClusters();
         }
     }
 
@@ -521,58 +551,33 @@ export class Scatterplot extends React.Component<Props, State> {
             let range2 = self._currYScale.range();
             self._currXScale = xr;
             self._currYScale = yr;
-            for (const d of data) {
-                let x = xr(d.reverseBAF);
-                let y = yr(d[yAxisToPlot]);
 
-                if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                    ctx.fillStyle = chooseColor(d);
-                    ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+            for (const d of data) {
+                if(!previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
+                    //drawGenomicBin(d);
+                    let x = xr(d.reverseBAF);
+                    let y = yr(d[yAxisToPlot]);
+
+                    if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+                        ctx.fillStyle = chooseColor(d);
+                        ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+                    }
                 }
             }
-            
-        }
 
-        // this.zoom = d3.zoom()
-        //     .scaleExtent([0, 100])
-        //     .extent([[0, 0], [width, height]])
-        //     .on("zoom", () => {
-        //         if (displayMode === DisplayMode.select) {
-        //             return null;
-        //         }
-        //         const transform = d3.event.transform;
-                
-        //         this._current_transform = transform;
-        //         ctx.save();
-        //         if(d3.event.sourceEvent && d3.event.sourceEvent.layerX < PADDING.left) {
-        //             console.log("Y-AXIS ZOOM");
-        //             zoomAxes(this._current_transform, false, true);
-        //         } else {
-        //             console.log("BOTH AXIS ZOOM");
-        //             zoomAxes(this._current_transform, true, true);
-        //         }
-        //         //zoomAxes(this._current_transform, true, true);
-        //         ctx.restore();
-        //     }).on("end", () => {
-        //         console.log(d3.event.transform);
-        //         let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-        //         self.props.onZoom(newScales);
-        //     });
-        
-        // let zoomY : any = d3.zoom()
-        //     .scaleExtent([0, 100])
-        //     .extent([[0, 0], [width, height]])
-        //     .on("zoom", () => {
-        //         const transform = d3.event.transform;
-        //         this._current_transform = transform;
-        //         ctx.save();
-        //         zoomAxes(this._current_transform, false, true);
-        //         ctx.restore();})
-        //     .on("end", () => {
-        //         let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-        //         //console.log("New scales: ", newScales);
-        //         self.props.onZoom(newScales);
-        //     });
+            for (const d of data) {
+                if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
+                    //drawGenomicBin(d);
+                    let x = xr(d.reverseBAF);
+                    let y = yr(d[yAxisToPlot]);
+
+                    if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
+                        ctx.fillStyle = chooseColor(d);
+                        ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
+                    }
+                }
+            } 
+        }
         
         this._canvas.width = width;
         this._canvas.height = height;

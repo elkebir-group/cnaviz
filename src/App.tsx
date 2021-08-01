@@ -393,7 +393,9 @@ export class App extends React.Component<{}, State> {
 
     handleCallBack(selectedCluster: string | number) {
         this.state.indexedData.updateCluster(Number(selectedCluster));
+        console.log("AFTER callback")
         this.setState({assignCluster: false});
+        this.state.indexedData.setChrFilter(this.state.selectedChr);
     }
 
     updateBrushedBins(brushedBins: GenomicBin[]) {
