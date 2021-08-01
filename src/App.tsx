@@ -243,6 +243,10 @@ interface State {
     sidebar: boolean;
 
     chosenFile: string;
+
+    showLinearPlot: boolean;
+
+    showScatterPlot: boolean;
 }
 
 
@@ -271,8 +275,8 @@ export class App extends React.Component<{}, State> {
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
-            sampleAmount: 1,
-            showComponents: [true],
+            sampleAmount: 2,
+            showComponents: [true, true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
             assignCluster: false,
@@ -285,7 +289,9 @@ export class App extends React.Component<{}, State> {
             selectedSample: "",
             displayMode: DisplayMode.select,  
             sidebar:  true,
-            chosenFile: ""
+            chosenFile: "",
+            showLinearPlot: true,
+            showScatterPlot: false
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -318,7 +324,12 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.keyCode == 32) {
                 self.onSideBarChange(!self.state.sidebar);
+            } else if (d3.event.key == "s") {
+                self.setState({showScatterPlot: !self.state.showScatterPlot})
+            } else if(d3.event.key == "l") {
+                self.setState({showLinearPlot: !self.state.showLinearPlot})
             }
+            
         })
 
         d3.select("body").on("keydown", function(){
@@ -558,6 +569,8 @@ export class App extends React.Component<{}, State> {
                                     {...scatterplotProps} 
                                     initialSelectedSample={samples[i]} 
                                     plotId={i}
+                                    showLinearPlot={this.state.showLinearPlot}
+                                    showScatterPlot={this.state.showScatterPlot}
                                 ></SampleViz>)}
                     </div>
                 </div>);

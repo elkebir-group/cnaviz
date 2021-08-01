@@ -39,8 +39,10 @@ body {
 }
 
 .sampleviz-wrapper {
-    display: grid;
+    display: flex;
     justify-content: center;
+    flex-direction: column;
+    flex-wrap: wrap;
     padding-top: 25px;
 }
 

@@ -42,6 +42,8 @@ interface Props {
     clusterTableData: any;
     applyLog: boolean;
     onClusterSelected: any;
+    showLinearPlot: boolean;
+    showScatterPlot: boolean;
 }
 
 interface State {
@@ -79,7 +81,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, initialSelectedSample, plotId, applyLog} = this.props;
+        const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot} = this.props;
         const selectedSample = this.state.selectedSample;
         const rdRange = data.getRdRange(selectedSample, applyLog);
         //console.log("NEW RD RANGE: ", rdRange);
@@ -99,22 +101,23 @@ export class SampleViz extends React.Component<Props, State> {
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>
             <div className="SampleViz-plots">
-                <SampleViz2D 
+                {showScatterPlot && <SampleViz2D 
                         {...this.props} 
                         onSelectedSample={this.handleSelectedSampleChanged}
                         selectedSample={selectedSample}
                         initialSelectedSample={initialSelectedSample}
                         onZoom={this.handleZoom}
-                        rdRange={rdRange}/> 
-                <SampleViz1D 
+                        rdRange={rdRange}/>}
+                {showLinearPlot && <SampleViz1D 
                     {...this.props}  
                     yScale={this.state.scales.yScale} 
                     xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
-                    rdRange={rdRange} />
+                    rdRange={rdRange} />}
             </div>
-            <div className="SampleViz-clusters">
+            {/* <div className="SampleViz-clusters"> */}
+            <div className={(showLinearPlot && showScatterPlot) ? "SampleViz-clusters" : ""}>
                 <ClusterTable 
                     data={data.brushedTableData()} 
                     onClusterRowsChange={() => {}} 
