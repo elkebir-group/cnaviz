@@ -15,6 +15,7 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 
+
 interface Props {
     parentCallBack: any;
     data: DataWarehouse;
@@ -44,6 +45,7 @@ interface Props {
     onClusterSelected: any;
     showLinearPlot: boolean;
     showScatterPlot: boolean;
+    showSidebar: boolean;
 }
 
 interface State {
@@ -76,12 +78,11 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleZoom(newScales: any) {
-        //console.log(newScales)
         this.setState({scales: newScales})
     }
 
     render() {
-        const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot} = this.props;
+        const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot, dispMode, showSidebar} = this.props;
         const selectedSample = this.state.selectedSample;
         const rdRange = data.getRdRange(selectedSample, applyLog);
         //console.log("NEW RD RANGE: ", rdRange);
@@ -91,15 +92,17 @@ export class SampleViz extends React.Component<Props, State> {
         rdRange[1] += 0.5;
         
         return <div className="SampleViz-wrapper">
+            {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
                 Sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
                 <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
                 <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
+                {/* <button onClick={() => {}} style={{marginLeft: 9}}> Reset View </button> */}
                 {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
                 {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
-            </div>
+            </div>}
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 
@@ -114,9 +117,12 @@ export class SampleViz extends React.Component<Props, State> {
                     xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
-                    rdRange={rdRange} />}
+                    rdRange={rdRange}
+                    displayMode={dispMode}
+                    width={showSidebar ? 800 : 800} />}
             </div>
             {/* <div className="SampleViz-clusters"> */}
+            {(showLinearPlot || showScatterPlot) &&
             <div className={(showLinearPlot && showScatterPlot) ? "SampleViz-clusters" : ""}>
                 <ClusterTable 
                     data={data.brushedTableData()} 
@@ -129,7 +135,7 @@ export class SampleViz extends React.Component<Props, State> {
                     selectable={false}
                     colors={this.props.colors}
                 ></ClusterTable>
-            </div>
+            </div>}
             
         </div>
     }

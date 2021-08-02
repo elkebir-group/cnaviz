@@ -291,7 +291,7 @@ export class App extends React.Component<{}, State> {
             sidebar:  true,
             chosenFile: "",
             showLinearPlot: true,
-            showScatterPlot: false
+            showScatterPlot: true
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -329,7 +329,7 @@ export class App extends React.Component<{}, State> {
             } else if(d3.event.key == "l") {
                 self.setState({showLinearPlot: !self.state.showLinearPlot})
             }
-            
+
         })
 
         d3.select("body").on("keydown", function(){
@@ -515,6 +515,7 @@ export class App extends React.Component<{}, State> {
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
+        //indexedData.setChrFilters(["chr1", "chr2", "chr3"]);
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             // clusterTableData.sort((a : any, b : any) => {
@@ -571,6 +572,7 @@ export class App extends React.Component<{}, State> {
                                     plotId={i}
                                     showLinearPlot={this.state.showLinearPlot}
                                     showScatterPlot={this.state.showScatterPlot}
+                                    showSidebar={this.state.sidebar}
                                 ></SampleViz>)}
                     </div>
                 </div>);

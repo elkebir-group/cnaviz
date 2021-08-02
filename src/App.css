@@ -59,17 +59,6 @@ body {
     justify-content: center;
 }
 
-.container-fluid {
-    /* display: flex;
-    justify-content: center; */
-   
-}
-
-.content {
-    /* display: flex;
-    flex-direction: column; */
-}
-
 .marginContent {
     margin-left: 300px;
 }

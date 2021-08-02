@@ -93,3 +93,16 @@
     border-top: 2px solid black;
   }
 
+  .closemenu {
+    color: #000;
+    position: absolute;
+    right: -30px;
+    z-index: 9999;
+    line-height: 20px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 22px;
+    top: 50%;
+    /* right: -60px; */
+    cursor: pointer;
+  }

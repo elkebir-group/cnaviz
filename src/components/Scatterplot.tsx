@@ -136,27 +136,24 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     initializeListOfClusters() : string[] {
-        //let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-        //let clusters = [...new Set(this.props.data.map(d => String(d.CLUSTER)))].sort(collator.compare); 
         let clusterTableData = this.props.clusterTableData;
         clusterTableData.sort((a : any, b : any) => {
             if (a.key > b.key) return 1;
             if (a.key < b.key) return -1;
             return 0;
         })
-        console.log("INITIALIZED CLUSTERS: ", clusterTableData);
 
         this._clusters = [];
         for(const obj of clusterTableData) {
             this._clusters.push(obj.key);
         }
-        console.log("INITIALIZED CLUSTERS2: ", this._clusters);
 
-        while(this._clusters.length > 0 && (this._clusters[0] == UNCLUSTERED_ID || this._clusters[0] == DELETED_ID)) {
-            //console.log("REMOVING");
+        while(this._clusters.length > 0 
+            && (this._clusters[0] == UNCLUSTERED_ID 
+            || this._clusters[0] == DELETED_ID)) {
             this._clusters.shift();
         }
-        console.log("INITIALIZED CLUSTERS3: ", this._clusters);
+
         return this._clusters;
     }
 
@@ -267,17 +264,21 @@ export class Scatterplot extends React.Component<Props, State> {
         // if(this._clusters.indexOf(DELETED_ID) <= -1) {
             
         // }
+        // window.getRect
         
-        
-        let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{position: "relative"}}>
+        let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" >
                             <canvas
                                 ref={node => this._canvas = node}
                                 width={width}
                                 height={height}
-                                style={{position: "absolute", zIndex: -1}} />
+                                // style={{position: "absolute", zIndex: -1}} 
+                                className={"canvas"}
+                                />
                             <svg
                                 ref={node => this._svg = node}
+                                // className={"svg"}
                                 width={width} height={height}
+                                // style={{minWidth: width, minHeight: height}}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
@@ -286,22 +287,9 @@ export class Scatterplot extends React.Component<Props, State> {
                                     && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
                                 {(displayMode==DisplayMode.select) 
                                     && <button id="new-cluster" onClick={()=>{
-                                    console.log(this.props.clusterTableData);
-                                    
                                     let clusters = this._clusters;
-                                    
-                                    
-
                                     const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
                                     let nextAvailable = highestCurrentCluster + 1;
-                                    let startIndex = 0;
-
-                                    // Assumes the clusters are sorted least to greatest
-                                    // for(let i = 0; i < 2; i++) {
-                                    //     if(clusters[i] === UNCLUSTERED_ID || clusters[i] === DELETED_ID) {
-                                    //         startIndex++;
-                                    //     }
-                                    // }
 
                                     for(let i = 0; i < clusters.length; i++) {
                                         if(Number(clusters[i]) !== i){
@@ -309,17 +297,15 @@ export class Scatterplot extends React.Component<Props, State> {
                                             break;
                                         }
                                     }
-                                    console.log(nextAvailable);
+
                                     this.onTrigger(nextAvailable);
                                     this.brushedNodes = new Set();
-                                    //this._clusters = this.initializeListOfClusters();
                                 }} >New Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
                                     <button id="assign-cluster" onClick={() => {
                                         console.log("SELECTED CLUSTER: ", this.state.selectedCluster);
                                         this.onTrigger(this.state.selectedCluster);
                                         this.brushedNodes = new Set();
-                                        //this._clusters = this.initializeListOfClusters();
                                     }}>Assign Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
                                     <select

@@ -2,7 +2,7 @@ import React from "react";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { hg38 } from "../model/Genome";
-import {genome} from "../App";
+import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";
 import { MergedGenomicBin } from "../model/BinMerger";
@@ -20,11 +20,13 @@ interface Props {
     xScale: [number, number] | null;
     clusterTableData: any;
     applyLog: boolean;
+    displayMode: DisplayMode;
+    width: number;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
-        brushedBins, customColor, colors, yScale, clusterTableData, applyLog} = props;
+        brushedBins, customColor, colors, yScale, clusterTableData, applyLog, displayMode, width} = props;
 
     return <LinearPlot
         data={data}
@@ -40,11 +42,14 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
         brushedBins={brushedBins}
         customColor={customColor}
         colors={colors}
-        clusterTableData={clusterTableData}/>
+        clusterTableData={clusterTableData}
+        displayMode={displayMode}
+        width={width}/>
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, colors, xScale, clusterTableData} = props;
+    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
+            customColor, colors, xScale, clusterTableData, displayMode, width} = props;
     return <LinearPlot
         data={data}
         chr={chr}
@@ -59,5 +64,7 @@ export function BAFLinearPlot(props: Props) {
         brushedBins={brushedBins}
         customColor={customColor}
         colors={colors} 
-        clusterTableData={clusterTableData}/>;
+        clusterTableData={clusterTableData}
+        displayMode={displayMode}
+        width={width}/>;
 }

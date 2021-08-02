@@ -5,7 +5,7 @@ import { ChromosomeInterval } from "./ChromosomeInterval";
 /**
  * Container to hold the name and length of a chromosome in bases.
  */
-interface Chromosome {
+export interface Chromosome {
     /** Name of the chromosome. */
     readonly name: string;
     /** Length of the chromosome, in bases. */
@@ -39,6 +39,8 @@ export class Genome {
     /** Total number of bases in the genome. */
     private _length: number;
 
+    private nameToChr: {[chr: string]: Chromosome}
+
     /**
      * Makes a new instance, with name and list of chromosomes.  Chromosomes *must* have unique names.
      * 
@@ -60,6 +62,10 @@ export class Genome {
             this._length += chromosome.length;
         }
         
+        this.nameToChr = {};
+        for (const chr of this._chromosomes) {
+            this.nameToChr[chr.name] = chr;
+        }
         //console.log("CHR STARTS: ", this._chrStarts);
     }
 
@@ -90,6 +96,11 @@ export class Genome {
         return this._chromosomes.map(chr => this._chrStarts[chr.name]);
     }
 
+
+    getChromosomeStarts2(chrs: Chromosome[]): number[] {
+        return chrs.map(chr => this._chrStarts[chr.name]);
+    }
+
     /**
      * Gets a length of a chromosome in base pairs, or the entire genome if the chromosome is unspecified.  Returns 0
      * if the chromosome does not exist.
@@ -106,6 +117,14 @@ export class Genome {
             }
             return this._chromosomes.find(chr => chr.name === chrName)!.length;
         }
+    }
+
+    getLength2(chrs: Chromosome[]) : number {
+        let length = 0;
+        for(const chr of chrs) {
+            length += chr.length;
+        }
+        return length
     }
 
     /**
@@ -147,6 +166,20 @@ export class Genome {
         const index = _.sortedLastIndex(sortedChrStarts, implicit) - 1;
         const chrCoordinate = implicit - sortedChrStarts[index];
         return new ChromosomeInterval(this._chromosomes[index].name, chrCoordinate, chrCoordinate + 1);
+    }
+
+    getChrs(chrs : string[]) {
+       // console.log("CHRS: ", chrs);
+        //console.log("NAME TO CHR: ", this.nameToChr);
+        let filteredChrs : Chromosome[] = [];
+        //console.log("INPUT CHRS: ", chrs);
+        for(const chr of chrs) {
+            filteredChrs.push(this.nameToChr[chr]);
+            //console.log(this.nameToChr[chr]);
+        }
+        
+        //console.log("Filtered CHRS: ", filteredChrs);
+        return filteredChrs;
     }
 }
 

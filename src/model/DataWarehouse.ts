@@ -220,6 +220,15 @@ export class DataWarehouse {
         //this._sampleGroupedMergedData = _.groupBy(this._merged_ndx.allFiltered(), d => d.bins[0].SAMPLE);
     }
 
+    setChrFilters(chrs?: string[]) {
+        if(chrs && ((chrs.length === 1 && chrs[0] == DataWarehouse.ALL_CHRS_KEY))) {
+            this._chr_dim.filterAll();
+        } else if(chrs) {
+            this._chr_dim.filterAll();
+            this._chr_dim.filter((d:string) => chrs.indexOf(d) === -1 ? false : true);
+        }
+    }
+
     setClusterFilters(clusters?: String[]) {
         if(clusters && ((clusters.length === 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY))) {
             this._cluster_dim.filterAll();

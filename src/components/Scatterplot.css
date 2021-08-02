@@ -1,3 +1,9 @@
+.Scatterplot {
+    /* width: fit-content; */
+    /* width: "100%";
+    height: "100%"; */
+}
+
 .Scatterplot-tooltip {
     padding: 10px;
     background-color: rgba(224,255,255,0.9);
@@ -35,4 +41,19 @@
 
 .Scatterplot-tools button.active { 
     background-color: #13a613;
+}
+
+.svg {
+    position: relative;
+    width: calc(100%);
+    height: 302;
+    /* background-color: aqua; */
+}
+
+.canvas {
+    position: absolute;
+    width: 400;
+    height: 302;
+    /* background-color: red; */
+    z-index: -1;
 }

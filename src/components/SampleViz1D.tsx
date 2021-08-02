@@ -9,6 +9,7 @@ import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 import "./SampleViz.css";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { GenomicBin } from "../model/GenomicBin";
+import { DisplayMode } from "../App";
 
 interface Props {
     data: DataWarehouse;
@@ -26,24 +27,19 @@ interface Props {
     rdRange: [number, number];
     clusterTableData: any;
     applyLog: boolean;
+    displayMode: DisplayMode;
+    width: number;
 }
-
-enum DisplayMode {
-    linear,
-    circos
-};
 
 interface State {
     selectedSample: string;
-    displayMode: DisplayMode;
 }
 
 export class SampleViz1D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            displayMode: DisplayMode.linear
+            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0]
         };
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
@@ -54,13 +50,13 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale, rdRange, clusterTableData, applyLog} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width} = this.props;
         const selectedSample = this.props.selectedSample;
 
         const selectedRecords = data.getRecords(selectedSample, chr);
         
         let visualization: React.ReactNode = null;
-        if (this.state.displayMode === DisplayMode.linear) {
+        //if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot
                     data={selectedRecords}
@@ -76,6 +72,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     xScale= {xScale}
                     clusterTableData={clusterTableData}
                     applyLog={applyLog}
+                    displayMode={displayMode}
+                    width={width}
                     />
                     
                 <div className="SampleViz-separator" />
@@ -91,10 +89,12 @@ export class SampleViz1D extends React.Component<Props, State> {
                     yScale={yScale}
                     xScale= {xScale}
                     clusterTableData={clusterTableData}
-                    applyLog={applyLog}/>
+                    applyLog={applyLog}
+                    displayMode={displayMode}
+                    width={width}/>
 
             </DivWithBullseye>;
-        }
+        //}
 
         return <div className="SampleViz-linear" >
             {visualization}

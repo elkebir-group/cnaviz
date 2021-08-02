@@ -7,6 +7,7 @@ import {DisplayMode} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import * as d3 from "d3";
+import { FiHome, FiLogOut, FiArrowLeftCircle, FiArrowRightCircle } from "react-icons/fi";
 
 interface Props {
     selectedChr : string;
@@ -67,9 +68,17 @@ function Sidebar(props: Props) {
   return (
     <div className={props.show ? "sidebar active" : "sidebar"}>
       
-      <button className="hamburger" type="button" onClick={showSidebar}>
+      <div className="closemenu" onClick={showSidebar}>
           <div> </div>
-        </button>
+          {props.show ? (
+                
+                <FiArrowLeftCircle/>
+              ) : (
+                <FiArrowRightCircle/>
+              )
+          }
+          {/* <FiArrowLeftCircle/> */}
+        </div>
       
       <div className="contents">
         <div>
