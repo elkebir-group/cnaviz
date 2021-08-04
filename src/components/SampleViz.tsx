@@ -15,6 +15,8 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 
+const UNCLUSTERED_ID = "-1";
+const DELETED_ID = "-2";
 
 interface Props {
     parentCallBack: any;
@@ -53,22 +55,55 @@ interface State {
     yScale: [number, number] | null;
     xScale: [number, number] | null;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
+    selectedCluster:string;
 }
 
 export class SampleViz extends React.Component<Props, State> {
+    private _clusters : string[];
     constructor(props: Props) {
         super(props);
+        this._clusters = this.initializeListOfClusters();
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
             yScale: null,
             xScale: null,
-            scales: {xScale: null, yScale: null}
+            scales: {xScale: null, yScale: null},
+            selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleSelectedSampleChange = this.handleSelectedSampleChange.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
+        
     }
-    
+
+    initializeListOfClusters() : string[] {
+        let clusterTableData = this.props.clusterTableData;
+        clusterTableData.sort((a : any, b : any) => {
+            if (a.key > b.key) return 1;
+            if (a.key < b.key) return -1;
+            return 0;
+        })
+
+        this._clusters = [];
+        for(const obj of clusterTableData) {
+            this._clusters.push(obj.key);
+        }
+
+        while(this._clusters.length > 0 
+            && (this._clusters[0] == UNCLUSTERED_ID 
+            || this._clusters[0] == DELETED_ID)) {
+            this._clusters.shift();
+        }
+
+        return this._clusters;
+    }
+
+    componentDidUpdate(prevProps: Props) {
+        if(this.props.clusterTableData !== prevProps.clusterTableData) {
+            this.initializeListOfClusters();
+        }
+    }
+
     handleSelectedSampleChanged(selected : string) {
         this.setState({selectedSample: selected});
     }
@@ -89,34 +124,75 @@ export class SampleViz extends React.Component<Props, State> {
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
+        sampleOptions.unshift(<option selected disabled>Sample</option>);
         rdRange[1] += 0.5;
         let elem = document.getElementById("grid-container");
         let width = 0;
         if(elem) {
             width = elem.offsetWidth;
         }
-        // if (width) {
-        //     width = width.clientWidth;
-        // }
         
-        // console.log("WIDTH: ", width)
+        let clusterOptions = this._clusters.map(clusterName =>
+            <option key={clusterName} value={clusterName} >{clusterName}</option>
+        );
+        
+        clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
+        clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
+        clusterOptions.unshift(<option selected disabled>Cluster</option>);
         return <div className="SampleViz-wrapper">
+            <div style={{verticalAlign: "middle"}}>
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
-                Sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
+                <span>Sample: </span>
+                <select style={{marginLeft: 9}} value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
                 <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
                 <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
             </div>}
-            {/* {(showLinearPlot || showScatterPlot) &&
+            
+            {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
-                Sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
-                    {sampleOptions}
-                </select>
-                <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
-                <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
-            </div>} */}
+                    {(dispMode==DisplayMode.select) && <span style={{marginRight: 9}}>Cluster: </span>}
+                     {(dispMode==DisplayMode.select) &&
+                        
+                          <select
+                            name="Select Cluster" 
+                            title="Cluster"
+                            className="Sampleviz-cluster-select"
+                            value={this.state.selectedCluster}
+                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
+                            {clusterOptions}
+                            </select>
+                        }
+                        
+                    {(dispMode==DisplayMode.select) &&
+                                <button style={{marginLeft: 9}} onClick={() => {
+                                    this.props.parentCallBack(this.state.selectedCluster);
+                                    this.props.onBrushedBinsUpdated([]);
+                                }}>Assign Cluster</button>}
+
+                    {(dispMode==DisplayMode.select) 
+                        && <button style={{marginLeft: 9}} onClick={()=>{
+
+                        let clusters = this._clusters;
+
+                        const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
+                        let nextAvailable = highestCurrentCluster + 1;
+
+                        for(let i = 0; i < clusters.length; i++) {
+                            if(Number(clusters[i]) !== i){
+                                nextAvailable = i;
+                                break;
+                            }
+                        }
+
+                        this.props.parentCallBack(nextAvailable);
+                        this.props.onBrushedBinsUpdated([]);
+                    }} >New Cluster</button>} 
+                </div>}
+            </div>
+
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 

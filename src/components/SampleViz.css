@@ -4,6 +4,8 @@
 
 .SampleViz-select {
     margin-bottom: 10px;
+    display: flex;
+    justify-content: left;
 }
 
 .SampleViz-pane {
@@ -47,4 +49,12 @@
 .SampleViz-clusters {
     align-items: left;
     width: 33%;
+}
+
+button {
+    vertical-align: middle;
+}
+
+.Sampleviz-cluster-select {
+    width: 90px;
 }

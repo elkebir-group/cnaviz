@@ -273,7 +273,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                 {(displayMode==DisplayMode.zoom 
                                     || displayMode==DisplayMode.boxzoom) 
                                     && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
-                                {(displayMode==DisplayMode.select) 
+                                {/* {(displayMode==DisplayMode.select) 
                                     && <button id="new-cluster" onClick={()=>{
                                     let clusters = this._clusters;
                                     const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
@@ -301,7 +301,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                         value={this.state.selectedCluster}
                                         onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
                                         {clusterOptions}
-                                    </select>}
+                                    </select>} */}
                             </div>
 
                             {this.renderTooltip()}
