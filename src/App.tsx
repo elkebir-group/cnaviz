@@ -12,7 +12,7 @@ import {SampleViz} from "./components/SampleViz";
 import { GenomicLocationInput } from "./components/GenomicLocationInput";
 import { CurveManager } from "./components/CurveManager";
 import spinner from "./loading-small.gif";
-import {HuePicker} from "react-color";
+import {HuePicker, SketchPicker} from "react-color";
 import "./App.css";
 import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
@@ -86,7 +86,7 @@ function getFileContentsAsString(file: File) {
 //     "#5fbe83", "#ec9761", "#3dc273", "#76bd54", "#49c34a", "#80bc20", "#6dbf1e"
 //     ]
 const CLUSTER_COLORS = [
-    "#3957ff", "#d3fe14", "#c9080a", "#fec7f8", "#0b7b3e", "#0bf0e9", "#c203c8", "#fd9b39", "#888593", 
+    "#d3fe14", "#c9080a", "#fec7f8", "#0b7b3e", "#3957ff", "#0bf0e9", "#c203c8", "#fd9b39", 
     "#906407", "#98ba7f", "#fe6794", "#10b0ff", "#ac7bff", "#fee7c0", "#964c63", "#1da49c", "#0ad811", 
     "#bbd9fd", "#fe6cfe", "#297192", "#d1a09c", "#78579e", "#81ffad", "#739400", "#ca6949", "#d9bf01", 
     "#646a58", "#d5097e", "#bb73a9", "#ccf6e9", "#9cb4b6", "#b6a7d4", "#9e8c62", "#6e83c8", "#01af64", 
@@ -247,6 +247,8 @@ interface State {
     showLinearPlot: boolean;
 
     showScatterPlot: boolean;
+
+    showDirections: boolean;
 }
 
 
@@ -291,7 +293,8 @@ export class App extends React.Component<{}, State> {
             sidebar:  true,
             chosenFile: "",
             showLinearPlot: true,
-            showScatterPlot: true
+            showScatterPlot: true,
+            showDirections: false
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -313,7 +316,8 @@ export class App extends React.Component<{}, State> {
         this.setDisplayMode = this.setDisplayMode.bind(this);
         this.onSideBarChange = this.onSideBarChange.bind(this);
         this.toggleLog = this.toggleLog.bind(this);
-
+        this.onToggleLinear = this.onToggleLinear.bind(this); 
+        this.onToggleScatter = this.onToggleScatter.bind(this); 
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
@@ -333,14 +337,19 @@ export class App extends React.Component<{}, State> {
         })
 
         d3.select("body").on("keydown", function(){
+            console.log(d3.event);
             if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.boxzoom})
+            } else if(d3.event.key == "/") {
+                self.setState({showDirections: true})
             }
         })
 
         d3.select("body").on("keyup", function(){
             if (self.state.displayMode === DisplayMode.boxzoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.zoom})
+            } else if(d3.event.key == "/") {
+                self.setState({showDirections: false})
             }
         })
     }
@@ -378,7 +387,7 @@ export class App extends React.Component<{}, State> {
             processingStatus: ProcessingStatus.done
         });
     }
-
+    
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
         this.state.indexedData.setChrFilter(event.target.value);
@@ -506,6 +515,13 @@ export class App extends React.Component<{}, State> {
         this.setState({sidebar: sidebar});
     }
 
+    onToggleScatter(){
+        this.setState({showScatterPlot: !this.state.showScatterPlot})
+    }
+
+    onToggleLinear(){
+        this.setState({showLinearPlot: !this.state.showLinearPlot})
+    }
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
@@ -577,7 +593,7 @@ export class App extends React.Component<{}, State> {
                     </div>
                 </div>);
         }
-
+        
         const status = this.getStatusCaption();
         
         return <div className="container-fluid">
@@ -603,13 +619,16 @@ export class App extends React.Component<{}, State> {
                     chosenFile={this.state.chosenFile}
                     show={this.state.sidebar}
                     onToggleLog = {this.toggleLog}
+                    onToggleLinear={this.onToggleLinear}
+                    onToggleScatter={this.onToggleScatter}
+                    showScatter={this.state.showScatterPlot}
+                    showLinear={this.state.showLinearPlot}
                 />
             </div>
             
-            <div className={this.state.sidebar ? "marginContent" : "content"}>
+            <div className={this.state.sidebar ? "marginContent" : ""}>
             
                 <div className="App-title-bar">
-                
                     {/* <h1>CNA-Viz</h1> */}
                     {/* <input style= {{marginLeft: 200}} type="checkbox" data-toggle="toggle" data-on="Ready" data-off="Not Ready" data-onstyle="success" data-offstyle="danger"/> */}
                     {/* {samples.length === 0 &&
@@ -622,11 +641,20 @@ export class App extends React.Component<{}, State> {
                     {/* <span className="App-CheckBox-explanation">Apply provided clustering: </span>
                     <input type="checkbox" onClick={this.toggleClustering.bind(this)}  /> */}
                 </div>
+                
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
+                {this.state.showDirections && <div className="Directions">
+                    <h2>Directions</h2>
+                    <li> Press "s" to hide the scatterplot </li>
+                    <li> Press "l" to hide the linear plot </li>
+                    <li> Press "z" or use the toggle to enter zoom mode </li>
+                    <li> Press "b" or use the toggle to enter selection mode </li>
+                    <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
+                    <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
+                </div>}
             </div>
             
         </div>;
-        
     }
 }

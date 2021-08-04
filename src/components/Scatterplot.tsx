@@ -185,7 +185,7 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         const {rdRange, width, height, invertAxis} = this.props;
-        const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
+        //const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         const top =  (this._currYScale(rd) || 0);
         const left = ((this._currXScale(baf) || 0) + TOOLTIP_OFFSET);
         const tooltipHeight = 150;
@@ -278,6 +278,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                 ref={node => this._svg = node}
                                 // className={"svg"}
                                 width={width} height={height}
+                                preserveAspectRatio={'xMinYMin'}
                                 // style={{minWidth: width, minHeight: height}}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
@@ -317,7 +318,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                     </select>}
                             </div>
 
-                            {this.renderTooltip()}
+                            {/* {this.renderTooltip()} */}
                         </div>;
         return scatterUI;
     }
@@ -341,6 +342,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
+        
         if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
             this.brushedNodes = new Set();

@@ -61,4 +61,31 @@ body {
 
 .marginContent {
     margin-left: 300px;
+    overflow-x: hidden;
+}
+
+.Directions {
+    /* display: flex; */
+    /* height: 20vh;
+    width: 20vh; */
+    /* margin-left: auto; */
+    /* vertical-align: middle; */
+    /* top: 50%;
+    
+    /* justify-content: center;
+    align-items: center; */
+    /* background-color: blue; */
+    /* 
+    */
+    position: absolute;
+    top: 50%;
+    left: 50%; 
+    /* margin-right: 50%; */
+    border-width: 2;
+    border-color: black;
+    /* width: 20%;
+    height: 20%; */
+    background-color: rgb(216, 193, 193);
+
+
 }

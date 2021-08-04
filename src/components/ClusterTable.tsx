@@ -1,7 +1,7 @@
 import React from "react"
 import _ from "lodash";
 import DataTable from 'react-data-table-component';
-import {HuePicker} from "react-color";
+import {HuePicker, SliderPicker, GithubPicker, BlockPicker} from "react-color";
 import {CSVLink} from "react-csv"
 
 const UNCLUSTERED_COLOR = "#999999";
@@ -45,7 +45,14 @@ export class ClusterTable extends React.Component<Props> {
 
     render() {
         const {colOneName, colTwoName, data, expandable, selectable, colors} = this.props;
-        const ExpandedComponent =(data:any) => <HuePicker width="100%" color={this.props.colors[data.data.key]} onChange={c => this.handleColorChange(c, data.data.key)} />;
+        const ExpandedComponent =(data:any) => 
+        <div> 
+            <BlockPicker 
+                width="100%"
+                color={this.props.colors[data.data.key]}
+                onChangeComplete={c => this.handleColorChange(c, data.data.key)} 
+            />
+        </div>;
 
         const conditionalRowStyles : any = [
             {
@@ -55,11 +62,6 @@ export class ClusterTable extends React.Component<Props> {
               }),
             }
           ];
-        const customStyle : any = {
-            rows: {
-                //outerWidth: 200
-            }
-        }
         const columns = [
             {
               name: colOneName,
@@ -108,6 +110,7 @@ export class ClusterTable extends React.Component<Props> {
                 }}
                 expandableRows
                 expandableRowsComponent={<ExpandedComponent/>}
+                expandableRowDisabled={row => row.key === -1 || row.key === -2}
                 pagination={true}
                 dense={true}
                 paginationPerPage={5}
@@ -116,8 +119,8 @@ export class ClusterTable extends React.Component<Props> {
                 noContextMenu={true}
                 noHeader={true}
                 conditionalRowStyles={conditionalRowStyles}
-                customStyles={customStyle}
             />
+            
         )
     }
 };

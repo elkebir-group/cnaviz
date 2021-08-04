@@ -90,7 +90,16 @@ export class SampleViz extends React.Component<Props, State> {
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
         rdRange[1] += 0.5;
+        let elem = document.getElementById("grid-container");
+        let width = 0;
+        if(elem) {
+            width = elem.offsetWidth;
+        }
+        // if (width) {
+        //     width = width.clientWidth;
+        // }
         
+        // console.log("WIDTH: ", width)
         return <div className="SampleViz-wrapper">
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
@@ -119,7 +128,7 @@ export class SampleViz extends React.Component<Props, State> {
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}
                     displayMode={dispMode}
-                    width={showSidebar ? 800 : 800} />}
+                    width={showSidebar ? 600 : 800} />}
             </div>
             {/* <div className="SampleViz-clusters"> */}
             {(showLinearPlot || showScatterPlot) &&

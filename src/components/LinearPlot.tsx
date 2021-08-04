@@ -176,13 +176,6 @@ export class LinearPlot extends React.PureComponent<Props> {
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
-        //let chrs = ["chr1", "chr2", "chr3"];
-        
-        // let chromosomes : Chromosome[] = [];
-        // if(!chr) {
-        //     chromosomes = genome.getChrs(chrs);
-        // }
-        //console.log("REDRAWING");
         const xScale = this.getXScale(width, genome, chr, this.implicitStart, this.implicitEnd);
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
@@ -191,9 +184,6 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!chr) {
             
             const chromosomes = genome.getChromosomeList();
-            
-            //console.log("CHROMOSOMES 2: ", chromosomes2);
-            //console.log("CHROMOSOMES: ", chromosomes)
 
             xAxis = d3.axisBottom(xScale)
                 .tickValues(genome.getChromosomeStarts2(chromosomes))

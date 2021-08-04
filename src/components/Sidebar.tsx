@@ -8,6 +8,7 @@ import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import * as d3 from "d3";
 import { FiHome, FiLogOut, FiArrowLeftCircle, FiArrowRightCircle } from "react-icons/fi";
+import { ToggleButton } from "./ToggleButton";
 
 interface Props {
     selectedChr : string;
@@ -30,13 +31,17 @@ interface Props {
     chosenFile: string;
     show: boolean;
     onToggleLog: () => void;
+    onToggleScatter: () => void;
+    onToggleLinear: () => void;
+    showScatter: boolean;
+    showLinear: boolean;
 }
 
 
 function Sidebar(props: Props) {
   // const [sidebar, setSidebar] = useState(true);
   const [value, setValue] = useState("");
-
+  const [selected, setSelected] = useState(false);
   const showSidebar = () => {
     props.onSidebarChange(!props.show)
   };
@@ -71,10 +76,13 @@ function Sidebar(props: Props) {
       <div className="closemenu" onClick={showSidebar}>
           <div> </div>
           {props.show ? (
-                
-                <FiArrowLeftCircle/>
+                <div className="arrow-container"> 
+                  <FiArrowLeftCircle/>
+                </div>
               ) : (
-                <FiArrowRightCircle/>
+                <div className="arrow-container">
+                  <FiArrowRightCircle/>
+                </div>
               )
           }
           {/* <FiArrowLeftCircle/> */}
@@ -125,15 +133,42 @@ function Sidebar(props: Props) {
                   {props.chrOptions}
           </select>
         </div>
+        <div className="contents">
+          <div className= "row-contents">
+            <label>
+              <span className="App-CheckBox-explanation">Apply log to RD: </span>
+              <input type="checkbox" onClick={props.onToggleLog}/>
+            </label>
+          </div>
+          <div className= "row-contents">
+            <label>
+              <span className="App-CheckBox-explanation">Display Scatterplots: </span>
+              <input type="checkbox" onClick={props.onToggleScatter} checked={props.showScatter} defaultChecked/>
+            </label>
+            
+          </div>
+          <div className= "row-contents">
+            <label>
+              <span className="App-CheckBox-explanation">Display Linear Plots: </span>
+              <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} defaultChecked/>
+            </label>
+          </div>
+        </div>
+
         <div className= "row-contents">
-          <span className="App-CheckBox-explanation">Apply log to RD: </span>
-          <input type="checkbox" onClick={props.onToggleLog}/>
+          <ToggleButton
+              displayMode={props.currentDisplayMode}
+              setDisplayMode={() => {
+                if(props.currentDisplayMode === DisplayMode.zoom) { 
+                  props.setDisplayMode(DisplayMode.select)
+                } else {
+                  props.setDisplayMode(DisplayMode.zoom)
+                }
+              }}
+            />
         </div>
         
-        <div>
-          {renderDisplayModeRadioOption(DisplayMode.select)}
-          {renderDisplayModeRadioOption(DisplayMode.zoom)}
-        </div>
+
         <div >
           <ClusterTable 
               data={props.tableData} 
@@ -150,6 +185,14 @@ function Sidebar(props: Props) {
       </div>
       <div>
         <h2 className="title-bar">Directions</h2>
+        <li> Press "s" to hide the scatterplot </li>
+        <li> Press "l" to hide the linear plot </li>
+        <li> Press "z" or use the toggle to enter zoom mode </li>
+        <li> Press "b" or use the toggle to enter selection mode </li>
+        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
+        <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
+        {/* <li> Only the bounding box zoom is available on the linear plot in zoom mode </li> */}
+
       </div>
     </div>
   );
