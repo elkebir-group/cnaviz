@@ -108,10 +108,15 @@ export class SampleViz extends React.Component<Props, State> {
                 </select>
                 <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
                 <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
-                {/* <button onClick={() => {}} style={{marginLeft: 9}}> Reset View </button> */}
-                {/* {this.renderDisplayModeRadioOption(DisplayMode.select)}
-                {this.renderDisplayModeRadioOption(DisplayMode.zoom)} */}
             </div>}
+            {/* {(showLinearPlot || showScatterPlot) &&
+            <div className="SampleViz-select">
+                Sample: <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
+                    {sampleOptions}
+                </select>
+                <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
+                <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
+            </div>} */}
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 

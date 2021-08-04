@@ -337,10 +337,9 @@ export class App extends React.Component<{}, State> {
         })
 
         d3.select("body").on("keydown", function(){
-            console.log(d3.event);
             if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.boxzoom})
-            } else if(d3.event.key == "/") {
+            } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: true})
             }
         })
@@ -348,7 +347,7 @@ export class App extends React.Component<{}, State> {
         d3.select("body").on("keyup", function(){
             if (self.state.displayMode === DisplayMode.boxzoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.zoom})
-            } else if(d3.event.key == "/") {
+            } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: false})
             }
         })
@@ -629,17 +628,6 @@ export class App extends React.Component<{}, State> {
             <div className={this.state.sidebar ? "marginContent" : ""}>
             
                 <div className="App-title-bar">
-                    {/* <h1>CNA-Viz</h1> */}
-                    {/* <input style= {{marginLeft: 200}} type="checkbox" data-toggle="toggle" data-on="Ready" data-off="Not Ready" data-onstyle="success" data-offstyle="danger"/> */}
-                    {/* {samples.length === 0 &&
-                        <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span>
-                    } */}
-                        
-                    {/* <input type="file" id="fileUpload" onChange={this.handleFileChoosen} /> */}
-                    {/* <span className="App-CheckBox-explanation">Apply log to RD: </span>
-                    <input type="checkbox" style={{marginRight: 2}} onClick={this.toggleLog.bind(this)} /> */}
-                    {/* <span className="App-CheckBox-explanation">Apply provided clustering: </span>
-                    <input type="checkbox" onClick={this.toggleClustering.bind(this)}  /> */}
                 </div>
                 
                 {status && <div className="App-status-pane">{status}</div>}

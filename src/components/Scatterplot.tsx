@@ -165,7 +165,7 @@ export class Scatterplot extends React.Component<Props, State> {
             baf: this._currXScale.invert(x)
         };
 
-        if( hoveredRdBaf.baf < this._currXScale.domain()[0] && hoveredRdBaf.baf > this._currXScale.domain()[1] 
+        if( hoveredRdBaf.baf > this._currXScale.domain()[0] && hoveredRdBaf.baf < this._currXScale.domain()[1] 
             && hoveredRdBaf.rd > this._currYScale.domain()[0] && hoveredRdBaf.rd < this._currYScale.domain()[1] ) {
             
             const radius = Math.abs(this._currXScale.invert(x) - this._currXScale.invert(x - 20));
@@ -218,7 +218,7 @@ export class Scatterplot extends React.Component<Props, State> {
             return (hoveredLocation.chr === currLoc.chr
             && hoveredLocation.start === currLoc.start 
             && hoveredLocation.end === currLoc.end)}) //record.location.hasOverlap(hoveredLocation));
-        
+       
         if(hoveredRecords.length === 0) {
             hoveredRecords = data.filter(record => GenomicBinHelpers.toChromosomeInterval(record).hasOverlap(hoveredLocation))
         }
@@ -228,7 +228,6 @@ export class Scatterplot extends React.Component<Props, State> {
             
             let range = this._currXScale.range();
             let range2 = this._currYScale.range();
-
             if (hoveredRecords.length === 1 && x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
                 const record = hoveredRecords[0];
                 const recordLocation = GenomicBinHelpers.toChromosomeInterval(record);
@@ -254,32 +253,20 @@ export class Scatterplot extends React.Component<Props, State> {
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
         
-        // if(this._clusters.indexOf(UNCLUSTERED_ID) > -1) {
-        //     console.log("DOESN'T have -1");
-        //     console.log(this._clusters);
-            
-        // }
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
-        // if(this._clusters.indexOf(DELETED_ID) <= -1) {
-            
-        // }
-        // window.getRect
         
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" >
                             <canvas
                                 ref={node => this._canvas = node}
                                 width={width}
                                 height={height}
-                                // style={{position: "absolute", zIndex: -1}} 
                                 className={"canvas"}
                                 />
                             <svg
                                 ref={node => this._svg = node}
-                                // className={"svg"}
                                 width={width} height={height}
                                 preserveAspectRatio={'xMinYMin'}
-                                // style={{minWidth: width, minHeight: height}}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
@@ -304,7 +291,6 @@ export class Scatterplot extends React.Component<Props, State> {
                                 }} >New Cluster</button>}
                                 {(displayMode==DisplayMode.select) &&
                                     <button id="assign-cluster" onClick={() => {
-                                        console.log("SELECTED CLUSTER: ", this.state.selectedCluster);
                                         this.onTrigger(this.state.selectedCluster);
                                         this.brushedNodes = new Set();
                                     }}>Assign Cluster</button>}
@@ -318,7 +304,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                     </select>}
                             </div>
 
-                            {/* {this.renderTooltip()} */}
+                            {this.renderTooltip()}
                         </div>;
         return scatterUI;
     }
@@ -375,7 +361,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 .addAll(data)
 
             let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
-            console.log("New scales: ", newScales);
             this.props.onZoom(newScales);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
@@ -391,7 +376,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
         const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
-        let baf = bafRange ? bafRange : [0.5001, -.0001] // .0001 allows for points exactly on the axis to still be seen
+        let baf = bafRange ? bafRange : [-.0001, 0.5001] // .0001 allows for points exactly on the axis to still be seen
         
         return {
             bafScale: d3.scaleLinear()
@@ -426,7 +411,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let {displayMode} = this.props;
         let xScale = this._currXScale;
         let yScale = this._currYScale;
-        let xLabel = "0.5 - BAF";
+        let xLabel = "Allelic Imbalance (0.5 - BAF)";
         let yLabel = "RDR";
         
         const svg = d3.select(this._svg);
@@ -511,8 +496,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 z = t;
                 redraw();
             } catch(error) {
-                console.log("DisplayMode: ", displayMode + " " + DisplayMode.select);
-                console.log("TEST: ", error);
+                console.log("Error: ", error);
             }
           }).on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
@@ -627,7 +611,6 @@ export class Scatterplot extends React.Component<Props, State> {
                     .on("start brush", () => this.updatePoints(d3.event))
                     .on("end", () => {
                         svg.selectAll("." + "brush").remove();
-                        console.log([...this.brushedNodes])
                         this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
                     
@@ -687,26 +670,6 @@ export class Scatterplot extends React.Component<Props, State> {
             }
         }
         
-        
-        // A function that updates the chart when the user zoom and thus new boundaries are available
-        
-        // function zoomAxes(transform : any, zoomX: boolean, zoomY: boolean) {
-        //     // console.log(self._currXScale.domain());
-        //     // console.log(self._currYScale.domain());
-
-        //     var newX = (zoomX) ? transform.rescaleX(xScale) : self._currXScale;
-        //     var newY = (zoomY) ? transform.rescaleY(yScale) : self._currYScale ;
-        //     self._currXScale = newX;
-        //     self._currYScale = newY;
-
-
-        //     // update axes with these new boundaries
-        //     xAxis.call(d3.axisBottom(newX))
-        //     yAxis.call(d3.axisLeft(newY))
-        
-        //     drawAllGenomicBins();
-        // }
-        
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 return customColor;
@@ -729,10 +692,10 @@ export class Scatterplot extends React.Component<Props, State> {
         const {brushedBins, data, yAxisToPlot} = this.props;
         if (data) {
             try {
-                const { selection } = d3.event;
-                let rect = [[this._currXScale.invert(selection[1][0]), 
+                const { selection } = d3.event
+                let rect = [[this._currXScale.invert(selection[0][0]), 
                             this._currYScale.invert(selection[1][1])], 
-                            [this._currXScale.invert(selection[0][0]), 
+                            [this._currXScale.invert(selection[1][0]) , 
                             this._currYScale.invert(selection[0][1])]];
                 let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
                     (d : GenomicBin) => d.reverseBAF, 
@@ -762,10 +725,19 @@ export class Scatterplot extends React.Component<Props, State> {
             let currLoc = GenomicBinHelpers.toChromosomeInterval(record);
             return (hoveredLocation.chr === currLoc.chr
             && hoveredLocation.start === currLoc.start 
-            && hoveredLocation.end === currLoc.end)}) //record.location.hasOverlap(hoveredLocation));
+            && hoveredLocation.end === currLoc.end)
+        })
         
+        let range = this._currXScale.range();
+        let range2 = this._currYScale.range();
         if(hoveredRecords.length === 0) {
+            
             hoveredRecords = data.filter(record => GenomicBinHelpers.toChromosomeInterval(record).hasOverlap(hoveredLocation))
+            hoveredRecords = hoveredRecords.filter(record => {
+                const x = this._currXScale(record.reverseBAF);
+                const y = this._currYScale(record[yAxisToPlot]);
+                return x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]
+            })
         }
 
         let svg = d3.select(this._svg);

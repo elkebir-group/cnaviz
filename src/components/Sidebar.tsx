@@ -143,14 +143,14 @@ function Sidebar(props: Props) {
           <div className= "row-contents">
             <label>
               <span className="App-CheckBox-explanation">Display Scatterplots: </span>
-              <input type="checkbox" onClick={props.onToggleScatter} checked={props.showScatter} defaultChecked/>
+              <input type="checkbox" onClick={props.onToggleScatter} checked={props.showScatter} readOnly/>
             </label>
             
           </div>
           <div className= "row-contents">
             <label>
               <span className="App-CheckBox-explanation">Display Linear Plots: </span>
-              <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} defaultChecked/>
+              <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
           </div>
         </div>
