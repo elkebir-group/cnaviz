@@ -99,7 +99,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog} = this.props;
-        
+                
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot

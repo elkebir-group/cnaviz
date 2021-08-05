@@ -318,6 +318,7 @@ export class App extends React.Component<{}, State> {
         this.toggleLog = this.toggleLog.bind(this);
         this.onToggleLinear = this.onToggleLinear.bind(this); 
         this.onToggleScatter = this.onToggleScatter.bind(this); 
+        this.goBackToPreviousCluster = this.goBackToPreviousCluster.bind(this);
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
@@ -412,7 +413,6 @@ export class App extends React.Component<{}, State> {
 
     handleCallBack(selectedCluster: string | number) {
         this.state.indexedData.updateCluster(Number(selectedCluster));
-        console.log("AFTER callback")
         this.setState({assignCluster: false});
         this.state.indexedData.setChrFilter(this.state.selectedChr);
     }
@@ -521,23 +521,24 @@ export class App extends React.Component<{}, State> {
     onToggleLinear(){
         this.setState({showLinearPlot: !this.state.showLinearPlot})
     }
+
+    goBackToPreviousCluster() {
+        this.state.indexedData.undoClusterUpdate();
+        this.setState({indexedData: this.state.indexedData})
+    }
+
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
-        //indexedData.setRDFilter([1.0, 1.5]);
+
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
-        //indexedData.setChrFilters(["chr1", "chr2", "chr3"]);
+       
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
-            // clusterTableData.sort((a : any, b : any) => {
-            //     if (a.value > b.value) return -1;
-            //     if (a.value < b.value) return 1;
-            //     return 0;
-            // })
             const scatterplotProps = {
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
@@ -561,7 +562,8 @@ export class App extends React.Component<{}, State> {
                 onAddSample: this.handleAddSampleClick,
                 clusterTableData: clusterTableData,
                 applyLog: this.state.applyLog,
-                onClusterSelected: this.handleClusterSelected
+                onClusterSelected: this.handleClusterSelected,
+                onUndoClick: this.goBackToPreviousCluster
             };
 
             chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -628,6 +630,9 @@ export class App extends React.Component<{}, State> {
             <div className={this.state.sidebar ? "marginContent" : ""}>
             
                 <div className="App-title-bar">
+                    {/* <button onClick={this.goBackToPreviousCluster}>
+                        Undo
+                    </button> */}
                 </div>
                 
                 {status && <div className="App-status-pane">{status}</div>}

@@ -328,7 +328,6 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        
         if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
             this.brushedNodes = new Set();

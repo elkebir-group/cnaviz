@@ -55,6 +55,13 @@ button {
     vertical-align: middle;
 }
 
-.Sampleviz-cluster-select {
+/* .Sampleviz-cluster-select {
     width: 90px;
+} */
+.SampleViz-select button {
+    margin-left: 7px;
+}
+
+.SampleViz-select select {
+    margin-left: 7px;
 }

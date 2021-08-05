@@ -48,6 +48,7 @@ interface Props {
     showLinearPlot: boolean;
     showScatterPlot: boolean;
     showSidebar: boolean;
+    onUndoClick: () => void;
 }
 
 interface State {
@@ -138,22 +139,22 @@ export class SampleViz extends React.Component<Props, State> {
         
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
-        clusterOptions.unshift(<option selected disabled>Cluster</option>);
+        // clusterOptions.unshift(<option selected disabled>Cluster</option>);
         return <div className="SampleViz-wrapper">
             <div style={{verticalAlign: "middle"}}>
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
                 <span>Sample: </span>
-                <select style={{marginLeft: 9}} value={selectedSample} onChange={this.handleSelectedSampleChange}>
+                <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.props.onAddSample} style={{marginLeft: 9}}> Add Sample </button>
-                <button onClick={this.props.onRemovePlot} style={{marginLeft: 9}}> Remove Sample </button>
+                <button onClick={this.props.onAddSample}> Add Sample </button>
+                <button onClick={this.props.onRemovePlot}> Remove Sample </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
-                    {(dispMode==DisplayMode.select) && <span style={{marginRight: 9}}>Cluster: </span>}
+                    {(dispMode==DisplayMode.select) && <span >Cluster: </span>}
                      {(dispMode==DisplayMode.select) &&
                         
                           <select
@@ -167,13 +168,13 @@ export class SampleViz extends React.Component<Props, State> {
                         }
                         
                     {(dispMode==DisplayMode.select) &&
-                                <button style={{marginLeft: 9}} onClick={() => {
+                                <button onClick={() => {
                                     this.props.parentCallBack(this.state.selectedCluster);
                                     this.props.onBrushedBinsUpdated([]);
                                 }}>Assign Cluster</button>}
 
                     {(dispMode==DisplayMode.select) 
-                        && <button style={{marginLeft: 9}} onClick={()=>{
+                        && <button onClick={()=>{
 
                         let clusters = this._clusters;
 
@@ -190,6 +191,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
                     }} >New Cluster</button>} 
+                    {(dispMode==DisplayMode.select) && <button onClick={this.props.onUndoClick}> Undo</button>}
                 </div>}
             </div>
 
