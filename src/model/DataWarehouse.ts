@@ -5,7 +5,7 @@ import { cross, group } from "d3-array";
 import { cluster } from "d3-hierarchy";
 import { ChromosomeInterval } from "./ChromosomeInterval";
 import "crossfilter2";
-import crossfilter from "crossfilter2";
+import crossfilter, { Crossfilter } from "crossfilter2";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -31,7 +31,7 @@ type ClusterIndexedData<T> = {
 type SampleIndexedData<T> = {
     [sample: string] : T
 }
-
+type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: string, value: number}
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
@@ -54,18 +54,19 @@ export class DataWarehouse {
     private readonly _logRdRanges: SampleIndexedData<[number, number]>;
     private _locationGroupedData: LocationIndexedData<GenomicBin[]>;
     private brushedBins: GenomicBin[];
-    private brushedCrossfilter: any;
-    private brushedClusterDim: any;
-    private _ndx: any;
-    private _sample_dim: any;
-    private _cluster_dim: any;
-    private _chr_dim: any;
+    private brushedCrossfilter: Crossfilter<GenomicBin>;
+    private brushedClusterDim: crossfilter.Dimension<GenomicBin, number>;
+    private _ndx: Crossfilter<GenomicBin>;
+    private _sample_dim: crossfilter.Dimension<GenomicBin, string>;
+    private _cluster_dim: crossfilter.Dimension<GenomicBin, number>;
+    private _chr_dim: crossfilter.Dimension<GenomicBin, string>;
+    private _start_dim: crossfilter.Dimension<GenomicBin, number>;
     private _samples: string[];
     private _clusters: string[];
     private _chrs: string[];
     private _sampleGroupedData: SampleIndexedData<GenomicBin[]>;
-    private clusterTableInfo: any; 
-    private allRecords: GenomicBin[];
+    private clusterTableInfo: clusterTableRow[]; 
+    private allRecords: readonly GenomicBin[];
     private _cluster_filters: String[];
     private historyStack: GenomicBin[][];
 
@@ -77,7 +78,7 @@ export class DataWarehouse {
      * @param merger aggregator to use
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
-    constructor(rawData: GenomicBin[], merger=new BinMerger()) {
+    constructor(rawData: GenomicBin[]) {
         console.time("Initializing DataWarehouse");
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
@@ -111,6 +112,8 @@ export class DataWarehouse {
         this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
+        this._start_dim = this._ndx.dimension((d:GenomicBin) => d.START);
+        //let dim =  this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
 
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         
@@ -124,21 +127,25 @@ export class DataWarehouse {
             }
         }
 
-        const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
-        clusterTable.forEach(d => d.value = Number(((d.value/rawData.length) * 100).toFixed(2)));
-
-        let clone : clusterTableRow[] = [];
-        for(const row of clusterTable){
-            let rowClone : clusterTableRow = {key: "", value: 0};
-            rowClone.key = row.key;
-            rowClone.value = row.value;
-            clone.push(rowClone);
-        }
-        
-        this.clusterTableInfo = clone;
-
         this.allRecords = this._ndx.all();
+        this.clusterTableInfo = this.calculateClusterTableInfo();
+
+        
         console.timeEnd("Initializing DataWarehouse");
+    }
+
+    calculateClusterTableInfo() : clusterTableRow[] {
+        const clusterInfo = this._cluster_dim.group().all();
+        const clusterTable : clusterTableRow[] = [];
+        for(const row of clusterInfo) {
+            let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            clusterTable.push(
+            {
+                key: String(row.key), 
+                value: value
+            });
+        }
+        return clusterTable;
     }
 
     initializeLocationGroupedData(rawData: GenomicBin[]) {
@@ -197,12 +204,12 @@ export class DataWarehouse {
         // }
 
         if(chr) {
-            this._chr_dim.filter((d:string) => d === chr);
+            this._chr_dim.filter(d => d === chr);
             //this._merged_chr_dim.filter((d:string) => d === chr);
         }
 
         if(clusters) {
-            this._cluster_dim.filter((d:string) => clusters.indexOf(d) === -1 ? false : true);
+            this._cluster_dim.filter(d => clusters.indexOf(String(d)) === -1 ? false : true);
             //this._merged_cluster_dim.filter((d:string) => clusters.indexOf(d) === -1 ? false : true);
         }
     }
@@ -211,7 +218,7 @@ export class DataWarehouse {
         if(chr) {
             this._chr_dim.filterAll();
             //this._merged_chr_dim.filterAll();
-            this._chr_dim.filter((d:string) => d === chr);
+            this._chr_dim.filter(d => d === chr);
            // this._merged_chr_dim.filter((d:string) => d === chr);
         } else {
             this._chr_dim.filterAll();
@@ -227,7 +234,7 @@ export class DataWarehouse {
             this._chr_dim.filterAll();
         } else if(chrs) {
             this._chr_dim.filterAll();
-            this._chr_dim.filter((d:string) => chrs.indexOf(d) === -1 ? false : true);
+            this._chr_dim.filter(d => chrs.indexOf(String(d)) === -1 ? false : true);
         }
     }
 
@@ -238,7 +245,7 @@ export class DataWarehouse {
         } else if(clusters) {
             this._cluster_dim.filterAll();
             //this._merged_cluster_dim.filterAll();
-            this._cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
+            this._cluster_dim.filter(d => clusters.indexOf(String(d)) === -1 ? false : true);
            // this._merged_cluster_dim.filter((d:Number) => clusters.indexOf(String(d)) === -1 ? false : true);
         }
         if(clusters) {
@@ -286,19 +293,12 @@ export class DataWarehouse {
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
 
-        const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
-        clusterTable.forEach(d => d.value = Number(((d.value/flattenNestedBins.length) * 100).toFixed(2)));
-
-        let clone : clusterTableRow[] = [];
-        for(const row of clusterTable){
-            let rowClone : clusterTableRow = {key: "", value: 0};
-            rowClone.key = row.key;
-            rowClone.value = row.value;
-            clone.push(rowClone);
-        }
-        
-        this.clusterTableInfo = clone;
-        this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
+        // Get all records prior to filtering out deleted points, 
+        // so that cluster table calculation uses all points including the deleted
+        this.allRecords =  this._ndx.all(); 
+        this.clusterTableInfo = this.calculateClusterTableInfo();
+        this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
+        //this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
         
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
@@ -323,19 +323,19 @@ export class DataWarehouse {
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         
-        const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
+        // const clusterTable : clusterTableRow[] = this._cluster_dim.group().all();
         
-        clusterTable.forEach(d => d.value = Number(((d.value/newRecords.length) * 100).toFixed(2)));
+        // clusterTable.forEach(d => d.value = Number(((d.value/newRecords.length) * 100).toFixed(2)));
 
-        let clone : clusterTableRow[] = [];
-        for(const row of clusterTable){
-            let rowClone : clusterTableRow = {key: "", value: 0};
-            rowClone.key = row.key;
-            rowClone.value = row.value;
-            clone.push(rowClone);
-        }
+        // let clone : clusterTableRow[] = [];
+        // for(const row of clusterTable){
+        //     let rowClone : clusterTableRow = {key: "", value: 0};
+        //     rowClone.key = row.key;
+        //     rowClone.value = row.value;
+        //     clone.push(rowClone);
+        // }
         
-        this.clusterTableInfo = clone;
+        this.clusterTableInfo = this.calculateClusterTableInfo();
         this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
         
         if(!this._cluster_filters.includes(String(cluster))) {
@@ -347,18 +347,18 @@ export class DataWarehouse {
     }
 
     brushedTableData() {
-        const clusterTable : clusterTableRow[] = this.brushedClusterDim.group().all();
-        const clusterTable2 : clusterTableRow[] = this._cluster_dim.group().all();
-        //console.log("Normal values: ", arr);
-        let sampleAmount = this._samples.length;
-        var result = clusterTable2.reduce(function(map : any, obj : clusterTableRow) {
-            map[obj.key] = obj.value / sampleAmount;
-            return map;
-        }, {});
-        //console.log(result);
-        clusterTable.forEach(d => d.value = Number(((d.value/result[d.key]) * 100).toFixed(2)));
+        
+        const sampleAmount = this._samples.length;
+        const clusterInfo = this._cluster_dim.group().all();
+
+        // map each cluster to the amount of points in a single sample 
+        // (Each sample contains the same amount of points so we divide by total amount of samples)
+        let clusterIdToAmount : clusterIdMap = {};
+        clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
+
+        const clusterTable = this.brushedClusterDim.group().all();
+        clusterTable.forEach(d => d.value = (Number(d.value)/clusterIdToAmount[Number(d.key)] * 100).toFixed(2));
         return clusterTable;
-        //this.brushedBins.map(item => item.bins[0].CLUSTER);
     }
     /**
      * Gets a list of chromosome names found in one sample.  If the sample is not in this data set, returns an empty

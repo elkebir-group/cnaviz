@@ -3,7 +3,7 @@ import React from "react"
 import { GenomicBin} from "../model/GenomicBin";
 
 interface Props {
-    data : GenomicBin[];
+    data : readonly GenomicBin[];
 }
 
 export class CSV extends React.Component<Props> {

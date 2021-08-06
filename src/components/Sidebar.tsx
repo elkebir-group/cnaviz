@@ -26,7 +26,7 @@ interface Props {
     currentDisplayMode: DisplayMode;
     colors: string[];
     onSidebarChange: any;
-    data: GenomicBin[];
+    data: readonly GenomicBin[];
     onFileChosen: any;
     chosenFile: string;
     show: boolean;
