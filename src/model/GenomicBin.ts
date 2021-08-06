@@ -30,7 +30,8 @@ export interface GenomicBin {
     readonly cn_clone2: number;
     readonly u_clone2: number;
     
-    reverseBAF: number;
+    readonly reverseBAF: number;
+    readonly genomicPosition: number;
 }
 
 export const GenomicBinHelpers = {

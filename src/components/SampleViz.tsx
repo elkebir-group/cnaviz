@@ -125,7 +125,7 @@ export class SampleViz extends React.Component<Props, State> {
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
-        sampleOptions.unshift(<option selected disabled>Sample</option>);
+        //sampleOptions.unshift(<option selected disabled>Sample</option>);
         rdRange[1] += 0.5;
         let elem = document.getElementById("grid-container");
         let width = 0;

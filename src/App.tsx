@@ -136,12 +136,14 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 reject(error);
                 return;
             }
-            
-            let start = Number(parsed[0].START);
+            console.time("PARSING BINS");
+            let start = Number(parsed[0].START); // Keeps track of the start of each chr
+            //let implicitStart = 0; 
             let end = 0;
+            //let 
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];
-
+            let genomicPosition = start;
             for (const bin of parsed) {
                 if(!applyClustering) {
                     bin.CLUSTER = -1;
@@ -152,10 +154,16 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 if(lastChr !==  bin["#CHR"]) {
                     chrNameLength.push({name: lastChr, length: (end - start)})
                     start = Number(bin.START);
+                    //implicitStart = start;
+                    //genomicPosition += start;
                     lastChr = bin["#CHR"]
                 }
+
+                
                 end = Number(bin.END);
-                //bin.BAF = 0.5 - bin.BAF;
+                //bin.genomicPosition = implicitStart + Number(bin.START);
+                // Genome position will be where the chromsome start + the current bins start
+
                 bin.reverseBAF = 0.5 - bin.BAF;
             }
             
@@ -169,6 +177,12 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             })
 
             genome = new Genome(chrNameLength);
+            
+            for (const bin of parsed) {
+                bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
+            }
+            console.log(genome.getImplicitCoordinates(new ChromosomeInterval("chr2", 250000, 500000)))
+            console.timeEnd("PARSING BINS");
             resolve(parsed);
         });
     })
@@ -364,7 +378,9 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
         try {
+            console.time("Reading File");
             contents = await getFileContentsAsString(files[0]);
+            console.timeEnd("Reading File");
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -536,7 +552,7 @@ export class App extends React.Component<{}, State> {
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
-       
+        
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             const scatterplotProps = {
@@ -584,6 +600,7 @@ export class App extends React.Component<{}, State> {
                             {_.times(sampleAmount, i => samples.length > i 
                             && this.state.showComponents[i] 
                             && <SampleViz 
+                                    key={i}
                                     {...scatterplotProps} 
                                     initialSelectedSample={samples[i]} 
                                     plotId={i}

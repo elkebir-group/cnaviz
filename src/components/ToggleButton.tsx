@@ -18,8 +18,8 @@ export class ToggleButton extends Component<Props> {
     const { displayMode, setDisplayMode } = this.props;
     return (
       <div className="toggle-container" onClick={setDisplayMode}>
-        <div className={`dialog-button ${displayMode == DisplayMode.select ? "" : "disabled"}`}>
-          {displayMode==DisplayMode.select ? "Select" : "Zoom"}
+        <div className={`dialog-button ${displayMode === DisplayMode.select ? "" : "disabled"}`}>
+          {displayMode === DisplayMode.select ? "Select" : "Zoom"}
         </div>
       </div>
     );
