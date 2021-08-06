@@ -6,6 +6,7 @@ import { cluster } from "d3-hierarchy";
 import { ChromosomeInterval } from "./ChromosomeInterval";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
+import memoizeOne from "memoize-one";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -128,8 +129,7 @@ export class DataWarehouse {
 
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
-        console.log(this.allRecords)
-        //this.setGenomicPositionFilter([1000000, 3250000])
+        this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
         console.timeEnd("Initializing DataWarehouse");
     }
 
@@ -240,6 +240,7 @@ export class DataWarehouse {
     }
 
     setGenomicPositionFilter(genomeRange: [number, number]) {
+        console.log("Setting filter");
         this._genomic_pos_dim.filterAll();
         this._genomic_pos_dim.filter(d => d > genomeRange[0] && d < genomeRange[1]);
 
@@ -258,11 +259,12 @@ export class DataWarehouse {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-       
+        console.time("Pushing to stack");
         let previousRecords = this._ndx.all();
         let deepCopy = JSON.parse(JSON.stringify(previousRecords));
         this.historyStack.push(deepCopy);
-        
+        console.timeEnd("Pushing to stack");
+        console.time("Modifying Data");
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
@@ -271,7 +273,8 @@ export class DataWarehouse {
                 }
             }
         }
-       
+        console.timeEnd("Modifying Data");
+        console.time("Creating crossfilter");
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
         this._ndx.remove();
@@ -281,9 +284,10 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
-
+        console.timeEnd("Creating crossfilter");
         // Get all records prior to filtering out deleted points, 
         // so that cluster table calculation uses all points including the deleted
+        console.time("Cluster Table stuff");
         this.allRecords =  this._ndx.all(); 
         this.clusterTableInfo = this.calculateClusterTableInfo();
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
@@ -291,7 +295,7 @@ export class DataWarehouse {
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
         }
-
+        console.timeEnd("Cluster Table stuff");
         console.timeEnd("Updating Clusters");
     }
 
@@ -346,7 +350,7 @@ export class DataWarehouse {
             return 0;
         }
         const firstSample = this.getSampleList()[0];
-        const firstRecord = this.getRecords(firstSample, DataWarehouse.ALL_CHRS_KEY, DataWarehouse.ALL_CLUSTERS_KEY)[0];
+        const firstRecord = this.getRecords(firstSample)[0];
         return firstRecord.END - firstRecord.START;
     }
 
@@ -359,11 +363,19 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getRecords(sample: string, chr?: string, cluster?: string): GenomicBin[] {
+    getRecords(sample: string, implicitStart?: number, implicitEnd?: number): GenomicBin[] {
         if(sample in this._sampleGroupedData) {
+            if(implicitStart && implicitEnd) {
+                return this.filterRecordsByScales(this._sampleGroupedData[sample], implicitStart, implicitEnd);
+            }
             return this._sampleGroupedData[sample];
         }
         return [];
+    }
+
+    filterRecordsByScales(records: GenomicBin[], implicitStart: number, implicitEnd: number) : GenomicBin[]{
+       // console.log("TEST");
+        return records.filter(record => record.genomicPosition > implicitStart && record.genomicPosition < implicitEnd )
     }
 
     getAllRecords() {

@@ -45,6 +45,7 @@ interface Props {
     clusterTableData: any;
     applyLog: boolean;
     onClusterSelected: any;
+    implicitRange: [number, number] | null;
 }
 
 interface State {
@@ -98,13 +99,13 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog} = this.props;
+                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog, implicitRange} = this.props;
                 
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}
-                    data={data.getRecords(selectedSample, chr)}
+                    data={(implicitRange !== null) ? data.getRecords(selectedSample, implicitRange[0], implicitRange[1]): data.getRecords(selectedSample)}
                     rdRange={rdRange}
                     width={width}
                     height={height}

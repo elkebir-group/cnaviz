@@ -14,6 +14,7 @@ import "./SampleViz.css";
 import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
+import { isExpressionWithTypeArguments } from "typescript";
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -57,6 +58,7 @@ interface State {
     xScale: [number, number] | null;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
     selectedCluster:string;
+    implicitRange: [number, number]  | null;
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -69,11 +71,13 @@ export class SampleViz extends React.Component<Props, State> {
             yScale: null,
             xScale: null,
             scales: {xScale: null, yScale: null},
-            selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID
+            selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID,
+            implicitRange: null
         }
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleSelectedSampleChange = this.handleSelectedSampleChange.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
+        this.handleLinearPlotZoom = this.handleLinearPlotZoom.bind(this);
         
     }
 
@@ -117,6 +121,14 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({scales: newScales})
     }
 
+    handleLinearPlotZoom(genomicRange: [number, number]) {
+        console.log("Linear plot zooming");
+        // this.props.data.setGenomicPositionFilter(genomicRange);
+        // this.forceUpdate();
+        this.setState({implicitRange: genomicRange})
+    }
+
+    
     render() {
         const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot, dispMode, showSidebar} = this.props;
         const selectedSample = this.state.selectedSample;
@@ -198,20 +210,24 @@ export class SampleViz extends React.Component<Props, State> {
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 
+                        
                         onSelectedSample={this.handleSelectedSampleChanged}
                         selectedSample={selectedSample}
                         initialSelectedSample={initialSelectedSample}
                         onZoom={this.handleZoom}
-                        rdRange={rdRange}/>}
+                        rdRange={rdRange}
+                        implicitRange={this.state.implicitRange}/>}
                 {showLinearPlot && <SampleViz1D 
                     {...this.props}  
+                    onLinearPlotZoom={this.handleLinearPlotZoom}
                     yScale={this.state.scales.yScale} 
                     xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}
                     displayMode={dispMode}
-                    width={showSidebar ? 600 : 800} />}
+                    width={showSidebar ? 600 : 800} 
+                    implicitRange={this.state.implicitRange}/>}
             </div>
             {/* <div className="SampleViz-clusters"> */}
             {(showLinearPlot || showScatterPlot) &&

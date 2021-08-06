@@ -68,6 +68,7 @@ interface Props {
     colors: string[];
     clusterTableData: any;
     displayMode: DisplayMode;
+    onLinearPlotZoom: (genomicRange: [number, number]) => void;
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -336,7 +337,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         const implicitEnd = xScale.invert(startEnd.end);
                         this.implicitStart = implicitStart;
                         this.implicitEnd = implicitEnd;
-                        
+                        this.props.onLinearPlotZoom([this.implicitStart, this.implicitEnd]);
                         
                     } catch (error) {
 
@@ -383,9 +384,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             this.handleMouseLeave();
             return;
         }
-        //console.log("MOUSE X: ", mouseX);
         const implicitLocation = xScale.invert(mouseX);
-        //console.log(implicitLocation);
         onLocationHovered(genome.getChromosomeLocation(implicitLocation));
     }
 

@@ -154,15 +154,11 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 if(lastChr !==  bin["#CHR"]) {
                     chrNameLength.push({name: lastChr, length: (end - start)})
                     start = Number(bin.START);
-                    //implicitStart = start;
-                    //genomicPosition += start;
                     lastChr = bin["#CHR"]
                 }
 
                 
                 end = Number(bin.END);
-                //bin.genomicPosition = implicitStart + Number(bin.START);
-                // Genome position will be where the chromsome start + the current bins start
 
                 bin.reverseBAF = 0.5 - bin.BAF;
             }
@@ -181,7 +177,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             for (const bin of parsed) {
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
-            console.log(genome.getImplicitCoordinates(new ChromosomeInterval("chr2", 250000, 500000)))
+            
             console.timeEnd("PARSING BINS");
             resolve(parsed);
         });

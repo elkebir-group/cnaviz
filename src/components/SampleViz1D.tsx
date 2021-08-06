@@ -29,6 +29,8 @@ interface Props {
     applyLog: boolean;
     displayMode: DisplayMode;
     width: number;
+    onLinearPlotZoom: (genomicRange: [number, number]) => void;
+    implicitRange: [number, number] | null;
 }
 
 interface State {
@@ -50,10 +52,11 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width} = this.props;
+        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
+             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange} = this.props;
         const selectedSample = this.props.selectedSample;
 
-        const selectedRecords = data.getRecords(selectedSample, chr);
+        const selectedRecords = (implicitRange !== null) ? data.getRecords(selectedSample, implicitRange[0], implicitRange[1]): data.getRecords(selectedSample);
         
         let visualization: React.ReactNode = null;
         //if (this.state.displayMode === DisplayMode.linear) {
@@ -74,6 +77,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     applyLog={applyLog}
                     displayMode={displayMode}
                     width={width}
+                    onLinearPlotZoom ={onLinearPlotZoom}
                     />
                     
                 <div className="SampleViz-separator" />
@@ -91,7 +95,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     clusterTableData={clusterTableData}
                     applyLog={applyLog}
                     displayMode={displayMode}
-                    width={width}/>
+                    width={width}
+                    onLinearPlotZoom={onLinearPlotZoom}/>
 
             </DivWithBullseye>;
         //}
