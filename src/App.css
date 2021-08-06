@@ -38,10 +38,18 @@ body {
     padding-top: 25px;
 }
 
-.sampleviz-wrapper {
+.sampleviz-wrapper-col {
     display: flex;
     justify-content: center;
     flex-direction: column;
+    flex-wrap: wrap;
+    padding-top: 25px;
+}
+
+.sampleviz-wrapper-row {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
     flex-wrap: wrap;
     padding-top: 25px;
 }

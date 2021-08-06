@@ -541,7 +541,7 @@ export class App extends React.Component<{}, State> {
                     <div className="App-global-controls">
                     </div>
                     
-                    <div className="sampleviz-wrapper">
+                    <div className="sampleviz-wrapper-row">
                             {_.times(sampleAmount, i => samples.length > i 
                             && this.state.showComponents[i] 
                             && <SampleViz 
@@ -552,6 +552,7 @@ export class App extends React.Component<{}, State> {
                                     showLinearPlot={this.state.showLinearPlot}
                                     showScatterPlot={this.state.showScatterPlot}
                                     showSidebar={this.state.sidebar}
+                                    sampleAmount={sampleAmount}
                                 ></SampleViz>)}
                     </div>
                 </div>);

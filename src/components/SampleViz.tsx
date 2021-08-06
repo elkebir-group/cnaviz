@@ -50,6 +50,7 @@ interface Props {
     showScatterPlot: boolean;
     showSidebar: boolean;
     onUndoClick: () => void;
+    sampleAmount: number;
 }
 
 interface State {
@@ -130,7 +131,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     
     render() {
-        const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot, dispMode, showSidebar} = this.props;
+        const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount} = this.props;
         const selectedSample = this.state.selectedSample;
         const rdRange = data.getRdRange(selectedSample, applyLog);
         //console.log("NEW RD RANGE: ", rdRange);
@@ -160,8 +161,8 @@ export class SampleViz extends React.Component<Props, State> {
                 <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.props.onAddSample}> Add Sample </button>
-                <button onClick={this.props.onRemovePlot}> Remove Sample </button>
+                <button onClick={this.props.onAddSample} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
+                <button onClick={this.props.onRemovePlot} disabled={sampleAmount <= 1}> Remove Sample </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
