@@ -64,11 +64,13 @@ interface Props {
     yLabel?: string;
     yMin: number;
     yMax: number;
+    implicitStart ?: number;
+    implicitEnd ?: number;
     customColor: string;
     colors: string[];
     clusterTableData: any;
     displayMode: DisplayMode;
-    onLinearPlotZoom: (genomicRange: [number, number]) => void;
+    onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -393,7 +395,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     render() {
-        const {width, height, displayMode} = this.props;
+        const {width, height, displayMode, dataKeyToPlot} = this.props;
         return <div
             className="LinearPlot"
             style={{position: "relative"}}
@@ -411,11 +413,12 @@ export class LinearPlot extends React.PureComponent<Props> {
             
             <svg ref={node => this._svg = node} width={width} height={height} />
             <div className="LinearPlot-tools">
-                {(displayMode==DisplayMode.zoom 
-                || displayMode==DisplayMode.boxzoom) 
+                {((displayMode==DisplayMode.zoom 
+                || displayMode==DisplayMode.boxzoom) && (dataKeyToPlot === "RD" || dataKeyToPlot === "logRD"))
                 && <button onClick={() => {
                     this.implicitStart = null;
                     this.implicitEnd = null;
+                    this.props.onLinearPlotZoom(null);
                     this.redraw();
 
                 }}>Reset View</button>}

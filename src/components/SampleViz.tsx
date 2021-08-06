@@ -121,7 +121,7 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({scales: newScales})
     }
 
-    handleLinearPlotZoom(genomicRange: [number, number]) {
+    handleLinearPlotZoom(genomicRange: [number, number] | null) {
         console.log("Linear plot zooming");
         // this.props.data.setGenomicPositionFilter(genomicRange);
         // this.forceUpdate();
