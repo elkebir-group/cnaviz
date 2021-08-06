@@ -341,13 +341,37 @@ export class Scatterplot extends React.Component<Props, State> {
         }
          else if(!(_.isEqual(this.props["data"], prevProps["data"])) || this.props.yAxisToPlot !== prevProps.yAxisToPlot) {
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
-            if((this._currXScale === this._original_XScale 
-                    && this._currYScale === this._original_YScale) || (this.props.yAxisToPlot !== prevProps.yAxisToPlot)) { 
+            
+
+            if((this._currXScale.domain()[0] === this._original_XScale.domain()[0] 
+                && this._currXScale.domain()[1] === this._original_XScale.domain()[1]
+                && this._currYScale.domain()[0] === this._original_YScale.domain()[0]
+                && this._currYScale.domain()[1] === this._original_YScale.domain()[1])) {  
+                // When the sample filter changes, the y-axis max will also change so must recaculate the scales
+                // Original scales saves the scales to which we should reset the view
                 this._currXScale = bafScale;
                 this._currYScale = rdrScale;
                 this._original_XScale = this._currXScale;
                 this._original_YScale = this._currYScale;
-            } else { // If zoom is applied, then update original scales
+            } else { // If zoom is applied, then update original scales but don't change current zoom
+                // CASE 1: going to log
+                if(this.props.yAxisToPlot !== prevProps.yAxisToPlot){
+                    let currentYDomain = this._currYScale.domain();
+                    if (this.props.yAxisToPlot==="logRD") {  
+                        if(currentYDomain[0] <= 0) {
+                            currentYDomain[0] = 0.1;
+                        }
+                        if(currentYDomain[1] <= 0) {
+                            currentYDomain[1] = 0.1;
+                        }
+                        const newYDomain = [Math.log2(currentYDomain[0]), Math.log2(currentYDomain[1])];
+                        this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
+                    } else {
+                        const newYDomain = [Math.pow(2, currentYDomain[0]), Math.pow(2, currentYDomain[1])];
+                        this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
+                    }
+                   
+                } 
                 this._original_XScale = bafScale;
                 this._original_YScale = rdrScale;
             }
@@ -418,11 +442,7 @@ export class Scatterplot extends React.Component<Props, State> {
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
-    //     // X axis stuff
-    //     let xAxis = svg.append("g")
-    //         .classed(SCALES_CLASS_NAME, true)
-    //         .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-    //         .call(d3.axisBottom(this._currXScale));
+        // X axis stuff
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
@@ -431,11 +451,7 @@ export class Scatterplot extends React.Component<Props, State> {
             .style("text-anchor", "middle")
             .text(xLabel);
 
-    // // Y axis stuff
-    //    let yAxis = svg.append("g")
-    //         .classed(SCALES_CLASS_NAME, true)
-    //         .attr("transform", `translate(${PADDING.left}, 0)`)
-    //         .call(d3.axisLeft(this._currYScale));
+        // Y axis stuff
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("y", PADDING.left-40)
@@ -655,13 +671,9 @@ export class Scatterplot extends React.Component<Props, State> {
                     const {bafScale, rdrScale} = self.computeScales(newRdRange, width, height, newBafRange, true);
                     self._currXScale = bafScale;
                     self._currYScale = rdrScale;
-                    //xAx.call(d3.axisBottom(self._currXScale))
-                    //yAx.call(d3.axisLeft(self._currYScale))
                     
                     self.redraw();
-
                     drawAllGenomicBins();
-                    //redraw();
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     self.props.onZoom(newScales);
