@@ -23,11 +23,14 @@ interface Props {
     displayMode: DisplayMode;
     width: number;
     onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    implicitStart: number | null;
+    implicitEnd: number | null;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
-        brushedBins, customColor, colors, yScale, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom} = props;
+        brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
+        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd} = props;
 
     return <LinearPlot
         data={data}
@@ -46,12 +49,15 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
         clusterTableData={clusterTableData}
         displayMode={displayMode}
         width={width}
-        onLinearPlotZoom={onLinearPlotZoom}/>
+        onLinearPlotZoom={onLinearPlotZoom}
+        implicitStart={implicitStart}
+        implicitEnd={implicitEnd}/>
 }
 
 export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
-            customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom} = props;
+            customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
+            implicitStart, implicitEnd} = props;
     return <LinearPlot
         data={data}
         chr={chr}
@@ -69,5 +75,7 @@ export function BAFLinearPlot(props: Props) {
         clusterTableData={clusterTableData}
         displayMode={displayMode}
         width={width}
-        onLinearPlotZoom={onLinearPlotZoom}/>;
+        onLinearPlotZoom={onLinearPlotZoom}
+        implicitStart={implicitStart}
+        implicitEnd={implicitEnd}/>;
 }

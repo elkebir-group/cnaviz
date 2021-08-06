@@ -78,6 +78,9 @@ export class SampleViz1D extends React.Component<Props, State> {
                     displayMode={displayMode}
                     width={width}
                     onLinearPlotZoom ={onLinearPlotZoom}
+                    implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
+                    implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}
+
                     />
                     
                 <div className="SampleViz-separator" />
@@ -96,7 +99,9 @@ export class SampleViz1D extends React.Component<Props, State> {
                     applyLog={applyLog}
                     displayMode={displayMode}
                     width={width}
-                    onLinearPlotZoom={onLinearPlotZoom}/>
+                    onLinearPlotZoom={onLinearPlotZoom}
+                    implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
+                    implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}/>
 
             </DivWithBullseye>;
         //}

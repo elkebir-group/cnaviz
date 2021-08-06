@@ -15,23 +15,6 @@ import "./LinearPlot.css";
 
 const visutils = require('vis-utils');
 const SCALES_CLASS_NAME = "linearplot-scale";
-const CLUSTER_COLORS = [
-    "#1b9e77", 
-    "#d95f02", 
-    "#7570b3", 
-    "#e7298a", 
-    "#66a61e", 
-    "#e6ab02", 
-    "#a6761d", 
-    "#666666", 
-    "#fe6794", 
-    "#10b0ff", 
-    "#ac7bff", 
-    "#964c63", 
-    "#cfe589", 
-    "#fdb082", 
-    "#28c2b5"
-];
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 const PADDING = { // For the SVG
@@ -64,8 +47,8 @@ interface Props {
     yLabel?: string;
     yMin: number;
     yMax: number;
-    implicitStart ?: number;
-    implicitEnd ?: number;
+    implicitStart : number | null;
+    implicitEnd : number | null;
     customColor: string;
     colors: string[];
     clusterTableData: any;
@@ -84,12 +67,9 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _canvas: HTMLCanvasElement | null;
     private _clusters: string[];
     private brushedNodes: Set<GenomicBin>;
-    private implicitStart : number | null;
-    private implicitEnd : number | null;
 
     constructor(props: Props) {
         super(props);
-        //console.log("Linear plot cluster tbale data: ", props.clusterTableData);
         this._svg = null;
         this._canvas = null;
         this.getXScale = memoizeOne(this.getXScale);
@@ -97,8 +77,6 @@ export class LinearPlot extends React.PureComponent<Props> {
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.brushedNodes = new Set();
-        this.implicitStart = null;
-        this.implicitEnd = null;
     }
 
     initializeListOfClusters() : string[] {
@@ -123,8 +101,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     componentDidUpdate(prevProps: Props) {
         if(this.propsDidChange(prevProps, ["chr"])) {
-            this.implicitStart = null;
-            this.implicitEnd = null;
+            this.props.onLinearPlotZoom(null);
             this.redraw();
         } else if (this.propsDidChange(prevProps, ["displayMode", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
             if(this.props["brushedBins"].length === 0)
@@ -137,9 +114,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     getXScale(width: number, genome: Genome, chr?: string, implicitStart ?: number | null, implicitEnd ?: number | null) {
         let domain = [0, 0];
-        //console.log("TEST: ", implicitStart + "  " + implicitEnd);
         if(implicitStart && implicitEnd) {
-            //console.log("TEST");
             domain[0] = implicitStart;
             domain[1] = implicitEnd;
         } else if (!chr) { // No chromosome specified: X domain is entire genome
@@ -149,7 +124,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             domain[1] = domain[0] + genome.getLength(chr);
         }
 
-        //domain[1] = 7000000;
         return d3.scaleLinear()
             .domain(domain)
             .range([PADDING.left, width - PADDING.right]);
@@ -179,7 +153,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
-        const xScale = this.getXScale(width, genome, chr, this.implicitStart, this.implicitEnd);
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
@@ -196,10 +170,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             let nonImplicitXScale = d3.scaleLinear()
                 .domain([0, genome.getLength(chr)])
                 .range(xScale.range())
-            if (this.implicitStart && this.implicitEnd) {
-                console.log("TEST")
-                const selectedNonImplicitStart = genome.getChromosomeLocation(this.implicitStart);
-                const selectedNonImplicitEnd = genome.getChromosomeLocation(this.implicitEnd);
+            if (this.props.implicitStart && this.props.implicitEnd) {
+                const selectedNonImplicitStart = genome.getChromosomeLocation(this.props.implicitStart);
+                const selectedNonImplicitEnd = genome.getChromosomeLocation(this.props.implicitEnd);
                 nonImplicitXScale = d3.scaleLinear()
                 .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
                 .range(xScale.range())
@@ -240,7 +213,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             .text(yLabel || dataKeyToPlot)
             .attr("y", _.mean(yScale.range()));
 
-        // Data
         if (!this._canvas) {
             return;
         }
@@ -251,7 +223,6 @@ export class LinearPlot extends React.PureComponent<Props> {
         brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()));
         let previous_brushed_nodes = new Set(previous);
         
-        //console.time("Linear plot DRAWING POINTS")
         applyRetinaFix(this._canvas);
         const ctx = this._canvas.getContext("2d")!;
         ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
@@ -288,58 +259,49 @@ export class LinearPlot extends React.PureComponent<Props> {
         .extent([[PADDING.left, PADDING.top], 
                 [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
-                    if(d3.event.metaKey) {
-                        console.log("TEST");
-                    } else {
-                        try{
-                            const { selection} = d3.event;
-                            
-                            let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
-                                function(d: GenomicBin){
-                                    const location = GenomicBinHelpers.toChromosomeInterval(d);
-                                    const range = genome.getImplicitCoordinates(location);
-                                    return xScale(range.getCenter());
-                                }, 
-                                function(d: GenomicBin){
-                                    const location = GenomicBinHelpers.toChromosomeInterval(d);
-                                    //const range = genome.getImplicitCoordinates(location);
-                                    return yScale(d[dataKeyToPlot]);
-                                });
+                    try{
+                        const { selection} = d3.event;
+                        
+                        let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
+                            function(d: GenomicBin){
+                                const location = GenomicBinHelpers.toChromosomeInterval(d);
+                                const range = genome.getImplicitCoordinates(location);
+                                return xScale(range.getCenter());
+                            }, 
+                            function(d: GenomicBin){
+                                return yScale(d[dataKeyToPlot]);
+                            });
 
-                            if(d3.event.sourceEvent.shiftKey) {
-                                brushed = _.uniq(_.union(brushed, brushedBins));  
-                            } else if(d3.event.sourceEvent.altKey) {
-                                brushed = _.difference(brushedBins, brushed);
-                            }
-
-                            this.brushedNodes = new Set(brushed);  
-                        }catch(error) {
-                            console.log(error);
+                        if(d3.event.sourceEvent.shiftKey) {
+                            brushed = _.uniq(_.union(brushed, brushedBins));  
+                        } else if(d3.event.sourceEvent.altKey) {
+                            brushed = _.difference(brushedBins, brushed);
                         }
+
+                        this.brushedNodes = new Set(brushed);  
+                    }catch(error) {
+                        console.log(error);
                     }
+                    
                 })
                 .on("end", () => {
                     svg.selectAll("." + "brush").remove();
                     this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                 });
         } else {
-            //svg.selectAll("." + "brush").remove();
             brush = d3.brushX().extent([[PADDING.left, PADDING.top], 
                 [this.props.width, this.props.height - PADDING.bottom]])
                 .on("end", () => {
                     svg.selectAll("." + "brush").remove();
                     const {selection} = d3.event;
                     try {
-                        //console.log(selection);
                         const startEnd = {
                             start: selection[0],
                             end: selection[1]
                         };
                         const implicitStart = xScale.invert(startEnd.start);
                         const implicitEnd = xScale.invert(startEnd.end);
-                        this.implicitStart = implicitStart;
-                        this.implicitEnd = implicitEnd;
-                        this.props.onLinearPlotZoom([this.implicitStart, this.implicitEnd]);
+                        this.props.onLinearPlotZoom([implicitStart, implicitEnd]);
                         
                     } catch (error) {
 
@@ -362,7 +324,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             return null;
         }
 
-        const xScale = this.getXScale(width, genome, chr, this.implicitStart, this.implicitEnd);
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
@@ -379,7 +341,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     handleMouseMove(event: React.MouseEvent) {
         const {width, genome, chr, onLocationHovered} = this.props;
-        const xScale = this.getXScale(width, genome, chr, this.implicitStart, this.implicitEnd);
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
         const range = xScale.range();
         const mouseX = getRelativeCoordinates(event).x;
         if (mouseX < range[0] || mouseX > range[1]) { // Count mouse events outside the range as mouseleaves
@@ -416,11 +378,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 {((displayMode==DisplayMode.zoom 
                 || displayMode==DisplayMode.boxzoom) && (dataKeyToPlot === "RD" || dataKeyToPlot === "logRD"))
                 && <button onClick={() => {
-                    this.implicitStart = null;
-                    this.implicitEnd = null;
                     this.props.onLinearPlotZoom(null);
-                    this.redraw();
-
                 }}>Reset View</button>}
             </div>
         </div>;
