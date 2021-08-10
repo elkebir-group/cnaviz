@@ -96,9 +96,9 @@ function Sidebar(props: Props) {
           <h2 className="title-bar">Import/Export</h2>
         </div>
         {/* <span className="App-file-upload-explanation">To get started, choose a .bbc file:</span> */}
-        <div>Chosen File: {props.chosenFile}</div>
+        <div className="row-contents"> Chosen File: {props.chosenFile}</div>
         <div className="contents">
-          <div>
+          <div className="row-contents">
             <label className="custom-file-upload">
               <input type="file" id="fileUpload" onChange={
                 (event: any) =>
@@ -108,7 +108,7 @@ function Sidebar(props: Props) {
             </label>
           </div>
           
-          <div>
+          <div className="row-contents">
             <label className="custom-file-upload">
               <input type="file" id="fileUpload" onChange={
                 (event: any) =>
@@ -118,8 +118,10 @@ function Sidebar(props: Props) {
             </label>
           </div>
           
-
-          <CSV data={props.data}></CSV>
+          <div className="row-contents">
+            <CSV data={props.data}></CSV>
+          </div>
+          
         </div>
         <div>
           <h2 className="title-bar">Display Settings</h2>
@@ -191,7 +193,6 @@ function Sidebar(props: Props) {
           ></ClusterTable>
         </div>
       </div>
-      
     </div>
   );
 }
