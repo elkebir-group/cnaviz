@@ -64,6 +64,7 @@ interface Props {
     clusterTableData: any;
     applyLog: boolean;
     onClusterSelected: any;
+    scales: any;
 }
 
 interface State {
@@ -328,7 +329,18 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if(this.props["assignCluster"]) {
+        if(this.props.scales.xScale 
+            && this.props.scales.yScale 
+            && prevProps.scales.xScale 
+            &&  prevProps.scales.yScale 
+            && (this.props.scales.xScale[0] !== prevProps.scales.xScale[0] 
+                && this.props.scales.xScale[1] !== prevProps.scales.xScale[1]
+                && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
+                && this.props.scales.yScale[1] !== prevProps.scales.yScale[1])) {  
+                this._currXScale.domain(this.props.scales.xScale);
+                this._currYScale.domain(this.props.scales.yScale);
+                this.redraw();
+        } else if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
             this.brushedNodes = new Set();
             //this._clusters = this.initializeListOfClusters();
@@ -425,7 +437,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
     redraw() {
         
-        console.time("Rendering");
+        //console.time("Rendering");
         if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
@@ -695,7 +707,7 @@ export class Scatterplot extends React.Component<Props, State> {
             }
         }
         
-        console.timeEnd("Rendering");
+        //console.timeEnd("Rendering");
      }
 
      updatePoints(event : any) {

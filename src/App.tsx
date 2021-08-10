@@ -208,6 +208,10 @@ interface State {
     showScatterPlot: boolean;
 
     showDirections: boolean;
+
+    syncScales: boolean;
+
+    scales: {xScale: [number, number] | null, yScale: [number, number] | null};
 }
 
 
@@ -253,7 +257,9 @@ export class App extends React.Component<{}, State> {
             chosenFile: "",
             showLinearPlot: true,
             showScatterPlot: true,
-            showDirections: false
+            showDirections: false,
+            syncScales: false,
+            scales: {xScale: null, yScale: null}
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -277,7 +283,10 @@ export class App extends React.Component<{}, State> {
         this.toggleLog = this.toggleLog.bind(this);
         this.onToggleLinear = this.onToggleLinear.bind(this); 
         this.onToggleScatter = this.onToggleScatter.bind(this); 
+        this.onToggleSync = this.onToggleSync.bind(this);
         this.goBackToPreviousCluster = this.goBackToPreviousCluster.bind(this);
+        this.handleZoom = this.handleZoom.bind(this);
+
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
@@ -483,9 +492,17 @@ export class App extends React.Component<{}, State> {
         this.setState({showLinearPlot: !this.state.showLinearPlot})
     }
 
+    onToggleSync() {
+        this.setState({syncScales: !this.state.syncScales})
+    }
+
     goBackToPreviousCluster() {
         this.state.indexedData.undoClusterUpdate();
         this.setState({indexedData: this.state.indexedData})
+    }
+
+    handleZoom(newScales: any) {
+        this.setState({scales: newScales})
     }
 
     render() {
@@ -553,6 +570,9 @@ export class App extends React.Component<{}, State> {
                                     showScatterPlot={this.state.showScatterPlot}
                                     showSidebar={this.state.sidebar}
                                     sampleAmount={sampleAmount}
+                                    syncScales={this.state.syncScales}
+                                    handleZoom={this.handleZoom}
+                                    scales={this.state.scales}
                                 ></SampleViz>)}
                     </div>
                 </div>);
@@ -587,6 +607,8 @@ export class App extends React.Component<{}, State> {
                     onToggleScatter={this.onToggleScatter}
                     showScatter={this.state.showScatterPlot}
                     showLinear={this.state.showLinearPlot}
+                    onToggleSync={this.onToggleSync}
+                    syncScales={this.state.syncScales}
                 />
             </div>
             

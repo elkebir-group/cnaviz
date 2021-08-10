@@ -51,12 +51,13 @@ interface Props {
     showSidebar: boolean;
     onUndoClick: () => void;
     sampleAmount: number;
+    syncScales: boolean;
+    handleZoom: (newScales: any) => void;
+    scales: {xScale: [number, number] | null, yScale: [number, number] | null};
 }
 
 interface State {
     selectedSample: string;
-    yScale: [number, number] | null;
-    xScale: [number, number] | null;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
     selectedCluster:string;
     implicitRange: [number, number]  | null;
@@ -69,8 +70,6 @@ export class SampleViz extends React.Component<Props, State> {
         this._clusters = this.initializeListOfClusters();
         this.state = {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
-            yScale: null,
-            xScale: null,
             scales: {xScale: null, yScale: null},
             selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID,
             implicitRange: null
@@ -119,7 +118,8 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleZoom(newScales: any) {
-        this.setState({scales: newScales})
+        const {syncScales, handleZoom} = this.props;
+        (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
     }
 
     handleLinearPlotZoom(genomicRange: [number, number] | null) {
@@ -131,7 +131,8 @@ export class SampleViz extends React.Component<Props, State> {
 
     
     render() {
-        const {data, initialSelectedSample, plotId, applyLog, showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount} = this.props;
+        const {data, initialSelectedSample, plotId, applyLog, 
+            showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales} = this.props;
         const selectedSample = this.state.selectedSample;
         const rdRange = data.getRdRange(selectedSample, applyLog);
         //console.log("NEW RD RANGE: ", rdRange);
@@ -217,12 +218,13 @@ export class SampleViz extends React.Component<Props, State> {
                         initialSelectedSample={initialSelectedSample}
                         onZoom={this.handleZoom}
                         rdRange={rdRange}
-                        implicitRange={this.state.implicitRange}/>}
+                        implicitRange={this.state.implicitRange}
+                        scales={(syncScales) ? this.props.scales : this.state.scales}/>}
                 {showLinearPlot && <SampleViz1D 
                     {...this.props}  
                     onLinearPlotZoom={this.handleLinearPlotZoom}
-                    yScale={this.state.scales.yScale} 
-                    xScale={this.state.scales.xScale} 
+                    yScale={(syncScales) ? this.props.scales.yScale : this.state.scales.yScale} 
+                    xScale={(syncScales) ? this.props.scales.xScale : this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}

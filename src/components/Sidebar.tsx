@@ -35,6 +35,8 @@ interface Props {
     onToggleLinear: () => void;
     showScatter: boolean;
     showLinear: boolean;
+    syncScales: boolean;
+    onToggleSync: () => void;
 }
 
 
@@ -151,6 +153,12 @@ function Sidebar(props: Props) {
             <label>
               <span className="App-CheckBox-explanation">Display Linear Plots: </span>
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
+            </label>
+          </div>
+          <div className= "row-contents">
+            <label>
+              <span className="App-CheckBox-explanation">Sync Scales: </span>
+              <input type="checkbox" onClick={props.onToggleSync} checked={props.syncScales} readOnly/>
             </label>
           </div>
         </div>
