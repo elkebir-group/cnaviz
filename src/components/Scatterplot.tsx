@@ -271,9 +271,10 @@ export class Scatterplot extends React.Component<Props, State> {
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                {(displayMode==DisplayMode.zoom 
+                                {/* {(displayMode==DisplayMode.zoom 
                                     || displayMode==DisplayMode.boxzoom) 
-                                    && <button id="reset" onClick={this.resetZoom}>Reset View</button>}
+                                    &&} */}
+                                <button id="reset" onClick={this.resetZoom}>Reset View</button>
                                 {/* {(displayMode==DisplayMode.select) 
                                     && <button id="new-cluster" onClick={()=>{
                                     let clusters = this._clusters;
