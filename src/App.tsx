@@ -619,15 +619,17 @@ export class App extends React.Component<{}, State> {
                 
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
-                {this.state.showDirections && <div className="Directions">
-                    <h2>Directions</h2>
-                    <li> Press "s" to hide the scatterplot </li>
-                    <li> Press "l" to hide the linear plot </li>
-                    <li> Press "z" or use the toggle to enter zoom mode </li>
-                    <li> Press "b" or use the toggle to enter selection mode </li>
-                    <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
-                    <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
-                </div>}
+                {this.state.showDirections && <div className="black_overlay"></div> }
+                {this.state.showDirections && 
+                    <div className="Directions">
+                        <h2>Directions</h2>
+                        <li> Press "s" to hide the scatterplot </li>
+                        <li> Press "l" to hide the linear plot </li>
+                        <li> Press "z" or use the toggle to enter zoom mode </li>
+                        <li> Press "b" or use the toggle to enter selection mode </li>
+                        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
+                        <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
+                    </div> }
             </div>
             
         </div>;
