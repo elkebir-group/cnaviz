@@ -229,7 +229,7 @@ export class SampleViz extends React.Component<Props, State> {
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}
                     displayMode={dispMode}
-                    width={showSidebar ? 600 : 800} 
+                    width={showSidebar ? 600 : 600} 
                     implicitRange={this.state.implicitRange}/>}
             </div>
             {/* <div className="SampleViz-clusters"> */}

@@ -555,8 +555,8 @@ export class App extends React.Component<{}, State> {
             mainUI = (
                 <div id="grid-container">
                     
-                    <div className="App-global-controls">
-                    </div>
+                    {/* <div className="App-global-controls">
+                    </div> */}
                     
                     <div className="sampleviz-wrapper-row">
                             {_.times(sampleAmount, i => samples.length > i 
@@ -614,8 +614,8 @@ export class App extends React.Component<{}, State> {
             
             <div className={this.state.sidebar ? "marginContent" : ""}>
             
-                <div className="App-title-bar">
-                </div>
+                {/* <div className="App-title-bar">
+                </div> */}
                 
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
