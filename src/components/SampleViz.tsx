@@ -119,6 +119,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     handleZoom(newScales: any) {
         const {syncScales, handleZoom} = this.props;
+        //console.log("New Scales Samplviz: ", newScales);
         (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
     }
 
@@ -139,13 +140,9 @@ export class SampleViz extends React.Component<Props, State> {
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
+        
         //sampleOptions.unshift(<option selected disabled>Sample</option>);
         rdRange[1] += 0.5;
-        let elem = document.getElementById("grid-container");
-        let width = 0;
-        if(elem) {
-            width = elem.offsetWidth;
-        }
         
         let clusterOptions = this._clusters.map(clusterName =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>

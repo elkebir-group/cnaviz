@@ -345,14 +345,14 @@ export class DataWarehouse {
      * 
      * @return a guess of the bin size in bases of data points in this data set.
      */
-    guessBinSize(): number {
-        if (this.isEmpty()) {
-            return 0;
-        }
-        const firstSample = this.getSampleList()[0];
-        const firstRecord = this.getRecords(firstSample)[0];
-        return firstRecord.END - firstRecord.START;
-    }
+    // guessBinSize(): number {
+    //     if (this.isEmpty()) {
+    //         return 0;
+    //     }
+    //     const firstSample = this.getSampleList()[0];
+    //     const firstRecord = this.getRecords(firstSample)[0];
+    //     return firstRecord.END - firstRecord.START;
+    // }
 
     /**
      * Performs a query for records matching a sample and a chromosome.  To get all records matching a sample,
@@ -363,19 +363,68 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getRecords(sample: string, implicitStart?: number, implicitEnd?: number): GenomicBin[] {
+    getRecords(sample: string, applyLog: boolean, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null): GenomicBin[] {
         if(sample in this._sampleGroupedData) {
-            if(implicitStart && implicitEnd) {
-                return this.filterRecordsByScales(this._sampleGroupedData[sample], implicitStart, implicitEnd);
-            }
-            return this._sampleGroupedData[sample];
+            // console.log("START: ", implicitStart);
+            // console.log("End: ", implicitEnd);
+            // console.log("XScale: ", xScale);
+            // console.log("yScale: ", yScale);
+            return this.filterRecordsByScales(this._sampleGroupedData[sample], applyLog, implicitStart, implicitEnd, xScale, yScale);
         }
         return [];
     }
 
-    filterRecordsByScales(records: GenomicBin[], implicitStart: number, implicitEnd: number) : GenomicBin[]{
-       // console.log("TEST");
-        return records.filter(record => record.genomicPosition > implicitStart && record.genomicPosition < implicitEnd )
+    filterRecordsByScales(records: GenomicBin[], applyLog: boolean, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null) : GenomicBin[]{
+       
+       let dataKey : keyof Pick<GenomicBin, "RD" | "logRD"> = (applyLog) ? "logRD" : "RD"
+       //console.log(xScale);
+        if((implicitStart && implicitEnd) && xScale && yScale) {
+            //console.log("TEST1");
+            return records.filter(record => record.genomicPosition > implicitStart 
+                && record.genomicPosition < implicitEnd 
+                && record.reverseBAF > xScale[0] 
+                && record.reverseBAF < xScale[1]
+                && record[dataKey] > yScale[0] 
+                && record[dataKey] < yScale[1]
+                )
+        } else if((implicitStart && implicitEnd) && xScale) {
+           //console.log("TEST2");
+            return records.filter(record => record.genomicPosition > implicitStart 
+                && record.genomicPosition < implicitEnd 
+                && record.reverseBAF > xScale[0] 
+                && record.reverseBAF < xScale[1]
+                )
+        } else if((implicitStart && implicitEnd) && yScale) {
+            //console.log("TEST2");
+             return records.filter(record => record.genomicPosition > implicitStart 
+                 && record.genomicPosition < implicitEnd 
+                 && record[dataKey] > yScale[0] 
+                && record[dataKey] < yScale[1]
+                 )
+         } else if(xScale && yScale) {
+            //console.log("TEST3");
+            return records.filter(record => 
+                record.reverseBAF > xScale[0] 
+                && record.reverseBAF < xScale[1]
+                && record[dataKey] > yScale[0] 
+                && record[dataKey] < yScale[1]
+                )
+         } else if (xScale) {
+            //console.log("TEST4");
+            return records.filter(record => 
+                record.reverseBAF > xScale[0] 
+                && record.reverseBAF < xScale[1]
+                )
+        } else if(yScale) {
+            //console.log("TEST5");
+            return records.filter(record => 
+                record[dataKey] > yScale[0] 
+                && record[dataKey] < yScale[1]
+                )
+        }
+
+        return records;
+        
     }
 
     getAllRecords() {

@@ -316,6 +316,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this._currXScale = this._original_XScale;
         this._currYScale = this._original_YScale;
         const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+        //console.log("New Scales: ", newScales);
         this.props.onZoom(newScales);
         this.redraw();
     }
@@ -397,6 +398,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 .addAll(data)
 
             let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+            //console.log("New Scales: ", newScales);
             this.props.onZoom(newScales);
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
@@ -409,6 +411,7 @@ export class Scatterplot extends React.Component<Props, State> {
 
     computeScales(rdRange: [number, number], width: number, height: number, 
                     bafRange?: [number, number], useLowerBound?: boolean) {
+        //console.log("Computing Scales");
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
         const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
@@ -528,6 +531,7 @@ export class Scatterplot extends React.Component<Props, State> {
             }
           }).on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+                //console.log("New Scales: ", newScales);
                 self.props.onZoom(newScales);
             }
         );

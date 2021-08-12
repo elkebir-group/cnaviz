@@ -56,8 +56,18 @@ export class SampleViz1D extends React.Component<Props, State> {
              customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange} = this.props;
         const selectedSample = this.props.selectedSample;
 
-        const selectedRecords = (implicitRange !== null) ? data.getRecords(selectedSample, implicitRange[0], implicitRange[1]): data.getRecords(selectedSample);
-        
+        //const selectedRecords = (implicitRange !== null && xScale !== null) ? data.getRecords(selectedSample, implicitRange[0], implicitRange[1], xScale): data.getRecords(selectedSample);
+        //console.log("YSCALE: ", yScale);
+        let selectedRecords = [];
+        if (implicitRange !== null || xScale !== null || yScale !== null) {
+            let implicitStart = (implicitRange) ? implicitRange[0] : null;
+            let implicitEnd = (implicitRange) ? implicitRange[1] : null;
+
+            selectedRecords = data.getRecords(selectedSample, applyLog, implicitStart, implicitEnd, xScale, yScale);
+        } else { 
+            selectedRecords = data.getRecords(selectedSample, applyLog, null, null, null, null);
+        }
+
         let visualization: React.ReactNode = null;
         //if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
