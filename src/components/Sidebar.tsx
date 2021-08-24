@@ -104,7 +104,7 @@ function Sidebar(props: Props) {
                 (event: any) =>
                 props.onFileChosen(event, false)
               } />
-              Import TSV
+              Import
             </label>
           </div>
           
@@ -114,12 +114,12 @@ function Sidebar(props: Props) {
                 (event: any) =>
                 props.onFileChosen(event, true)
               }/>
-              Import TSV with Clustering
+              Import with Clustering
             </label>
           </div>
           
           <div className="row-contents">
-            <CSV data={props.data}></CSV>
+            <CSV data={props.data} fileName={props.chosenFile}></CSV>
           </div>
           
         </div>

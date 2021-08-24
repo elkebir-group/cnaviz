@@ -365,10 +365,6 @@ export class DataWarehouse {
      */
     getRecords(sample: string, applyLog: boolean, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null): GenomicBin[] {
         if(sample in this._sampleGroupedData) {
-            // console.log("START: ", implicitStart);
-            // console.log("End: ", implicitEnd);
-            // console.log("XScale: ", xScale);
-            // console.log("yScale: ", yScale);
             return this.filterRecordsByScales(this._sampleGroupedData[sample], applyLog, implicitStart, implicitEnd, xScale, yScale);
         }
         return [];

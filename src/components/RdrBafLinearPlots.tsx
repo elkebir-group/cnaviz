@@ -42,7 +42,7 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
         onBrushedBinsUpdated={onBrushedBinsUpdated}
         yMin={yScale ? yScale[0] : (applyLog ? -2 : 0)}
         yMax={yScale ? yScale[1] : rdRange[1]}
-        yLabel={"RDR"}
+        yLabel={applyLog ? "log RDR" : "RDR"}
         brushedBins={brushedBins}
         customColor={customColor}
         colors={colors}

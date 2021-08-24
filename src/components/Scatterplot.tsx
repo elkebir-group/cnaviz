@@ -271,39 +271,7 @@ export class Scatterplot extends React.Component<Props, State> {
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                {/* {(displayMode==DisplayMode.zoom 
-                                    || displayMode==DisplayMode.boxzoom) 
-                                    &&} */}
                                 <button id="reset" onClick={this.resetZoom}>Reset View</button>
-                                {/* {(displayMode==DisplayMode.select) 
-                                    && <button id="new-cluster" onClick={()=>{
-                                    let clusters = this._clusters;
-                                    const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
-                                    let nextAvailable = highestCurrentCluster + 1;
-
-                                    for(let i = 0; i < clusters.length; i++) {
-                                        if(Number(clusters[i]) !== i){
-                                            nextAvailable = i;
-                                            break;
-                                        }
-                                    }
-
-                                    this.onTrigger(nextAvailable);
-                                    this.brushedNodes = new Set();
-                                }} >New Cluster</button>}
-                                {(displayMode==DisplayMode.select) &&
-                                    <button id="assign-cluster" onClick={() => {
-                                        this.onTrigger(this.state.selectedCluster);
-                                        this.brushedNodes = new Set();
-                                    }}>Assign Cluster</button>}
-                                {(displayMode==DisplayMode.select) &&
-                                    <select
-                                        name="Select Cluster" 
-                                        id="Select Cluster"
-                                        value={this.state.selectedCluster}
-                                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
-                                        {clusterOptions}
-                                    </select>} */}
                             </div>
 
                             {this.renderTooltip()}
@@ -451,7 +419,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let xScale = this._currXScale;
         let yScale = this._currYScale;
         let xLabel = "Allelic Imbalance (0.5 - BAF)";
-        let yLabel = "RDR";
+        let yLabel = yAxisToPlot === "RD" ? "RDR" : "log RDR";
         
         const svg = d3.select(this._svg);
         
@@ -645,6 +613,7 @@ export class Scatterplot extends React.Component<Props, State> {
                         svg.selectAll("." + "brush").remove();
                         this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
+            
                     
             // attach the brush to the chart
             svg.append('g')
@@ -725,6 +694,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             this._currYScale.invert(selection[1][1])], 
                             [this._currXScale.invert(selection[1][0]) , 
                             this._currYScale.invert(selection[0][1])]];
+                console.log("Rect: ", rect);
                 let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
                     (d : GenomicBin) => d.reverseBAF, 
                     (d : GenomicBin)  => d[yAxisToPlot]); // The new points selected
