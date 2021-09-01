@@ -83,11 +83,11 @@ export class SampleViz extends React.Component<Props, State> {
 
     initializeListOfClusters() : string[] {
         let clusterTableData = this.props.clusterTableData;
-        clusterTableData.sort((a : any, b : any) => {
-            if (a.key > b.key) return 1;
-            if (a.key < b.key) return -1;
-            return 0;
-        })
+        // clusterTableData.sort((a : any, b : any) => {
+        //     if (a.key > b.key) return 1;
+        //     if (a.key < b.key) return -1;
+        //     return 0;
+        // })
 
         this._clusters = [];
         for(const obj of clusterTableData) {
@@ -124,7 +124,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleLinearPlotZoom(genomicRange: [number, number] | null) {
-        console.log("Linear plot zooming");
+        //console.log("Linear plot zooming");
         // this.props.data.setGenomicPositionFilter(genomicRange);
         // this.forceUpdate();
         this.setState({implicitRange: genomicRange})
@@ -186,9 +186,23 @@ export class SampleViz extends React.Component<Props, State> {
 
                     {(dispMode==DisplayMode.select) 
                         && <button onClick={()=>{
-
+                        this.initializeListOfClusters();
                         let clusters = this._clusters;
-
+                        // var i = 0, j;
+                        // while (i < clusters.length) {
+                        //     j = i + 1;
+                        //     while (j < clusters.length) {
+                        //         if (clusters[j] < clusters[i]) {
+                        //             var temp = clusters[i];
+                        //             clusters[i] = clusters[j];
+                        //             clusters[j] = temp;
+                        //         }
+                        //         j++;
+                        //     }
+                        //     i++;
+                        // }
+                        clusters.sort((a: string, b:string) => (Number(a) - Number(b)))
+                        //console.log(clusters);
                         const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
                         let nextAvailable = highestCurrentCluster + 1;
 

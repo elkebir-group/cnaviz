@@ -332,9 +332,9 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
         try {
-            console.time("Reading File");
+            //console.time("Reading File");
             contents = await getFileContentsAsString(files[0]);
-            console.timeEnd("Reading File");
+            //console.timeEnd("Reading File");
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});

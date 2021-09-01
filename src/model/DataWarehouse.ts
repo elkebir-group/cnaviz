@@ -7,6 +7,7 @@ import { ChromosomeInterval } from "./ChromosomeInterval";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
+import { visitNode } from "typescript";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -138,12 +139,20 @@ export class DataWarehouse {
         const clusterTable : clusterTableRow[] = [];
         for(const row of clusterInfo) {
             let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            //console.log(String(row.key) + " : " + value);
             clusterTable.push(
             {
                 key: String(row.key), 
                 value: value
             });
+            // for(const row2 of clusterTable) {
+            //     console.log(clusterTable.length, row2);
+            // }
+            
+
         }
+        // console.log("CLUSTER TABLE INFO 2: ", clusterInfo);
+        // console.log("CLUSTER TABLE INFO 4: ", clusterTable);
         return clusterTable;
     }
 
@@ -240,7 +249,7 @@ export class DataWarehouse {
     }
 
     setGenomicPositionFilter(genomeRange: [number, number]) {
-        console.log("Setting filter");
+        //console.log("Setting filter");
         this._genomic_pos_dim.filterAll();
         this._genomic_pos_dim.filter(d => d > genomeRange[0] && d < genomeRange[1]);
 
@@ -259,12 +268,12 @@ export class DataWarehouse {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-        console.time("Pushing to stack");
+        //console.time("Pushing to stack");
         let previousRecords = this._ndx.all();
         let deepCopy = JSON.parse(JSON.stringify(previousRecords));
         this.historyStack.push(deepCopy);
-        console.timeEnd("Pushing to stack");
-        console.time("Modifying Data");
+        //console.timeEnd("Pushing to stack");
+       // console.time("Modifying Data");
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
@@ -273,8 +282,8 @@ export class DataWarehouse {
                 }
             }
         }
-        console.timeEnd("Modifying Data");
-        console.time("Creating crossfilter");
+        //console.timeEnd("Modifying Data");
+        //console.time("Creating crossfilter");
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
         this._ndx.remove();
@@ -284,18 +293,21 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
-        console.timeEnd("Creating crossfilter");
+       // console.timeEnd("Creating crossfilter");
         // Get all records prior to filtering out deleted points, 
         // so that cluster table calculation uses all points including the deleted
-        console.time("Cluster Table stuff");
+       // console.time("Cluster Table stuff");
         this.allRecords =  this._ndx.all(); 
-        this.clusterTableInfo = this.calculateClusterTableInfo();
+        let test = this.calculateClusterTableInfo();
+        this.clusterTableInfo = test;
+        // console.log("CLUSTER TABLE INFO: ", this.clusterTableInfo);
+        // console.log("CLUSTER TABLE INFO3: ", test);
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
         
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
         }
-        console.timeEnd("Cluster Table stuff");
+        //console.timeEnd("Cluster Table stuff");
         console.timeEnd("Updating Clusters");
     }
 
@@ -303,7 +315,7 @@ export class DataWarehouse {
         if(this.historyStack.length === 0) {
             return;
         }
-        console.time("Undoing cluster");
+        //console.time("Undoing cluster");
         let newRecords = this.historyStack[this.historyStack.length-1];
         this.historyStack.pop();
         this.initializeLocationGroupedData(newRecords);
@@ -314,6 +326,7 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         
         this.clusterTableInfo = this.calculateClusterTableInfo();
+        
         this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
         
         if(!this._cluster_filters.includes(String(cluster))) {
@@ -321,7 +334,7 @@ export class DataWarehouse {
         }
 
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        console.timeEnd("Undoing cluster");
+        //console.timeEnd("Undoing cluster");
     }
 
     brushedTableData() {

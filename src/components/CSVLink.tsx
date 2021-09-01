@@ -52,7 +52,7 @@ export class CSV extends React.Component<Props> {
         
                 // finally joining each row with a line break
                 }, []).join('\n');
-                console.log("Headings: ", headings);
+                //console.log("Headings: ", headings);
                 let csvContent : any = headings + "\n" + rows;
                 // var encodedUri = encodeURI(csvContent);
                 // console.log("Encoded URI: ", encodedUri)

@@ -694,7 +694,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             this._currYScale.invert(selection[1][1])], 
                             [this._currXScale.invert(selection[1][0]) , 
                             this._currYScale.invert(selection[0][1])]];
-                console.log("Rect: ", rect);
+               // console.log("Rect: ", rect);
                 let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
                     (d : GenomicBin) => d.reverseBAF, 
                     (d : GenomicBin)  => d[yAxisToPlot]); // The new points selected
