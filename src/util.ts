@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 export interface Coordinate {
     x: number;
     y: number;
@@ -128,3 +130,20 @@ export function sampleWithEqualSpacing<T>(list: T[], numSamples: number): T[] {
     }
     return samples;
 }
+
+export const trunc = (str : string, len : number) =>
+  str.length > len ? str.substr(0, len - 1) + "..." : str;
+
+export const webglColor = (color : string) => {
+    //console.log("COLOR: ",color);
+    let col = d3.color(color);
+    if(col !== null) {  
+        const { r, g, b, opacity } = col.rgb();
+        return [r / 255, g / 255, b / 255, opacity];
+    }
+
+    return;
+}
+
+export const iterateElements = (selector : any, fn : any) =>
+  [].forEach.call(document.querySelectorAll(selector), fn);

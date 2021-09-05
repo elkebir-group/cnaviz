@@ -1,8 +1,9 @@
 import React from "react";
 import * as d3 from "d3";
+// @ts-ignore: Unreachable code error
+import * as fc from "d3fc";
 import _, { assign } from "lodash";
 import memoizeOne from "memoize-one";
-
 import { CopyNumberCurveDrawer } from "./CopyNumberCurveDrawer";
 import { MergedBinHelpers, MergedGenomicBin } from "../model/BinMerger";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
@@ -11,7 +12,7 @@ import { CopyNumberCurve } from "../model/CopyNumberCurve";
 import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberState";
 //import { niceBpCount, getRelativeCoordinates } from "../util";
 import {GenomicBin, GenomicBinHelpers} from "../model/GenomicBin";
-import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
+import {webglColor, getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
@@ -263,7 +264,13 @@ export class Scatterplot extends React.Component<Props, State> {
                                 width={width}
                                 height={height}
                                 className={"canvas"}
-                                />
+                                style={{position: "absolute", 
+                                        top: PADDING.top, 
+                                        zIndex: -1, 
+                                        left: PADDING.left, 
+                                        width: width-PADDING.left - PADDING.right, 
+                                        height: height-PADDING.top-PADDING.bottom}}
+                            />
                             <svg
                                 ref={node => this._svg = node}
                                 width={width} height={height}
@@ -454,7 +461,6 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("transform", `translate(${PADDING.left}, 0)`)
             .call(d3.axisLeft(scale))
             
-        const ctx = this._canvas.getContext("2d")!;  
 
         let previous : string[] = [];
         brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()))
@@ -511,6 +517,23 @@ export class Scatterplot extends React.Component<Props, State> {
             return [width / 2, height / 2];
         }
 
+        const gl = this._canvas.getContext("webgl")!;
+        gl.clearColor(0,0,0,1);
+        let languageFill = (d:any) => {
+            return webglColor(chooseColor(d));
+        };
+        
+        let fillColor = fc.webglFillColor().value(languageFill).data(self.props.data);
+        let pointSeries = fc
+            .seriesWebglPoint()
+            .xScale(self._currXScale)
+            .yScale(self._currYScale)
+            .size(1)
+            .crossValue((d : any) => d.reverseBAF)
+            .mainValue((d : any) => d[yAxisToPlot])
+            .context(gl);
+        pointSeries.decorate((program:any) => fillColor(program));
+
         function redraw() {
             const xr = tx().rescaleX(xScale);
             const yr = ty().rescaleY(yScale);
@@ -518,75 +541,22 @@ export class Scatterplot extends React.Component<Props, State> {
             gx.call(xAx , xr);
             gy.call(yAx, yr);
             
-            ctx.clearRect(0, 0, width, height);
-            let range = self._currXScale.range();
-            let range2 = self._currYScale.range();
             self._currXScale = xr;
             self._currYScale = yr;
 
-            for (const d of data) {
-                if(!previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
-                    //drawGenomicBin(d);
-                    let x = xr(d.reverseBAF);
-                    let y = yr(d[yAxisToPlot]);
-
-                    if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                        ctx.fillStyle = chooseColor(d);
-                        ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-                    }
-                }
+            if(self._canvas) {
+                pointSeries
+                    .xScale(self._currXScale)
+                    .yScale(self._currYScale)
+                pointSeries(data);
             }
-
-            for (const d of data) {
-                if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
-                    //drawGenomicBin(d);
-                    let x = xr(d.reverseBAF);
-                    let y = yr(d[yAxisToPlot]);
-
-                    if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                        ctx.fillStyle = chooseColor(d);
-                        ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-                    }
-                }
-            } 
         }
         
         this._canvas.width = width;
         this._canvas.height = height;
 
-        applyRetinaFix(this._canvas);
-
-        // drawAllGenomicBins();
-
-        function drawAllGenomicBins() {
-            ctx.clearRect(0, 0, width, height);
-            for (const d of data) {
-                if(!previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
-                    drawGenomicBin(d);
-                }
-            }
-            for (const d of data) {
-                if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
-                    drawGenomicBin(d);
-                }
-            }
-        }
-
-        function drawGenomicBin(d : GenomicBin) {
-            const x = self._currXScale(d.reverseBAF);
-            const y = self._currYScale(d[yAxisToPlot]);
-            
-            let range = self._currXScale.range();
-            let range2 = self._currYScale.range();
-
-            if(x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
-                ctx.fillStyle = chooseColor(d);
-                ctx.fillRect(x || 0, (y || 0) - 1, 2, 3);
-            }
-        }
         redraw();
 
-        
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
@@ -621,7 +591,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 .call(brush);
         } else if(displayMode === DisplayMode.zoom) {
             svg.selectAll("." + "brush").remove();
-            
         } else if(displayMode === DisplayMode.boxzoom) {
             const brush = d3.brush()
             .keyModifiers(false)
@@ -659,7 +628,6 @@ export class Scatterplot extends React.Component<Props, State> {
                     self._currYScale = rdrScale;
                     
                     self.redraw();
-                    drawAllGenomicBins();
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     self.props.onZoom(newScales);
@@ -737,7 +705,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 return x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]
             })
         }
-
+    
         let svg = d3.select(this._svg);
         svg.select("." + CIRCLE_GROUP_CLASS_NAME).remove();
         svg.select(".eventrect")
@@ -768,6 +736,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("fill-opacity", 1)
                     .attr("stroke-width", 2)
                     .attr("stroke", "black");
+
     }
 
     forceHover(genomeLocation?: ChromosomeInterval) {

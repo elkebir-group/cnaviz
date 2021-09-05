@@ -1,12 +1,14 @@
 import React from "react";
 import * as d3 from "d3";
+// @ts-ignore: Unreachable code error
+import * as fc from "d3fc";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome, Chromosome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
+import {webglColor, getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { brush } from "d3";
 import { DisplayMode } from "../App";
@@ -185,6 +187,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             .ticks((yScale.range()[0] - yScale.range()[1]) / 15); // Every ~10 pixels
 
         const svg = d3.select(this._svg);
+        
+
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
@@ -213,6 +217,66 @@ export class LinearPlot extends React.PureComponent<Props> {
             .text(yLabel || dataKeyToPlot)
             .attr("y", _.mean(yScale.range()));
 
+        const chromosomes = genome.getChromosomeList();
+        let xAx = (g : any, scale : any) => g
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+            .call(d3.axisBottom(scale).tickValues(genome.getChromosomeStarts2(chromosomes)).tickFormat((unused, i) => findChrNumber(chromosomes[i].name)))
+        
+        let yAx = (g : any, scale : any) => g
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("transform", `translate(${PADDING.left}, 0)`)
+            .call(d3.axisLeft(scale))
+
+        const gx = svg.append("g");
+        const gy = svg.append("g");
+        let z = d3.zoomIdentity;
+        const zoomX : any = d3.zoom().scaleExtent([0, 100]);
+        const zoomY : any = d3.zoom().scaleExtent([0, 100]);
+        const tx = () => d3.zoomTransform(gx.node() as Element);
+        const ty = () => d3.zoomTransform(gy.node() as Element);
+        gx.call(zoomX).attr("pointer-events", "none");
+        gy.call(zoomY).attr("pointer-events", "none");
+
+        const zoom : any = d3.zoom().on("zoom", () => {
+            try {
+                const t = d3.event.transform;
+                const k = t.k / z.k;
+                const point = center(d3.event);
+
+                // is it on an axis?
+                const doX = point[0] > xScale.range()[0];
+                const doY = point[1] < yScale.range()[0];
+                if(displayMode === DisplayMode.zoom || !(doX && doY)) {
+                    if (k === 1) {
+                    // pure translation?
+                    doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
+                    //doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
+                    } else {
+                    // if not, we're zooming on a fixed point
+                    doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
+                    //doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
+                    }
+                }
+                z = t;
+                redraw();
+            } catch(error) {
+                console.log("Error: ", error);
+            }
+          }).on("end", () => {
+                let newScales = {xScale: xScale.domain(), yScale: yScale.domain()}
+                //console.log("New Scales: ", newScales);
+                self.props.onLinearPlotZoom([xScale.domain()[0], xScale.domain()[1]]);
+            }
+        );
+
+        function center(event : any) {
+            if (event.sourceEvent) {
+                return [event.sourceEvent.layerX, event.sourceEvent.layerY];
+            }
+            return [width / 2, height / 2];
+        }
+
         if (!this._canvas) {
             return;
         }
@@ -223,22 +287,50 @@ export class LinearPlot extends React.PureComponent<Props> {
         brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()));
         let previous_brushed_nodes = new Set(previous);
         
-        applyRetinaFix(this._canvas);
-        const ctx = this._canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
+        // applyRetinaFix(this._canvas);
+        // const ctx = this._canvas.getContext("2d")!;
+        // ctx.clearRect(0, 0, width, height); // Clearing an area larger than the canvas dimensions, but that's fine.
         
-        for (const d of data) {
-            const location = GenomicBinHelpers.toChromosomeInterval(d);
-            const range = genome.getImplicitCoordinates(location);
-            const x = xScale(range.getCenter());
-            const y = yScale(d[dataKeyToPlot]);
-            if(x && y && y < yScale.range()[0] && y > yScale.range()[1] 
-                    && x < xScale.range()[1] && x > xScale.range()[0]) {
-                ctx.fillStyle = chooseColor(d);
-                ctx.fillRect(x, y - 1, 2, 3);
-            }
+        // for (const d of data) {
+        //     const location = GenomicBinHelpers.toChromosomeInterval(d);
+        //     const range = genome.getImplicitCoordinates(location);
+        //     const x = xScale(range.getCenter());
+        //     const y = yScale(d[dataKeyToPlot]);
+        //     if(x && y && y < yScale.range()[0] && y > yScale.range()[1] 
+        //             && x < xScale.range()[1] && x > xScale.range()[0]) {
+        //         ctx.fillStyle = chooseColor(d);
+        //         ctx.fillRect(x, y - 1, 2, 3);
+        //     }
+        // }
+        const gl = this._canvas.getContext("webgl")!;
+        gl.clearColor(255,255,255,1);
+        let languageFill = (d:any) => {
+            return webglColor(chooseColor(d));
+        };
+        let fillColor = fc.webglFillColor().value(languageFill).data(this.props.data);
+        let pointSeries = fc
+                .seriesWebglPoint()
+                .xScale(xScale)
+                .yScale(yScale)
+                .size(3)
+                .crossValue((d : any) => genome.getImplicitCoordinates(GenomicBinHelpers.toChromosomeInterval(d)).getCenter())
+                .mainValue((d : any) => d[dataKeyToPlot])
+                .context(gl);
+        pointSeries.decorate((program:any) => fillColor(program));
+        function redraw() {
+            const xr = tx().rescaleX(xScale);
+            const yr = ty().rescaleY(yScale);
+            
+            gx.call(xAx , xr);
+            gy.call(yAx, yr);
+
+            pointSeries.xScale(xr).yScale(yr);
+                     
+            pointSeries(data);
         }
-        
+
+        redraw();
+
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 return customColor;
@@ -252,43 +344,51 @@ export class LinearPlot extends React.PureComponent<Props> {
                 return colors[col_index];
             }
         }
+
+       
+
         let brush : any = null;
         if(displayMode == DisplayMode.select) {
-        brush = d3.brush()
-        .keyModifiers(false)
-        .extent([[PADDING.left, PADDING.top], 
-                [this.props.width, this.props.height - PADDING.bottom]])
-                .on("start brush", () => {
-                    try{
-                        const { selection} = d3.event;
-                        
-                        let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
-                            function(d: GenomicBin){
-                                const location = GenomicBinHelpers.toChromosomeInterval(d);
-                                const range = genome.getImplicitCoordinates(location);
-                                return xScale(range.getCenter());
-                            }, 
-                            function(d: GenomicBin){
-                                return yScale(d[dataKeyToPlot]);
-                            });
+            brush = d3.brush()
+                .keyModifiers(false)
+                .extent([[PADDING.left, PADDING.top], 
+                        [this.props.width, this.props.height - PADDING.bottom]])
+                        .on("start brush", () => {
+                            try{
+                                const { selection} = d3.event;
+                                
+                                let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
+                                    function(d: GenomicBin){
+                                        const location = GenomicBinHelpers.toChromosomeInterval(d);
+                                        const range = genome.getImplicitCoordinates(location);
+                                        return xScale(range.getCenter());
+                                    }, 
+                                    function(d: GenomicBin){
+                                        return yScale(d[dataKeyToPlot]);
+                                    });
 
-                        if(d3.event.sourceEvent.shiftKey) {
-                            brushed = _.uniq(_.union(brushed, brushedBins));  
-                        } else if(d3.event.sourceEvent.altKey) {
-                            brushed = _.difference(brushedBins, brushed);
-                        }
+                                if(d3.event.sourceEvent.shiftKey) {
+                                    brushed = _.uniq(_.union(brushed, brushedBins));  
+                                } else if(d3.event.sourceEvent.altKey) {
+                                    brushed = _.difference(brushedBins, brushed);
+                                }
 
-                        this.brushedNodes = new Set(brushed);  
-                    }catch(error) {
-                        console.log(error);
-                    }
+                                this.brushedNodes = new Set(brushed);  
+                            }catch(error) {
+                                console.log(error);
+                            }
+
                     
                 })
                 .on("end", () => {
                     svg.selectAll("." + "brush").remove();
                     this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                 });
-        } else {
+                
+                svg.append('g')
+                    .attr('class', 'brush')
+                    .call(brush);
+        } else if(displayMode === DisplayMode.boxzoom){
             brush = d3.brushX().extent([[PADDING.left, PADDING.top], 
                 [this.props.width, this.props.height - PADDING.bottom]])
                 .on("end", () => {
@@ -309,13 +409,15 @@ export class LinearPlot extends React.PureComponent<Props> {
                     this.redraw();
                     
                 })
-        }
-             
-        // attach the brush to the chart
-        svg.append('g')
-            .attr('class', 'brush')
-            .call(brush);
 
+            svg.append('g')
+                .attr('class', 'brush')
+                .call(brush);
+        } else if(displayMode === DisplayMode.zoom) {
+            svg.selectAll("." + "brush").remove();
+        }
+        svg.call(zoom).call(zoom.transform, d3.zoomIdentity.scale(1.0));
+        // attach the brush to the chart
     }
 
     renderHighlight() {
@@ -371,7 +473,13 @@ export class LinearPlot extends React.PureComponent<Props> {
                 ref={node => this._canvas = node}
                 width={width}
                 height={height}
-                style={{position: "absolute", zIndex: -1}} />
+                className={"canvas"}
+                style={{position: "absolute", 
+                        top: PADDING.top, 
+                        zIndex: -1, 
+                        left: PADDING.left, 
+                        width: width-PADDING.left - PADDING.right, 
+                        height: height-PADDING.top-PADDING.bottom}} />
             
             <svg ref={node => this._svg = node} width={width} height={height} />
             <div className="LinearPlot-tools">
@@ -379,6 +487,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 || displayMode==DisplayMode.boxzoom) && (dataKeyToPlot === "RD" || dataKeyToPlot === "logRD"))
                 && <button onClick={() => {
                     this.props.onLinearPlotZoom(null);
+                    //this.redraw();
                 }}>Reset View</button>}
             </div>
         </div>;

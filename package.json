@@ -9,6 +9,7 @@
     "@types/react-dom": "16.8.4",
     "crossfilter2": "^1.5.4",
     "d3": "^5.9.2",
+    "d3fc": "^14.2.3",
     "react": "^16.8.6",
     "react-annotation": "^2.2.1",
     "react-color": "^2.19.3",

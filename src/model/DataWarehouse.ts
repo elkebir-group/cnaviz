@@ -270,8 +270,9 @@ export class DataWarehouse {
         }
         //console.time("Pushing to stack");
         let previousRecords = this._ndx.all();
-        let deepCopy = JSON.parse(JSON.stringify(previousRecords));
-        this.historyStack.push(deepCopy);
+        //let deepCopy = JSON.parse(JSON.stringify(previousRecords));
+        //this.historyStack.push(deepCopy);
+        
         //console.timeEnd("Pushing to stack");
        // console.time("Modifying Data");
         for(let i = 0; i < this.brushedBins.length; i++) {
