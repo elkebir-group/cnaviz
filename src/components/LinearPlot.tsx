@@ -69,6 +69,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _canvas: HTMLCanvasElement | null;
     private _clusters: string[];
     private brushedNodes: Set<GenomicBin>;
+    private _currXScale: d3.ScaleLinear<number, number>;
 
     constructor(props: Props) {
         super(props);
@@ -79,6 +80,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.brushedNodes = new Set();
+        this._currXScale = this.getXScale(props.width, props.genome, props.chr, this.props.implicitStart, this.props.implicitEnd);
+
     }
 
     initializeListOfClusters() : string[] {
@@ -229,14 +232,14 @@ export class LinearPlot extends React.PureComponent<Props> {
             .call(d3.axisLeft(scale))
 
         const gx = svg.append("g");
-        const gy = svg.append("g");
+        // const gy = svg.append("g");
         let z = d3.zoomIdentity;
         const zoomX : any = d3.zoom().scaleExtent([0, 100]);
-        const zoomY : any = d3.zoom().scaleExtent([0, 100]);
+        //const zoomY : any = d3.zoom().scaleExtent([0, 100]);
         const tx = () => d3.zoomTransform(gx.node() as Element);
-        const ty = () => d3.zoomTransform(gy.node() as Element);
+        //const ty = () => d3.zoomTransform(gy.node() as Element);
         gx.call(zoomX).attr("pointer-events", "none");
-        gy.call(zoomY).attr("pointer-events", "none");
+        //gy.call(zoomY).attr("pointer-events", "none");
 
         const zoom : any = d3.zoom().on("zoom", () => {
             try {
@@ -264,9 +267,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                let newScales = {xScale: xScale.domain(), yScale: yScale.domain()}
+                //let newScales = {xScale: xScale.domain(), yScale: yScale.domain()}
                 //console.log("New Scales: ", newScales);
-                self.props.onLinearPlotZoom([xScale.domain()[0], xScale.domain()[1]]);
+                if(!chr) {
+                    self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]]);
+                }
             }
         );
 
@@ -319,13 +324,14 @@ export class LinearPlot extends React.PureComponent<Props> {
         pointSeries.decorate((program:any) => fillColor(program));
         function redraw() {
             const xr = tx().rescaleX(xScale);
-            const yr = ty().rescaleY(yScale);
+            // const yr = ty().rescaleY(yScale);
             
             gx.call(xAx , xr);
-            gy.call(yAx, yr);
+            // gy.call(yAx, yr);
+            
+            pointSeries.xScale(xr).yScale(yScale);
+            self._currXScale = xr;
 
-            pointSeries.xScale(xr).yScale(yr);
-                     
             pointSeries(data);
         }
 
@@ -384,11 +390,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                     svg.selectAll("." + "brush").remove();
                     this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                 });
-                
+
                 svg.append('g')
                     .attr('class', 'brush')
                     .call(brush);
-        } else if(displayMode === DisplayMode.boxzoom){
+        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom){
             brush = d3.brushX().extent([[PADDING.left, PADDING.top], 
                 [this.props.width, this.props.height - PADDING.bottom]])
                 .on("end", () => {
@@ -414,7 +420,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .attr('class', 'brush')
                 .call(brush);
         } else if(displayMode === DisplayMode.zoom) {
-            svg.selectAll("." + "brush").remove();
+            //svg.selectAll("." + "brush").remove();
         }
         svg.call(zoom).call(zoom.transform, d3.zoomIdentity.scale(1.0));
         // attach the brush to the chart
