@@ -165,44 +165,29 @@ export class SampleViz extends React.Component<Props, State> {
             
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
-                    {(dispMode==DisplayMode.select) && <span >Cluster: </span>}
-                     {(dispMode==DisplayMode.select) &&
+                    <span >Cluster: </span>
                         
-                          <select
-                            name="Select Cluster" 
-                            title="Cluster"
-                            className="Sampleviz-cluster-select"
-                            value={this.state.selectedCluster}
-                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
-                            {clusterOptions}
-                            </select>
-                        }
+                    <select
+                    name="Select Cluster" 
+                    title="Cluster"
+                    className="Sampleviz-cluster-select"
+                    value={this.state.selectedCluster}
+                    disabled={dispMode==DisplayMode.zoom}
+                    onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
+                    {clusterOptions}
+                    </select>
                         
-                    {(dispMode==DisplayMode.select) &&
-                                <button onClick={() => {
-                                    this.props.parentCallBack(this.state.selectedCluster);
-                                    this.props.onBrushedBinsUpdated([]);
-                                }}>Assign Cluster</button>}
 
-                    {(dispMode==DisplayMode.select) 
-                        && <button onClick={()=>{
+                    <button onClick={() => {
+                        this.props.parentCallBack(this.state.selectedCluster);
+                        this.props.onBrushedBinsUpdated([]);
+                    }}
+                    disabled={dispMode==DisplayMode.zoom}>Assign Cluster</button>
+
+                    <button onClick={()=>{
                         this.initializeListOfClusters();
                         let clusters = this._clusters;
-                        // var i = 0, j;
-                        // while (i < clusters.length) {
-                        //     j = i + 1;
-                        //     while (j < clusters.length) {
-                        //         if (clusters[j] < clusters[i]) {
-                        //             var temp = clusters[i];
-                        //             clusters[i] = clusters[j];
-                        //             clusters[j] = temp;
-                        //         }
-                        //         j++;
-                        //     }
-                        //     i++;
-                        // }
                         clusters.sort((a: string, b:string) => (Number(a) - Number(b)))
-                        //console.log(clusters);
                         const highestCurrentCluster = (clusters.length > 0) ? Number(clusters[clusters.length-1]) : -1;
                         let nextAvailable = highestCurrentCluster + 1;
 
@@ -215,8 +200,9 @@ export class SampleViz extends React.Component<Props, State> {
 
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
-                    }} >New Cluster</button>} 
-                    {(dispMode==DisplayMode.select) && <button onClick={this.props.onUndoClick}> Undo</button>}
+                    }}
+                    disabled={dispMode==DisplayMode.zoom} >New Cluster</button>
+                    <button onClick={this.props.onUndoClick} disabled={dispMode==DisplayMode.zoom}> Undo</button>
                 </div>}
             </div>
 
