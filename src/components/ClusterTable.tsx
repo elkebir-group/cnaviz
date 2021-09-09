@@ -17,6 +17,7 @@ interface Props {
     colOneName : string;
     colTwoName: string;
     colors : string[];
+    updatedClusterTable?: () => void;
 }
 
 const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
@@ -41,6 +42,11 @@ export class ClusterTable extends React.Component<Props> {
         //this.colors = tempColors
         this.props.onClusterColorChange(tempColors);
         this.forceUpdate();
+    }
+    
+    componentDidUpdate(prevProps: Props) {
+        if(this.props.updatedClusterTable)
+            this.props.updatedClusterTable();
     }
 
     render() {

@@ -136,7 +136,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
 /**
  * Possible states of processing input data.
  */
-enum ProcessingStatus {
+export enum ProcessingStatus {
     /** No data input (yet) */
     none,
 
@@ -240,8 +240,8 @@ export class App extends React.Component<{}, State> {
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
-            sampleAmount: 2,
-            showComponents: [true, true],
+            sampleAmount: 1,
+            showComponents: [true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
             assignCluster: false,
@@ -286,6 +286,7 @@ export class App extends React.Component<{}, State> {
         this.onToggleSync = this.onToggleSync.bind(this);
         this.goBackToPreviousCluster = this.goBackToPreviousCluster.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
+        this.updatedClusterTable = this.updatedClusterTable.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -505,6 +506,10 @@ export class App extends React.Component<{}, State> {
         this.setState({scales: newScales})
     }
 
+    updatedClusterTable() {
+        // this.setState({updatingStatus: ProcessingStatus.done});
+    }
+
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
@@ -554,9 +559,6 @@ export class App extends React.Component<{}, State> {
 
             mainUI = (
                 <div id="grid-container">
-                    
-                    {/* <div className="App-global-controls">
-                    </div> */}
                     
                     <div className="sampleviz-wrapper-row">
                             {_.times(sampleAmount, i => samples.length > i 
@@ -609,6 +611,7 @@ export class App extends React.Component<{}, State> {
                     showLinear={this.state.showLinearPlot}
                     onToggleSync={this.onToggleSync}
                     syncScales={this.state.syncScales}
+                    updatedClusterTable = {this.updatedClusterTable}
                 />
             </div>
             

@@ -139,6 +139,8 @@ export const webglColor = (color : string) => {
     let col = d3.color(color);
     if(col !== null) {  
         const { r, g, b, opacity } = col.rgb();
+        //if(color !== "blue")
+            //return [r / 255, g / 255, b / 255, 0.5];
         return [r / 255, g / 255, b / 255, opacity];
     }
 

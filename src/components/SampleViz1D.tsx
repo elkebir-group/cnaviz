@@ -12,10 +12,10 @@ import { GenomicBin } from "../model/GenomicBin";
 import { DisplayMode } from "../App";
 
 interface Props {
-    data: DataWarehouse;
+    data: GenomicBin[];
     chr: string;
     hoveredLocation?: ChromosomeInterval;
-    initialSelectedSample?: string;
+    initialSelectedSample: string;
     onLocationHovered?: (location: ChromosomeInterval | null) => void;
     onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
     brushedBins: GenomicBin[];
@@ -41,7 +41,7 @@ export class SampleViz1D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0]
+            selectedSample: props.initialSelectedSample
         };
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
@@ -56,23 +56,10 @@ export class SampleViz1D extends React.Component<Props, State> {
              customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange} = this.props;
         const selectedSample = this.props.selectedSample;
 
-        //const selectedRecords = (implicitRange !== null && xScale !== null) ? data.getRecords(selectedSample, implicitRange[0], implicitRange[1], xScale): data.getRecords(selectedSample);
-        //console.log("YSCALE: ", yScale);
-        let selectedRecords = [];
-        if (implicitRange !== null || xScale !== null || yScale !== null) {
-            let implicitStart = (implicitRange) ? implicitRange[0] : null;
-            let implicitEnd = (implicitRange) ? implicitRange[1] : null;
-
-            selectedRecords = data.getRecords(selectedSample, applyLog, implicitStart, implicitEnd, xScale, yScale);
-        } else { 
-            selectedRecords = data.getRecords(selectedSample, applyLog, null, null, null, null);
-        }
-
         let visualization: React.ReactNode = null;
-        //if (this.state.displayMode === DisplayMode.linear) {
             visualization = <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot
-                    data={selectedRecords}
+                    data={data}
                     chr={chr}
                     rdRange={rdRange}
                     hoveredLocation={hoveredLocation}
@@ -95,7 +82,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     
                 <div className="SampleViz-separator" />
                 <BAFLinearPlot
-                    data={selectedRecords}
+                    data={data}
                     chr={chr}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered}
@@ -114,7 +101,6 @@ export class SampleViz1D extends React.Component<Props, State> {
                     implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}/>
 
             </DivWithBullseye>;
-        //}
 
         return <div className="SampleViz-linear" >
             {visualization}

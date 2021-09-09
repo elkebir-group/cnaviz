@@ -12,15 +12,15 @@ import * as d3 from "d3";
 
 import "./SampleViz.css";
 import { zoom } from "d3-zoom";
-import {DisplayMode} from "../App"
+import {DisplayMode, ProcessingStatus} from "../App"
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 
 interface Props {
     parentCallBack: any;
-    data: DataWarehouse;
+    data: GenomicBin[];
     chr: string;
     cluster: string;
-    initialSelectedSample?: string;
+    initialSelectedSample: string;
     initialSelectedCluster?: string;
     width?: number;
     height?: number;
@@ -65,7 +65,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample || props.data.getSampleList()[0]
+            selectedSample: props.initialSelectedSample
         };
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleRecordsHovered = this.handleRecordsHovered.bind(this);
@@ -100,21 +100,12 @@ export class SampleViz2D extends React.Component<Props, State> {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog, implicitRange, scales} = this.props;
-        
-        let selectedRecords = [];
-        if (implicitRange !== null || scales.xScale !== null || scales.yScale !== null) {
-            let implicitStart = (implicitRange) ? implicitRange[0] : null;
-            let implicitEnd = (implicitRange) ? implicitRange[1] : null;
-            selectedRecords = data.getRecords(selectedSample, applyLog, implicitStart, implicitEnd, scales.xScale, scales.yScale);
-        } else { 
-            selectedRecords = data.getRecords(selectedSample, applyLog, null, null, null, null);
-        }
 
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}
-                    data={selectedRecords}
+                    data={data}
                     rdRange={rdRange}
                     width={width}
                     height={height}
@@ -141,28 +132,4 @@ export class SampleViz2D extends React.Component<Props, State> {
             </DivWithBullseye>
         </div>;
     }
-
-    // renderDisplayModeRadioOption(mode: DisplayMode) {
-    //     let label: string;
-    //     let padding: string;
-    //     switch (mode) {
-    //         case DisplayMode.zoom:
-    //             label = "Zoom";
-    //             padding= "15px"
-    //             break;
-    //         case DisplayMode.select:
-    //             label = "Select";
-    //             padding = "10px";
-    //             break;
-    //         default:
-    //             label = "???";
-    //             padding= "0px"
-    //     }
-
-    //     return <div className="row">
-    //         <div className="col" style={{marginLeft: padding, display: "inline-block"}} onClick={() => this.setState({displayMode: mode})}>
-    //             {label} <input type="radio" checked={this.state.displayMode === mode} readOnly/>
-    //         </div>
-    //     </div>;
-    // }
 }

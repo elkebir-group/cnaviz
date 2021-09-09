@@ -11,7 +11,7 @@ import { SampleViz1D } from "./SampleViz1D";
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
-import {DisplayMode} from "../App"
+import {DisplayMode, ProcessingStatus} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { isExpressionWithTypeArguments } from "typescript";
@@ -24,7 +24,7 @@ interface Props {
     data: DataWarehouse;
     chr: string;
     cluster: string;
-    initialSelectedSample?: string;
+    initialSelectedSample: string;
     initialSelectedCluster?: string;
     width?: number;
     height?: number;
@@ -134,12 +134,24 @@ export class SampleViz extends React.Component<Props, State> {
     render() {
         const {data, initialSelectedSample, plotId, applyLog, 
             showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales} = this.props;
+        const {implicitRange} = this.state;
+
         const selectedSample = this.state.selectedSample;
         const rdRange = data.getRdRange(selectedSample, applyLog);
-        //console.log("NEW RD RANGE: ", rdRange);
+        
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
+
+        let selectedRecords = [];
+        let scales = (syncScales) ? this.props.scales : this.state.scales;
+        if (implicitRange !== null || scales.xScale !== null || scales.yScale !== null) {
+            let implicitStart = (implicitRange) ? implicitRange[0] : null;
+            let implicitEnd = (implicitRange) ? implicitRange[1] : null;
+            selectedRecords = data.getRecords(selectedSample, applyLog, implicitStart, implicitEnd, scales.xScale, scales.yScale);
+        } else { 
+            selectedRecords = data.getRecords(selectedSample, applyLog, null, null, null, null);
+        }
         
         //sampleOptions.unshift(<option selected disabled>Sample</option>);
         rdRange[1] += 0.5;
@@ -202,14 +214,14 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={dispMode==DisplayMode.zoom} >New Cluster</button>
-                    <button onClick={this.props.onUndoClick} disabled={dispMode==DisplayMode.zoom}> Undo</button>
+                    <button onClick={this.props.onUndoClick} disabled={true}> Undo</button>
                 </div>}
             </div>
 
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 
-                        
+                        data={selectedRecords}
                         onSelectedSample={this.handleSelectedSampleChanged}
                         selectedSample={selectedSample}
                         initialSelectedSample={initialSelectedSample}
@@ -219,6 +231,7 @@ export class SampleViz extends React.Component<Props, State> {
                         scales={(syncScales) ? this.props.scales : this.state.scales}/>}
                 {showLinearPlot && <SampleViz1D 
                     {...this.props}  
+                    data={selectedRecords}
                     onLinearPlotZoom={this.handleLinearPlotZoom}
                     yScale={(syncScales) ? this.props.scales.yScale : this.state.scales.yScale} 
                     xScale={(syncScales) ? this.props.scales.xScale : this.state.scales.xScale} 

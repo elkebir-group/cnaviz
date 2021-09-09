@@ -37,6 +37,7 @@ interface Props {
     showLinear: boolean;
     syncScales: boolean;
     onToggleSync: () => void;
+    updatedClusterTable: () => void;
 }
 
 
@@ -47,30 +48,6 @@ function Sidebar(props: Props) {
   const showSidebar = () => {
     props.onSidebarChange(!props.show)
   };
-
-  const renderDisplayModeRadioOption = (mode: DisplayMode) => {
-    let label: string;
-    let padding: string;
-    switch (mode) {
-        case DisplayMode.zoom:
-            label = "Zoom";
-            padding= "15px"
-            break;
-        case DisplayMode.select:
-            label = "Select";
-            padding = "15px";
-            break;
-        default:
-            label = "???";
-            padding= "0px"
-    }
-
-    return <div className="row-contents">
-        <div onClick={() => props.setDisplayMode(mode)}>
-            {label} <input type="radio" checked={props.currentDisplayMode === mode} readOnly/>
-        </div>
-    </div>;
-  }
 
   return (
     <div className={props.show ? "sidebar active" : "sidebar"}>
@@ -190,6 +167,7 @@ function Sidebar(props: Props) {
               expandable={true}
               selectable={true}
               colors={props.colors}
+              updatedClusterTable={props.updatedClusterTable}
           ></ClusterTable>
         </div>
       </div>

@@ -264,17 +264,14 @@ export class DataWarehouse {
     }
 
     updateCluster(cluster: number) {
-        console.time("Updating Clusters");
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-        //console.time("Pushing to stack");
-        let previousRecords = this._ndx.all();
+
+        //let previousRecords = this._ndx.all();
         //let deepCopy = JSON.parse(JSON.stringify(previousRecords));
         //this.historyStack.push(deepCopy);
-        
-        //console.timeEnd("Pushing to stack");
-       // console.time("Modifying Data");
+
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
@@ -283,8 +280,7 @@ export class DataWarehouse {
                 }
             }
         }
-        //console.timeEnd("Modifying Data");
-        //console.time("Creating crossfilter");
+
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
         this._ndx.remove();
@@ -294,47 +290,42 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
-       // console.timeEnd("Creating crossfilter");
-        // Get all records prior to filtering out deleted points, 
-        // so that cluster table calculation uses all points including the deleted
-       // console.time("Cluster Table stuff");
+
         this.allRecords =  this._ndx.all(); 
         let test = this.calculateClusterTableInfo();
         this.clusterTableInfo = test;
-        // console.log("CLUSTER TABLE INFO: ", this.clusterTableInfo);
-        // console.log("CLUSTER TABLE INFO3: ", test);
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
         
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
         }
-        //console.timeEnd("Cluster Table stuff");
-        console.timeEnd("Updating Clusters");
+        this.setClusterFilters(this._cluster_filters);
+        console.log("Finished Updating Clusters");
     }
 
     undoClusterUpdate() {
-        if(this.historyStack.length === 0) {
-            return;
-        }
-        //console.time("Undoing cluster");
-        let newRecords = this.historyStack[this.historyStack.length-1];
-        this.historyStack.pop();
-        this.initializeLocationGroupedData(newRecords);
+        // if(this.historyStack.length === 0) {
+        //     return;
+        // }
+        // //console.time("Undoing cluster");
+        // let newRecords = this.historyStack[this.historyStack.length-1];
+        // this.historyStack.pop();
+        // this.initializeLocationGroupedData(newRecords);
         
-        this._ndx = crossfilter(newRecords);
-        this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
-        this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
-        this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
+        // this._ndx = crossfilter(newRecords);
+        // this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
+        // this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
+        // this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         
-        this.clusterTableInfo = this.calculateClusterTableInfo();
+        // this.clusterTableInfo = this.calculateClusterTableInfo();
         
-        this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
+        // this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
         
-        if(!this._cluster_filters.includes(String(cluster))) {
-            this._cluster_filters.push(String(cluster));
-        }
+        // if(!this._cluster_filters.includes(String(cluster))) {
+        //     this._cluster_filters.push(String(cluster));
+        // }
 
-        this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
+        // this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         //console.timeEnd("Undoing cluster");
     }
 
@@ -387,9 +378,7 @@ export class DataWarehouse {
     filterRecordsByScales(records: GenomicBin[], applyLog: boolean, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null) : GenomicBin[]{
        
        let dataKey : keyof Pick<GenomicBin, "RD" | "logRD"> = (applyLog) ? "logRD" : "RD"
-       //console.log(xScale);
         if((implicitStart && implicitEnd) && xScale && yScale) {
-            //console.log("TEST1");
             return records.filter(record => record.genomicPosition > implicitStart 
                 && record.genomicPosition < implicitEnd 
                 && record.reverseBAF > xScale[0] 
@@ -398,21 +387,18 @@ export class DataWarehouse {
                 && record[dataKey] < yScale[1]
                 )
         } else if((implicitStart && implicitEnd) && xScale) {
-           //console.log("TEST2");
             return records.filter(record => record.genomicPosition > implicitStart 
                 && record.genomicPosition < implicitEnd 
                 && record.reverseBAF > xScale[0] 
                 && record.reverseBAF < xScale[1]
                 )
         } else if((implicitStart && implicitEnd) && yScale) {
-            //console.log("TEST2");
              return records.filter(record => record.genomicPosition > implicitStart 
                  && record.genomicPosition < implicitEnd 
                  && record[dataKey] > yScale[0] 
                 && record[dataKey] < yScale[1]
                  )
          } else if(xScale && yScale) {
-            //console.log("TEST3");
             return records.filter(record => 
                 record.reverseBAF > xScale[0] 
                 && record.reverseBAF < xScale[1]
@@ -420,13 +406,11 @@ export class DataWarehouse {
                 && record[dataKey] < yScale[1]
                 )
          } else if (xScale) {
-            //console.log("TEST4");
             return records.filter(record => 
                 record.reverseBAF > xScale[0] 
                 && record.reverseBAF < xScale[1]
                 )
         } else if(yScale) {
-            //console.log("TEST5");
             return records.filter(record => 
                 record[dataKey] > yScale[0] 
                 && record[dataKey] < yScale[1]
