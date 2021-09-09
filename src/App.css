@@ -95,7 +95,7 @@ body {
     height: 100%; 
     overflow: auto;  */
     /* display: none; */
-    position: absolute;
+    position: fixed;
     top: 25%;
     left: 25%;
     width: 50%;
@@ -108,7 +108,7 @@ body {
 }
 
 .black_overlay{
-    position: absolute;
+    position: fixed;
     top: 0%;
     left: 0%;
     width: 100%;
