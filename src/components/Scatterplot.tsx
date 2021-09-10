@@ -274,7 +274,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             <svg
                                 ref={node => this._svg = node}
                                 width={width} height={height}
-                                preserveAspectRatio={'xMinYMin'}
+                                // preserveAspectRatio={'xMinYMin'}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
@@ -337,7 +337,7 @@ export class Scatterplot extends React.Component<Props, State> {
             this.forceHover(this.props.hoveredLocation);
         } else if((!(_.isEqual(this.props["data"], prevProps["data"])) || this.props.yAxisToPlot !== prevProps.yAxisToPlot)) {
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
-            console.log("TEST IS EQUAL");
+
             if((this._currXScale.domain()[0] === this._original_XScale.domain()[0] 
                 && this._currXScale.domain()[1] === this._original_XScale.domain()[1]
                 && this._currYScale.domain()[0] === this._original_YScale.domain()[0]

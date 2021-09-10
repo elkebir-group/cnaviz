@@ -97,8 +97,18 @@ export class Genome {
     }
 
 
-    getChromosomeStarts2(chrs: Chromosome[]): number[] {
-        return chrs.map(chr => this._chrStarts[chr.name]);
+    getChromosomeStarts2(chrs: Chromosome[], implicitStart: number, implicitEnd: number): number[] {
+        // let chrStarts= [];
+        // for(let chr of chrs) {
+        //     let start = this._chrStarts[chr.name];
+        //     if(start > implicitStart && start < implicitEnd) {
+        //         chrStarts.push(start);
+        //     }
+        // }
+        // return chrStarts;
+        return chrs.map(chr => {
+           return this._chrStarts[chr.name];
+        });
     }
 
     /**
