@@ -247,6 +247,22 @@ export class LinearPlot extends React.PureComponent<Props> {
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(${PADDING.left}, 0)`)
             .call(d3.axisLeft(scale))
+        
+        let nonImplicitXScale = d3.scaleLinear()
+            .domain([0, genome.getLength(chr)])
+            .range(xScale.range())
+        if (this.props.implicitStart && this.props.implicitEnd) {
+            const selectedNonImplicitStart = genome.getChromosomeLocation(this.props.implicitStart);
+            const selectedNonImplicitEnd = genome.getChromosomeLocation(this.props.implicitEnd);
+            nonImplicitXScale = d3.scaleLinear()
+            .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
+            .range(xScale.range())
+        }
+        let xAx2 = (g : any, scale : any) => g
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+            .call(d3.axisBottom(nonImplicitXScale)
+                    .tickFormat(baseNum => niceBpCount(baseNum.valueOf(), 0)))
 
         const gx = svg.append("g");
         // const gy = svg.append("g");
@@ -325,15 +341,18 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .context(gl);
         pointSeries.decorate((program:any) => fillColor(program));
         function redraw() {
-            const xr = tx().rescaleX(xScale);
-            // const yr = ty().rescaleY(yScale);
+            if(!chr) {
+                const xr = tx().rescaleX(xScale);
+                gx.call(xAx , xr);
+                self._currXScale = xr;
+                pointSeries.xScale(xr).yScale(yScale);
+            } else {
+                const xr = tx().rescaleX(xScale);
+                gx.call(xAx2 , xr);
+                self._currXScale = xr;
+                pointSeries.xScale(xr).yScale(yScale);
+            }
             
-            gx.call(xAx , xr);
-            // gy.call(yAx, yr);
-            
-            pointSeries.xScale(xr).yScale(yScale);
-            self._currXScale = xr;
-
             pointSeries(data);
         }
 

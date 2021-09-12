@@ -1,8 +1,8 @@
 .sidebar {
   position: fixed;
   top: 0;
-  width: 300px;
-  left: -300px;
+  width: 320px;
+  left: -320px;
   height: 100%;
   border-right: 2px solid black;
   z-index: 1;
@@ -64,7 +64,7 @@
   .closemenu {
     color: #000;
     position: absolute;
-    right: -30px;
+    right: -25px;
     z-index: 9999;
     line-height: 20px;
     border-radius: 50%;

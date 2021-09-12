@@ -3,6 +3,7 @@ import _ from "lodash";
 import DataTable from 'react-data-table-component';
 import {HuePicker, SliderPicker, GithubPicker, BlockPicker} from "react-color";
 import {CSVLink} from "react-csv"
+import "./ClusterTable.css"
 
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
@@ -104,28 +105,30 @@ export class ClusterTable extends React.Component<Props> {
         }
 
         return (
-            <DataTable
-                columns={columns}
-                data={data}
-                selectableRows
-                onSelectedRowsChange={this.props.onClusterRowsChange}
-                selectableRowSelected={row => {
-                    if(this.props.currentFilters.includes(String(row.key))) {
-                        return row;
-                    }
-                }}
-                expandableRows
-                expandableRowsComponent={<ExpandedComponent/>}
-                expandableRowDisabled={row => row.key === -1 || row.key === -2}
-                pagination={true}
-                dense={true}
-                paginationPerPage={5}
-                paginationComponentOptions={{rowsPerPageText: '', selectAllRowsItem: true}}
-                paginationRowsPerPageOptions={[5, 10, 15, 20]}
-                noContextMenu={true}
-                noHeader={true}
-                conditionalRowStyles={conditionalRowStyles}
-            />
+            <div className="scroll">
+                <DataTable
+                    columns={columns}
+                    data={data}
+                    selectableRows
+                    onSelectedRowsChange={this.props.onClusterRowsChange}
+                    selectableRowSelected={row => {
+                        if(this.props.currentFilters.includes(String(row.key))) {
+                            return row;
+                        }
+                    }}
+                    expandableRows
+                    expandableRowsComponent={<ExpandedComponent/>}
+                    expandableRowDisabled={row => row.key === -1 || row.key === -2}
+                    pagination={true}
+                    dense={true}
+                    paginationPerPage={5}
+                    paginationComponentOptions={{rowsPerPageText: '', selectAllRowsItem: true}}
+                    paginationRowsPerPageOptions={[5, 10, 15, 20]}
+                    noContextMenu={true}
+                    noHeader={true}
+                    conditionalRowStyles={conditionalRowStyles}
+                />
+            </div>
             
         )
     }

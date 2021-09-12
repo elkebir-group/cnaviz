@@ -533,7 +533,7 @@ export class Scatterplot extends React.Component<Props, State> {
             .seriesWebglPoint()
             .xScale(self._currXScale)
             .yScale(self._currYScale)
-            .size(1)
+            .size(3)
             .crossValue((d : any) => d.reverseBAF)
             .mainValue((d : any) => d[yAxisToPlot])
             .context(gl);
