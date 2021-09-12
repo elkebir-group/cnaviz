@@ -34,7 +34,7 @@ type SampleIndexedData<T> = {
     [sample: string] : T
 }
 type clusterIdMap = {[id: string] : number}
-type clusterTableRow =  {key: string, value: number}
+type clusterTableRow =  {key: number, value: number}
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
  * chromosome.  For applications that want a limited amount of data, pre-aggregates GenomicBin and allows fast queries
@@ -93,10 +93,8 @@ export class DataWarehouse {
         this.brushedBins = [];
         this.brushedCrossfilter = crossfilter(this.brushedBins);
         this.brushedClusterDim = this.brushedCrossfilter.dimension((d:GenomicBin) => d.CLUSTER);
-        
         this._cluster_filters = [];
         this.historyStack = [];
-
         this._ndx = crossfilter(rawData);
 
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
@@ -115,7 +113,6 @@ export class DataWarehouse {
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this._genomic_pos_dim = this._ndx.dimension((d:GenomicBin) => d.genomicPosition);
-        
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         
         if (rawData.length > 0) {
@@ -139,20 +136,12 @@ export class DataWarehouse {
         const clusterTable : clusterTableRow[] = [];
         for(const row of clusterInfo) {
             let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
-            //console.log(String(row.key) + " : " + value);
             clusterTable.push(
             {
-                key: String(row.key), 
+                key: Number(row.key), 
                 value: value
             });
-            // for(const row2 of clusterTable) {
-            //     console.log(clusterTable.length, row2);
-            // }
-            
-
         }
-        // console.log("CLUSTER TABLE INFO 2: ", clusterInfo);
-        // console.log("CLUSTER TABLE INFO 4: ", clusterTable);
         return clusterTable;
     }
 
@@ -340,24 +329,21 @@ export class DataWarehouse {
         clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
 
         const clusterTable = this.brushedClusterDim.group().all();
-        clusterTable.forEach(d => d.value = (Number(d.value)/clusterIdToAmount[Number(d.key)] * 100).toFixed(2));
-        return clusterTable;
-    }
+        clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
+        
+        const clusterTable2 : clusterTableRow[] = [];
+        for(const row of clusterTable) {
+            //let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            clusterTable2.push(
+            {
+                key: Number(row.key), 
+                value: Number(row.value)
+            });
+        }
 
-    /**
-     * Gets the bin size in bases of an arbitrary data point in this data set.  Most useful if it is known that all data
-     * have the same bin size.
-     * 
-     * @return a guess of the bin size in bases of data points in this data set.
-     */
-    // guessBinSize(): number {
-    //     if (this.isEmpty()) {
-    //         return 0;
-    //     }
-    //     const firstSample = this.getSampleList()[0];
-    //     const firstRecord = this.getRecords(firstSample)[0];
-    //     return firstRecord.END - firstRecord.START;
-    // }
+
+        return clusterTable2;
+    }
 
     /**
      * Performs a query for records matching a sample and a chromosome.  To get all records matching a sample,
