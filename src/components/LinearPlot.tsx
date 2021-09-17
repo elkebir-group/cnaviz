@@ -27,6 +27,7 @@ const PADDING = { // For the SVG
 };
 
 function findChrNumber(chr: string) {
+    // console.log("CHR: ", chr);
     const match = chr.match(/\d+/);
     if (!match) {
         return chr;
@@ -106,6 +107,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     componentDidUpdate(prevProps: Props) {
         if(this.propsDidChange(prevProps, ["chr"])) {
+            // console.log("SWITCH CHR");
             this.props.onLinearPlotZoom(null);
             this.redraw();
         } else if (this.propsDidChange(prevProps, ["displayMode", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
@@ -122,11 +124,15 @@ export class LinearPlot extends React.PureComponent<Props> {
         if(implicitStart && implicitEnd) {
             domain[0] = implicitStart;
             domain[1] = implicitEnd;
+            // console.log("ONE");
+            //console.log("")
         } else if (!chr) { // No chromosome specified: X domain is entire genome
             domain[1] = genome.getLength();
+            // console.log("TWO");
         } else { // Chromosome specified: X domain is length of one chromosome
             domain[0] = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, 1)).start;
             domain[1] = domain[0] + genome.getLength(chr);
+            // console.log("THREE");
         }
 
         return d3.scaleLinear()
@@ -155,6 +161,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._svg) {
             return;
         }
+        // console.log("REDRAW");
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
@@ -167,10 +174,17 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!chr) {
             
             const chromosomes = genome.getChromosomeList();
-
+            let chrs: Chromosome[]= [];
+            let chrStarts = genome.getChrStartMap();
+            for(let chr of chromosomes) {
+                let start = chrStarts[chr.name];
+                if(start >= xScale.domain()[0] && start <= xScale.domain()[1]) {
+                    chrs.push(chr);
+                }
+            }
             xAxis = d3.axisBottom(xScale)
-                .tickValues(genome.getChromosomeStarts2(chromosomes, xScale.domain()[0], xScale.domain()[1]))
-                .tickFormat((unused, i) => findChrNumber(chromosomes[i].name));
+                .tickValues(genome.getChromosomeStarts2(chrs, xScale.domain()[0], xScale.domain()[1]))
+                .tickFormat((unused, i) => findChrNumber(chrs[i].name));
         } else {
             
             let nonImplicitXScale = d3.scaleLinear()
@@ -205,8 +219,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr('width', width - PADDING.left - PADDING.right)
             .attr('height', PADDING.bottom);
 
-            
-
         svg.append("g")
             .classed(SCALES_CLASS_NAME, true)
             .attr('clip-path', 'url(#clip-x-axis)')
@@ -230,18 +242,24 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            //.attr("transform", `rotate(90, ${PADDING.left - 40}, ${_.mean(yScale.range())})`)
             .attr("transform", `rotate(-90, ${PADDING.left- 30}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
             .attr("y", _.mean(yScale.range()));
 
         const chromosomes = genome.getChromosomeList();
-        
+        let chrs: Chromosome[]= [];
+        let chrStarts = genome.getChrStartMap();
+        for(let chr of chromosomes) {
+            let start = chrStarts[chr.name];
+            if(start >= xScale.domain()[0] && start <= xScale.domain()[1]) {
+                chrs.push(chr);
+            }
+        }
 
         let xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-            .call(d3.axisBottom(scale).tickValues(genome.getChromosomeStarts2(chromosomes, scale.domain()[0], scale.domain()[1])).tickFormat((unused, i) => findChrNumber(chromosomes[i].name)))
+            .call(d3.axisBottom(scale).tickValues(genome.getChromosomeStarts2(chrs, scale.domain()[0], scale.domain()[1])).tickFormat((unused, i) => findChrNumber(chrs[i].name)))
         
         let yAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
@@ -265,14 +283,14 @@ export class LinearPlot extends React.PureComponent<Props> {
                     .tickFormat(baseNum => niceBpCount(baseNum.valueOf(), 0)))
 
         const gx = svg.append("g");
-        // const gy = svg.append("g");
+        const gy = svg.append("g");
         let z = d3.zoomIdentity;
         const zoomX : any = d3.zoom().scaleExtent([0, 100]);
-        //const zoomY : any = d3.zoom().scaleExtent([0, 100]);
+        const zoomY : any = d3.zoom().scaleExtent([0, 100]);
         const tx = () => d3.zoomTransform(gx.node() as Element);
-        //const ty = () => d3.zoomTransform(gy.node() as Element);
+        const ty = () => d3.zoomTransform(gy.node() as Element);
         gx.call(zoomX).attr("pointer-events", "none");
-        //gy.call(zoomY).attr("pointer-events", "none");
+        gy.call(zoomY).attr("pointer-events", "none");
 
         const zoom : any = d3.zoom().on("zoom", () => {
             try {
@@ -287,11 +305,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                     if (k === 1) {
                     // pure translation?
                     doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
-                    //doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
+                    doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
                     } else {
                     // if not, we're zooming on a fixed point
                     doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
-                    //doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
+                    doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
                     }
                 }
                 z = t;
@@ -300,8 +318,9 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                //let newScales = {xScale: xScale.domain(), yScale: yScale.domain()}
+                let newScales = {xScale: xScale.domain(), yScale: yScale.domain()}
                 //console.log("New Scales: ", newScales);
+                // self.props.on
                 if(!chr) {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]]);
                 }
@@ -326,7 +345,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         let previous_brushed_nodes = new Set(previous);
         
         const gl = this._canvas.getContext("webgl")!;
-        gl.clearColor(255,255,255,1);
+        gl.clearColor(0,0,0,1);
         let colorFill = (d:any) => {
             return webglColor(chooseColor(d));
         };
@@ -342,11 +361,13 @@ export class LinearPlot extends React.PureComponent<Props> {
         pointSeries.decorate((program:any) => fillColor(program));
         function redraw() {
             if(!chr) {
+                // console.log("CHR NOT PICKED");
                 const xr = tx().rescaleX(xScale);
                 gx.call(xAx , xr);
                 self._currXScale = xr;
                 pointSeries.xScale(xr).yScale(yScale);
             } else {
+                // console.log("CHR PICKED");
                 const xr = tx().rescaleX(xScale);
                 gx.call(xAx2 , xr);
                 self._currXScale = xr;
@@ -504,6 +525,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
                 && <button onClick={() => {
                     this.props.onLinearPlotZoom(null);
+                    //this.redraw();
                 }}
                 >Reset View</button>}
             </div>

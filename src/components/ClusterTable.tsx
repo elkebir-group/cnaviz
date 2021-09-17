@@ -100,6 +100,7 @@ export class ClusterTable extends React.Component<Props> {
                     noContextMenu={true}
                     noHeader={true}
                     conditionalRowStyles={conditionalRowStyles}
+                    noDataComponent={<div style={{padding: 10}}>No Records Selected</div>}
                 />
             )
         }

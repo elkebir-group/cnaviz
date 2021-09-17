@@ -559,6 +559,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 //pointSeries(dataMinusBrush.concat([...brushedBins]));
                 pointSeries(data);
                 //pointSeries([...self.brushedNodes]);
+                
             }
         }
         

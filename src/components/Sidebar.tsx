@@ -7,7 +7,7 @@ import {DisplayMode} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import * as d3 from "d3";
-import { FiHome, FiLogOut, FiArrowLeftCircle, FiArrowRightCircle } from "react-icons/fi";
+import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
 import { ToggleButton } from "./ToggleButton";
 
 interface Props {
@@ -64,6 +64,8 @@ function Sidebar(props: Props) {
                 </div>
               )
           }
+          {props.currentDisplayMode == DisplayMode.select && <FiMousePointer></FiMousePointer>}
+          {props.currentDisplayMode == DisplayMode.zoom && <FiZoomIn></FiZoomIn>}
           {/* <FiArrowLeftCircle/> */}
         </div>
       

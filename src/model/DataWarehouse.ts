@@ -33,6 +33,11 @@ type ClusterIndexedData<T> = {
 type SampleIndexedData<T> = {
     [sample: string] : T
 }
+
+type ChrIndexedData<T> = {
+    [sample: string] : T
+}
+
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
 /**
@@ -71,7 +76,7 @@ export class DataWarehouse {
     private allRecords: readonly GenomicBin[];
     private _cluster_filters: String[];
     private historyStack: GenomicBin[][];
-
+    private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>;
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -114,7 +119,7 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this._genomic_pos_dim = this._ndx.dimension((d:GenomicBin) => d.genomicPosition);
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());//_.groupBy(rawData, "#CHR");
         if (rawData.length > 0) {
             for(const sample of this._samples) {
                 let currentSampleBins = this._sampleGroupedData[sample];
@@ -279,7 +284,7 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
-
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
         this.allRecords =  this._ndx.all(); 
         let test = this.calculateClusterTableInfo();
         this.clusterTableInfo = test;
@@ -321,14 +326,16 @@ export class DataWarehouse {
     brushedTableData() {
         
         const sampleAmount = this._samples.length;
-        const clusterInfo = this._cluster_dim.group().all();
-
+        const clusterInfo = this._clusterAmounts;//this._cluster_dim.group().all();
+        console.log("CLUSTER ID AMNT: ", clusterInfo);
         // map each cluster to the amount of points in a single sample 
         // (Each sample contains the same amount of points so we divide by total amount of samples)
         let clusterIdToAmount : clusterIdMap = {};
         clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
 
         const clusterTable = this.brushedClusterDim.group().all();
+        // console.log("CLUSTER TABLE DATA: ", clusterTable);
+        // console.log("CLUSTER ID AMNT: ", clusterIdToAmount);
         clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
         
         const clusterTable2 : clusterTableRow[] = [];
@@ -341,7 +348,7 @@ export class DataWarehouse {
             });
         }
 
-
+        
         return clusterTable2;
     }
 

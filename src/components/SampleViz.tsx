@@ -127,6 +127,7 @@ export class SampleViz extends React.Component<Props, State> {
         //console.log("Linear plot zooming");
         // this.props.data.setGenomicPositionFilter(genomicRange);
         // this.forceUpdate();
+        // console.log("TEST");
         this.setState({implicitRange: genomicRange})
     }
 
