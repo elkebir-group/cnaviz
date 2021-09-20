@@ -263,7 +263,7 @@ export class DataWarehouse {
         }
 
         //let previousRecords = this._ndx.all();
-        //let deepCopy = JSON.parse(JSON.stringify(previousRecords));
+        //let deepCcopy = JSON.parse(JSON.stringify(previousRecords));
         //this.historyStack.push(deepCopy);
 
         for(let i = 0; i < this.brushedBins.length; i++) {
@@ -327,20 +327,16 @@ export class DataWarehouse {
         
         const sampleAmount = this._samples.length;
         const clusterInfo = this._clusterAmounts;//this._cluster_dim.group().all();
-        console.log("CLUSTER ID AMNT: ", clusterInfo);
         // map each cluster to the amount of points in a single sample 
         // (Each sample contains the same amount of points so we divide by total amount of samples)
         let clusterIdToAmount : clusterIdMap = {};
         clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
 
         const clusterTable = this.brushedClusterDim.group().all();
-        // console.log("CLUSTER TABLE DATA: ", clusterTable);
-        // console.log("CLUSTER ID AMNT: ", clusterIdToAmount);
         clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
         
         const clusterTable2 : clusterTableRow[] = [];
         for(const row of clusterTable) {
-            //let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
             clusterTable2.push(
             {
                 key: Number(row.key), 
