@@ -18,6 +18,7 @@ import { cpuUsage } from "process";
 import { MergedGenomicBin } from "./model/BinMerger";
 import DataTable from "react-data-table-component"
 import {ClusterTable} from "./components/ClusterTable";
+import {LogTable} from "./components/LogTable";
 import {CSV} from "./components/CSVLink"
 import * as d3 from "d3";
 import {Genome} from "./model/Genome";
@@ -209,6 +210,8 @@ interface State {
 
     showDirections: boolean;
 
+    showLog: boolean;
+
     syncScales: boolean;
 
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
@@ -258,6 +261,7 @@ export class App extends React.Component<{}, State> {
             showLinearPlot: true,
             showScatterPlot: true,
             showDirections: false,
+            showLog: false,
             syncScales: false,
             scales: {xScale: null, yScale: null}
         };
@@ -302,8 +306,9 @@ export class App extends React.Component<{}, State> {
                 self.setState({showScatterPlot: !self.state.showScatterPlot})
             } else if(d3.event.key == "l") {
                 self.setState({showLinearPlot: !self.state.showLinearPlot})
+            } else if(d3.event.key == "e") {
+                self.setState({showLog: !self.state.showLog})
             }
-
         })
 
         d3.select("body").on("keydown", function(){
@@ -311,7 +316,7 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: true})
-            }
+            } 
         })
 
         d3.select("body").on("keyup", function(){
@@ -519,7 +524,7 @@ export class App extends React.Component<{}, State> {
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
-        
+        let actions = indexedData.getActions();
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             const scatterplotProps = {
@@ -632,6 +637,25 @@ export class App extends React.Component<{}, State> {
                         <li> Press "b" or use the toggle to enter selection mode </li>
                         <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
                         <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
+                    </div> }
+
+                {this.state.showLog && <div className="black_overlay"></div> }
+                {this.state.showLog && 
+                    <div className="Directions">
+
+                        {/* <h2>Directions</h2>
+                        <li> Press "s" to hide the scatterplot </li>
+                        <li> Press "l" to hide the linear plot </li>
+                        <li> Press "z" or use the toggle to enter zoom mode </li>
+                        <li> Press "b" or use the toggle to enter selection mode </li>
+                        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
+                        <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li> */}
+                        <LogTable
+                            data={actions}//[{action: "TEST"}, {action: "TEST2"}, {action: "Test3"}]}
+                            onClusterColorChange={this.onClusterColorChange}
+                            onClusterRowsChange={this.onClusterRowsChange}
+                            colName={"Actions"}
+                        ></LogTable>
                     </div> }
             </div>
             

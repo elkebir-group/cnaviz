@@ -38,6 +38,9 @@ type ChrIndexedData<T> = {
     [sample: string] : T
 }
 
+type LogTableRow = {
+    action: string
+}
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
 /**
@@ -77,6 +80,7 @@ export class DataWarehouse {
     private _cluster_filters: String[];
     private historyStack: GenomicBin[][];
     private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>;
+    private logOfActions: LogTableRow[];
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -101,6 +105,7 @@ export class DataWarehouse {
         this._cluster_filters = [];
         this.historyStack = [];
         this._ndx = crossfilter(rawData);
+        this.logOfActions = [];
 
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -257,30 +262,28 @@ export class DataWarehouse {
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
     }
 
+    getActions() {
+        return this.logOfActions;
+    }
+
     updateCluster(cluster: number) {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
 
         //let previousRecords = this.brushedBins;
-        console.time("Deep copy");
-        // let brushed = []
-        // let deep = _.cloneDeep(this.brushedBins)
-        // for(const bin of deep) {
-        //     let deepCopy = JSON.parse(JSON.stringify(bin));
-        //     //let newBin = {...deepCopy};
-        //     brushed.push(deepCopy);
-        // }
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
-        console.log("HISTORY STACK: ", this.historyStack);
-        console.timeEnd("Deep copy");
-
-        // Create Data structure to hold:
-            // 1. Pointers to the data
-            // 2. Current cluster of each data point before updating
-            // 3. Cluster after updating
-            // 4. Overall description of the action taken (Points ranging from [RD] and [BAF] and within clusters [] assigned/made new cluster to cluster __)
-    
+        // Assigned points raning from [] to [] and clusters
+        // console.log("CLUSTER AMOUNTS: ", );
+        let brushedTableData  = this.brushedTableData();
+        let brushedTableDataKeys = Object.keys(brushedTableData);
+        let brushedTableDataValues = Object.values(brushedTableData);
+        let action = "Assigned ";
+        for(let i = 0; i < brushedTableData.length; i++) {
+            action += brushedTableDataValues[i].toString() + "% of cluster " + brushedTableDataKeys[i] + ", "
+        }
+        this.logOfActions.push({action: action + " to cluster " + cluster});
+        
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
@@ -289,7 +292,7 @@ export class DataWarehouse {
                 }
             }
         }
-        console.log("HISTORY STACK: ", this.historyStack);
+
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
         this._ndx.remove();
@@ -304,13 +307,11 @@ export class DataWarehouse {
         let test = this.calculateClusterTableInfo();
         this.clusterTableInfo = test;
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
-        console.log("HISTORY STACK: ", this.historyStack);
+
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
         }
         this.setClusterFilters(this._cluster_filters);
-        console.log("HISTORY STACK: ", this.historyStack);
-        console.log("Finished Updating Clusters");
     }
 
     undoClusterUpdate() {
