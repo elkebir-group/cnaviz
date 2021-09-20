@@ -262,15 +262,82 @@ export class DataWarehouse {
             return;
         }
 
-        //let previousRecords = this._ndx.all();
-        //let deepCcopy = JSON.parse(JSON.stringify(previousRecords));
-        //this.historyStack.push(deepCopy);
+        //let previousRecords = this.brushedBins;
+        console.time("Deep copy");
+        // let brushed = []
+        // let deep = _.cloneDeep(this.brushedBins)
+        // for(const bin of deep) {
+        //     let deepCopy = JSON.parse(JSON.stringify(bin));
+        //     //let newBin = {...deepCopy};
+        //     brushed.push(deepCopy);
+        // }
+        this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
+        console.log("HISTORY STACK: ", this.historyStack);
+        console.timeEnd("Deep copy");
 
+        // Create Data structure to hold:
+            // 1. Pointers to the data
+            // 2. Current cluster of each data point before updating
+            // 3. Cluster after updating
+            // 4. Overall description of the action taken (Points ranging from [RD] and [BAF] and within clusters [] assigned/made new cluster to cluster __)
+    
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
                 for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
                     this._locationGroupedData[locKey][j].CLUSTER = cluster;
+                }
+            }
+        }
+        console.log("HISTORY STACK: ", this.historyStack);
+        const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
+        let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
+        this._ndx.remove();
+        this._ndx = crossfilter(flattenNestedBins);
+        this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
+        this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
+        this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
+        this.brushedBins = [];
+        this.brushedCrossfilter.remove();
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
+        this.allRecords =  this._ndx.all(); 
+        let test = this.calculateClusterTableInfo();
+        this.clusterTableInfo = test;
+        this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
+        console.log("HISTORY STACK: ", this.historyStack);
+        if(!this._cluster_filters.includes(String(cluster))) {
+            this._cluster_filters.push(String(cluster));
+        }
+        this.setClusterFilters(this._cluster_filters);
+        console.log("HISTORY STACK: ", this.historyStack);
+        console.log("Finished Updating Clusters");
+    }
+
+    undoClusterUpdate() {
+        console.log("HISTORY STACK: ", this.historyStack);
+        if(this.historyStack.length === 0) {
+            return;
+        }
+
+        
+        // //console.time("Undoing cluster");
+        let newRecords = this.historyStack[this.historyStack.length-1];
+        
+        this.historyStack.pop();
+        console.log("NEW RECORDS: ", newRecords);
+        console.log("NEW RECORDS: ", newRecords[0]["CLUSTER"]);
+        for(let i = 0; i < newRecords.length; i++) {
+            let currentBin = newRecords[i];
+            let locKey = GenomicBinHelpers.toChromosomeInterval(currentBin).toString();
+            let cluster = currentBin.CLUSTER;
+            if(!this._cluster_filters.includes(String(cluster))) {
+                this._cluster_filters.push(String(cluster));
+            }
+            if(this._locationGroupedData[locKey]) {
+                // console.log("Found locKey", locKey);
+                for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
+                    this._locationGroupedData[locKey][j].CLUSTER = cluster;
+                    // console.log("UPDATING CLUSTER");
                 }
             }
         }
@@ -290,37 +357,8 @@ export class DataWarehouse {
         this.clusterTableInfo = test;
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
         
-        if(!this._cluster_filters.includes(String(cluster))) {
-            this._cluster_filters.push(String(cluster));
-        }
+        
         this.setClusterFilters(this._cluster_filters);
-        console.log("Finished Updating Clusters");
-    }
-
-    undoClusterUpdate() {
-        // if(this.historyStack.length === 0) {
-        //     return;
-        // }
-        // //console.time("Undoing cluster");
-        // let newRecords = this.historyStack[this.historyStack.length-1];
-        // this.historyStack.pop();
-        // this.initializeLocationGroupedData(newRecords);
-        
-        // this._ndx = crossfilter(newRecords);
-        // this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
-        // this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
-        // this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
-        
-        // this.clusterTableInfo = this.calculateClusterTableInfo();
-        
-        // this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
-        
-        // if(!this._cluster_filters.includes(String(cluster))) {
-        //     this._cluster_filters.push(String(cluster));
-        // }
-
-        // this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        //console.timeEnd("Undoing cluster");
     }
 
     brushedTableData() {

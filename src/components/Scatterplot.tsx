@@ -241,7 +241,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
-                    <div> Genome Pos: {record.genomicPosition}</div>
+                    {/* <div> Genome Pos: {record.genomicPosition}</div> */}
                 </React.Fragment>);
             } 
         }

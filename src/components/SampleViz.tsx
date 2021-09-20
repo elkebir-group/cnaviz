@@ -215,7 +215,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={dispMode==DisplayMode.zoom} >New Cluster</button>
-                    <button onClick={this.props.onUndoClick} disabled={true}> Undo</button>
+                    <button onClick={this.props.onUndoClick}> Undo</button>
                 </div>}
             </div>
 
