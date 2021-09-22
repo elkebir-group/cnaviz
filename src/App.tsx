@@ -617,6 +617,7 @@ export class App extends React.Component<{}, State> {
                     onToggleSync={this.onToggleSync}
                     syncScales={this.state.syncScales}
                     updatedClusterTable = {this.updatedClusterTable}
+                    logData = {actions}
                 />
             </div>
             
@@ -642,19 +643,11 @@ export class App extends React.Component<{}, State> {
                 {this.state.showLog && <div className="black_overlay"></div> }
                 {this.state.showLog && 
                     <div className="Directions">
-
-                        {/* <h2>Directions</h2>
-                        <li> Press "s" to hide the scatterplot </li>
-                        <li> Press "l" to hide the linear plot </li>
-                        <li> Press "z" or use the toggle to enter zoom mode </li>
-                        <li> Press "b" or use the toggle to enter selection mode </li>
-                        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
-                        <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li> */}
                         <LogTable
-                            data={actions}//[{action: "TEST"}, {action: "TEST2"}, {action: "Test3"}]}
+                            data={actions}
                             onClusterColorChange={this.onClusterColorChange}
                             onClusterRowsChange={this.onClusterRowsChange}
-                            colName={"Actions"}
+                            colName={"Actions (Starting from most recent)"}
                         ></LogTable>
                     </div> }
             </div>

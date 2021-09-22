@@ -278,11 +278,34 @@ export class DataWarehouse {
         let brushedTableData  = this.brushedTableData();
         let brushedTableDataKeys = Object.keys(brushedTableData);
         let brushedTableDataValues = Object.values(brushedTableData);
-        let action = "Assigned ";
+        let action = "Assigned to cluster " + cluster + " | ";
+        action += "Clusters selected: ";
         for(let i = 0; i < brushedTableData.length; i++) {
-            action += brushedTableDataValues[i].toString() + "% of cluster " + brushedTableDataKeys[i] + ", "
+            action += brushedTableDataKeys[i] + " (" + Number(brushedTableDataValues[i].value) + "%)";
+
+            // console.log(brushedTableDataValues[i]);
+            // action += Number(brushedTableDataValues[i].value) + "% of cluster " + brushedTableDataKeys[i];
+            if(i != brushedTableData.length-1) { 
+                action+= ", ";
+            } else {
+                action += " | ";
+            }
         }
-        this.logOfActions.push({action: action + " to cluster " + cluster});
+
+        let currentRdRange : [number, number] = [_.minBy(this.brushedBins, "RD")!.RD, _.maxBy(this.brushedBins, "RD")!.RD];
+        let currentBAFRange : [number, number] = [_.minBy(this.brushedBins, "reverseBAF")!.reverseBAF, _.maxBy(this.brushedBins, "reverseBAF")!.reverseBAF];
+        
+        action += "RD Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
+
+        action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "] | ";
+
+
+        // Assigned to cluster _
+        // Clusters selected: ...
+        // BAF Range: ...
+        // RD Range: ...
+
+        this.logOfActions.push({action: action});
         
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();

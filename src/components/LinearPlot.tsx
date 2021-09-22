@@ -248,10 +248,10 @@ export class LinearPlot extends React.PureComponent<Props> {
             .text(chr || genome.getName());
 
         // Y axis stuff
-        svg.append("g")
-            .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `translate(${PADDING.left}, 0)`)
-            .call(yAxis);
+        // svg.append("g")
+        //     .classed(SCALES_CLASS_NAME, true)
+        //     .attr("transform", `translate(${PADDING.left}, 0)`)
+        //     .call(yAxis);
 
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
@@ -274,7 +274,10 @@ export class LinearPlot extends React.PureComponent<Props> {
             .call(d3.axisBottom(scale)
                     .tickFormat(baseNum => niceBpCount(Number(baseNum.valueOf()), 0, chrStarts[chr])))
 
-
+        let yAx = (g : any, scale : any) => g
+                    .classed(SCALES_CLASS_NAME, true)
+                    .attr("transform", `translate(${PADDING.left}, 0)`)
+                    .call(d3.axisLeft(scale))
         const gx = svg.append("g");
         const gy = svg.append("g");
         let z = d3.zoomIdentity;
@@ -351,16 +354,19 @@ export class LinearPlot extends React.PureComponent<Props> {
         pointSeries.decorate((program:any) => fillColor(program));
 
         function redraw() {
+            const yr = ty().rescaleY(yScale);
+        
+            gy.call(yAx, yr);
             if(!chr) {
                 const xr = tx().rescaleX(xScale);
                 gx.call(xAx , xr);
                 self._currXScale = xr;
-                pointSeries.xScale(xr).yScale(yScale);
+                pointSeries.xScale(xr).yScale(yr);
             } else {
                 const xr = tx().rescaleX(xScale);
                 gx.call(xAx2 , xr);
                 self._currXScale = xr;
-                pointSeries.xScale(xr).yScale(yScale);
+                pointSeries.xScale(xr).yScale(yr);
             }
             
             pointSeries(data);

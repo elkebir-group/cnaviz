@@ -27,6 +27,7 @@ interface Props {
     colors: string[];
     onSidebarChange: any;
     data: readonly GenomicBin[];
+    logData: any[];
     onFileChosen: any;
     chosenFile: string;
     show: boolean;
@@ -98,7 +99,7 @@ function Sidebar(props: Props) {
           </div>
           
           <div className="row-contents">
-            <CSV data={props.data} fileName={props.chosenFile}></CSV>
+            <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
           </div>
           
         </div>

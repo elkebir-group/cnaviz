@@ -13,7 +13,7 @@
     "react": "^16.8.6",
     "react-annotation": "^2.2.1",
     "react-color": "^2.19.3",
-    "react-csv": "^2.0.3",
+    "react-csv": "https://github.com/zubairlalani/react-csv.git",
     "react-data-table-component": "^6.11.7",
     "react-dom": "^16.8.6",
     "react-icons": "^4.2.0",

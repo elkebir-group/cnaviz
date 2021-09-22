@@ -556,7 +556,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .yScale(self._currYScale)
                 //console.log("Amount of points: ", data.length);
                 
-                let dataMinusBrush = _.difference(data, [...brushedBins]);
+                //let dataMinusBrush = _.difference(data, [...brushedBins]);
                 //pointSeries(dataMinusBrush.concat([...brushedBins]));
                 pointSeries(data);
                 //pointSeries([...self.brushedNodes]);
