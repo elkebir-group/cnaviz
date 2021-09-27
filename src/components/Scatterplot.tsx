@@ -474,7 +474,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this.previous_brushed_nodes = new Set(previous);
         
         const previous_brushed_nodes = this.previous_brushed_nodes;
-        console.log("Brushed Bins1: ", [...previous_brushed_nodes]);
+        //console.log("Brushed Bins1: ", [...previous_brushed_nodes]);
 
         const gx = svg.append("g");
         const gy = svg.append("g");
@@ -638,7 +638,7 @@ export class Scatterplot extends React.Component<Props, State> {
             if (data) {
                 const { selection } = d3.event;
                 if(selection) {
-                    console.log("Not Clearing");
+                    //console.log("Not Clearing");
                     let rect = [[self._currXScale.invert(selection[0][0]), self._currYScale.invert(selection[1][1])], // bottom left (x y)
                                 [self._currXScale.invert(selection[1][0]), self._currYScale.invert(selection[0][1])]]; // top right (x y)
                                 
@@ -655,7 +655,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     self.props.onZoom(newScales);
                 } else {
-                    console.log("Clearing");
+                    //console.log("Clearing");
                 }
             }
         }
@@ -708,7 +708,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 }
                 let brushNodes = data.filter(d => rectContains(selection, [this._currXScale(d.reverseBAF), this._currYScale(d[yAxisToPlot])]));
                 
-                console.log("Amount of brushed nodes: ", brushNodes.length);
+                //console.log("Amount of brushed nodes: ", brushNodes.length);
                 if (brushNodes) {
                     if(displayMode == DisplayMode.select) {//event.sourceEvent.shiftKey) {
                         brushNodes = _.uniq(_.union(brushNodes, brushedBins));  

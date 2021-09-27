@@ -8,11 +8,8 @@ import memoizeOne from "memoize-one";
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome, Chromosome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import {webglColor, getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
-import { MergedGenomicBin } from "../model/BinMerger";
-import { brush } from "d3";
+import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import { DisplayMode } from "../App";
-import { start } from "repl";
 import "./LinearPlot.css";
 
 const visutils = require('vis-utils');
@@ -147,7 +144,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         .extent([[PADDING.left, PADDING.top], 
                 [this.props.width - PADDING.right, this.props.height - PADDING.bottom]])
                 .on("end", () => {
-                    svg.selectAll("." + "brush").remove();
+                    svg.selectAll(".brush").remove();
                     
                 });
                 
@@ -158,7 +155,6 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     redraw() {
-        console.time("Start Linear draw");
         if (!this._svg) {
             return;
         }
@@ -171,7 +167,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
         let xAxis;
-        let filteredChrs = [];
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
         let chrStarts = genome.getChrStartMap();
@@ -207,8 +202,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             //     .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
             //     .range(xScale.range())
             // }
-            let start =  chrStarts[chr];
-            console.log("START: ", start);
+            //console.log("START: ", start);
             xAxis = d3.axisBottom(xScale)
                 // .tickFormat((baseNum) => {
                 //     //console.log("TEST: ");
@@ -379,9 +373,9 @@ export class LinearPlot extends React.PureComponent<Props> {
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 return customColor;
-            } else if (d.CLUSTER == -1){
+            } else if (d.CLUSTER === -1){
                 return UNCLUSTERED_COLOR;
-            } else if(d.CLUSTER == -2){
+            } else if(d.CLUSTER === -2){
                 return DELETED_COLOR;
             } else {
                 const cluster = d.CLUSTER;
@@ -391,7 +385,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         let brush : any = null;
-        if(displayMode == DisplayMode.select || displayMode == DisplayMode.erase) {
+        if(displayMode === DisplayMode.select || displayMode === DisplayMode.erase) {
             brush = d3.brush()
                 .keyModifiers(false)
                 .extent([[PADDING.left, PADDING.top], 
@@ -422,7 +416,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     }
                 })
                 .on("end", () => {
-                    svg.selectAll("." + "brush").remove();
+                    svg.selectAll(".brush").remove();
                     this.props.onBrushedBinsUpdated([...this.brushedNodes]);
                 });
 
@@ -434,7 +428,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("end", () => {
-                    svg.selectAll("." + "brush").remove();
+                    svg.selectAll(".brush").remove();
                     const {selection} = d3.event;
                     try {
                         const startEnd = {
@@ -454,8 +448,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .call(brush);
         }
         svg.call(zoom).call(zoom.transform, d3.zoomIdentity.scale(1.0));
-        //console.timeEnd("End Linear draw");
-        console.timeEnd("Start Linear draw");
     }
 
     renderHighlight() {
@@ -497,7 +489,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     render() {
-        const {width, height, displayMode, dataKeyToPlot} = this.props;
+        const {width, height, dataKeyToPlot} = this.props;
         return <div
                 className="LinearPlot"
                 style={{position: "relative"}}

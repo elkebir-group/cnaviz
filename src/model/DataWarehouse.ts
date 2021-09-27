@@ -91,7 +91,6 @@ export class DataWarehouse {
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
     constructor(rawData: GenomicBin[]) {
-        console.time("Initializing DataWarehouse");
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
         this._sampleGroupedData = {};
@@ -139,7 +138,6 @@ export class DataWarehouse {
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
-        console.timeEnd("Initializing DataWarehouse");
     }
 
     calculateClusterTableInfo() : clusterTableRow[] {

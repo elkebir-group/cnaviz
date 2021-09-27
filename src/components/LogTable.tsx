@@ -38,9 +38,6 @@ export class LogTable extends React.Component<Props> {
         ];
         let newData = [];
         for(let s of data) {
-            //let lines = s.action.split(' - ')
-            console.log(s);
-            //let linesHTML  = lines.map((line : any)=><div>{line}</div>);
             newData.push(s);
         }
         return <div>

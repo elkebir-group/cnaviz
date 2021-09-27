@@ -91,7 +91,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 reject(error);
                 return;
             }
-            console.time("PARSING BINS");
+
             let start = Number(parsed[0].START); // Keeps track of the start of each chr
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
@@ -128,7 +128,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
             
-            console.timeEnd("PARSING BINS");
             resolve(parsed);
         });
     })
@@ -314,14 +313,15 @@ export class App extends React.Component<{}, State> {
         })
 
         d3.select("body").on("keydown", function(){
+            console.log(d3.event.key);
             if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: true})
-            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "s") {
-                console.log("Holding down s");
+            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "Meta") {
+                //console.log("Holding down s");
                 self.setState({displayMode: DisplayMode.select})
-            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "e") {
+            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "Alt") {
                 self.setState({displayMode: DisplayMode.erase})
             } 
         })
@@ -331,9 +331,9 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: false})
-            } else if(d3.event.key == "s") {
+            } else if(self.state.displayMode === DisplayMode.select && d3.event.key == "Meta") {
                 self.setState({displayMode: DisplayMode.zoom})
-            } else if(d3.event.key == "e") {
+            } else if(self.state.displayMode === DisplayMode.erase && d3.event.key == "Alt") {
                 self.setState({displayMode: DisplayMode.zoom})
             }
         });

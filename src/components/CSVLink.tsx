@@ -116,7 +116,7 @@ export class CSV extends React.Component<Props, State> {
         let self = this;
         const toggleLoader = () => {
             if (!this.state.loading) {
-                console.log("Test");
+                //console.log("Test");
               this.setState({ loading: true });
             } else {
               this.setState({ loading: false });
