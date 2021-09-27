@@ -43,6 +43,7 @@ type LogTableRow = {
 }
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
+type selectionTableRow =  {key: number, value: number, selectPerc: number}
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
  * chromosome.  For applications that want a limited amount of data, pre-aggregates GenomicBin and allows fast queries
@@ -150,6 +151,22 @@ export class DataWarehouse {
             {
                 key: Number(row.key), 
                 value: value
+            });
+        }
+        return clusterTable;
+    }
+
+    calculateSelectTableInfo() : selectionTableRow[] {
+        const clusterInfo = this._cluster_dim.group().all();
+        const clusterTable : selectionTableRow[] = [];
+        for(const row of clusterInfo) {
+            let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            let selectPerc = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            clusterTable.push(
+            {
+                key: Number(row.key), 
+                value: value,
+                selectPerc: selectPerc
             });
         }
         return clusterTable;
@@ -271,10 +288,7 @@ export class DataWarehouse {
             return;
         }
 
-        //let previousRecords = this.brushedBins;
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
-        // Assigned points raning from [] to [] and clusters
-        // console.log("CLUSTER AMOUNTS: ", );
         let brushedTableData  = this.brushedTableData();
         let brushedTableDataKeys = Object.keys(brushedTableData);
         let brushedTableDataValues = Object.values(brushedTableData);
@@ -282,9 +296,6 @@ export class DataWarehouse {
         action += "Clusters selected: ";
         for(let i = 0; i < brushedTableData.length; i++) {
             action += brushedTableDataKeys[i] + " (" + Number(brushedTableDataValues[i].value) + "%)";
-
-            // console.log(brushedTableDataValues[i]);
-            // action += Number(brushedTableDataValues[i].value) + "% of cluster " + brushedTableDataKeys[i];
             if(i != brushedTableData.length-1) { 
                 action+= ", ";
             } else {
@@ -298,12 +309,6 @@ export class DataWarehouse {
         action += "RD Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
 
         action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "] | ";
-
-
-        // Assigned to cluster _
-        // Clusters selected: ...
-        // BAF Range: ...
-        // RD Range: ...
 
         this.logOfActions.push({action: action});
         
@@ -338,18 +343,12 @@ export class DataWarehouse {
     }
 
     undoClusterUpdate() {
-        console.log("HISTORY STACK: ", this.historyStack);
         if(this.historyStack.length === 0) {
             return;
         }
 
-        
-        // //console.time("Undoing cluster");
-        let newRecords = this.historyStack[this.historyStack.length-1];
-        
+        let newRecords = this.historyStack[this.historyStack.length-1];  
         this.historyStack.pop();
-        console.log("NEW RECORDS: ", newRecords);
-        console.log("NEW RECORDS: ", newRecords[0]["CLUSTER"]);
         for(let i = 0; i < newRecords.length; i++) {
             let currentBin = newRecords[i];
             let locKey = GenomicBinHelpers.toChromosomeInterval(currentBin).toString();
@@ -358,10 +357,8 @@ export class DataWarehouse {
                 this._cluster_filters.push(String(cluster));
             }
             if(this._locationGroupedData[locKey]) {
-                // console.log("Found locKey", locKey);
                 for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
                     this._locationGroupedData[locKey][j].CLUSTER = cluster;
-                    // console.log("UPDATING CLUSTER");
                 }
             }
         }
@@ -393,16 +390,17 @@ export class DataWarehouse {
         // (Each sample contains the same amount of points so we divide by total amount of samples)
         let clusterIdToAmount : clusterIdMap = {};
         clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
-
+        const amountInSelection = this.brushedBins.length;
         const clusterTable = this.brushedClusterDim.group().all();
-        clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
+        //clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
         
-        const clusterTable2 : clusterTableRow[] = [];
+        const clusterTable2 : selectionTableRow[] = [];
         for(const row of clusterTable) {
             clusterTable2.push(
             {
                 key: Number(row.key), 
-                value: Number(row.value)
+                value: Number((Number(row.value)/Number(clusterIdToAmount[Number(row.key)]) * 100).toFixed(2)),
+                selectPerc: Number((Number(row.value)/Number(amountInSelection) * 100).toFixed(2))
             });
         }
 

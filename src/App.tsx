@@ -221,7 +221,8 @@ interface State {
 export enum DisplayMode {
     zoom,
     select,
-    boxzoom
+    boxzoom,
+    erase
 };
 
 /**
@@ -255,7 +256,7 @@ export class App extends React.Component<{}, State> {
             value: "0",
             updatedBins: false,
             selectedSample: "",
-            displayMode: DisplayMode.select,  
+            displayMode: DisplayMode.zoom,  
             sidebar:  true,
             chosenFile: "",
             showLinearPlot: true,
@@ -302,11 +303,12 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.keyCode == 32) {
                 self.onSideBarChange(!self.state.sidebar);
-            } else if (d3.event.key == "s") {
-                self.setState({showScatterPlot: !self.state.showScatterPlot})
-            } else if(d3.event.key == "l") {
-                self.setState({showLinearPlot: !self.state.showLinearPlot})
-            } else if(d3.event.key == "e") {
+            }
+            // } else if (d3.event.key == "s") {
+            //     self.setState({showScatterPlot: !self.state.showScatterPlot})
+            // } else if(d3.event.key == "l") {
+            //     self.setState({showLinearPlot: !self.state.showLinearPlot})
+            else if(d3.event.key == "l") {
                 self.setState({showLog: !self.state.showLog})
             }
         })
@@ -316,6 +318,11 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: true})
+            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "s") {
+                console.log("Holding down s");
+                self.setState({displayMode: DisplayMode.select})
+            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "e") {
+                self.setState({displayMode: DisplayMode.erase})
             } 
         })
 
@@ -324,8 +331,13 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: false})
+            } else if(d3.event.key == "s") {
+                self.setState({displayMode: DisplayMode.zoom})
+            } else if(d3.event.key == "e") {
+                self.setState({displayMode: DisplayMode.zoom})
             }
-        })
+        });
+        
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>, applyClustering: boolean) {

@@ -159,7 +159,7 @@ function Sidebar(props: Props) {
         </div>
         
 
-        <div >
+        <div>
           <ClusterTable 
               data={props.tableData} 
               onClusterRowsChange={props.onClusterRowsChange} 

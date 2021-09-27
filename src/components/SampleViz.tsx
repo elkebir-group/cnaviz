@@ -252,7 +252,8 @@ export class SampleViz extends React.Component<Props, State> {
                     onClusterColorChange={() => {}}
                     currentFilters={["-1"]}
                     colOneName={"Cluster ID"}
-                    colTwoName={"Cluster (%)"}
+                    colTwoName={"% of cluster"}
+                    colThreeName={"% of selection"}
                     expandable={false}
                     selectable={false}
                     colors={this.props.colors}

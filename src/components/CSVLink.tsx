@@ -60,15 +60,36 @@ export class CSV extends React.Component<Props, State> {
         
         //provide the name for the CSV file to be downloaded 
         const fileName = this.props.fileName;
-        let nameExt = fileName.split("."); 
+        let removeDateTime = fileName.split("_");
+        console.log(removeDateTime);
+
+        let nameExt = removeDateTime[0].split("."); 
+        console.log("nameExt: " + nameExt);
+        let newFileName = "";
+        for(let i = 0; i < nameExt.length-1; i++) {
+            newFileName += nameExt[i];
+        }
+        console.log("newFileName: " + newFileName);
         const currentDate = new Date();
-        let date = (currentDate.getMonth() + 1) + "-" + currentDate.getDay() + "-" + currentDate.getFullYear()
+        let date = (currentDate.getMonth() + 1) + "-" + currentDate.getDate() + "-" + currentDate.getFullYear()
         let time = currentDate.getHours() + "-" + currentDate.getMinutes() + "-" + currentDate.getSeconds();
-        hiddenElement.download = nameExt[0] + "_" + date + "_" + time;  
+        hiddenElement.download = newFileName + "_" + date + "_" + time;
         hiddenElement.click();
-
-
         
+        let actions = [];
+        for(let action of this.props.logData) {
+            actions.push(action.action);
+        }
+        let logFileContent = "";
+        logFileContent = actions.join("\n");
+        var hiddenElement2 = document.createElement('a');  
+        hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);  
+        const fileName2 = this.props.fileName;
+        //let nameExt2 = fileName.split("."); 
+        hiddenElement2.download = newFileName + "-" + "log" + "_" + date + "_" + time;  
+        hiddenElement2.click();
+
+
         this.setState({loading: false})
             //this.setState({loading: false})
             //this.setState({loading: false})
@@ -80,7 +101,7 @@ export class CSV extends React.Component<Props, State> {
     }
 
     render() {
-        console.log(this.state.loading);
+        // console.log(this.state.loading);
         const separator = "\t"
         const enclosing_char = "";
         function download(filename : string, textInput  : string) {

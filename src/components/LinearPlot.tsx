@@ -158,6 +158,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     redraw() {
+        console.time("Start Linear draw");
         if (!this._svg) {
             return;
         }
@@ -318,6 +319,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]]);
                 }
             }
+
         );
 
         function center(event : any) {
@@ -389,7 +391,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         let brush : any = null;
-        if(displayMode == DisplayMode.select) {
+        if(displayMode == DisplayMode.select || displayMode == DisplayMode.erase) {
             brush = d3.brush()
                 .keyModifiers(false)
                 .extent([[PADDING.left, PADDING.top], 
@@ -450,10 +452,10 @@ export class LinearPlot extends React.PureComponent<Props> {
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
-        } else if(displayMode === DisplayMode.zoom) {
-            //svg.selectAll("." + "brush").remove();
         }
         svg.call(zoom).call(zoom.transform, d3.zoomIdentity.scale(1.0));
+        //console.timeEnd("End Linear draw");
+        console.timeEnd("Start Linear draw");
     }
 
     renderHighlight() {

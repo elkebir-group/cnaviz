@@ -421,7 +421,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     redraw() {
-        
+        console.time("Scatter draw");
         //console.time("Rendering");
         if (!this._svg || !this._canvas || !this.scatter) {
             return;
@@ -469,9 +469,12 @@ export class Scatterplot extends React.Component<Props, State> {
             
 
         let previous : string[] = [];
+        
         brushedBins.forEach(d => previous.push(GenomicBinHelpers.toChromosomeInterval(d).toString()))
         this.previous_brushed_nodes = new Set(previous);
+        
         const previous_brushed_nodes = this.previous_brushed_nodes;
+        console.log("Brushed Bins1: ", [...previous_brushed_nodes]);
 
         const gx = svg.append("g");
         const gy = svg.append("g");
@@ -540,6 +543,16 @@ export class Scatterplot extends React.Component<Props, State> {
             .context(gl);
         pointSeries.decorate((program:any) => fillColor(program));
 
+        let pointSeries2 = fc
+            .seriesWebglPoint()
+            .xScale(self._currXScale)
+            .yScale(self._currYScale)
+            .size(3)
+            .crossValue((d : any) => d.reverseBAF)
+            .mainValue((d : any) => d[yAxisToPlot])
+            .context(gl);
+        pointSeries2.decorate((program:any) => fillColor(program));
+
         function redraw() {
             const xr = tx().rescaleX(xScale);
             const yr = ty().rescaleY(yScale);
@@ -553,14 +566,10 @@ export class Scatterplot extends React.Component<Props, State> {
             if(self._canvas) {
                 pointSeries
                     .xScale(self._currXScale)
-                    .yScale(self._currYScale)
-                //console.log("Amount of points: ", data.length);
-                
+                    .yScale(self._currYScale)    
                 //let dataMinusBrush = _.difference(data, [...brushedBins]);
                 //pointSeries(dataMinusBrush.concat([...brushedBins]));
-                pointSeries(data);
-                //pointSeries([...self.brushedNodes]);
-                
+                pointSeries(data);     
             }
         }
         
@@ -569,10 +578,12 @@ export class Scatterplot extends React.Component<Props, State> {
 
         redraw();
 
+        // Create event-rect that allows for svg points to be overlayed under mouse pointer
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
             .append("rect")
+                .on("dblclick", e => console.log("Double click"))
                 .attr("x", PADDING.left)
                 .attr("y", PADDING.top)
                 .attr("width", width - PADDING.right - PADDING.left)
@@ -583,26 +594,23 @@ export class Scatterplot extends React.Component<Props, State> {
 
         
 
-        if(displayMode === DisplayMode.select) {
-            //this.createNewBrush();
-            const svg = d3.select(this._svg);
+        if(displayMode === DisplayMode.select || displayMode === DisplayMode.erase) {
             const brush = d3.brush()
             .keyModifiers(false)
             .extent([[PADDING.left - 2*CIRCLE_R, PADDING.top - 2*CIRCLE_R], 
                     [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
-                    //.on("start brush", () => this.updatePoints(d3.event))
                     .on("end", () => {
                         this.updatePoints(d3.event)
                         svg.selectAll("." + "brush").remove();
-                        //console.log("Amount of brushed points: ", [...this.brushedNodes].length);
                         this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
             
-                    
+              
             // attach the brush to the chart
             svg.append('g')
                 .attr('class', 'brush')
                 .call(brush);
+
         } else if(displayMode === DisplayMode.zoom) {
             svg.selectAll("." + "brush").remove();
         } else if(displayMode === DisplayMode.boxzoom) {
@@ -628,8 +636,9 @@ export class Scatterplot extends React.Component<Props, State> {
             if(!self._svg) {return;}
             const {data} = self.props;
             if (data) {
-                try {
-                    const { selection } = d3.event;
+                const { selection } = d3.event;
+                if(selection) {
+                    console.log("Not Clearing");
                     let rect = [[self._currXScale.invert(selection[0][0]), self._currYScale.invert(selection[1][1])], // bottom left (x y)
                                 [self._currXScale.invert(selection[1][0]), self._currYScale.invert(selection[0][1])]]; // top right (x y)
                                 
@@ -645,18 +654,24 @@ export class Scatterplot extends React.Component<Props, State> {
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     self.props.onZoom(newScales);
-                } catch (error) { console.log(error);}
+                } else {
+                    console.log("Clearing");
+                }
             }
         }
         
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
+                //console.log(1);
                 return customColor;
             } else if (d.CLUSTER == -1){
+                //console.log(2);
                 return UNCLUSTERED_COLOR;
             } else if(d.CLUSTER == -2){
+                //console.log(3);
                 return DELETED_COLOR;
             } else {
+                ///onsole.log(4);
                 const cluster = d.CLUSTER;
                 const col_index = cluster % colors.length;
                 return colors[col_index];
@@ -664,11 +679,12 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         
         //console.timeEnd("Rendering");
+        console.timeEnd("Scatter draw");
      }
 
      updatePoints(event : any) {
         if(!this._svg) {return;}
-        const {brushedBins, data, yAxisToPlot} = this.props;
+        const {brushedBins, data, yAxisToPlot, displayMode} = this.props;
         if (data) {
             //try {
                 const { selection } = d3.event
@@ -694,15 +710,16 @@ export class Scatterplot extends React.Component<Props, State> {
                 
                 console.log("Amount of brushed nodes: ", brushNodes.length);
                 if (brushNodes) {
-                    if(event.sourceEvent.shiftKey) {
+                    if(displayMode == DisplayMode.select) {//event.sourceEvent.shiftKey) {
                         brushNodes = _.uniq(_.union(brushNodes, brushedBins));  
-                    } else if(event.sourceEvent.altKey) {
+                    } else if(displayMode == DisplayMode.erase) {
                         brushNodes = _.difference(brushedBins, brushNodes);
                     }
 
                     this.brushedNodes = new Set(brushNodes);                  
                 } 
             } else {
+                //console.log("TEST");
                 this.brushedNodes = new Set([]);
             }
             //} catch (error) { console.log(error);}

@@ -17,6 +17,7 @@ interface Props {
     expandable ?: boolean;
     colOneName : string;
     colTwoName: string;
+    colThreeName?: string;
     colors : string[];
     updatedClusterTable?: () => void;
 }
@@ -51,7 +52,7 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, data, expandable, selectable, colors} = this.props;
+        const {colOneName, colTwoName, colThreeName, data, expandable, selectable, colors} = this.props;
         const ExpandedComponent =(data:any) => 
         <div> 
             <BlockPicker 
@@ -65,7 +66,12 @@ export class ClusterTable extends React.Component<Props> {
             {
               when: (row:any) => row,
               style: (row:any) => ({
-                backgroundColor: (Number(row.key)===-1) ? UNCLUSTERED_COLOR : colors[Number(row.key) % colors.length]
+                backgroundColor: (Number(row.key)===-1) ? UNCLUSTERED_COLOR : colors[Number(row.key) % colors.length],
+                alignItems: 'center',
+                justifyContent: 'center',
+                innerWidth: 50,
+                outerWidth: 50
+
               }),
             }
           ];
@@ -87,10 +93,43 @@ export class ClusterTable extends React.Component<Props> {
             },
         ];
 
+        const columns3 = [
+            {
+                name: colOneName,
+                selector: 'key',
+                sortable: true,
+                compact: true,
+                wrap: true,
+                center: true
+                // width: "50"
+            },
+            {
+                name: colTwoName,
+                selector: 'value',
+                sortable: true,
+                right: true,
+                compact: true,
+                wrap: true,
+                center: true
+                // width: "50"
+            },
+            {
+                name: colThreeName,
+                selector: 'selectPerc',
+                sortable: true,
+                right: true,
+                compact: true,
+                wrap: true,
+                center: true
+                // width: "50"
+            },
+        ];
+
         if(!expandable && !selectable) {
+            // console.log(data);
             return (
                 <DataTable
-                    columns={columns}
+                    columns={columns3}
                     data={data}
                     pagination={true}
                     dense={true}
