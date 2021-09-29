@@ -289,18 +289,12 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.keyCode == 32) {
                 self.onSideBarChange(!self.state.sidebar);
-            }
-            // } else if (d3.event.key == "s") {
-            //     self.setState({showScatterPlot: !self.state.showScatterPlot})
-            // } else if(d3.event.key == "l") {
-            //     self.setState({showLinearPlot: !self.state.showLinearPlot})
-            else if(d3.event.key == "l") {
+            } else if(d3.event.key == "l") {
                 self.setState({showLog: !self.state.showLog})
             }
         })
 
-        d3.select("body").on("keydown", function(){
-            console.log(d3.event.key);
+        d3.select("body").on("keydown", function() {
             if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
@@ -634,6 +628,8 @@ export class App extends React.Component<{}, State> {
                         <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
                         <h5> Other Key Modifiers </h5>
                         <li> Click "l" to toggle a log of previous actions </li>
+                        <li> Click space to toggle the sidebar </li>
+                        <li> Hold down "?" or "/" button to open direction panel </li>
 
                     </div> }
 
