@@ -5,25 +5,12 @@ import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
-
-import { SampleViz2D } from "./components/SampleViz2D";
-import { SampleViz1D } from "./components/SampleViz1D";
 import {SampleViz} from "./components/SampleViz";
-import { GenomicLocationInput } from "./components/GenomicLocationInput";
-import { CurveManager } from "./components/CurveManager";
 import spinner from "./loading-small.gif";
-import {HuePicker, SketchPicker} from "react-color";
 import "./App.css";
-import { cpuUsage } from "process";
-import { MergedGenomicBin } from "./model/BinMerger";
-import DataTable from "react-data-table-component"
-import {ClusterTable} from "./components/ClusterTable";
 import {LogTable} from "./components/LogTable";
-import {CSV} from "./components/CSVLink"
 import * as d3 from "d3";
 import {Genome} from "./model/Genome";
-
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import "./App.css";
 
@@ -318,10 +305,9 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: true})
-            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "Meta") {
-                //console.log("Holding down s");
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && d3.event.key == "Meta") {
                 self.setState({displayMode: DisplayMode.select})
-            } else if(self.state.displayMode === DisplayMode.zoom && d3.event.key == "Alt") {
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.select) && d3.event.key == "Alt") {
                 self.setState({displayMode: DisplayMode.erase})
             } 
         })
@@ -346,21 +332,11 @@ export class App extends React.Component<{}, State> {
             return;
         }
 
-        // let fileName = files[0].name;
-        // let nameExt = fileName.split("."); 
-        // let newFileName = "";
-        // for(let i = 0; i < nameExt.length-1; i++) {
-        //     newFileName += nameExt[i];
-        // }
-        // let removeDateTime = newFileName.split("_");
-        // newFileName = removeDateTime[0] + nameExt[nameExt.length-1];
         this.setState({chosenFile: files[0].name})
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
         try {
-            //console.time("Reading File");
             contents = await getFileContentsAsString(files[0]);
-            //console.timeEnd("Reading File");
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -649,10 +625,10 @@ export class App extends React.Component<{}, State> {
                     <div className="Directions">
                         <h2>Directions</h2>
                         <h5> Selection/Erasing </h5>
-                        <li> Hold down "Command" in Zoom mode to temporarily enter Select mode </li>
-                        <li> Hold down "Control" in Zoom mode to temporarily enter Erase mode </li>
+                        <li> Hold down "Command/Control" in Zoom mode to temporarily enter Select mode </li>
+                        <li> Hold down "Alt" in Zoom mode to temporarily enter Erase mode </li>
                         <li> To completely clear your selection, click anywhere in the plot while in Select/Erase mode </li>
-                        <li> To permanent stay in Select mode, you can click b </li>
+                        <li> To stay in Select mode without holding a button, you can click b or switch the toggle button in the sidebar </li>
                         <h5> Zoom Mode </h5>
                         <li> The default mode is zoom mode</li>
                         <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>

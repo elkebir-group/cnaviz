@@ -569,7 +569,9 @@ export class Scatterplot extends React.Component<Props, State> {
                     .yScale(self._currYScale)    
                 //let dataMinusBrush = _.difference(data, [...brushedBins]);
                 //pointSeries(dataMinusBrush.concat([...brushedBins]));
-                pointSeries(data);     
+                if(data) {
+                    pointSeries(data);   
+                }  
             }
         }
         
@@ -694,10 +696,6 @@ export class Scatterplot extends React.Component<Props, State> {
                             [this._currXScale.invert(selection[1][0]) , 
                             this._currYScale.invert(selection[0][1])]];
                
-                // let brushNodes : GenomicBin[] = visutils.filterInRectFromQuadtree(this.quadTree, rect,
-                //     (d : GenomicBin) => d.reverseBAF, 
-                //     (d : GenomicBin)  => d[yAxisToPlot]); // The new points selected
-                
                 function rectContains(rect : any, point : any) {
                     const X = 0;
                     const Y = 1;
@@ -708,9 +706,8 @@ export class Scatterplot extends React.Component<Props, State> {
                 }
                 let brushNodes = data.filter(d => rectContains(selection, [this._currXScale(d.reverseBAF), this._currYScale(d[yAxisToPlot])]));
                 
-                //console.log("Amount of brushed nodes: ", brushNodes.length);
                 if (brushNodes) {
-                    if(displayMode == DisplayMode.select) {//event.sourceEvent.shiftKey) {
+                    if(displayMode == DisplayMode.select) {
                         brushNodes = _.uniq(_.union(brushNodes, brushedBins));  
                     } else if(displayMode == DisplayMode.erase) {
                         brushNodes = _.difference(brushedBins, brushNodes);
@@ -719,10 +716,8 @@ export class Scatterplot extends React.Component<Props, State> {
                     this.brushedNodes = new Set(brushNodes);                  
                 } 
             } else {
-                //console.log("TEST");
                 this.brushedNodes = new Set([]);
             }
-            //} catch (error) { console.log(error);}
         }
     }
 

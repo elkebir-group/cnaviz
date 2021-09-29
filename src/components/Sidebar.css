@@ -60,7 +60,7 @@
   .title-bar {
     border-top: 2px solid black;
   }
- 
+  
   .closemenu {
     color: #000;
     position: absolute;
@@ -72,5 +72,19 @@
     font-weight: bold;
     font-size: 22px;
     top: 50%;
+    cursor: pointer;
+  }
+
+  .closemenu2 {
+    color: #000;
+    position: absolute;
+    right: -25px;
+    z-index: 9999;
+    line-height: 20px;
+    height: 11%;
+    width: 7%;
+    font-weight: bold;
+    font-size: 22px;
+    top: 54%;
     cursor: pointer;
   }

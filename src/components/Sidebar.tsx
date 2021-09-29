@@ -65,10 +65,22 @@ function Sidebar(props: Props) {
                 </div>
               )
           }
-          {props.currentDisplayMode == DisplayMode.select && <FiMousePointer></FiMousePointer>}
-          {props.currentDisplayMode == DisplayMode.zoom && <FiZoomIn></FiZoomIn>}
-          {/* <FiArrowLeftCircle/> */}
-        </div>
+      </div>
+
+      {props.currentDisplayMode == DisplayMode.select && <div className="closemenu2" onClick={() => {
+                if(props.currentDisplayMode === DisplayMode.zoom) { 
+                  props.setDisplayMode(DisplayMode.select)
+                } else {
+                  props.setDisplayMode(DisplayMode.zoom)
+                }
+              }}><FiMousePointer></FiMousePointer>  </div>}
+      {props.currentDisplayMode == DisplayMode.zoom && <div className="closemenu2" onClick={() => {
+                if(props.currentDisplayMode === DisplayMode.zoom) { 
+                  props.setDisplayMode(DisplayMode.select)
+                } else {
+                  props.setDisplayMode(DisplayMode.zoom)
+                }
+              }}><FiZoomIn></FiZoomIn></div>}
       
       <div className="contents">
         <div>

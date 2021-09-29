@@ -68,12 +68,12 @@ export class CSV extends React.Component<Props, State> {
         let newFileName = "";
         for(let i = 0; i < nameExt.length-1; i++) {
             newFileName += nameExt[i];
+            if(i != nameExt.length-2) {
+                newFileName += ".";
+            }
         }
 
         let removeDateTime = newFileName.split("_");
-        console.log(removeDateTime);
-
-        console.log("newFileName: " + removeDateTime[0]);
 
         const currentDate = new Date();
         let month = String(currentDate.getMonth() + 1);
@@ -100,7 +100,7 @@ export class CSV extends React.Component<Props, State> {
             sec = "0" + sec;
         }
         let time = hrs + min + sec;
-        hiddenElement.download = removeDateTime[0] + "_" + date + time;
+        hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
         hiddenElement.click();
         
         let actions = [];
