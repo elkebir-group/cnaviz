@@ -1,0 +1,22 @@
+library(ASCAT)
+ascat.bc = ascat.loadData("/Users/gillianchu/mek/ascat/ascat_inputs/P5_ascat_logr.txt", "/Users/gillianchu/mek/ascat/ascat_inputs/P5_ascat_baf.txt")
+#ascat.plotRawData(ascat.bc)
+ascat.bc = ascat.asmultipcf(ascat.bc)
+write.csv(ascat.bc$Tumor_LogR_segmented, "/Users/gillianchu/mek/ascat/ascat_outputs/P5_logr_segments.csv", row.names=FALSE)
+write.csv(ascat.bc$Tumor_BAF_segmented, "/Users/gillianchu/mek/ascat/ascat_outputs/P5_baf_segments.csv", row.names=FALSE)
+write.csv(ascat.bc$SNPpos, "/Users/gillianchu/mek/ascat/ascat_outputs/P5_snpdata.csv", row.names=FALSE)
+
+ascat.bc = ascat.loadData("/Users/gillianchu/mek/ascat/ascat_inputs/P6_ascat_logr.txt", "/Users/gillianchu/mek/ascat/ascat_inputs/P6_ascat_baf.txt")
+#ascat.plotRawData(ascat.bc)
+ascat.bc = ascat.asmultipcf(ascat.bc)
+write.csv(ascat.bc$Tumor_LogR_segmented, "/Users/gillianchu/mek/ascat/ascat_outputs/P6_logr_segments.csv", row.names=FALSE)
+write.csv(ascat.bc$Tumor_BAF_segmented, "/Users/gillianchu/mek/ascat/ascat_outputs/P6_baf_segments.csv", row.names=FALSE)
+write.csv(ascat.bc$SNPpos, "/Users/gillianchu/mek/ascat/ascat_outputs/P6_snpdata.csv", row.names=FALSE)
+
+ascat.bc = ascat.loadData("/Users/gillianchu/mek/ascat/ascat_inputs/P10_ascat_logr.txt", "/Users/gillianchu/mek/ascat/ascat_inputs/P10_ascat_baf.txt")
+#ascat.plotRawData(ascat.bc)
+ascat.bc = ascat.asmultipcf(ascat.bc)
+write.csv(ascat.bc$Tumor_LogR_segmented, "/Users/gillianchu/mek/ascat/ascat_outputs/P10_logr_segments.csv", row.names=FALSE)
+write.csv(ascat.bc$Tumor_BAF_segmented, "/Users/gillianchu/mek/ascat/ascat_outputs/P10_baf_segments.csv", row.names=FALSE)
+write.csv(ascat.bc$SNPpos, "/Users/gillianchu/mek/ascat/ascat_outputs/P10_snpdata.csv", row.names=FALSE)
+
