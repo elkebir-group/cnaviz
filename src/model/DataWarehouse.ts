@@ -33,8 +33,17 @@ type ClusterIndexedData<T> = {
 type SampleIndexedData<T> = {
     [sample: string] : T
 }
+
+type ChrIndexedData<T> = {
+    [sample: string] : T
+}
+
+type LogTableRow = {
+    action: string
+}
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
+type selectionTableRow =  {key: number, value: number, selectPerc: number}
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
  * chromosome.  For applications that want a limited amount of data, pre-aggregates GenomicBin and allows fast queries
@@ -71,7 +80,8 @@ export class DataWarehouse {
     private allRecords: readonly GenomicBin[];
     private _cluster_filters: String[];
     private historyStack: GenomicBin[][];
-
+    private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>;
+    private logOfActions: LogTableRow[];
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -81,7 +91,6 @@ export class DataWarehouse {
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
     constructor(rawData: GenomicBin[]) {
-        console.time("Initializing DataWarehouse");
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
         this._sampleGroupedData = {};
@@ -96,6 +105,7 @@ export class DataWarehouse {
         this._cluster_filters = [];
         this.historyStack = [];
         this._ndx = crossfilter(rawData);
+        this.logOfActions = [];
 
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -114,7 +124,7 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this._genomic_pos_dim = this._ndx.dimension((d:GenomicBin) => d.genomicPosition);
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());//_.groupBy(rawData, "#CHR");
         if (rawData.length > 0) {
             for(const sample of this._samples) {
                 let currentSampleBins = this._sampleGroupedData[sample];
@@ -128,7 +138,6 @@ export class DataWarehouse {
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
-        console.timeEnd("Initializing DataWarehouse");
     }
 
     calculateClusterTableInfo() : clusterTableRow[] {
@@ -140,6 +149,22 @@ export class DataWarehouse {
             {
                 key: Number(row.key), 
                 value: value
+            });
+        }
+        return clusterTable;
+    }
+
+    calculateSelectTableInfo() : selectionTableRow[] {
+        const clusterInfo = this._cluster_dim.group().all();
+        const clusterTable : selectionTableRow[] = [];
+        for(const row of clusterInfo) {
+            let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            let selectPerc = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+            clusterTable.push(
+            {
+                key: Number(row.key), 
+                value: value,
+                selectPerc: selectPerc
             });
         }
         return clusterTable;
@@ -252,15 +277,39 @@ export class DataWarehouse {
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
     }
 
+    getActions() {
+        return this.logOfActions;
+    }
+
     updateCluster(cluster: number) {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
 
-        //let previousRecords = this._ndx.all();
-        //let deepCopy = JSON.parse(JSON.stringify(previousRecords));
-        //this.historyStack.push(deepCopy);
+        this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
+        let brushedTableData  = this.brushedTableData();
+        let brushedTableDataKeys = Object.keys(brushedTableData);
+        let brushedTableDataValues = Object.values(brushedTableData);
+        let action = "Assigned to cluster " + cluster + " | ";
+        action += "Clusters selected: ";
+        for(let i = 0; i < brushedTableData.length; i++) {
+            action += brushedTableDataKeys[i] + " (" + Number(brushedTableDataValues[i].value) + "%)";
+            if(i != brushedTableData.length-1) { 
+                action+= ", ";
+            } else {
+                action += " | ";
+            }
+        }
 
+        let currentRdRange : [number, number] = [_.minBy(this.brushedBins, "RD")!.RD, _.maxBy(this.brushedBins, "RD")!.RD];
+        let currentBAFRange : [number, number] = [_.minBy(this.brushedBins, "reverseBAF")!.reverseBAF, _.maxBy(this.brushedBins, "reverseBAF")!.reverseBAF];
+        
+        action += "RD Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
+
+        action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "] | ";
+
+        this.logOfActions.push({action: action});
+        
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
@@ -279,69 +328,81 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
+        this.allRecords =  this._ndx.all(); 
+        let test = this.calculateClusterTableInfo();
+        this.clusterTableInfo = test;
+        this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
 
+        if(!this._cluster_filters.includes(String(cluster))) {
+            this._cluster_filters.push(String(cluster));
+        }
+        this.setClusterFilters(this._cluster_filters);
+    }
+
+    undoClusterUpdate() {
+        if(this.historyStack.length === 0) {
+            return;
+        }
+
+        let newRecords = this.historyStack[this.historyStack.length-1];  
+        this.historyStack.pop();
+        for(let i = 0; i < newRecords.length; i++) {
+            let currentBin = newRecords[i];
+            let locKey = GenomicBinHelpers.toChromosomeInterval(currentBin).toString();
+            let cluster = currentBin.CLUSTER;
+            if(!this._cluster_filters.includes(String(cluster))) {
+                this._cluster_filters.push(String(cluster));
+            }
+            if(this._locationGroupedData[locKey]) {
+                for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
+                    this._locationGroupedData[locKey][j].CLUSTER = cluster;
+                }
+            }
+        }
+
+        const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
+        let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
+        this._ndx.remove();
+        this._ndx = crossfilter(flattenNestedBins);
+        this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
+        this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
+        this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
+        this.brushedBins = [];
+        this.brushedCrossfilter.remove();
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
         this.allRecords =  this._ndx.all(); 
         let test = this.calculateClusterTableInfo();
         this.clusterTableInfo = test;
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
         
-        if(!this._cluster_filters.includes(String(cluster))) {
-            this._cluster_filters.push(String(cluster));
-        }
+        
         this.setClusterFilters(this._cluster_filters);
-        console.log("Finished Updating Clusters");
-    }
-
-    undoClusterUpdate() {
-        // if(this.historyStack.length === 0) {
-        //     return;
-        // }
-        // //console.time("Undoing cluster");
-        // let newRecords = this.historyStack[this.historyStack.length-1];
-        // this.historyStack.pop();
-        // this.initializeLocationGroupedData(newRecords);
-        
-        // this._ndx = crossfilter(newRecords);
-        // this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
-        // this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
-        // this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
-        
-        // this.clusterTableInfo = this.calculateClusterTableInfo();
-        
-        // this.allRecords =  this._ndx.all().filter((d: GenomicBin) => d.CLUSTER !== -2);
-        
-        // if(!this._cluster_filters.includes(String(cluster))) {
-        //     this._cluster_filters.push(String(cluster));
-        // }
-
-        // this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        //console.timeEnd("Undoing cluster");
     }
 
     brushedTableData() {
         
         const sampleAmount = this._samples.length;
-        const clusterInfo = this._cluster_dim.group().all();
-
+        const clusterInfo = this._clusterAmounts;//this._cluster_dim.group().all();
         // map each cluster to the amount of points in a single sample 
         // (Each sample contains the same amount of points so we divide by total amount of samples)
         let clusterIdToAmount : clusterIdMap = {};
         clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
-
+        const amountInSelection = this.brushedBins.length;
         const clusterTable = this.brushedClusterDim.group().all();
-        clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
+        //clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
         
-        const clusterTable2 : clusterTableRow[] = [];
+        const clusterTable2 : selectionTableRow[] = [];
         for(const row of clusterTable) {
-            //let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
             clusterTable2.push(
             {
                 key: Number(row.key), 
-                value: Number(row.value)
+                value: Number((Number(row.value)/Number(clusterIdToAmount[Number(row.key)]) * 100).toFixed(2)),
+                selectPerc: Number((Number(row.value)/Number(amountInSelection) * 100).toFixed(2))
             });
         }
 
-
+        
         return clusterTable2;
     }
 

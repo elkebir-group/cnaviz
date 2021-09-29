@@ -7,7 +7,7 @@ import {DisplayMode} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import * as d3 from "d3";
-import { FiHome, FiLogOut, FiArrowLeftCircle, FiArrowRightCircle } from "react-icons/fi";
+import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
 import { ToggleButton } from "./ToggleButton";
 
 interface Props {
@@ -27,6 +27,7 @@ interface Props {
     colors: string[];
     onSidebarChange: any;
     data: readonly GenomicBin[];
+    logData: any[];
     onFileChosen: any;
     chosenFile: string;
     show: boolean;
@@ -64,8 +65,22 @@ function Sidebar(props: Props) {
                 </div>
               )
           }
-          {/* <FiArrowLeftCircle/> */}
-        </div>
+      </div>
+
+      {props.currentDisplayMode == DisplayMode.select && <div className="closemenu2" onClick={() => {
+                if(props.currentDisplayMode === DisplayMode.zoom) { 
+                  props.setDisplayMode(DisplayMode.select)
+                } else {
+                  props.setDisplayMode(DisplayMode.zoom)
+                }
+              }}><FiMousePointer></FiMousePointer>  </div>}
+      {props.currentDisplayMode == DisplayMode.zoom && <div className="closemenu2" onClick={() => {
+                if(props.currentDisplayMode === DisplayMode.zoom) { 
+                  props.setDisplayMode(DisplayMode.select)
+                } else {
+                  props.setDisplayMode(DisplayMode.zoom)
+                }
+              }}><FiZoomIn></FiZoomIn></div>}
       
       <div className="contents">
         <div>
@@ -96,7 +111,7 @@ function Sidebar(props: Props) {
           </div>
           
           <div className="row-contents">
-            <CSV data={props.data} fileName={props.chosenFile}></CSV>
+            <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
           </div>
           
         </div>
@@ -156,7 +171,7 @@ function Sidebar(props: Props) {
         </div>
         
 
-        <div >
+        <div>
           <ClusterTable 
               data={props.tableData} 
               onClusterRowsChange={props.onClusterRowsChange} 

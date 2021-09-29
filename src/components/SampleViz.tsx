@@ -127,6 +127,7 @@ export class SampleViz extends React.Component<Props, State> {
         //console.log("Linear plot zooming");
         // this.props.data.setGenomicPositionFilter(genomicRange);
         // this.forceUpdate();
+        // console.log("TEST");
         this.setState({implicitRange: genomicRange})
     }
 
@@ -153,7 +154,6 @@ export class SampleViz extends React.Component<Props, State> {
             selectedRecords = data.getRecords(selectedSample, applyLog, null, null, null, null);
         }
         
-        //sampleOptions.unshift(<option selected disabled>Sample</option>);
         rdRange[1] += 0.5;
         
         let clusterOptions = this._clusters.map(clusterName =>
@@ -162,7 +162,7 @@ export class SampleViz extends React.Component<Props, State> {
         
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
-        // clusterOptions.unshift(<option selected disabled>Cluster</option>);
+        let disableSelectOptions = (data.getBrushedBins().length === 0);
         return <div className="SampleViz-wrapper">
             <div style={{verticalAlign: "middle"}}>
             {(showLinearPlot || showScatterPlot) &&
@@ -184,7 +184,7 @@ export class SampleViz extends React.Component<Props, State> {
                     title="Cluster"
                     className="Sampleviz-cluster-select"
                     value={this.state.selectedCluster}
-                    disabled={dispMode==DisplayMode.zoom}
+                    disabled={disableSelectOptions}
                     onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
                     {clusterOptions}
                     </select>
@@ -194,7 +194,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.parentCallBack(this.state.selectedCluster);
                         this.props.onBrushedBinsUpdated([]);
                     }}
-                    disabled={dispMode==DisplayMode.zoom}>Assign Cluster</button>
+                    disabled={disableSelectOptions}>Assign Cluster</button>
 
                     <button onClick={()=>{
                         this.initializeListOfClusters();
@@ -213,8 +213,8 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
                     }}
-                    disabled={dispMode==DisplayMode.zoom} >New Cluster</button>
-                    <button onClick={this.props.onUndoClick} disabled={true}> Undo</button>
+                    disabled={disableSelectOptions} >New Cluster</button>
+                    <button onClick={this.props.onUndoClick}> Undo</button>
                 </div>}
             </div>
 
@@ -251,7 +251,8 @@ export class SampleViz extends React.Component<Props, State> {
                     onClusterColorChange={() => {}}
                     currentFilters={["-1"]}
                     colOneName={"Cluster ID"}
-                    colTwoName={"Cluster (%)"}
+                    colTwoName={"% of cluster"}
+                    colThreeName={"% of selection"}
                     expandable={false}
                     selectable={false}
                     colors={this.props.colors}

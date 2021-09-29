@@ -1,28 +1,16 @@
 import React from "react";
 import parse from "csv-parse";
-import _, { last, sample } from "lodash";
+import _, { last, remove, sample } from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
-
-import { SampleViz2D } from "./components/SampleViz2D";
-import { SampleViz1D } from "./components/SampleViz1D";
 import {SampleViz} from "./components/SampleViz";
-import { GenomicLocationInput } from "./components/GenomicLocationInput";
-import { CurveManager } from "./components/CurveManager";
 import spinner from "./loading-small.gif";
-import {HuePicker, SketchPicker} from "react-color";
 import "./App.css";
-import { cpuUsage } from "process";
-import { MergedGenomicBin } from "./model/BinMerger";
-import DataTable from "react-data-table-component"
-import {ClusterTable} from "./components/ClusterTable";
-import {CSV} from "./components/CSVLink"
+import {LogTable} from "./components/LogTable";
 import * as d3 from "d3";
 import {Genome} from "./model/Genome";
-
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import "./App.css";
 
@@ -90,7 +78,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 reject(error);
                 return;
             }
-            console.time("PARSING BINS");
+
             let start = Number(parsed[0].START); // Keeps track of the start of each chr
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
@@ -127,7 +115,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
             
-            console.timeEnd("PARSING BINS");
             resolve(parsed);
         });
     })
@@ -209,6 +196,8 @@ interface State {
 
     showDirections: boolean;
 
+    showLog: boolean;
+
     syncScales: boolean;
 
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
@@ -218,7 +207,8 @@ interface State {
 export enum DisplayMode {
     zoom,
     select,
-    boxzoom
+    boxzoom,
+    erase
 };
 
 /**
@@ -252,12 +242,13 @@ export class App extends React.Component<{}, State> {
             value: "0",
             updatedBins: false,
             selectedSample: "",
-            displayMode: DisplayMode.select,  
+            displayMode: DisplayMode.zoom,  
             sidebar:  true,
             chosenFile: "",
             showLinearPlot: true,
             showScatterPlot: true,
             showDirections: false,
+            showLog: false,
             syncScales: false,
             scales: {xScale: null, yScale: null}
         };
@@ -298,20 +289,21 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.keyCode == 32) {
                 self.onSideBarChange(!self.state.sidebar);
-            } else if (d3.event.key == "s") {
-                self.setState({showScatterPlot: !self.state.showScatterPlot})
             } else if(d3.event.key == "l") {
-                self.setState({showLinearPlot: !self.state.showLinearPlot})
+                self.setState({showLog: !self.state.showLog})
             }
-
         })
 
-        d3.select("body").on("keydown", function(){
+        d3.select("body").on("keydown", function() {
             if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: true})
-            }
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && d3.event.key == "Meta") {
+                self.setState({displayMode: DisplayMode.select})
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.select) && d3.event.key == "Alt") {
+                self.setState({displayMode: DisplayMode.erase})
+            } 
         })
 
         d3.select("body").on("keyup", function(){
@@ -319,8 +311,13 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(d3.event.key == "/" || d3.event.key == "?") {
                 self.setState({showDirections: false})
+            } else if(self.state.displayMode === DisplayMode.select && d3.event.key == "Meta") {
+                self.setState({displayMode: DisplayMode.zoom})
+            } else if(self.state.displayMode === DisplayMode.erase && d3.event.key == "Alt") {
+                self.setState({displayMode: DisplayMode.zoom})
             }
-        })
+        });
+        
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>, applyClustering: boolean) {
@@ -333,9 +330,7 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
         try {
-            //console.time("Reading File");
             contents = await getFileContentsAsString(files[0]);
-            //console.timeEnd("Reading File");
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -519,7 +514,7 @@ export class App extends React.Component<{}, State> {
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
-        
+        let actions = indexedData.getActions();
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             const scatterplotProps = {
@@ -612,26 +607,41 @@ export class App extends React.Component<{}, State> {
                     onToggleSync={this.onToggleSync}
                     syncScales={this.state.syncScales}
                     updatedClusterTable = {this.updatedClusterTable}
+                    logData = {actions}
                 />
             </div>
             
             <div className={this.state.sidebar ? "marginContent" : ""}>
-            
-                {/* <div className="App-title-bar">
-                </div> */}
-                
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
                 {this.state.showDirections && <div className="black_overlay"></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
                         <h2>Directions</h2>
-                        <li> Press "s" to hide the scatterplot </li>
-                        <li> Press "l" to hide the linear plot </li>
-                        <li> Press "z" or use the toggle to enter zoom mode </li>
-                        <li> Press "b" or use the toggle to enter selection mode </li>
+                        <h5> Selection/Erasing </h5>
+                        <li> Hold down "Command/Control" in Zoom mode to temporarily enter Select mode </li>
+                        <li> Hold down "Alt" in Zoom mode to temporarily enter Erase mode </li>
+                        <li> To completely clear your selection, click anywhere in the plot while in Select/Erase mode </li>
+                        <li> To stay in Select mode without holding a button, you can click b or switch the toggle button in the sidebar </li>
+                        <h5> Zoom Mode </h5>
+                        <li> The default mode is zoom mode</li>
                         <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
-                        <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
+                        <h5> Other Key Modifiers </h5>
+                        <li> Click "l" to toggle a log of previous actions </li>
+                        <li> Click space to toggle the sidebar </li>
+                        <li> Hold down "?" or "/" button to open direction panel </li>
+
+                    </div> }
+
+                {this.state.showLog && <div className="black_overlay"></div> }
+                {this.state.showLog && 
+                    <div className="Directions">
+                        <LogTable
+                            data={actions}
+                            onClusterColorChange={this.onClusterColorChange}
+                            onClusterRowsChange={this.onClusterRowsChange}
+                            colName={"Actions (Starting from most recent)"}
+                        ></LogTable>
                     </div> }
             </div>
             

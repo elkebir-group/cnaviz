@@ -5,6 +5,12 @@ export interface Coordinate {
     y: number;
 }
 
+interface Window {
+    webkitURL?: any;
+}
+
+declare var window2: Window;
+
 /**
  * Gets the x and y coordinates of a mouse event *relative to the top left corner of an element*.  By default, the
  * element is the event's `currentTarget`, the element to which the event listener has been attached.
@@ -66,8 +72,16 @@ export function applyRetinaFix(canvas: HTMLCanvasElement) {
  * @param {number} [sigFigs] - number of digits after the decimal point.  Default = 1
  * @return {string} human-readable string representing that number of bases
  */
-export function niceBpCount(bases: number, sigFigs=1) {
-    const rounded = Math.floor(bases);
+export function niceBpCount(bases: number, sigFigs=1, sub?: number) {
+    
+    let basesAmnt = bases;
+    // console.log("Test: ", sub);
+    if(sub) {
+        // console.log("Test: ");
+        basesAmnt = basesAmnt - sub;
+        // console.log("BASES: ", basesAmnt);
+    }
+    const rounded = Math.floor(basesAmnt);
     if (rounded >= 750000) {
         return `${(rounded/1000000).toFixed(sigFigs)} Mb`;
     } else if (rounded >= 10000) {
@@ -149,3 +163,102 @@ export const webglColor = (color : string) => {
 
 export const iterateElements = (selector : any, fn : any) =>
   [].forEach.call(document.querySelectorAll(selector), fn);
+
+
+  /**
+ * Simple safari detection based on user agent test
+ */
+export const isSafari = () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+export const isJsons = ((array: any) => Array.isArray(array) && array.every(
+ row => (typeof row === 'object' && !(row instanceof Array))
+));
+
+export const isArrays = ((array: any) => Array.isArray(array) && array.every(
+ row => Array.isArray(row)
+));
+
+export const jsonsHeaders = ((array: any) => Array.from(
+ array.map((json: any) => Object.keys(json))
+ .reduce((a: any, b: any) => new Set([...a, ...b]), [])
+));
+
+export const jsons2arrays = (jsons: any, headers: any) => {
+  headers = headers || jsonsHeaders(jsons);
+
+  // allow headers to have custom labels, defaulting to having the header data key be the label
+  let headerLabels = headers;
+  let headerKeys = headers;
+  if (isJsons(headers)) {
+    headerLabels = headers.map((header: any) => header.label);
+    headerKeys = headers.map((header: any) => header.key);
+  }
+
+  const data = jsons.map((object: any) => headerKeys.map((header: any) => getHeaderValue(header, object)));
+  return [headerLabels, ...data];
+};
+
+export const getHeaderValue = (property: any, obj: any) => {
+  const foundValue = property
+    .replace(/\[([^\]]+)]/g, ".$1")
+    .split(".")
+    .reduce(function(o: any, p: any, i: any, arr: any) {
+      // if at any point the nested keys passed do not exist, splice the array so it doesnt keep reducing
+      if (o[p] === undefined) {
+        arr.splice(1);
+      } else {
+        return o[p];
+      }
+    }, obj);
+  // if at any point the nested keys passed do not exist then looks for key `property` in object obj
+  return (foundValue === undefined) ? ((property in obj) ? obj[property] : '') : foundValue;
+}
+
+export const elementOrEmpty = (element : any) => {
+  return (typeof element === 'undefined' || element === null) ? '' : element;
+};
+
+export const joiner = ((data : any, separator = ',', enclosingCharacter = '') => {
+  return data
+    .filter((e : any) => e)
+    .map(
+      (row: any) => row
+        .map((element : any) => elementOrEmpty(element))
+        .map((column: any) => `${column}`)
+        .join(separator)
+    )
+    .join(`\n`);
+});
+
+export const arrays2csv = ((data: any, headers: any, separator: any, enclosingCharacter: any) =>
+ joiner(headers ? [headers, ...data] : data, separator, enclosingCharacter)
+);
+
+export const jsons2csv = ((data: any, headers: any, separator: any, enclosingCharacter: any) =>
+ joiner(jsons2arrays(data, headers), separator, enclosingCharacter)
+);
+
+export const string2csv = ((data: any, headers: any, separator: any, enclosingCharacter: any) =>
+  (headers) ? `${headers.join(separator)}\n${data}`: data
+);
+
+export const toCSV = (data: any, headers: any, separator: any, enclosingCharacter: any) => {
+ if (isJsons(data)) return jsons2csv(data, headers, separator, enclosingCharacter);
+ if (isArrays(data)) return arrays2csv(data, headers, separator, enclosingCharacter);
+ if (typeof data ==='string') return string2csv(data, headers, separator, enclosingCharacter);
+ throw new TypeError(`Data should be a "String", "Array of arrays" OR "Array of objects" `);
+};
+
+export const buildURI = ((data : any, uFEFF: any, headers: any, separator: any, enclosingCharacter: any) => {
+  const csv = toCSV(data, headers, separator, enclosingCharacter);
+  //console.log(csv);
+  const type = isSafari() ? 'application/csv' : 'text/csv';
+  const blob = new Blob([uFEFF ? '\uFEFF' : '', csv], {type});
+  const dataURI = `data:${type};charset=utf-8,${uFEFF ? '\uFEFF' : ''}${csv}`;
+
+  const URL = window.URL || window2.webkitURL;
+
+  return (typeof URL.createObjectURL === 'undefined')
+    ? dataURI
+    : URL.createObjectURL(blob);
+});
