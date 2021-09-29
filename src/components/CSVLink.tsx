@@ -58,22 +58,49 @@ export class CSV extends React.Component<Props, State> {
         var hiddenElement = document.createElement('a');  
         hiddenElement.href = 'data:text/tab-separated-values,' + encodeURIComponent(csvContent);  
         
-        //provide the name for the CSV file to be downloaded 
+        // provide the name for the CSV file to be downloaded
+        // Assume that underscore is not in actual filename (only used to separate datetime)
         const fileName = this.props.fileName;
-        let removeDateTime = fileName.split("_");
-        console.log(removeDateTime);
-
-        let nameExt = removeDateTime[0].split("."); 
+        
+        
+        let nameExt = fileName.split("."); 
         console.log("nameExt: " + nameExt);
         let newFileName = "";
         for(let i = 0; i < nameExt.length-1; i++) {
             newFileName += nameExt[i];
         }
-        console.log("newFileName: " + newFileName);
+
+        let removeDateTime = newFileName.split("_");
+        console.log(removeDateTime);
+
+        console.log("newFileName: " + removeDateTime[0]);
+
         const currentDate = new Date();
-        let date = (currentDate.getMonth() + 1) + "-" + currentDate.getDate() + "-" + currentDate.getFullYear()
-        let time = currentDate.getHours() + "-" + currentDate.getMinutes() + "-" + currentDate.getSeconds();
-        hiddenElement.download = newFileName + "_" + date + "_" + time;
+        let month = String(currentDate.getMonth() + 1);
+        if(month.length < 2) {
+            month = "0" + month;
+        }
+
+        let day = String(currentDate.getDate());
+        if(day.length < 2) {
+            day = "0" + day;
+        }
+
+        let date = currentDate.getFullYear()+ month + day; 
+        let hrs = String(currentDate.getHours() )
+        let min = String(currentDate.getMinutes());
+        let sec = String(currentDate.getSeconds());
+        if(hrs.length < 2) {
+            hrs = "0" + hrs;
+        }
+        if(min.length < 2) {
+            min = "0" + min;
+        }
+        if(sec.length < 2) {
+            sec = "0" + sec;
+        }
+        let time = hrs + min + sec;
+        hiddenElement.download = removeDateTime[0] + "_" + date + time;
         hiddenElement.click();
         
         let actions = [];
@@ -85,19 +112,10 @@ export class CSV extends React.Component<Props, State> {
         var hiddenElement2 = document.createElement('a');  
         hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);  
         const fileName2 = this.props.fileName;
-        //let nameExt2 = fileName.split("."); 
-        hiddenElement2.download = newFileName + "-" + "log" + "_" + date + "_" + time;  
+        hiddenElement2.download = removeDateTime[0] + "-" + "log" + "_" + date + "_" + time;  
         hiddenElement2.click();
 
-
         this.setState({loading: false})
-            //this.setState({loading: false})
-            //this.setState({loading: false})
-        //});
-        
-        //let result = await promise
-
-        //alert(result);
     }
 
     render() {

@@ -1,6 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
-import _, { last, sample } from "lodash";
+import _, { last, remove, sample } from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
@@ -346,6 +346,14 @@ export class App extends React.Component<{}, State> {
             return;
         }
 
+        // let fileName = files[0].name;
+        // let nameExt = fileName.split("."); 
+        // let newFileName = "";
+        // for(let i = 0; i < nameExt.length-1; i++) {
+        //     newFileName += nameExt[i];
+        // }
+        // let removeDateTime = newFileName.split("_");
+        // newFileName = removeDateTime[0] + nameExt[nameExt.length-1];
         this.setState({chosenFile: files[0].name})
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
@@ -634,22 +642,23 @@ export class App extends React.Component<{}, State> {
             </div>
             
             <div className={this.state.sidebar ? "marginContent" : ""}>
-            
-                {/* <div className="App-title-bar">
-                </div> */}
-                
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
                 {this.state.showDirections && <div className="black_overlay"></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
                         <h2>Directions</h2>
-                        <li> Press "s" to hide the scatterplot </li>
-                        <li> Press "l" to hide the linear plot </li>
-                        <li> Press "z" or use the toggle to enter zoom mode </li>
-                        <li> Press "b" or use the toggle to enter selection mode </li>
+                        <h5> Selection/Erasing </h5>
+                        <li> Hold down "Command" in Zoom mode to temporarily enter Select mode </li>
+                        <li> Hold down "Control" in Zoom mode to temporarily enter Erase mode </li>
+                        <li> To completely clear your selection, click anywhere in the plot while in Select/Erase mode </li>
+                        <li> To permanent stay in Select mode, you can click b </li>
+                        <h5> Zoom Mode </h5>
+                        <li> The default mode is zoom mode</li>
                         <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
-                        <li> In select mode, shift allows you to add to a selection, and alt will allow you to erase </li>
+                        <h5> Other Key Modifiers </h5>
+                        <li> Click "l" to toggle a log of previous actions </li>
+
                     </div> }
 
                 {this.state.showLog && <div className="black_overlay"></div> }
