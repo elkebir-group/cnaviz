@@ -6,85 +6,91 @@
   height: 100%;
   border-right: 2px solid black;
   z-index: 1;
-  /* overflow-x: hidden; */
-    /* position: fixed;
-    top: 0; */
-    /* left: -400px;
-    width: 400px; */
-    /* left: -400px; */
-    /* max-width: 0px;
-    min-width: 0px; */
-    /* height: 100%;
-    max-width: 400px;
-    min-width: 400px; */
-    background-color: white;
-    
-    /* transition: left 300ms ease-out; */
-  }
-  .sidebar.active {
-    /* margin-left: -500px; */
-    left: 0;
-    /* left: 0px; */
-    /* background-color: aqua; */
-  }
+  background-color: white;
+  /* overflow-y: auto; */
+}
+.sidebar.active {
+  left: 0;
+}
 
-  .contents {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    /* justify-content: space-evenly; */
-    /* flex: 1 1 0; */
-  }
+.contents {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 60%;
+  padding: 2px;
+}
 
-  .row-contents {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-    margin-bottom: 10px;
-    flex: 1 1 0;
-  }
+.contents2 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 40%;
+  padding: 2px;
+  overflow-y: auto;
+}
 
-  input[type="file"] {
-    display: none;
-  }
+.row-contents {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 50px;
+  /* margin-bottom: 10px; */
+  flex: 1 1 0;
+}
 
-  .custom-file-upload {
-    /* border: 1px solid #ccc; */
-    display: inline-block;
-    /* padding: 6px 12px; */
-    cursor: pointer;
-    background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
-    border: 1px solid #afafaf
-  }
+input[type="file"] {
+  display: none;
+}
 
-  .title-bar {
-    border-top: 2px solid black;
-  }
+
+
+.custom-file-upload {
+  display: inline-block;
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+}
+
+
+.title-bar {
+  border-top: 2px solid black;
+  margin: 3px;
+}
   
-  .closemenu {
-    color: #000;
-    position: absolute;
-    right: -25px;
-    z-index: 9999;
-    line-height: 20px;
-    height: 10%;
-    width: 7%;
-    font-weight: bold;
-    font-size: 22px;
-    top: 50%;
-    cursor: pointer;
-  }
+.closemenu {
+  color: #000;
+  position: absolute;
+  right: -25px;
+  z-index: 9999;
+  line-height: 20px;
+  height: 3%;
+  width: 7%;
+  font-weight: bold;
+  font-size: 22px;
+  top: 50%;
+  cursor: pointer;
+}
 
-  .closemenu2 {
-    color: #000;
-    position: absolute;
-    right: -25px;
-    z-index: 9999;
-    line-height: 20px;
-    height: 11%;
-    width: 7%;
-    font-weight: bold;
-    font-size: 22px;
-    top: 54%;
-    cursor: pointer;
-  }
+.closemenu2 {
+  color: #000;
+  position: absolute;
+  right: -25px;
+  z-index: 9999;
+  line-height: 20px;
+  height: 3%;
+  width: 7%;
+  font-weight: bold;
+  font-size: 22px;
+  top: 54%;
+  cursor: pointer;
+}
+
+.clustertable {
+  top: 60%;
+  height: 40%;
+}

@@ -82,6 +82,10 @@ export class ClusterTable extends React.Component<Props> {
               sortable: true,
               compact: true,
               wrap: true,
+              innerWidth: 40,
+              outerWidth: 40,
+              width: "50",
+              center: true
             },
             {
               name: colTwoName,
@@ -90,6 +94,10 @@ export class ClusterTable extends React.Component<Props> {
               right: true,
               compact: true,
               wrap: true,
+              innerWidth: 40,
+              outerWidth: 40,
+              width: "50",
+              center: true
             },
         ];
 
@@ -169,6 +177,7 @@ export class ClusterTable extends React.Component<Props> {
                     conditionalRowStyles={conditionalRowStyles}
                 />
             </div>
+
             
         )
     }
