@@ -287,6 +287,8 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.select})
             } else if(d3.event.key == "a") {
                 self.setState({displayMode: DisplayMode.boxzoom})
+            } else if(d3.event.key == "e") {
+                self.setState({displayMode: DisplayMode.erase})
             } else if(d3.event.keyCode == 32) {
                 self.onSideBarChange(!self.state.sidebar);
             } else if(d3.event.key == "l") {
@@ -623,6 +625,7 @@ export class App extends React.Component<{}, State> {
                         <li> Hold down "Alt" in Zoom mode to temporarily enter Erase mode </li>
                         <li> To completely clear your selection, click anywhere in the plot while in Select/Erase mode </li>
                         <li> To stay in Select mode without holding a button, you can click b or switch the toggle button in the sidebar </li>
+                        <li> To stay in Erase mode without holding a button, you can click e </li>
                         <h5> Zoom Mode </h5>
                         <li> The default mode is zoom mode</li>
                         <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
