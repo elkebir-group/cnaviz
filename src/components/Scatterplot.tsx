@@ -87,6 +87,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private previous_brushed_nodes: Set<string>;
     private quadTree: d3.Quadtree<GenomicBin>;
     private _canvas: HTMLCanvasElement | null;
+    private _canvas2: HTMLCanvasElement | null;
     private _currXScale: d3.ScaleLinear<number, number>;
     private _currYScale: d3.ScaleLinear<number, number>;
     private _original_XScale: d3.ScaleLinear<number, number>;
@@ -103,6 +104,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
+        this._canvas2 = null;
         this._circleIdPrefix = nextCircleIdPrefix;
         nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
@@ -260,8 +262,21 @@ export class Scatterplot extends React.Component<Props, State> {
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
         
         let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" >
+                            
                             <canvas
                                 ref={node => this._canvas = node}
+                                width={width}
+                                height={height}
+                                className={"canvas"}
+                                style={{position: "absolute", 
+                                        top: PADDING.top, 
+                                        zIndex: -4, 
+                                        left: PADDING.left, 
+                                        width: width-PADDING.left - PADDING.right, 
+                                        height: height-PADDING.top-PADDING.bottom}}
+                            />
+                            <canvas
+                                ref={node => this._canvas2 = node}
                                 width={width}
                                 height={height}
                                 className={"canvas"}
@@ -275,6 +290,7 @@ export class Scatterplot extends React.Component<Props, State> {
                             <svg
                                 ref={node => this._svg = node}
                                 width={width} height={height}
+                                style={{zIndex: 100}}
                                 // preserveAspectRatio={'xMinYMin'}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
@@ -423,7 +439,7 @@ export class Scatterplot extends React.Component<Props, State> {
     redraw() {
         console.time("Scatter draw");
         //console.time("Rendering");
-        if (!this._svg || !this._canvas || !this.scatter) {
+        if (!this._svg || !this._canvas || !this.scatter || !this._canvas2) {
             return;
         }
         let self = this;
@@ -527,12 +543,27 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         const gl = this._canvas.getContext("webgl")!;
+        const gl2 = this._canvas2.getContext("webgl")!;
         gl.clearColor(0,0,0,1);
+        gl2.clearColor(0, 0, 0, 1);
+
         let languageFill = (d:any) => {
             return webglColor(chooseColor(d));
         };
+        let newData :GenomicBin[]= [];
+        for(const d of data) {
+            if(!previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
+                newData.push(d);
+            }
+        }
+        for(const d of data) {
+            
+            if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
+                newData.push(d);
+            }
+        }
         
-        let fillColor = fc.webglFillColor().value(languageFill).data(self.props.data);
+        let fillColor = fc.webglFillColor().value(languageFill).data(newData);
         let pointSeries = fc
             .seriesWebglPoint()
             .xScale(self._currXScale)
@@ -541,7 +572,13 @@ export class Scatterplot extends React.Component<Props, State> {
             .crossValue((d : any) => d.reverseBAF)
             .mainValue((d : any) => d[yAxisToPlot])
             .context(gl);
-        pointSeries.decorate((program:any) => fillColor(program));
+        pointSeries.decorate((program:any) => {
+                fillColor(program)
+                //const ctx = program.context();
+                gl.depthFunc(gl.NEVER);
+                gl.disable(gl.DEPTH_TEST);
+                
+        });
 
         let pointSeries2 = fc
             .seriesWebglPoint()
@@ -550,8 +587,13 @@ export class Scatterplot extends React.Component<Props, State> {
             .size(3)
             .crossValue((d : any) => d.reverseBAF)
             .mainValue((d : any) => d[yAxisToPlot])
-            .context(gl);
+            .context(gl2);
         pointSeries2.decorate((program:any) => fillColor(program));
+        const repeatSeries = fc.seriesWebglRepeat()
+            .xScale(self._currXScale)
+            .yScale(self._currYScale)
+            .context(gl)
+            .series(pointSeries);
 
         function redraw() {
             const xr = tx().rescaleX(xScale);
@@ -567,11 +609,27 @@ export class Scatterplot extends React.Component<Props, State> {
                 pointSeries
                     .xScale(self._currXScale)
                     .yScale(self._currYScale)    
-                //let dataMinusBrush = _.difference(data, [...brushedBins]);
+                // let dataMinusBrush = _.difference(data, brushedBins);
                 //pointSeries(dataMinusBrush.concat([...brushedBins]));
-                if(data) {
-                    pointSeries(data);   
-                }  
+                
+                console.log(data.length);
+                console.log(newData.length);
+                // newData.push(data);
+                // newData.push(brushedBins);
+                // let newData = dataMinusBrush.concat(brushedBins);
+                // if(data) {
+                
+                pointSeries(newData);
+                // pointSeries(brushedBins);
+
+                // pointSeries2(this.brushedNodes);   
+                // }  
+                // pointSeries2(brushedBins);
+                // repeatSeries(newData);
+                // d3.select('g')
+                //     .datum(newData)
+                //     .call(repeatSeries);
+                // repeatSeries(newData);
             }
         }
         
@@ -664,10 +722,8 @@ export class Scatterplot extends React.Component<Props, State> {
         
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
-                //console.log(1);
                 return customColor;
             } else if (d.CLUSTER == -1){
-                //console.log(2);
                 return UNCLUSTERED_COLOR;
             } else if(d.CLUSTER == -2){
                 //console.log(3);

@@ -1,7 +1,3 @@
 div.scroll {
-    /* width: 315px; */
-    /* height: 100%; */
-    /* justify-content: center; */
-    /* overflow-x: auto; */
     overflow-y: auto;
 }
