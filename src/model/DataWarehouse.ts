@@ -41,9 +41,12 @@ type ChrIndexedData<T> = {
 type LogTableRow = {
     action: string
 }
+
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
 type selectionTableRow =  {key: number, value: number, selectPerc: number}
+type centroidTableRow = {key: number, sample: string, centroid: string}
+
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
  * chromosome.  For applications that want a limited amount of data, pre-aggregates GenomicBin and allows fast queries
@@ -82,6 +85,8 @@ export class DataWarehouse {
     private historyStack: GenomicBin[][];
     private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>;
     private logOfActions: LogTableRow[];
+    private centroids: centroidTableRow[];
+
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -106,6 +111,7 @@ export class DataWarehouse {
         this.historyStack = [];
         this._ndx = crossfilter(rawData);
         this.logOfActions = [];
+        this.centroids = [];
 
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -113,6 +119,7 @@ export class DataWarehouse {
             const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
             this._clusters = _.union(this._clusters, Object.keys(groupedByCluster));
             for (const binsForCluster of Object.values(groupedByCluster)) {
+                this.initializeCentroidOfCluster(binsForCluster[0].CLUSTER, sample, binsForCluster, "RD");
                 const groupedByChr = _.groupBy(binsForCluster, "#CHR");
                 this._chrs = _.union(this._chrs, Object.keys(groupedByChr));
             }
@@ -140,6 +147,20 @@ export class DataWarehouse {
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
     }
 
+    initializeCentroidOfCluster(cluster: number, sample: string, points: GenomicBin[], yaxis: keyof Pick<GenomicBin, "RD" | "logRD">) {
+        let centroid =  this.calculateCentroid(points, yaxis);
+        let row : centroidTableRow = {key: cluster, sample: sample, centroid: centroid};
+        console.log("ROW: ", row);
+        this.centroids.push(row);
+    }
+
+    calculateCentroid(points: GenomicBin[], yAxis: keyof Pick<GenomicBin, "RD" | "logRD">):  string {
+        return "("+ _.meanBy(points, d => d.reverseBAF).toFixed(2) + ", " +  _.meanBy(points, d => d[yAxis]).toFixed(2) + ")";
+    }
+
+    getCentroidData() {
+        return this.centroids;
+    }
     calculateClusterTableInfo() : clusterTableRow[] {
         const clusterInfo = this._cluster_dim.group().all();
         const clusterTable : clusterTableRow[] = [];

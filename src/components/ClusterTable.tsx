@@ -18,6 +18,7 @@ interface Props {
     colOneName : string;
     colTwoName: string;
     colThreeName?: string;
+    centroidTable?: boolean;
     colors : string[];
     updatedClusterTable?: () => void;
 }
@@ -52,7 +53,7 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, colThreeName, data, expandable, selectable, colors} = this.props;
+        const {colOneName, colTwoName, colThreeName, data, expandable, selectable, colors, centroidTable} = this.props;
         const ExpandedComponent =(data:any) => 
         <div> 
             <BlockPicker 
@@ -133,6 +134,53 @@ export class ClusterTable extends React.Component<Props> {
             },
         ];
 
+        if(centroidTable) {
+            const centroidColumns = [
+                {
+                    name: colOneName,
+                    selector: 'key',
+                    sortable: true,
+                    compact: true,
+                    wrap: true,
+                    center: true
+                },
+                {
+                    name: colTwoName,
+                    selector: 'sample',
+                    sortable: true,
+                    right: true,
+                    compact: true,
+                    wrap: true,
+                    center: true
+                },
+                {
+                    name: colThreeName,
+                    selector: 'centroid',
+                    sortable: true,
+                    right: true,
+                    compact: true,
+                    wrap: true,
+                    center: true
+                },
+            ];
+            
+            return (
+                <DataTable
+                    columns={centroidColumns}
+                    data={data}
+                    pagination={true}
+                    dense={true}
+                    paginationPerPage={5}
+                    paginationComponentOptions={{rowsPerPageText: '', selectAllRowsItem: true}}
+                    paginationRowsPerPageOptions={[5, 10, 15, 20]}
+                    noContextMenu={true}
+                    noHeader={true}
+                    conditionalRowStyles={conditionalRowStyles}
+                />
+            )
+
+        }
+        
         if(!expandable && !selectable) {
             // console.log(data);
             return (

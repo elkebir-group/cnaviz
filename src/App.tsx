@@ -13,6 +13,7 @@ import * as d3 from "d3";
 import {Genome} from "./model/Genome";
 import Sidebar from "./components/Sidebar";
 import "./App.css";
+import { ClusterTable } from "./components/ClusterTable";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -99,8 +100,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 end = Number(bin.END);
                 bin.reverseBAF = 0.5 - bin.BAF;
             }
-            
-            
+                  
             chrNameLength.push({name: lastChr, length: (end - start)})
             const sortedChrNameLength = chrNameLength.sort((a: any, b : any) => {
                 return a.name.localeCompare(b.name, undefined, {
@@ -198,6 +198,8 @@ interface State {
 
     showLog: boolean;
 
+    showCentroidTable: boolean;
+
     syncScales: boolean;
 
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
@@ -249,6 +251,7 @@ export class App extends React.Component<{}, State> {
             showScatterPlot: true,
             showDirections: false,
             showLog: false,
+            showCentroidTable: false,
             syncScales: false,
             scales: {xScale: null, yScale: null}
         };
@@ -293,7 +296,9 @@ export class App extends React.Component<{}, State> {
                 self.onSideBarChange(!self.state.sidebar);
             } else if(d3.event.key == "l") {
                 self.setState({showLog: !self.state.showLog})
-            }
+            } else if(d3.event.key == "c") {
+                self.setState({showCentroidTable: !self.state.showCentroidTable})
+            }   
         })
 
         d3.select("body").on("keydown", function() {
@@ -645,6 +650,22 @@ export class App extends React.Component<{}, State> {
                             onClusterRowsChange={this.onClusterRowsChange}
                             colName={"Actions (Starting from most recent)"}
                         ></LogTable>
+                    </div> }
+
+                {this.state.showCentroidTable && <div className="black_overlay"></div> }
+                {this.state.showCentroidTable && 
+                    <div className="Directions">
+                        <ClusterTable
+                            data={indexedData.getCentroidData()}
+                            onClusterColorChange={this.onClusterColorChange}
+                            onClusterRowsChange={this.onClusterRowsChange}
+                            colors={CLUSTER_COLORS}
+                            currentFilters={[""]}
+                            centroidTable={true}
+                            colOneName={"Cluster"}
+                            colTwoName={"Sample"}
+                            colThreeName={"Centroid"}
+                        ></ClusterTable>
                     </div> }
             </div>
             

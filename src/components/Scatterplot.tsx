@@ -550,14 +550,15 @@ export class Scatterplot extends React.Component<Props, State> {
         let languageFill = (d:any) => {
             return webglColor(chooseColor(d));
         };
+        
         let newData :GenomicBin[]= [];
         for(const d of data) {
             if(!previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 newData.push(d);
             }
         }
+
         for(const d of data) {
-            
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 newData.push(d);
             }
