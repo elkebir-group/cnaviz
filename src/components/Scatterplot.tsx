@@ -573,28 +573,13 @@ export class Scatterplot extends React.Component<Props, State> {
             .crossValue((d : any) => d.reverseBAF)
             .mainValue((d : any) => d[yAxisToPlot])
             .context(gl);
+        
         pointSeries.decorate((program:any) => {
                 fillColor(program)
-                //const ctx = program.context();
                 gl.depthFunc(gl.NEVER);
                 gl.disable(gl.DEPTH_TEST);
                 
         });
-
-        let pointSeries2 = fc
-            .seriesWebglPoint()
-            .xScale(self._currXScale)
-            .yScale(self._currYScale)
-            .size(3)
-            .crossValue((d : any) => d.reverseBAF)
-            .mainValue((d : any) => d[yAxisToPlot])
-            .context(gl2);
-        pointSeries2.decorate((program:any) => fillColor(program));
-        const repeatSeries = fc.seriesWebglRepeat()
-            .xScale(self._currXScale)
-            .yScale(self._currYScale)
-            .context(gl)
-            .series(pointSeries);
 
         function redraw() {
             const xr = tx().rescaleX(xScale);
@@ -610,27 +595,8 @@ export class Scatterplot extends React.Component<Props, State> {
                 pointSeries
                     .xScale(self._currXScale)
                     .yScale(self._currYScale)    
-                // let dataMinusBrush = _.difference(data, brushedBins);
-                //pointSeries(dataMinusBrush.concat([...brushedBins]));
-                
-                console.log(data.length);
-                console.log(newData.length);
-                // newData.push(data);
-                // newData.push(brushedBins);
-                // let newData = dataMinusBrush.concat(brushedBins);
-                // if(data) {
-                
-                pointSeries(newData);
-                // pointSeries(brushedBins);
 
-                // pointSeries2(this.brushedNodes);   
-                // }  
-                // pointSeries2(brushedBins);
-                // repeatSeries(newData);
-                // d3.select('g')
-                //     .datum(newData)
-                //     .call(repeatSeries);
-                // repeatSeries(newData);
+                pointSeries(newData);
             }
         }
         

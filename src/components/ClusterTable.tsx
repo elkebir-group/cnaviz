@@ -135,6 +135,7 @@ export class ClusterTable extends React.Component<Props> {
         ];
 
         if(centroidTable) {
+            console.log("CENTROID DATA: ", data);
             const centroidColumns = [
                 {
                     name: colOneName,

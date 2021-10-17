@@ -638,7 +638,7 @@ export class App extends React.Component<{}, State> {
                         <li> Click "l" to toggle a log of previous actions </li>
                         <li> Click space to toggle the sidebar </li>
                         <li> Hold down "?" or "/" button to open direction panel </li>
-
+                        <li> Click "c" to toggle a table of the centroids of each cluster for each sample </li>
                     </div> }
 
                 {this.state.showLog && <div className="black_overlay"></div> }

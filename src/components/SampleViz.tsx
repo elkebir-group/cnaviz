@@ -83,11 +83,6 @@ export class SampleViz extends React.Component<Props, State> {
 
     initializeListOfClusters() : string[] {
         let clusterTableData = this.props.clusterTableData;
-        // clusterTableData.sort((a : any, b : any) => {
-        //     if (a.key > b.key) return 1;
-        //     if (a.key < b.key) return -1;
-        //     return 0;
-        // })
 
         this._clusters = [];
         for(const obj of clusterTableData) {
@@ -119,15 +114,11 @@ export class SampleViz extends React.Component<Props, State> {
 
     handleZoom(newScales: any) {
         const {syncScales, handleZoom} = this.props;
-        //console.log("New Scales Samplviz: ", newScales);
+        console.log("NEW SCALES: ", newScales);
         (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
     }
 
     handleLinearPlotZoom(genomicRange: [number, number] | null) {
-        //console.log("Linear plot zooming");
-        // this.props.data.setGenomicPositionFilter(genomicRange);
-        // this.forceUpdate();
-        // console.log("TEST");
         this.setState({implicitRange: genomicRange})
     }
 
@@ -233,6 +224,7 @@ export class SampleViz extends React.Component<Props, State> {
                     {...this.props}  
                     data={selectedRecords}
                     onLinearPlotZoom={this.handleLinearPlotZoom}
+                    onZoom={this.handleZoom}
                     yScale={(syncScales) ? this.props.scales.yScale : this.state.scales.yScale} 
                     xScale={(syncScales) ? this.props.scales.xScale : this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 

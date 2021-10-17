@@ -131,7 +131,8 @@ export class DataWarehouse {
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
         this._genomic_pos_dim = this._ndx.dimension((d:GenomicBin) => d.genomicPosition);
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
-        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());//_.groupBy(rawData, "#CHR");
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
+        
         if (rawData.length > 0) {
             for(const sample of this._samples) {
                 let currentSampleBins = this._sampleGroupedData[sample];
@@ -150,7 +151,7 @@ export class DataWarehouse {
     initializeCentroidOfCluster(cluster: number, sample: string, points: GenomicBin[], yaxis: keyof Pick<GenomicBin, "RD" | "logRD">) {
         let centroid =  this.calculateCentroid(points, yaxis);
         let row : centroidTableRow = {key: cluster, sample: sample, centroid: centroid};
-        console.log("ROW: ", row);
+        // console.log("ROW: ", row);
         this.centroids.push(row);
     }
 
@@ -342,6 +343,17 @@ export class DataWarehouse {
 
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
+        this.centroids = [];
+        console.log("CENTROID DATA BEFORE: ", this.centroids);
+        const groupedBySample = _.groupBy(flattenNestedBins, "SAMPLE");
+        for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
+            const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
+            for (const binsForCluster of Object.values(groupedByCluster)) {
+                this.initializeCentroidOfCluster(binsForCluster[0].CLUSTER, sample, binsForCluster, "RD");
+            }
+        }
+        console.log("CENTROID DATA AFTER: ", this.centroids);
+
         this._ndx.remove();
         this._ndx = crossfilter(flattenNestedBins);
         this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
@@ -498,7 +510,6 @@ export class DataWarehouse {
     }
 
     getFilteredClusters() {
-
         return this._cluster_filters;
     }
 

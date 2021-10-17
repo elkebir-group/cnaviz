@@ -54,6 +54,8 @@ interface Props {
     clusterTableData: any;
     displayMode: DisplayMode;
     onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    onZoom: (newScales: any) => void;
+
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -68,6 +70,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _clusters: string[];
     private brushedNodes: Set<GenomicBin>;
     private _currXScale: d3.ScaleLinear<number, number>;
+    private _currYScale: d3.ScaleLinear<number, number>;
 
     constructor(props: Props) {
         super(props);
@@ -79,7 +82,9 @@ export class LinearPlot extends React.PureComponent<Props> {
         this._clusters = this.initializeListOfClusters();
         this.brushedNodes = new Set();
         this._currXScale = this.getXScale(props.width, props.genome, props.chr, this.props.implicitStart, this.props.implicitEnd);
-
+        this._currYScale = d3.scaleLinear()
+        .domain([this.props.yMin, this.props.yMax])
+        .range([this.props.height - PADDING.bottom, PADDING.top]);
     }
 
     initializeListOfClusters() : string[] {
@@ -163,9 +168,10 @@ export class LinearPlot extends React.PureComponent<Props> {
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
-        const yScale = d3.scaleLinear()
-            .domain([yMin, yMax])
-            .range([height - PADDING.bottom, PADDING.top]);
+        const yScale = self._currYScale;
+        // d3.scaleLinear()
+        //     .domain([yMin, yMax])
+        //     .range([height - PADDING.bottom, PADDING.top]);
         let xAxis;
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
@@ -202,6 +208,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             //     .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
             //     .range(xScale.range())
             // }
+
             //console.log("START: ", start);
             xAxis = d3.axisBottom(xScale)
                 // .tickFormat((baseNum) => {
@@ -219,21 +226,6 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
-
-        // X axis stuff
-        // var clipX = svg.append("clipPath")
-        //     .attr('id', 'clip-x-axis')
-        //     .append('rect')
-        //     .attr('x', PADDING.left)
-        //     .attr('y', height-PADDING.bottom)
-        //     .attr('width', width - PADDING.left - PADDING.right)
-        //     .attr('height', PADDING.bottom);
-
-        // svg.append("g")
-        //     .classed(SCALES_CLASS_NAME, true)
-        //     .attr('clip-path', 'url(#clip-x-axis)')
-        //     .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-        //     .call(xAxis);
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
@@ -243,11 +235,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             .text(chr || genome.getName());
 
         // Y axis stuff
-        // svg.append("g")
-        //     .classed(SCALES_CLASS_NAME, true)
-        //     .attr("transform", `translate(${PADDING.left}, 0)`)
-        //     .call(yAxis);
-
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `rotate(-90, ${PADDING.left- 30}, ${_.mean(yScale.range())})`)
@@ -272,7 +259,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         let yAx = (g : any, scale : any) => g
                     .classed(SCALES_CLASS_NAME, true)
                     .attr("transform", `translate(${PADDING.left}, 0)`)
-                    .call(d3.axisLeft(scale))
+                    .call(d3.axisLeft(scale).ticks((scale.range()[0] - scale.range()[1]) / 15))
+                    
         const gx = svg.append("g");
         const gy = svg.append("g");
         let z = d3.zoomIdentity;
@@ -310,7 +298,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
           }).on("end", () => {
                 if(!chr) {
+                    // console.log(self._currYScale.domain());
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]]);
+                    // self.props.onZoom({xScale: self._currXScale.domain(), yScale: self._currYScale.domain()});//[self._currXScale.domain()[0], self._currXScale.domain()[1]], yScale: self.c.domain()})
                 }
             }
 
@@ -353,6 +343,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             const yr = ty().rescaleY(yScale);
         
             gy.call(yAx, yr);
+            self._currYScale = yr;
             if(!chr) {
                 const xr = tx().rescaleX(xScale);
                 gx.call(xAx , xr);
@@ -392,7 +383,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
                     try{
-                        const { selection} = d3.event;
+                        const {selection} = d3.event;
                         
                         let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
                             function(d: GenomicBin){

@@ -38,7 +38,7 @@ interface Props {
     brushedBins: GenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
-    onZoom: (newYScale: [number, number]) => void;
+    onZoom: (newScales: any) => void;
     onRemovePlot: any;
     rdRange: [number, number];
     plotId: number;

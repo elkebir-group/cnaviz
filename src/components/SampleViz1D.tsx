@@ -30,6 +30,7 @@ interface Props {
     displayMode: DisplayMode;
     width: number;
     onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    onZoom: (newScales: any) => void;
     implicitRange: [number, number] | null;
 }
 
@@ -53,7 +54,7 @@ export class SampleViz1D extends React.Component<Props, State> {
 
     render() {
         const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
-             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange} = this.props;
+             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom} = this.props;
         const selectedSample = this.props.selectedSample;
 
         let visualization: React.ReactNode = null;
@@ -77,6 +78,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     onLinearPlotZoom ={onLinearPlotZoom}
                     implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
                     implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}
+                    onZoom={onZoom}
 
                     />
                     
@@ -97,6 +99,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     displayMode={displayMode}
                     width={width}
                     onLinearPlotZoom={onLinearPlotZoom}
+                    onZoom={onZoom}
                     implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
                     implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}/>
 
