@@ -114,7 +114,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     handleZoom(newScales: any) {
         const {syncScales, handleZoom} = this.props;
-        console.log("NEW SCALES: ", newScales);
+        // console.log("NEW SCALES: ", newScales);
         (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
     }
 
@@ -219,7 +219,9 @@ export class SampleViz extends React.Component<Props, State> {
                         onZoom={this.handleZoom}
                         rdRange={rdRange}
                         implicitRange={this.state.implicitRange}
-                        scales={(syncScales) ? this.props.scales : this.state.scales}/>}
+                        scales={(syncScales) ? this.props.scales : this.state.scales}
+                        centroidPts={data.getCentroidPoints(selectedSample, this.props.chr)}/>
+                }
                 {showLinearPlot && <SampleViz1D 
                     {...this.props}  
                     data={selectedRecords}
@@ -245,6 +247,7 @@ export class SampleViz extends React.Component<Props, State> {
                     colOneName={"Cluster ID"}
                     colTwoName={"% of cluster"}
                     colThreeName={"% of selection"}
+                    cols={""}
                     expandable={false}
                     selectable={false}
                     colors={this.props.colors}

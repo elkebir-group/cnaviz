@@ -4,6 +4,7 @@ import DataTable from 'react-data-table-component';
 import {HuePicker, SliderPicker, GithubPicker, BlockPicker} from "react-color";
 import {CSVLink} from "react-csv"
 import "./ClusterTable.css"
+import { cluster } from "d3-hierarchy";
 
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
@@ -18,6 +19,7 @@ interface Props {
     colOneName : string;
     colTwoName: string;
     colThreeName?: string;
+    cols: any;
     centroidTable?: boolean;
     colors : string[];
     updatedClusterTable?: () => void;
@@ -53,7 +55,7 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, colThreeName, data, expandable, selectable, colors, centroidTable} = this.props;
+        const {colOneName, colTwoName, colThreeName, cols, data, expandable, selectable, colors, centroidTable} = this.props;
         const ExpandedComponent =(data:any) => 
         <div> 
             <BlockPicker 
@@ -135,35 +137,30 @@ export class ClusterTable extends React.Component<Props> {
         ];
 
         if(centroidTable) {
-            console.log("CENTROID DATA: ", data);
-            const centroidColumns = [
-                {
-                    name: colOneName,
-                    selector: 'key',
+            // console.log("CENTROID DATA: ", data);
+            let colNames : any[] = [];
+            
+            if(data != null && data != undefined && data.length > 0) {
+                colNames.push({name: "Cluster ID", type: "key"})
+                for(const s of Object.keys(data[0].sample)) {
+                    // console.log("KEY: ", s);
+                    colNames.push({name: s, type: "sample."+s});
+                }
+                // console.log("COL NAMES: ", colNames);
+            }
+        
+            const centroidColumns = [];
+            for(const name of colNames) {
+                let centroidCol = {
+                    name: name.name,
+                    selector: name.type,
                     sortable: true,
                     compact: true,
                     wrap: true,
                     center: true
-                },
-                {
-                    name: colTwoName,
-                    selector: 'sample',
-                    sortable: true,
-                    right: true,
-                    compact: true,
-                    wrap: true,
-                    center: true
-                },
-                {
-                    name: colThreeName,
-                    selector: 'centroid',
-                    sortable: true,
-                    right: true,
-                    compact: true,
-                    wrap: true,
-                    center: true
-                },
-            ];
+                }
+                centroidColumns.push(centroidCol);
+            }
             
             return (
                 <DataTable

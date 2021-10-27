@@ -109,10 +109,8 @@ function Sidebar(props: Props) {
             <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
           </div>
           
-        {/* </div> */}
         <div className="title-bar"></div>
         <h2 >Display Settings</h2>
-        {/* <div className="contents"> */}
           <div className= "row-contents" >
             <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
             <select
@@ -163,7 +161,6 @@ function Sidebar(props: Props) {
               />
           </div>
 
-        {/* </div> */}
       </div>
         <div className="contents2">
           <ClusterTable 
@@ -173,6 +170,7 @@ function Sidebar(props: Props) {
                 currentFilters={props.currentClusterFilters}
                 colOneName={"Cluster ID"}
                 colTwoName={"Bins (%)"}
+                cols={""}
                 expandable={true}
                 selectable={true}
                 colors={props.colors}

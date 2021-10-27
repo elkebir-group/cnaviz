@@ -71,6 +71,8 @@ export class LinearPlot extends React.PureComponent<Props> {
     private brushedNodes: Set<GenomicBin>;
     private _currXScale: d3.ScaleLinear<number, number>;
     private _currYScale: d3.ScaleLinear<number, number>;
+    private _original_XScale: d3.ScaleLinear<number, number>;
+    private _original_YScale: d3.ScaleLinear<number, number>;
 
     constructor(props: Props) {
         super(props);
@@ -85,6 +87,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         this._currYScale = d3.scaleLinear()
         .domain([this.props.yMin, this.props.yMax])
         .range([this.props.height - PADDING.bottom, PADDING.top]);
+        this._original_XScale = this._currXScale;
+        this._original_YScale = this._currYScale;
     }
 
     initializeListOfClusters() : string[] {
@@ -118,7 +122,40 @@ export class LinearPlot extends React.PureComponent<Props> {
             this.redraw();
         } else if(!(_.isEqual(this.props["data"], prevProps["data"])) || this.props["dataKeyToPlot"] !== prevProps["dataKeyToPlot"]) {
             this.redraw();
-        }
+        } 
+
+        // else if((this._currXScale.domain()[0] === this._original_XScale.domain()[0] 
+        //         && this._currXScale.domain()[1] === this._original_XScale.domain()[1]
+        //         && this._currYScale.domain()[0] === this._original_YScale.domain()[0]
+        //         && this._currYScale.domain()[1] === this._original_YScale.domain()[1])) {  
+        //         // When the sample filter changes, the y-axis max will also change so must recaculate the scales
+        //         // Original scales saves the scales to which we should reset the view
+        //         this._currXScale = bafScale;
+        //         this._currYScale = rdrScale;
+        //         this._original_XScale = this._currXScale;
+        //         this._original_YScale = this._currYScale;
+        //     } else { // If zoom is applied, then update original scales but don't change current zoom
+        //         // CASE 1: going to log
+        //         if(this.props.yAxisToPlot !== prevProps.yAxisToPlot){
+        //             let currentYDomain = this._currYScale.domain();
+        //             if (this.props.yAxisToPlot==="logRD") {  
+        //                 if(currentYDomain[0] <= 0) {
+        //                     currentYDomain[0] = 0.1;
+        //                 }
+        //                 if(currentYDomain[1] <= 0) {
+        //                     currentYDomain[1] = 0.1;
+        //                 }
+        //                 const newYDomain = [Math.log2(currentYDomain[0]), Math.log2(currentYDomain[1])];
+        //                 this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
+        //             } else {
+        //                 const newYDomain = [Math.pow(2, currentYDomain[0]), Math.pow(2, currentYDomain[1])];
+        //                 this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
+        //             }
+                   
+        //         } 
+        //         this._original_XScale = bafScale;
+        //         this._original_YScale = rdrScale;
+        //     }
     }
 
     getXScale(width: number, genome: Genome, chr?: string, implicitStart ?: number | null, implicitEnd ?: number | null) {
@@ -254,7 +291,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(d3.axisBottom(scale)
-                    .tickFormat(baseNum => niceBpCount(Number(baseNum.valueOf()), 0, chrStarts[chr])))
+                    .tickFormat(baseNum => {
+                        return niceBpCount(Number(baseNum.valueOf()), 0, chrStarts[chr])
+                    }))
 
         let yAx = (g : any, scale : any) => g
                     .classed(SCALES_CLASS_NAME, true)
@@ -280,9 +319,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                 const doX = point[0] > xScale.range()[0];
                 const doY = point[1] < yScale.range()[0];
                 // let tx3 = (chr) ? tx2 : tx 
+                // console.log(xScale.domain());
                 if(displayMode === DisplayMode.zoom || !(doX && doY)) {
                     if (k === 1) {
                     // pure translation?
+                    // console.log((t.x - z.x) / tx().k);
                     doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
                     doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
                     } else {
@@ -298,7 +339,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
           }).on("end", () => {
                 if(!chr) {
-                    // console.log(self._currYScale.domain());
+                    // console.log(self._currXScale.domain());
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]]);
                     // self.props.onZoom({xScale: self._currXScale.domain(), yScale: self._currYScale.domain()});//[self._currXScale.domain()[0], self._currXScale.domain()[1]], yScale: self.c.domain()})
                 }
@@ -431,7 +472,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                         this.props.onLinearPlotZoom([implicitStart, implicitEnd]);
                     } catch (error) {}
                     this.redraw();
-                    
                 })
 
             svg.append('g')
@@ -504,6 +544,12 @@ export class LinearPlot extends React.PureComponent<Props> {
             <div className="LinearPlot-tools">
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
                 && <button onClick={() => {
+
+                    this._currXScale = this._original_XScale;
+                    this._currYScale = this._original_YScale;
+                    const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+                    this.props.onZoom(newScales);
+                    this.redraw();
                     this.props.onLinearPlotZoom(null);
                     //this.redraw();
                 }}

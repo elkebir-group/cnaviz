@@ -349,6 +349,7 @@ export class App extends React.Component<{}, State> {
         try {
             const parsed = await parseGenomicBins(contents, this.state.applyLog, applyClustering);
             indexedData = new DataWarehouse(parsed);
+
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
@@ -665,7 +666,9 @@ export class App extends React.Component<{}, State> {
                             colOneName={"Cluster"}
                             colTwoName={"Sample"}
                             colThreeName={"Centroid"}
+                            cols={[{name: "Cluster", type: 'key'}, {name: "Sample", type: 'sample'}, {name: "Centroid", type: 'centroid'}]}
                         ></ClusterTable>
+
                     </div> }
             </div>
             

@@ -66,6 +66,7 @@ interface Props {
     applyLog: boolean;
     onClusterSelected: any;
     scales: any;
+    centroidPts: {cluster: number, point: [number, number]}[]; //[number, number][];
 }
 
 interface State {
@@ -253,7 +254,8 @@ export class Scatterplot extends React.Component<Props, State> {
 
     render() {
         
-        const {width, height, displayMode} = this.props;
+        const {width, height} = this.props;
+        
         let clusterOptions = this._clusters.map(clusterName =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
@@ -323,7 +325,8 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if(this.props.scales.xScale 
+        
+        if(this.props.scales.xScale  // sync scales
             && this.props.scales.yScale 
             && prevProps.scales.xScale 
             &&  prevProps.scales.yScale 
@@ -437,13 +440,11 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     redraw() {
-        console.time("Scatter draw");
-        //console.time("Rendering");
         if (!this._svg || !this._canvas || !this.scatter || !this._canvas2) {
             return;
         }
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot} = this.props;
+        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts} = this.props;
         let {displayMode} = this.props;
         let xScale = this._currXScale;
         let yScale = this._currYScale;
@@ -605,6 +606,15 @@ export class Scatterplot extends React.Component<Props, State> {
 
         redraw();
 
+        svg
+        .append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+            .attr("x", PADDING.left)
+            .attr("y", PADDING.top)
+            .attr("width", width - PADDING.right - PADDING.left)
+            .attr("height", height - PADDING.bottom - PADDING.top);
+
         // Create event-rect that allows for svg points to be overlayed under mouse pointer
         var event_rect = svg
             .append("g")
@@ -618,8 +628,30 @@ export class Scatterplot extends React.Component<Props, State> {
                 .style("fill", "none")
                 .style("pointer-events", "all")
                 .attr("clip-path", "url(#clip)");
+            
+       
 
-        
+        // svg.append('g')
+        //     .attr("clip-path", "url(#clip)")
+         
+        svg.select(".Centroids").remove();
+        svg.select(".eventrect")
+                .append("g")
+                .attr("clip-path", "url(#clip)")
+                .classed("Centroids", true)
+                .selectAll("path")
+                .data(centroidPts)
+                .enter()
+                .append("path")
+                .attr("class", "point")
+                .attr("d", d3.symbol().type(d3.symbolCross))
+                .attr("fill", d => chooseColor2(d.cluster))
+                .attr("fill-opacity", 1)
+                .attr("stroke-width", 2)
+                .attr("stroke", "black") 
+                .attr("transform", function(d) {
+                    return "translate(" + self._currXScale(d.point[0]) + "," + self._currYScale(d.point[1]) + ")"; 
+                });
 
         if(displayMode === DisplayMode.select || displayMode === DisplayMode.erase) {
             const brush = d3.brush()
@@ -665,7 +697,6 @@ export class Scatterplot extends React.Component<Props, State> {
             if (data) {
                 const { selection } = d3.event;
                 if(selection) {
-                    //console.log("Not Clearing");
                     let rect = [[self._currXScale.invert(selection[0][0]), self._currYScale.invert(selection[1][1])], // bottom left (x y)
                                 [self._currXScale.invert(selection[1][0]), self._currYScale.invert(selection[0][1])]]; // top right (x y)
                                 
@@ -681,8 +712,6 @@ export class Scatterplot extends React.Component<Props, State> {
 
                     let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
                     self.props.onZoom(newScales);
-                } else {
-                    //console.log("Clearing");
                 }
             }
         }
@@ -693,18 +722,26 @@ export class Scatterplot extends React.Component<Props, State> {
             } else if (d.CLUSTER == -1){
                 return UNCLUSTERED_COLOR;
             } else if(d.CLUSTER == -2){
-                //console.log(3);
                 return DELETED_COLOR;
             } else {
-                ///onsole.log(4);
                 const cluster = d.CLUSTER;
                 const col_index = cluster % colors.length;
                 return colors[col_index];
             }
         }
-        
-        //console.timeEnd("Rendering");
-        console.timeEnd("Scatter draw");
+
+        function chooseColor2(c: number) {
+            if (c == -1){
+                return UNCLUSTERED_COLOR;
+            } else if(c == -2){
+                return DELETED_COLOR;
+            } else {
+                const cluster = c;
+                const col_index = cluster % colors.length;
+                return colors[col_index];
+            }
+        }
+    
      }
 
      updatePoints(event : any) {

@@ -64,7 +64,7 @@ export class CSV extends React.Component<Props, State> {
         
         
         let nameExt = fileName.split("."); 
-        console.log("nameExt: " + nameExt);
+        // console.log("nameExt: " + nameExt);
         let newFileName = "";
         for(let i = 0; i < nameExt.length-1; i++) {
             newFileName += nameExt[i];

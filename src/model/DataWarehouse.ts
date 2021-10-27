@@ -1,4 +1,4 @@
-import _, { sample } from "lodash";
+import _, { first, sample } from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import { MergedGenomicBin, BinMerger, MergedBinHelpers } from "./BinMerger";
 import { cross, group } from "d3-array";
@@ -46,6 +46,8 @@ type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
 type selectionTableRow =  {key: number, value: number, selectPerc: number}
 type centroidTableRow = {key: number, sample: string, centroid: string}
+type centroidPoint = {cluster: number, point: [number, number]}
+type newCentroidTableRow = {key: string, sample: {[sampleName: string] : string}}//string, centroid: string}
 
 /**
  * A container that stores metadata for a list of GenomicBin and allows fast queries first by sample, and then by
@@ -85,7 +87,9 @@ export class DataWarehouse {
     private historyStack: GenomicBin[][];
     private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>;
     private logOfActions: LogTableRow[];
-    private centroids: centroidTableRow[];
+    private centroids: newCentroidTableRow[];
+    private centroidPts: SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
+    private chrToClusters: {[chr: string] : Set<string>}
 
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -111,7 +115,16 @@ export class DataWarehouse {
         this.historyStack = [];
         this._ndx = crossfilter(rawData);
         this.logOfActions = [];
-        this.centroids = [];
+        this.centroidPts = {}; // used for plotting centroids
+        this.centroids = []; // used for displaying centroids in centroid table
+        this.chrToClusters = {};
+
+        for(const d of rawData) {
+            if(this.chrToClusters[d["#CHR"]])
+                this.chrToClusters[d["#CHR"]].add(String(d.CLUSTER));
+            else
+                this.chrToClusters[d["#CHR"]] = new Set([String(d.CLUSTER)]);
+        }
 
         const groupedBySample = _.groupBy(rawData, "SAMPLE");
         for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
@@ -123,6 +136,38 @@ export class DataWarehouse {
                 const groupedByChr = _.groupBy(binsForCluster, "#CHR");
                 this._chrs = _.union(this._chrs, Object.keys(groupedByChr));
             }
+        }
+
+
+        const groupedByCluster = _.groupBy(rawData, "CLUSTER");
+        for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
+            const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
+            let sampleDict : {[sampleName: string] : string} = {};
+            for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
+                const centroid = this.calculateCentroid(binsForSample, "RD");
+                let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
+
+                if(this.centroidPts[sample] && this.centroidPts[clus]) {
+                    this.centroidPts[sample][clus].push(centroidPt);
+                } else if(this.centroidPts[sample]) {
+                    this.centroidPts[sample][clus] = [centroidPt];
+                } else  { 
+                    let dataKey : string = clus; //.toString();
+                    let tempMap : ClusterIndexedData<centroidPoint[]> = {};
+                    tempMap[dataKey] = [centroidPt];
+                    this.centroidPts[sample] = tempMap;
+                }
+
+                let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
+                sampleDict[sample] = centroidStr;
+                // this.initializeCentroidOfAllSamples(clus, sample, binsForCluster, "RD");
+            }
+
+            let centroidTableRow : newCentroidTableRow = {
+                key: clus,
+                sample: sampleDict
+            };
+            this.centroids.push(centroidTableRow);
         }
 
         this._cluster_filters = this._clusters;
@@ -149,19 +194,65 @@ export class DataWarehouse {
     }
 
     initializeCentroidOfCluster(cluster: number, sample: string, points: GenomicBin[], yaxis: keyof Pick<GenomicBin, "RD" | "logRD">) {
-        let centroid =  this.calculateCentroid(points, yaxis);
-        let row : centroidTableRow = {key: cluster, sample: sample, centroid: centroid};
-        // console.log("ROW: ", row);
-        this.centroids.push(row);
+        // let centroid =  this.calculateCentroid(points, yaxis);
+        // let centroidPt : centroidPoint = {cluster: cluster, point: centroid};
+
+        // if(this.centroidPts[sample] && this.centroidPts[cluster]) {
+        //     this.centroidPts[sample][cluster].push(centroidPt);
+        // } else if(this.centroidPts[sample]) {
+        //     this.centroidPts[sample][cluster] = [centroidPt];
+        // } else  { 
+        //     let dataKey : string = cluster.toString();
+        //     let tempMap : ClusterIndexedData<centroidPoint[]> = {};
+        //     tempMap[dataKey] = [centroidPt];
+        //     this.centroidPts[sample] = tempMap;
+        // }
+        // console.log("CENTROID PTS: ", this.centroidPts);
+        // let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
+        // let row : centroidTableRow = {key: cluster, sample: sample, centroid: centroidStr};
+        // this.centroids.push(row);
     }
 
-    calculateCentroid(points: GenomicBin[], yAxis: keyof Pick<GenomicBin, "RD" | "logRD">):  string {
-        return "("+ _.meanBy(points, d => d.reverseBAF).toFixed(2) + ", " +  _.meanBy(points, d => d[yAxis]).toFixed(2) + ")";
+    initializeCentroidOfAllSamples(cluster: string, sample: string, points: GenomicBin[], yaxis: keyof Pick<GenomicBin, "RD" | "logRD">) {
+
+    }
+
+    calculateCentroid(points: GenomicBin[], yAxis: keyof Pick<GenomicBin, "RD" | "logRD">):  [number, number] {
+        return [_.meanBy(points, d => d.reverseBAF), _.meanBy(points, d => d[yAxis])];
     }
 
     getCentroidData() {
         return this.centroids;
     }
+
+    getCentroidPoints(sample: string, chr?: string) {
+        console.log("SAMPLE: ", sample);
+        if(chr) {
+            console.log("CHR: ", chr);
+        }
+        console.log("CENTROID PTS: ", this.centroidPts);
+        const samplePts = this.centroidPts[sample];
+        console.log("SAMPLE POINTS: ", samplePts);
+        let clustersAssociatedWithChr = this._cluster_filters;
+        let setOfClustersInChr;
+        if(chr) {
+            setOfClustersInChr = this.chrToClusters[chr];
+        } else {
+            setOfClustersInChr = new Set(clustersAssociatedWithChr);
+        }
+       
+
+
+        let sampleSpecificCentroids : centroidPoint[] = [];
+        for(const cluster of clustersAssociatedWithChr) {
+            if(setOfClustersInChr.has(cluster) && samplePts[cluster.valueOf()]) {
+                sampleSpecificCentroids.push(samplePts[cluster.valueOf()][0]);
+            }
+        }
+
+        return sampleSpecificCentroids;
+    }
+
     calculateClusterTableInfo() : clusterTableRow[] {
         const clusterInfo = this._cluster_dim.group().all();
         const clusterTable : clusterTableRow[] = [];
@@ -285,7 +376,6 @@ export class DataWarehouse {
     }
 
     setGenomicPositionFilter(genomeRange: [number, number]) {
-        //console.log("Setting filter");
         this._genomic_pos_dim.filterAll();
         this._genomic_pos_dim.filter(d => d > genomeRange[0] && d < genomeRange[1]);
 
@@ -344,15 +434,62 @@ export class DataWarehouse {
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
         this.centroids = [];
-        console.log("CENTROID DATA BEFORE: ", this.centroids);
-        const groupedBySample = _.groupBy(flattenNestedBins, "SAMPLE");
-        for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
-            const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
-            for (const binsForCluster of Object.values(groupedByCluster)) {
-                this.initializeCentroidOfCluster(binsForCluster[0].CLUSTER, sample, binsForCluster, "RD");
-            }
+        this.centroidPts = {};
+        this.chrToClusters = {};
+        for(const d of flattenNestedBins) {
+            if(this.chrToClusters[d["#CHR"]])
+                this.chrToClusters[d["#CHR"]].add(String(d.CLUSTER));
+            else
+                this.chrToClusters[d["#CHR"]] = new Set([String(d.CLUSTER)]);
         }
-        console.log("CENTROID DATA AFTER: ", this.centroids);
+
+        // Steps to find centroids (in a format that can be displayed in the table properly)
+        // 1. group by cluster
+        // 2. Get each group of points with all matching cluster
+        // 3. Group by sample
+        // 4. Find centroid for that group of points
+        // 5. Create a Sample dictionary with each sample name mapped to centroid
+        // 6. Add dictionary to table row
+        // 7. Push table row into list of table rows
+        // 8. Move on to next cluster and repeat
+        const groupedByCluster = _.groupBy(flattenNestedBins, "CLUSTER");
+        for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
+            const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
+            let sampleDict : {[sampleName: string] : string} = {};
+            for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
+                const centroid = this.calculateCentroid(binsForSample, "RD");
+                let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
+
+                if(this.centroidPts[sample] && this.centroidPts[clus]) {
+                    this.centroidPts[sample][clus].push(centroidPt);
+                } else if(this.centroidPts[sample]) {
+                    this.centroidPts[sample][clus] = [centroidPt];
+                } else  { 
+                    let dataKey : string = clus; //.toString();
+                    let tempMap : ClusterIndexedData<centroidPoint[]> = {};
+                    tempMap[dataKey] = [centroidPt];
+                    this.centroidPts[sample] = tempMap;
+                }
+                let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
+                sampleDict[sample] = centroidStr;
+                // this.initializeCentroidOfAllSamples(clus, sample, binsForCluster, "RD");
+            }
+
+            let centroidTableRow : newCentroidTableRow = {
+                key: clus,
+                sample: sampleDict
+            };
+            this.centroids.push(centroidTableRow);
+        }
+        
+
+        // const groupedBySample = _.groupBy(flattenNestedBins, "SAMPLE");
+        // for (const [sample, binsForSample] of Object.entries(groupedBySample)) {
+        //     const groupedByCluster = _.groupBy(binsForSample, "CLUSTER");
+        //     for (const binsForCluster of Object.values(groupedByCluster)) {
+        //         this.initializeCentroidOfCluster(binsForCluster[0].CLUSTER, sample, binsForCluster, "RD");
+        //     }
+        // }
 
         this._ndx.remove();
         this._ndx = crossfilter(flattenNestedBins);

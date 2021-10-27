@@ -75,12 +75,14 @@ export function applyRetinaFix(canvas: HTMLCanvasElement) {
 export function niceBpCount(bases: number, sigFigs=1, sub?: number) {
     
     let basesAmnt = bases;
-    // console.log("Test: ", sub);
     if(sub) {
-        // console.log("Test: ");
         basesAmnt = basesAmnt - sub;
-        // console.log("BASES: ", basesAmnt);
     }
+
+    if(basesAmnt < 0) {
+      return '';
+    }
+
     const rounded = Math.floor(basesAmnt);
     if (rounded >= 750000) {
         return `${(rounded/1000000).toFixed(sigFigs)} Mb`;
