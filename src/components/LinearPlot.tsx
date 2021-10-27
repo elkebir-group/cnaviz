@@ -200,7 +200,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._svg) {
             return;
         }
-        // console.log("REDRAW");
+        console.log("REDRAW");
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
@@ -545,11 +545,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
                 && <button onClick={() => {
 
-                    this._currXScale = this._original_XScale;
-                    this._currYScale = this._original_YScale;
-                    const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
-                    this.props.onZoom(newScales);
-                    this.redraw();
+                    // this._currXScale = this._original_XScale;
+                    // this._currYScale = this._original_YScale;
+                    // const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+                    // this.props.onZoom(newScales);
+                    // this.redraw();
                     this.props.onLinearPlotZoom(null);
                     //this.redraw();
                 }}

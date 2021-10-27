@@ -582,29 +582,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 
         });
 
-        function redraw() {
-            const xr = tx().rescaleX(xScale);
-            const yr = ty().rescaleY(yScale);
-        
-            gx.call(xAx , xr);
-            gy.call(yAx, yr);
-            
-            self._currXScale = xr;
-            self._currYScale = yr;
-
-            if(self._canvas) {
-                pointSeries
-                    .xScale(self._currXScale)
-                    .yScale(self._currYScale)    
-
-                pointSeries(newData);
-            }
-        }
-        
-        this._canvas.width = width;
-        this._canvas.height = height;
-
-        redraw();
 
         svg
         .append("clipPath")
@@ -628,30 +605,53 @@ export class Scatterplot extends React.Component<Props, State> {
                 .style("fill", "none")
                 .style("pointer-events", "all")
                 .attr("clip-path", "url(#clip)");
-            
+         
        
 
-        // svg.append('g')
-        //     .attr("clip-path", "url(#clip)")
-         
-        svg.select(".Centroids").remove();
-        svg.select(".eventrect")
-                .append("g")
-                .attr("clip-path", "url(#clip)")
-                .classed("Centroids", true)
-                .selectAll("path")
-                .data(centroidPts)
-                .enter()
-                .append("path")
-                .attr("class", "point")
-                .attr("d", d3.symbol().type(d3.symbolCross))
-                .attr("fill", d => chooseColor2(d.cluster))
-                .attr("fill-opacity", 1)
-                .attr("stroke-width", 2)
-                .attr("stroke", "black") 
-                .attr("transform", function(d) {
-                    return "translate(" + self._currXScale(d.point[0]) + "," + self._currYScale(d.point[1]) + ")"; 
-                });
+        function redraw() {
+            const xr = tx().rescaleX(xScale);
+            const yr = ty().rescaleY(yScale);
+        
+            gx.call(xAx , xr);
+            gy.call(yAx, yr);
+            
+            self._currXScale = xr;
+            self._currYScale = yr;
+
+            if(self._canvas) {
+                pointSeries
+                    .xScale(self._currXScale)
+                    .yScale(self._currYScale)    
+
+                pointSeries(newData);
+            }
+
+            svg.select(".Centroids").remove();
+            svg.select(".eventrect")
+                    .append("g")
+                    .attr("clip-path", "url(#clip)")
+                    .classed("Centroids", true)
+                    .selectAll("path")
+                    .data(centroidPts)
+                    .enter()
+                    .append("path")
+                    .attr("class", "point")
+                    .attr("d", d3.symbol().type(d3.symbolCross))
+                    .attr("fill", d => chooseColor2(d.cluster))
+                    .attr("fill-opacity", 1)
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "black") 
+                    .attr("transform", function(d) {
+                        return "translate(" + self._currXScale(d.point[0]) + "," + self._currYScale(d.point[1]) + ")"; 
+                    });
+        }
+        
+        this._canvas.width = width;
+        this._canvas.height = height;
+
+        redraw();
+
+        
 
         if(displayMode === DisplayMode.select || displayMode === DisplayMode.erase) {
             const brush = d3.brush()

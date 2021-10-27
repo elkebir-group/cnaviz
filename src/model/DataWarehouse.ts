@@ -226,13 +226,7 @@ export class DataWarehouse {
     }
 
     getCentroidPoints(sample: string, chr?: string) {
-        console.log("SAMPLE: ", sample);
-        if(chr) {
-            console.log("CHR: ", chr);
-        }
-        console.log("CENTROID PTS: ", this.centroidPts);
         const samplePts = this.centroidPts[sample];
-        console.log("SAMPLE POINTS: ", samplePts);
         let clustersAssociatedWithChr = this._cluster_filters;
         let setOfClustersInChr;
         if(chr) {
@@ -418,9 +412,9 @@ export class DataWarehouse {
         
         action += "RD Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
 
-        action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "] | ";
+        action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "]";
 
-        this.logOfActions.push({action: action});
+        this.logOfActions.unshift({action: action});
         
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
