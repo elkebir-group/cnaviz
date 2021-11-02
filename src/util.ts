@@ -123,6 +123,13 @@ export function getMinDistanceIndex<T>(queryPoint: T, searchPoints: T[], xKey: k
     }
 }
 
+export function calculateEuclideanDist(pointOne: [number | string, number | string], pointTwo: [number | string, number | string]) : number {
+  const xDiff = Number(pointOne[0]) - Number(pointTwo[0]);
+  const yDiff = Number(pointOne[1]) - Number(pointTwo[1]);
+  return xDiff * xDiff + yDiff * yDiff;
+}
+
+
 
 /**
  * Samples `numSamples` items from the input list by selecting equally-spaced elements.  If the list is shorter than the

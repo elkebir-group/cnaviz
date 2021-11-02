@@ -22,7 +22,7 @@ interface Props {
     applyLog: boolean;
     displayMode: DisplayMode;
     width: number;
-    onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) => void;
     implicitStart: number | null;
     implicitEnd: number | null;
     onZoom: (newScales: any) => void;

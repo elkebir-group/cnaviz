@@ -8,6 +8,8 @@ import { CurveState } from "../model/CurveState";
 
 import { SampleViz2D } from "./SampleViz2D";
 import { SampleViz1D } from "./SampleViz1D";
+import {HeatMap} from "./TestHeatMap";
+
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
@@ -114,12 +116,13 @@ export class SampleViz extends React.Component<Props, State> {
 
     handleZoom(newScales: any) {
         const {syncScales, handleZoom} = this.props;
-        // console.log("NEW SCALES: ", newScales);
         (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
     }
 
-    handleLinearPlotZoom(genomicRange: [number, number] | null) {
-        this.setState({implicitRange: genomicRange})
+    handleLinearPlotZoom(genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) {
+        this.setState({implicitRange: genomicRange});
+        // let newScale = (!key) ? {xScale: yscale, yScale: this.state.scales.yScale} : {xScale: this.state.scales.xScale, yScale: yscale};
+        // this.setState({scales: newScale});
     }
 
     
@@ -127,7 +130,7 @@ export class SampleViz extends React.Component<Props, State> {
         const {data, initialSelectedSample, plotId, applyLog, 
             showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales} = this.props;
         const {implicitRange} = this.state;
-
+        
         const selectedSample = this.state.selectedSample;
         const rdRange = data.getRdRange(selectedSample, applyLog);
         
@@ -235,7 +238,13 @@ export class SampleViz extends React.Component<Props, State> {
                     displayMode={dispMode}
                     width={showSidebar ? 600 : 600} 
                     implicitRange={this.state.implicitRange}/>}
+                {/* <HeatMap
+                    width={450 - 30 - 30}
+                    height={450 - 30 - 30}
+                    data={data.getCentroidDistMatrix(this.state.selectedSample)}
+                ></HeatMap> */}
             </div>
+
             {/* <div className="SampleViz-clusters"> */}
             {(showLinearPlot || showScatterPlot) &&
             <div className={(showLinearPlot && showScatterPlot) ? "SampleViz-clusters" : ""}>
