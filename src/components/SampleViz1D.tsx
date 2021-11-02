@@ -1,8 +1,6 @@
 import React from "react";
-import { RdrBafCircosPlot } from "./RdrBafCircosPlot";
 import { DataWarehouse } from "../model/DataWarehouse";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { hg38 } from "../model/Genome";
 import { DivWithBullseye } from "./DivWithBullseye";
 import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 
@@ -29,7 +27,7 @@ interface Props {
     applyLog: boolean;
     displayMode: DisplayMode;
     width: number;
-    onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) => void;
     onZoom: (newScales: any) => void;
     implicitRange: [number, number] | null;
 }

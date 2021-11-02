@@ -53,6 +53,7 @@ export class Genome {
         this._chromosomes = chromosomes;
         this._chrStarts = {};
         this._length = 0;
+        console.log("CHROMOSOMES: ", chromosomes);
         for (const chromosome of chromosomes) {
             const chrName = chromosome.name;
             if (this._chrStarts[chrName] !== undefined) {
@@ -176,16 +177,11 @@ export class Genome {
     }
 
     getChrs(chrs : string[]) {
-       // console.log("CHRS: ", chrs);
-        //console.log("NAME TO CHR: ", this.nameToChr);
         let filteredChrs : Chromosome[] = [];
-        //console.log("INPUT CHRS: ", chrs);
         for(const chr of chrs) {
             filteredChrs.push(this.nameToChr[chr]);
-            //console.log(this.nameToChr[chr]);
         }
         
-        //console.log("Filtered CHRS: ", filteredChrs);
         return filteredChrs;
     }
 }

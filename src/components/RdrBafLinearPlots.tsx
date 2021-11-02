@@ -1,7 +1,6 @@
 import React from "react";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { hg38 } from "../model/Genome";
 import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";
@@ -22,7 +21,7 @@ interface Props {
     applyLog: boolean;
     displayMode: DisplayMode;
     width: number;
-    onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) => void;
     implicitStart: number | null;
     implicitEnd: number | null;
     onZoom: (newScales: any) => void;

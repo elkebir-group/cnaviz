@@ -24,7 +24,6 @@ const PADDING = { // For the SVG
 };
 
 function findChrNumber(chr: string) {
-    // console.log("CHR: ", chr);
     const match = chr.match(/\d+/);
     if (!match) {
         return chr;
@@ -40,7 +39,7 @@ interface Props {
     width: number;
     height: number;
     hoveredLocation?: ChromosomeInterval;
-    onLocationHovered: (location: ChromosomeInterval | null) => void
+    onLocationHovered: (location: ChromosomeInterval | null) => void;
     brushedBins: GenomicBin[];
     onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
     genome: Genome;
@@ -53,9 +52,8 @@ interface Props {
     colors: string[];
     clusterTableData: any;
     displayMode: DisplayMode;
-    onLinearPlotZoom: (genomicRange: [number, number] | null) => void;
+    onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) => void;
     onZoom: (newScales: any) => void;
-
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -85,8 +83,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         this.brushedNodes = new Set();
         this._currXScale = this.getXScale(props.width, props.genome, props.chr, this.props.implicitStart, this.props.implicitEnd);
         this._currYScale = d3.scaleLinear()
-        .domain([this.props.yMin, this.props.yMax])
-        .range([this.props.height - PADDING.bottom, PADDING.top]);
+            .domain([this.props.yMin, this.props.yMax])
+            .range([this.props.height - PADDING.bottom, PADDING.top]);
         this._original_XScale = this._currXScale;
         this._original_YScale = this._currYScale;
     }
@@ -112,66 +110,37 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
+        
         if(this.propsDidChange(prevProps, ["chr"])) {
-            // console.log("SWITCH CHR");
-            this.props.onLinearPlotZoom(null);
-            this.redraw();
-        } else if (this.propsDidChange(prevProps, ["displayMode", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
+            if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                this.props.onLinearPlotZoom(null, null, true);
+            } else {
+                this.props.onLinearPlotZoom(null, null, false);
+            }
+
+        } else if (this.propsDidChange(prevProps, ["displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
         } else if(!(_.isEqual(this.props["data"], prevProps["data"])) || this.props["dataKeyToPlot"] !== prevProps["dataKeyToPlot"]) {
             this.redraw();
-        } 
-
-        // else if((this._currXScale.domain()[0] === this._original_XScale.domain()[0] 
-        //         && this._currXScale.domain()[1] === this._original_XScale.domain()[1]
-        //         && this._currYScale.domain()[0] === this._original_YScale.domain()[0]
-        //         && this._currYScale.domain()[1] === this._original_YScale.domain()[1])) {  
-        //         // When the sample filter changes, the y-axis max will also change so must recaculate the scales
-        //         // Original scales saves the scales to which we should reset the view
-        //         this._currXScale = bafScale;
-        //         this._currYScale = rdrScale;
-        //         this._original_XScale = this._currXScale;
-        //         this._original_YScale = this._currYScale;
-        //     } else { // If zoom is applied, then update original scales but don't change current zoom
-        //         // CASE 1: going to log
-        //         if(this.props.yAxisToPlot !== prevProps.yAxisToPlot){
-        //             let currentYDomain = this._currYScale.domain();
-        //             if (this.props.yAxisToPlot==="logRD") {  
-        //                 if(currentYDomain[0] <= 0) {
-        //                     currentYDomain[0] = 0.1;
-        //                 }
-        //                 if(currentYDomain[1] <= 0) {
-        //                     currentYDomain[1] = 0.1;
-        //                 }
-        //                 const newYDomain = [Math.log2(currentYDomain[0]), Math.log2(currentYDomain[1])];
-        //                 this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
-        //             } else {
-        //                 const newYDomain = [Math.pow(2, currentYDomain[0]), Math.pow(2, currentYDomain[1])];
-        //                 this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
-        //             }
-                   
-        //         } 
-        //         this._original_XScale = bafScale;
-        //         this._original_YScale = rdrScale;
-        //     }
+        }
     }
 
     getXScale(width: number, genome: Genome, chr?: string, implicitStart ?: number | null, implicitEnd ?: number | null) {
         let domain = [0, 0];
-        if(implicitStart && implicitEnd) {
+        if(implicitStart != null && implicitEnd != null) {
+            // console.log("Implicit start and implicit end");
             domain[0] = implicitStart;
             domain[1] = implicitEnd;
-            // console.log("ONE");
-            //console.log("")
         } else if (!chr) { // No chromosome specified: X domain is entire genome
+            // console.log("CHR NOT SPECIFIED");
             domain[1] = genome.getLength();
-            // console.log("TWO");
         } else { // Chromosome specified: X domain is length of one chromosome
-            domain[0] = genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, 1)).start;
+            // console.log("CHR SPECIFIED");
+            domain[0] = genome.getChrStartMap()[chr];//genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, 1)).start;
+            console.log("CHR START: ", genome.getChrStartMap()[chr]);
             domain[1] = domain[0] + genome.getLength(chr);
-            // console.log("THREE");
         }
 
         return d3.scaleLinear()
@@ -200,15 +169,16 @@ export class LinearPlot extends React.PureComponent<Props> {
         if (!this._svg) {
             return;
         }
-        console.log("REDRAW");
+
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
+
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
-        const yScale = self._currYScale;
-        // d3.scaleLinear()
-        //     .domain([yMin, yMax])
-        //     .range([height - PADDING.bottom, PADDING.top]);
+        const yScale =
+            d3.scaleLinear()
+            .domain([yMin, yMax])
+            .range([height - PADDING.bottom, PADDING.top]);
         let xAxis;
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
@@ -246,13 +216,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             //     .range(xScale.range())
             // }
 
-            //console.log("START: ", start);
-            xAxis = d3.axisBottom(xScale)
-                // .tickFormat((baseNum) => {
-                //     //console.log("TEST: ");
-                //     return niceBpCount((baseNum.valueOf()), 0, start);
-                // });
-
+            xAxis = d3.axisBottom(xScale);
         }
         
         const yAxis = d3.axisLeft(yScale)
@@ -294,6 +258,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     .tickFormat(baseNum => {
                         return niceBpCount(Number(baseNum.valueOf()), 0, chrStarts[chr])
                     }))
+        
 
         let yAx = (g : any, scale : any) => g
                     .classed(SCALES_CLASS_NAME, true)
@@ -318,8 +283,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 // is it on an axis?
                 const doX = point[0] > xScale.range()[0];
                 const doY = point[1] < yScale.range()[0];
-                // let tx3 = (chr) ? tx2 : tx 
-                // console.log(xScale.domain());
+
                 if(displayMode === DisplayMode.zoom || !(doX && doY)) {
                     if (k === 1) {
                     // pure translation?
@@ -338,11 +302,17 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                if(!chr) {
-                    // console.log(self._currXScale.domain());
-                    self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]]);
+                // if(!chr) {
+                    
+                    if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                        self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
+                    } else {
+                        this.props.onLinearPlotZoom(null, null, false);
+                        self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
+                    }
+                    // self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]]);
                     // self.props.onZoom({xScale: self._currXScale.domain(), yScale: self._currYScale.domain()});//[self._currXScale.domain()[0], self._currXScale.domain()[1]], yScale: self.c.domain()})
-                }
+                // }
             }
 
         );
@@ -391,7 +361,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                 self._currXScale = xr;
                 pointSeries.xScale(xr).yScale(yr);
             } else {
+                // console.log("DOMAINX: ", xScale.domain());
                 const xr = tx().rescaleX(xScale);
+                // console.log("DOMAIN: ", xr.domain());
+                // let niceDomain = [niceBpCount(xr.domain()[0], 1, chrStarts[chr]), niceBpCount(xr.domain()[1], 1, chrStarts[chr])];
+                // console.log("NICE DOMAIN: ", niceDomain);
                 gx.call(xAx2 , xr);
                 self._currXScale = xr;
                 pointSeries.xScale(xr).yScale(yr);
@@ -423,9 +397,9 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
-                    try{
-                        const {selection} = d3.event;
-                        
+                    const {selection} = d3.event;
+                    // if(selection) {
+                    if(selection && selection[0][0] !== selection[1][0] && selection[0][1] !== selection[1][1]) {
                         let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
                             function(d: GenomicBin){
                                 const location = GenomicBinHelpers.toChromosomeInterval(d);
@@ -436,15 +410,17 @@ export class LinearPlot extends React.PureComponent<Props> {
                                 return yScale(d[dataKeyToPlot]);
                             });
 
-                        if(d3.event.sourceEvent.shiftKey) {
-                            brushed = _.uniq(_.union(brushed, brushedBins));  
-                        } else if(d3.event.sourceEvent.altKey) {
-                            brushed = _.difference(brushedBins, brushed);
+                        if (brushed) {
+                            if(displayMode == DisplayMode.select) {
+                                brushed = _.uniq(_.union(brushed, brushedBins));  
+                            } else if(displayMode == DisplayMode.erase) {
+                                brushed = _.difference(brushedBins, brushed);
+                            }
+        
+                            this.brushedNodes = new Set(brushed);                  
                         }
-
-                        this.brushedNodes = new Set(brushed);  
-                    }catch(error) {
-                        console.log(error);
+                    } else {
+                        this.brushedNodes = new Set([]);
                     }
                 })
                 .on("end", () => {
@@ -455,7 +431,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 svg.append('g')
                     .attr('class', 'brush')
                     .call(brush);
-        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom){
+        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom) {
             brush = d3.brushX()
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
@@ -469,7 +445,12 @@ export class LinearPlot extends React.PureComponent<Props> {
                         };
                         const implicitStart = xScale.invert(startEnd.start);
                         const implicitEnd = xScale.invert(startEnd.end);
-                        this.props.onLinearPlotZoom([implicitStart, implicitEnd]);
+                        
+                        if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                            this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currXScale.domain()[0], self._currXScale.domain()[1]], true);
+                        } else {
+                            this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currXScale.domain()[0], self._currXScale.domain()[1]], false);
+                        }
                     } catch (error) {}
                     this.redraw();
                 })
@@ -550,8 +531,13 @@ export class LinearPlot extends React.PureComponent<Props> {
                     // const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
                     // this.props.onZoom(newScales);
                     // this.redraw();
-                    this.props.onLinearPlotZoom(null);
-                    //this.redraw();
+
+                    if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                        this.props.onLinearPlotZoom(null, null, true);
+                    } else {
+                        this.props.onLinearPlotZoom(null, null, false);
+                    }
+                    // this.redraw();
                 }}
                 >Reset View</button>}
             </div>

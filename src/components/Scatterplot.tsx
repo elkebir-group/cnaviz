@@ -66,7 +66,7 @@ interface Props {
     applyLog: boolean;
     onClusterSelected: any;
     scales: any;
-    centroidPts: {cluster: number, point: [number, number]}[]; //[number, number][];
+    centroidPts: {cluster: number, point: [number, number]}[];
 }
 
 interface State {
@@ -244,7 +244,8 @@ export class Scatterplot extends React.Component<Props, State> {
                     <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
-                    {/* <div> Genome Pos: {record.genomicPosition}</div> */}
+                    <div> Genome Position: {record.genomicPosition}</div>
+                    
                 </React.Fragment>);
             } 
         }
@@ -491,7 +492,6 @@ export class Scatterplot extends React.Component<Props, State> {
         this.previous_brushed_nodes = new Set(previous);
         
         const previous_brushed_nodes = this.previous_brushed_nodes;
-        //console.log("Brushed Bins1: ", [...previous_brushed_nodes]);
 
         const gx = svg.append("g");
         const gy = svg.append("g");
@@ -621,8 +621,7 @@ export class Scatterplot extends React.Component<Props, State> {
             if(self._canvas) {
                 pointSeries
                     .xScale(self._currXScale)
-                    .yScale(self._currYScale)    
-
+                    .yScale(self._currYScale)
                 pointSeries(newData);
             }
 
@@ -749,8 +748,8 @@ export class Scatterplot extends React.Component<Props, State> {
         const {brushedBins, data, yAxisToPlot, displayMode} = this.props;
         if (data) {
             //try {
-                const { selection } = d3.event
-                if(selection) {
+            const { selection } = d3.event
+            if(selection) {
                 let rect = [[this._currXScale.invert(selection[0][0]), 
                             this._currYScale.invert(selection[1][1])], 
                             [this._currXScale.invert(selection[1][0]) , 

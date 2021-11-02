@@ -100,7 +100,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 end = Number(bin.END);
                 bin.reverseBAF = 0.5 - bin.BAF;
             }
-                  
+
             chrNameLength.push({name: lastChr, length: (end - 0)})
             const sortedChrNameLength = chrNameLength.sort((a: any, b : any) => {
                 return a.name.localeCompare(b.name, undefined, {
@@ -109,12 +109,23 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 })
             })
 
+            // let newChrNameLength : any= [];
+            // const groupedByChr = _.groupBy(parsed, "#CHR");
+            // for(const [chr, binsForChr] of Object.entries(groupedByChr)) {
+            //     const chrRange = [0, _.maxBy(binsForChr, "END").END];
+            //     //_.minBy(binsForChr, "START").START
+            //     console.log(chrRange);
+            //     newChrNameLength.push({chr: chr, length: chrRange[1] - chrRange[0]});
+            // }
+
+            // console.log("NEW CHR NAME LEN: ", newChrNameLength);
+
             genome = new Genome(chrNameLength);
             
             for (const bin of parsed) {
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
-            
+            console.log("PARSED: ", parsed.length);
             resolve(parsed);
         });
     })
@@ -232,8 +243,8 @@ export class App extends React.Component<{}, State> {
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
-            sampleAmount: 2,
-            showComponents: [true, true],
+            sampleAmount: 1,
+            showComponents: [true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
             assignCluster: false,
