@@ -238,11 +238,11 @@ export class SampleViz extends React.Component<Props, State> {
                     displayMode={dispMode}
                     width={showSidebar ? 600 : 600} 
                     implicitRange={this.state.implicitRange}/>}
-                {/* <HeatMap
+                <HeatMap
                     width={450 - 30 - 30}
                     height={450 - 30 - 30}
                     data={data.getCentroidDistMatrix(this.state.selectedSample)}
-                ></HeatMap> */}
+                ></HeatMap>
             </div>
 
             {/* <div className="SampleViz-clusters"> */}
