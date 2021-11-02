@@ -622,7 +622,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 pointSeries
                     .xScale(self._currXScale)
                     .yScale(self._currYScale)
-                console.log("NEW DATA: ", newData.length);
                 pointSeries(newData);
             }
 
@@ -776,8 +775,6 @@ export class Scatterplot extends React.Component<Props, State> {
                     this.brushedNodes = new Set(brushNodes);                  
                 } 
             } else {
-                console.log("CLEARING");
-                console.log("SELECTION: ", selection);
                 this.brushedNodes = new Set([]);
             }
         }

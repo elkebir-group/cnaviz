@@ -397,7 +397,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
-                    console.log("EVENT: ", d3.event);
                     const {selection} = d3.event;
                     // if(selection) {
                     if(selection && selection[0][0] !== selection[1][0] && selection[0][1] !== selection[1][1]) {
@@ -421,7 +420,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                             this.brushedNodes = new Set(brushed);                  
                         }
                     } else {
-                        console.log("CLEARING");
                         this.brushedNodes = new Set([]);
                     }
                 })
@@ -433,8 +431,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 svg.append('g')
                     .attr('class', 'brush')
                     .call(brush);
-        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom){
-            console.log("ZOOM ");
+        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom) {
             brush = d3.brushX()
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
@@ -448,13 +445,12 @@ export class LinearPlot extends React.PureComponent<Props> {
                         };
                         const implicitStart = xScale.invert(startEnd.start);
                         const implicitEnd = xScale.invert(startEnd.end);
-
+                        
                         if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currXScale.domain()[0], self._currXScale.domain()[1]], true);
                         } else {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currXScale.domain()[0], self._currXScale.domain()[1]], false);
                         }
-                        // this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currXScale.domain()[0], self._currXScale.domain()[1]]);
                     } catch (error) {}
                     this.redraw();
                 })
