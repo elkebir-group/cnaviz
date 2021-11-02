@@ -244,6 +244,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
+                    <div> Genome Position: {record.genomicPosition}</div>
                     
                 </React.Fragment>);
             } 
@@ -620,8 +621,8 @@ export class Scatterplot extends React.Component<Props, State> {
             if(self._canvas) {
                 pointSeries
                     .xScale(self._currXScale)
-                    .yScale(self._currYScale)    
-
+                    .yScale(self._currYScale)
+                console.log("NEW DATA: ", newData.length);
                 pointSeries(newData);
             }
 

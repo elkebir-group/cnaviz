@@ -1,7 +1,6 @@
 import React from "react";
 
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { hg38 } from "../model/Genome";
 import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";

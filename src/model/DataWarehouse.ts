@@ -103,6 +103,7 @@ export class DataWarehouse {
      * @throws {Error} if the data contains chromosome(s) with the reserved name of `DataWarehouse.ALL_CHRS_KEY`
      */
     constructor(rawData: GenomicBin[]) {
+        console.log("DATA WAREHOUSE RAW DATA: ", rawData.length)
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
         this._sampleGroupedData = {};
