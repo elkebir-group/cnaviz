@@ -749,8 +749,8 @@ export class Scatterplot extends React.Component<Props, State> {
         const {brushedBins, data, yAxisToPlot, displayMode} = this.props;
         if (data) {
             //try {
-                const { selection } = d3.event
-                if(selection) {
+            const { selection } = d3.event
+            if(selection) {
                 let rect = [[this._currXScale.invert(selection[0][0]), 
                             this._currYScale.invert(selection[1][1])], 
                             [this._currXScale.invert(selection[1][0]) , 
@@ -776,6 +776,8 @@ export class Scatterplot extends React.Component<Props, State> {
                     this.brushedNodes = new Set(brushNodes);                  
                 } 
             } else {
+                console.log("CLEARING");
+                console.log("SELECTION: ", selection);
                 this.brushedNodes = new Set([]);
             }
         }

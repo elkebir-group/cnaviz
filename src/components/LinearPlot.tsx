@@ -173,14 +173,9 @@ export class LinearPlot extends React.PureComponent<Props> {
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
             yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
-        if(chr) {
-            // console.log("CHR: ", chr);
-            // console.log("START: ", this.props.implicitStart);
-            // console.log("END: ", this.props.implicitEnd);
-        }
+
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
-        console.log("DOMAINX1: ", xScale.domain());
-        const yScale = //self._currYScale;
+        const yScale =
             d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
@@ -288,8 +283,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 // is it on an axis?
                 const doX = point[0] > xScale.range()[0];
                 const doY = point[1] < yScale.range()[0];
-                // let tx3 = (chr) ? tx2 : tx 
-                // console.log(xScale.domain());
+
                 if(displayMode === DisplayMode.zoom || !(doX && doY)) {
                     if (k === 1) {
                     // pure translation?
@@ -403,9 +397,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
-                    try{
-                        const {selection} = d3.event;
-                        
+                    console.log("EVENT: ", d3.event);
+                    const {selection} = d3.event;
+                    // if(selection) {
+                    if(selection && selection[0][0] !== selection[1][0] && selection[0][1] !== selection[1][1]) {
                         let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
                             function(d: GenomicBin){
                                 const location = GenomicBinHelpers.toChromosomeInterval(d);
@@ -424,10 +419,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                             }
         
                             this.brushedNodes = new Set(brushed);                  
-                        } 
-
-                    }catch(error) {
-                        console.log(error);
+                        }
+                    } else {
+                        console.log("CLEARING");
+                        this.brushedNodes = new Set([]);
                     }
                 })
                 .on("end", () => {
@@ -439,6 +434,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     .attr('class', 'brush')
                     .call(brush);
         } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom){
+            console.log("ZOOM ");
             brush = d3.brushX()
                 .extent([[PADDING.left, PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
