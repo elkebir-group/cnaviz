@@ -76,10 +76,10 @@ export class HeatMap extends React.Component<Props> {
 
         svg.append("g")
             .call(d3.axisLeft(y));
-
+ 
         var myColor = d3.scaleSequential()
-            .interpolator( d3.interpolateRdYlBu)
-            .domain([distRange[1], distRange[0]])
+            .interpolator(d3.interpolateRdYlBu)
+            .domain([distRange[0], distRange[1]])
         
         // create a tooltip
         var tooltip = svg

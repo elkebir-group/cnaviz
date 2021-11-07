@@ -244,7 +244,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
-                    <div> Genome Position: {record.genomicPosition}</div>
+                    {/* <div> Genome Position: {record.genomicPosition}</div> */}
                     
                 </React.Fragment>);
             } 
@@ -311,7 +311,6 @@ export class Scatterplot extends React.Component<Props, State> {
         this._currXScale = this._original_XScale;
         this._currYScale = this._original_YScale;
         const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
-        //console.log("New Scales: ", newScales);
         this.props.onZoom(newScales);
         this.redraw();
     }
@@ -412,7 +411,6 @@ export class Scatterplot extends React.Component<Props, State> {
 
     computeScales(rdRange: [number, number], width: number, height: number, 
                     bafRange?: [number, number], useLowerBound?: boolean) {
-        //console.log("Computing Scales");
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
         const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
@@ -531,7 +529,6 @@ export class Scatterplot extends React.Component<Props, State> {
             }
           }).on("end", () => {
                 let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                //console.log("New Scales: ", newScales);
                 self.props.onZoom(newScales);
             }
         );
@@ -597,7 +594,6 @@ export class Scatterplot extends React.Component<Props, State> {
             .append("g")
             .classed("eventrect", true)
             .append("rect")
-                .on("dblclick", e => console.log("Double click"))
                 .attr("x", PADDING.left)
                 .attr("y", PADDING.top)
                 .attr("width", width - PADDING.right - PADDING.left)
@@ -624,7 +620,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .yScale(self._currYScale)
                 pointSeries(newData);
             }
-
+            
             svg.select(".Centroids").remove();
             svg.select(".eventrect")
                     .append("g")

@@ -134,10 +134,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             domain[0] = implicitStart;
             domain[1] = implicitEnd;
         } else if (!chr) { // No chromosome specified: X domain is entire genome
-            // console.log("CHR NOT SPECIFIED");
             domain[1] = genome.getLength();
         } else { // Chromosome specified: X domain is length of one chromosome
-            // console.log("CHR SPECIFIED");
             domain[0] = genome.getChrStartMap()[chr];//genome.getImplicitCoordinates(new ChromosomeInterval(chr, 0, 1)).start;
             console.log("CHR START: ", genome.getChrStartMap()[chr]);
             domain[1] = domain[0] + genome.getLength(chr);
@@ -302,17 +300,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                // if(!chr) {
-                    
                     if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
                         self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                     } else {
-                        this.props.onLinearPlotZoom(null, null, false);
                         self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
                     }
-                    // self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]]);
-                    // self.props.onZoom({xScale: self._currXScale.domain(), yScale: self._currYScale.domain()});//[self._currXScale.domain()[0], self._currXScale.domain()[1]], yScale: self.c.domain()})
-                // }
             }
 
         );

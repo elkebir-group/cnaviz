@@ -264,7 +264,6 @@ export class DataWarehouse {
             setOfClustersInChr = new Set(clustersAssociatedWithChr);
         }
        
-
         let sampleSpecificCentroids : centroidPoint[] = [];
         for(const cluster of clustersAssociatedWithChr) { // Go through all filtered clusters
             if(setOfClustersInChr.has(cluster) && samplePts[cluster.valueOf()]) { // Check that the cluster appears when filtered by chr 
@@ -459,10 +458,12 @@ export class DataWarehouse {
         this.centroidPts = {};
         this.chrToClusters = {};
         for(const d of flattenNestedBins) {
-            if(this.chrToClusters[d["#CHR"]])
+            if(this.chrToClusters[d["#CHR"]]) {
                 this.chrToClusters[d["#CHR"]].add(String(d.CLUSTER));
-            else
-                this.chrToClusters[d["#CHR"]] = new Set([String(d.CLUSTER)]);
+                
+            } else {
+                this.chrToClusters[d["#CHR"]] = new Set([String(d.CLUSTER)]); 
+            }   
         }
 
         // Steps to find centroids (in a format that can be displayed in the table properly)
@@ -502,6 +503,7 @@ export class DataWarehouse {
                 sample: sampleDict
             };
             this.centroids.push(centroidTableRow);
+            
         }
         
         this.initializeCentroidDistMatrix();
