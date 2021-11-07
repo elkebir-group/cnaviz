@@ -119,10 +119,16 @@ export class SampleViz extends React.Component<Props, State> {
         (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
     }
 
-    handleLinearPlotZoom(genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) {
-        this.setState({implicitRange: genomicRange});
-        // let newScale = (!key) ? {xScale: yscale, yScale: this.state.scales.yScale} : {xScale: this.state.scales.xScale, yScale: yscale};
-        // this.setState({scales: newScale});
+    handleLinearPlotZoom(genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) {
+        if(reset) {
+            this.setState({implicitRange: null});
+            let newScale = {xScale: null, yScale: null};
+            this.setState({scales: newScale});
+        } else {
+            this.setState({implicitRange: genomicRange});
+            let newScale = (!key) ? {xScale: yscale, yScale: this.state.scales.yScale} : {xScale: this.state.scales.xScale, yScale: yscale};
+            this.setState({scales: newScale});
+        }
     }
 
     

@@ -21,7 +21,7 @@ interface Props {
     applyLog: boolean;
     displayMode: DisplayMode;
     width: number;
-    onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean) => void;
+    onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) => void;
     implicitStart: number | null;
     implicitEnd: number | null;
     onZoom: (newScales: any) => void;
@@ -60,6 +60,7 @@ export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
             implicitStart, implicitEnd, onZoom} = props;
+    // console.log("XSCALE: ", xScale);
     return <LinearPlot
                 data={data}
                 chr={chr}
