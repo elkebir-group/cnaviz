@@ -200,18 +200,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .tickValues(genome.getChromosomeStarts2(chrs, xScale.domain()[0], xScale.domain()[1]))
                 .tickFormat((unused, i) => findChrNumber(chrs[i].name));
         } else {
-            
-            // let nonImplicitXScale = d3.scaleLinear()
-            //     .domain([0, genome.getLength(chr)])
-            //     .range(xScale.range())
-            // if (this.props.implicitStart && this.props.implicitEnd) {
-            //     const selectedNonImplicitStart = genome.getChromosomeLocation(this.props.implicitStart);
-            //     const selectedNonImplicitEnd = genome.getChromosomeLocation(this.props.implicitEnd);
-            //     nonImplicitXScale = d3.scaleLinear()
-            //     .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
-            //     .range(xScale.range())
-            // }
-
             xAxis = d3.axisBottom(xScale);
         }
         
@@ -237,8 +225,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr("transform", `rotate(-90, ${PADDING.left- 30}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
             .attr("y", _.mean(yScale.range()));
-
-        
 
         let xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
@@ -276,6 +262,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 const t = d3.event.transform;
                 const k = t.k / z.k;
                 const point = center(d3.event);
+
                 // is it on an axis?
                 const doX = point[0] > xScale.range()[0];
                 const doY = point[1] < yScale.range()[0];
@@ -283,13 +270,12 @@ export class LinearPlot extends React.PureComponent<Props> {
                 if(displayMode === DisplayMode.zoom || !(doX && doY)) {
                     if (k === 1) {
                     // pure translation?
-                    
-                    doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
-                    doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
+                        doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
+                        doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
                     } else {
-                    // if not, we're zooming on a fixed point
-                    doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
-                    doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
+                        // if not, we're zooming on a fixed point
+                        doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
+                        doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
                     }
                 }
                 z = t;
@@ -298,11 +284,11 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                    if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
-                        self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
-                    } else {
-                        self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
-                    }
+                if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                    self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
+                } else {
+                    self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
+                }
             }
 
         );
@@ -332,8 +318,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         let fillColor = fc.webglFillColor().value(colorFill).data(this.props.data);
         let pointSeries = fc
                 .seriesWebglPoint()
-                .xScale(xScale)
-                .yScale(yScale)
+                // .xScale(xScale)
+                // .yScale(yScale)
                 .size(3)
                 .crossValue((d : any) => genome.getImplicitCoordinates(GenomicBinHelpers.toChromosomeInterval(d)).getCenter())
                 .mainValue((d : any) => d[dataKeyToPlot])
@@ -341,6 +327,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         pointSeries.decorate((program:any) => fillColor(program));
 
         function redraw() {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.clearColor(255,255,255,1);
             const yr = ty().rescaleY(yScale);
         
             gy.call(yAx, yr);
@@ -361,6 +349,23 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         redraw();
+        // const yr = ty().rescaleY(yScale);
+        
+        // gy.call(yAx, yr);
+        // self._currYScale = yr;
+        // if(!chr) {
+        //     const xr = tx().rescaleX(xScale);
+        //     gx.call(xAx , xr);
+        //     self._currXScale = xr;
+        //     pointSeries.xScale(xr).yScale(yr);
+        // } else {
+        //     const xr = tx().rescaleX(xScale);
+        //     gx.call(xAx2 , xr);
+        //     self._currXScale = xr;
+        //     pointSeries.xScale(xr).yScale(yr);
+        // }
+        
+        // pointSeries(data);
 
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {

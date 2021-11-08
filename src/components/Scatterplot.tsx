@@ -325,19 +325,29 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        
-        if(this.props.scales.xScale  // sync scales
-            && this.props.scales.yScale 
-            && prevProps.scales.xScale 
-            &&  prevProps.scales.yScale 
-            && (this.props.scales.xScale[0] !== prevProps.scales.xScale[0] 
-                && this.props.scales.xScale[1] !== prevProps.scales.xScale[1]
-                && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
-                && this.props.scales.yScale[1] !== prevProps.scales.yScale[1]) ) {  
+        if(!this.props.scales.xScale && !this.props.scales.yScale && prevProps.scales.xScale && prevProps.scales.yScale) {
+            this.resetZoom();
+        } else if((this.props.scales.xScale  // sync scales
+            && prevProps.scales.xScale
+            && this.props.scales.xScale[0] !== prevProps.scales.xScale[0] 
+            && this.props.scales.xScale[1] !== prevProps.scales.xScale[1]) 
+            || (this.props.scales.xScale  && !prevProps.scales.xScale)) {
+                console.log("X SCALE UPDATED");
                 this._currXScale.domain(this.props.scales.xScale);
-                this._currYScale.domain(this.props.scales.yScale);
+                if(this.props.scales.yScale) {
+                    this._currYScale.domain(this.props.scales.yScale);
+                }
                 this.redraw();
-
+        } else if((this.props.scales.yScale &&  prevProps.scales.yScale 
+            && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
+            && this.props.scales.yScale[1] !== prevProps.scales.yScale[1])
+            || (this.props.scales.yScale  && !prevProps.scales.yScale)) {
+            console.log("Y SCALE UPDATED");
+            if(this.props.scales.xScale) {
+                this._currXScale.domain(this.props.scales.xScale);
+            }
+            this._currYScale.domain(this.props.scales.yScale);
+            this.redraw();
         } else if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
             this.brushedNodes = new Set();
@@ -605,6 +615,8 @@ export class Scatterplot extends React.Component<Props, State> {
        
 
         function redraw() {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.clearColor(255,255,255,1);
             const xr = tx().rescaleX(xScale);
             const yr = ty().rescaleY(yScale);
         
