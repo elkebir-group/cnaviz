@@ -34,6 +34,8 @@ interface Props {
     onToggleLog: () => void;
     onToggleScatter: () => void;
     onToggleLinear: () => void;
+    onToggleShowCentroids: () => void;
+    showCentroids: boolean;
     showScatter: boolean;
     showLinear: boolean;
     syncScales: boolean;
@@ -104,7 +106,7 @@ function Sidebar(props: Props) {
               Import with Clustering
             </label>
           </div>
-          
+
           <div className="row-contents">
             <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
           </div>
@@ -141,10 +143,16 @@ function Sidebar(props: Props) {
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
           </div>
-          <div className= "row-contents" >
+          {/* <div className= "row-contents" >
             <label>
               <span className="App-CheckBox-explanation">Sync Scales: </span>
               <input type="checkbox" onClick={props.onToggleSync} checked={props.syncScales} readOnly/>
+            </label>
+          </div> */}
+          <div className= "row-contents" >
+            <label>
+              <span className="App-CheckBox-explanation">Show Centroids: </span>
+              <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
             </label>
           </div>
 

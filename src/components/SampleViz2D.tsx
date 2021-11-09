@@ -47,7 +47,8 @@ interface Props {
     onClusterSelected: any;
     implicitRange: [number, number] | null;
     scales: any;
-    centroidPts: {cluster: number, point: [number, number]}[]//[number, number][];
+    centroidPts: {cluster: number, point: [number, number]}[]
+    showCentroids: boolean;
 }
 
 interface State {
@@ -100,7 +101,8 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, chr, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
-                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, selectedSample, applyLog, implicitRange, scales, centroidPts} = this.props;
+                brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
+                selectedSample, applyLog, implicitRange, scales, centroidPts, showCentroids} = this.props;
 
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
@@ -130,6 +132,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onClusterSelected ={this.props.onClusterSelected}
                     scales={scales}
                     centroidPts={centroidPts}
+                    showCentroids={showCentroids}
                     />
             </DivWithBullseye>
         </div>;

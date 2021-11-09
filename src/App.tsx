@@ -109,23 +109,12 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 })
             })
 
-            // let newChrNameLength : any= [];
-            // const groupedByChr = _.groupBy(parsed, "#CHR");
-            // for(const [chr, binsForChr] of Object.entries(groupedByChr)) {
-            //     const chrRange = [0, _.maxBy(binsForChr, "END").END];
-            //     //_.minBy(binsForChr, "START").START
-            //     console.log(chrRange);
-            //     newChrNameLength.push({chr: chr, length: chrRange[1] - chrRange[0]});
-            // }
-
-            // console.log("NEW CHR NAME LEN: ", newChrNameLength);
-
             genome = new Genome(chrNameLength);
             
             for (const bin of parsed) {
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
-            console.log("PARSED: ", parsed.length);
+
             resolve(parsed);
         });
     })
@@ -211,9 +200,12 @@ interface State {
 
     showCentroidTable: boolean;
 
+    showCentroids: boolean;
+
     syncScales: boolean;
 
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
+
 }
 
 
@@ -263,6 +255,7 @@ export class App extends React.Component<{}, State> {
             showDirections: false,
             showLog: false,
             showCentroidTable: false,
+            showCentroids: false,
             syncScales: false,
             scales: {xScale: null, yScale: null}
         };
@@ -292,6 +285,7 @@ export class App extends React.Component<{}, State> {
         this.goBackToPreviousCluster = this.goBackToPreviousCluster.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
         this.updatedClusterTable = this.updatedClusterTable.bind(this);
+        this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -511,6 +505,10 @@ export class App extends React.Component<{}, State> {
         this.setState({syncScales: !this.state.syncScales})
     }
 
+    onToggleShowCentroids() {
+        this.setState({showCentroids: !this.state.showCentroids})
+    }
+
     goBackToPreviousCluster() {
         this.state.indexedData.undoClusterUpdate();
         this.setState({indexedData: this.state.indexedData})
@@ -523,6 +521,8 @@ export class App extends React.Component<{}, State> {
     updatedClusterTable() {
         // this.setState({updatingStatus: ProcessingStatus.done});
     }
+
+
 
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
@@ -560,7 +560,8 @@ export class App extends React.Component<{}, State> {
                 clusterTableData: clusterTableData,
                 applyLog: this.state.applyLog,
                 onClusterSelected: this.handleClusterSelected,
-                onUndoClick: this.goBackToPreviousCluster
+                onUndoClick: this.goBackToPreviousCluster,
+                showCentroids: this.state.showCentroids
             };
 
             chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -627,6 +628,8 @@ export class App extends React.Component<{}, State> {
                     syncScales={this.state.syncScales}
                     updatedClusterTable = {this.updatedClusterTable}
                     logData = {actions}
+                    onToggleShowCentroids= {this.onToggleShowCentroids}
+                    showCentroids= {this.state.showCentroids}
                 />
             </div>
             

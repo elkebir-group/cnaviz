@@ -8,7 +8,7 @@ import { CurveState } from "../model/CurveState";
 
 import { SampleViz2D } from "./SampleViz2D";
 import { SampleViz1D } from "./SampleViz1D";
-import {HeatMap} from "./TestHeatMap";
+import {HeatMap} from "./HeatMap";
 
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
@@ -56,6 +56,7 @@ interface Props {
     syncScales: boolean;
     handleZoom: (newScales: any) => void;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
+    showCentroids: boolean;
 }
 
 interface State {
@@ -229,7 +230,8 @@ export class SampleViz extends React.Component<Props, State> {
                         rdRange={rdRange}
                         implicitRange={this.state.implicitRange}
                         scales={(syncScales) ? this.props.scales : this.state.scales}
-                        centroidPts={data.getCentroidPoints(selectedSample, this.props.chr)}/>
+                        centroidPts={data.getCentroidPoints(selectedSample, this.props.chr)}
+                        />
                 }
                 {showLinearPlot && <SampleViz1D 
                     {...this.props}  
@@ -244,12 +246,13 @@ export class SampleViz extends React.Component<Props, State> {
                     displayMode={dispMode}
                     width={showSidebar ? 600 : 600} 
                     implicitRange={this.state.implicitRange}/>}
-                {/* <HeatMap
-                    width={450 - 30 - 30}
-                    height={450 - 30 - 30}
-                    data={data.getCentroidDistMatrix(this.state.selectedSample)}
-                ></HeatMap> */}
             </div>
+            
+            <HeatMap
+                width={450 - 30 - 30}
+                height={450 - 30 - 30}
+                data={data.getCentroidDistMatrix(this.state.selectedSample)}
+            ></HeatMap>
 
             {/* <div className="SampleViz-clusters"> */}
             {(showLinearPlot || showScatterPlot) &&
@@ -260,8 +263,8 @@ export class SampleViz extends React.Component<Props, State> {
                     onClusterColorChange={() => {}}
                     currentFilters={["-1"]}
                     colOneName={"Cluster ID"}
-                    colTwoName={"% of cluster"}
-                    colThreeName={"% of selection"}
+                    colTwoName={"Cluster (%)"}
+                    colThreeName={"Selection (%)"}
                     cols={""}
                     expandable={false}
                     selectable={false}

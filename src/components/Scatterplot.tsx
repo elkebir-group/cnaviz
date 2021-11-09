@@ -67,6 +67,7 @@ interface Props {
     onClusterSelected: any;
     scales: any;
     centroidPts: {cluster: number, point: [number, number]}[];
+    showCentroids: boolean;
 }
 
 interface State {
@@ -354,7 +355,7 @@ export class Scatterplot extends React.Component<Props, State> {
         } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
             this.forceUnhover();
             this.forceHover(this.props.hoveredLocation); 
-        } else if (this.propsDidChange(prevProps, ["displayMode", "colors", "brushedBins", "width", "height"])) {
+        } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height"])) {
             let data : GenomicBin[] = this.props.data;
             // Update quadtree so that when hovering works on new points that appear 
             // (when assigning to an existing cluster - all the points in that cluster show up even if it has been filtered out)
@@ -633,8 +634,10 @@ export class Scatterplot extends React.Component<Props, State> {
                 pointSeries(newData);
             }
             
+
             svg.select(".Centroids").remove();
-            svg.select(".eventrect")
+            if(self.props.showCentroids) {
+                svg.select(".eventrect")
                     .append("g")
                     .attr("clip-path", "url(#clip)")
                     .classed("Centroids", true)
@@ -651,6 +654,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("transform", function(d) {
                         return "translate(" + self._currXScale(d.point[0]) + "," + self._currYScale(d.point[1]) + ")"; 
                     });
+            }
         }
         
         this._canvas.width = width;

@@ -58,7 +58,7 @@ body {
     display: flex;
     /* grid-template-columns: repeat(2, auto); */
     /* grid-auto-rows: auto; */
-    /* justify-content: center; */
+    justify-content: center;
     flex-direction: row;
     
 }
