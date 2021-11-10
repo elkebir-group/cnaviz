@@ -11,6 +11,7 @@ import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import { DisplayMode } from "../App";
 import "./LinearPlot.css";
+import { Gene } from "../model/Gene";
 
 const visutils = require('vis-utils');
 const SCALES_CLASS_NAME = "linearplot-scale";
@@ -54,6 +55,7 @@ interface Props {
     displayMode: DisplayMode;
     onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) => void;
     onZoom: (newScales: any) => void;
+    driverGenes: Gene[] | null;
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -118,7 +120,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 this.props.onLinearPlotZoom(null, null, false);
             }
 
-        } else if (this.propsDidChange(prevProps, ["displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
+        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
@@ -168,7 +170,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
-            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
+            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode, driverGenes} = this.props;
 
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
         const yScale =
@@ -326,6 +328,31 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .context(gl);
         pointSeries.decorate((program:any) => fillColor(program));
 
+        svg
+        .append("clipPath")
+        .attr("id", "clip2")
+        .append("rect")
+            .attr("x", PADDING.left)
+            .attr("y", PADDING.top)
+            .attr("width", width)
+            .attr("height", height)
+            .attr("fill", "red");
+
+        // Create event-rect that allows for svg points to be overlayed under mouse pointer
+        console.log(width);
+        console.log(height);
+        var event_rect = svg
+            .append("g")
+            .classed("eventrect", true)
+            .append("rect")
+                .attr("x", PADDING.left)
+                .attr("y", PADDING.top)
+                .attr("width", width - PADDING.right - PADDING.left)
+                .attr("height", height - PADDING.bottom - PADDING.top)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .attr("clip-path", "url(#clip2)");
+
         function redraw() {
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.clearColor(255,255,255,1);
@@ -346,26 +373,30 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
             
             pointSeries(data);
+            if(driverGenes) {
+                
+                svg.select(".Drivers").remove();
+                svg.select(".eventrect")
+                        .append("g")
+                        .attr("clip-path", "url(#clip2)")
+                        .classed("Drivers", true)
+                        .selectAll("path")
+                        .data(driverGenes)
+                        .enter()
+                        .append("path")
+                        .attr("class", "point")
+                        .attr("d", d3.symbol().type(d3.symbolCross))
+                        .attr("fill", "red")
+                        .attr("fill-opacity", 1)
+                        .attr("stroke-width", 2)
+                        .attr("stroke", "black") 
+                        .attr("transform", function(d) {
+                            return "translate(" + self._currXScale(genome.getImplicitCoordinates(d.location).getCenter()) + "," + self._currYScale(yr.domain()[0]) + ")"; 
+                        });
+            }
         }
 
         redraw();
-        // const yr = ty().rescaleY(yScale);
-        
-        // gy.call(yAx, yr);
-        // self._currYScale = yr;
-        // if(!chr) {
-        //     const xr = tx().rescaleX(xScale);
-        //     gx.call(xAx , xr);
-        //     self._currXScale = xr;
-        //     pointSeries.xScale(xr).yScale(yr);
-        // } else {
-        //     const xr = tx().rescaleX(xScale);
-        //     gx.call(xAx2 , xr);
-        //     self._currXScale = xr;
-        //     pointSeries.xScale(xr).yScale(yr);
-        // }
-        
-        // pointSeries(data);
 
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
@@ -389,7 +420,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
                     const {selection} = d3.event;
-                    // if(selection) {
                     if(selection && selection[0][0] !== selection[1][0] && selection[0][1] !== selection[1][1]) {
                         let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
                             function(d: GenomicBin){
@@ -512,7 +542,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         width: width-PADDING.left - PADDING.right, 
                         height: height-PADDING.top-PADDING.bottom}} />
             
-            <svg ref={node => this._svg = node} width={width} height={height} />
+            <svg ref={node => this._svg = node} width={width} height={height}/>
             <div className="LinearPlot-tools">
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
                 && <button onClick={() => {

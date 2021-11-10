@@ -8,6 +8,7 @@ import "./SampleViz.css";
 import { MergedGenomicBin } from "../model/BinMerger";
 import { GenomicBin } from "../model/GenomicBin";
 import { DisplayMode } from "../App";
+import { Gene } from "../model/Gene";
 
 interface Props {
     data: GenomicBin[];
@@ -30,6 +31,7 @@ interface Props {
     onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) => void;
     onZoom: (newScales: any) => void;
     implicitRange: [number, number] | null;
+    driverGenes: Gene[] | null;
 }
 
 interface State {
@@ -52,7 +54,7 @@ export class SampleViz1D extends React.Component<Props, State> {
 
     render() {
         const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
-             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom} = this.props;
+             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes} = this.props;
         const selectedSample = this.props.selectedSample;
 
         let visualization: React.ReactNode = null;
@@ -77,7 +79,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
                     implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}
                     onZoom={onZoom}
-
+                    driverGenes={driverGenes}
                     />
                     
                 <div className="SampleViz-separator" />
@@ -99,8 +101,9 @@ export class SampleViz1D extends React.Component<Props, State> {
                     onLinearPlotZoom={onLinearPlotZoom}
                     onZoom={onZoom}
                     implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
-                    implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}/>
-
+                    implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}
+                    driverGenes={driverGenes}/>
+                    
             </DivWithBullseye>;
 
         return <div className="SampleViz-linear" >

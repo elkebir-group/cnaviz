@@ -29,6 +29,7 @@ interface Props {
     data: readonly GenomicBin[];
     logData: any[];
     onFileChosen: any;
+    onDriverFileChosen: any;
     chosenFile: string;
     show: boolean;
     onToggleLog: () => void;
@@ -104,6 +105,16 @@ function Sidebar(props: Props) {
                 props.onFileChosen(event, true)
               }/>
               Import with Clustering
+            </label>
+          </div>
+          
+          <div className="row-contents" >
+            <label className="custom-file-upload">
+              <input type="file" id="fileUpload" onChange={
+                (event: any) =>
+                props.onDriverFileChosen(event, true)
+              }/>
+              Import Driver Genes
             </label>
           </div>
 

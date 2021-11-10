@@ -5,6 +5,7 @@ import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";
 import { MergedGenomicBin } from "../model/BinMerger";
+import { Gene } from "../model/Gene";
 
 interface Props {
     data: GenomicBin[];
@@ -25,12 +26,13 @@ interface Props {
     implicitStart: number | null;
     implicitEnd: number | null;
     onZoom: (newScales: any) => void;
+    driverGenes: Gene[] | null;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
         brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
-        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom} = props;
+        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes} = props;
 
     return <LinearPlot
                 data={data}
@@ -53,13 +55,14 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
                 onLinearPlotZoom={onLinearPlotZoom}
                 implicitStart={implicitStart}
                 implicitEnd={implicitEnd}
+                driverGenes={driverGenes}
         />
 }
 
 export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
-            implicitStart, implicitEnd, onZoom} = props;
+            implicitStart, implicitEnd, onZoom, driverGenes} = props;
     // console.log("XSCALE: ", xScale);
     return <LinearPlot
                 data={data}
@@ -82,5 +85,6 @@ export function BAFLinearPlot(props: Props) {
                 implicitStart={implicitStart}
                 implicitEnd={implicitEnd}
                 onZoom={onZoom}
+                driverGenes={driverGenes}
         />;
 }

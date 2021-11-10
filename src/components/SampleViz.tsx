@@ -17,6 +17,7 @@ import {DisplayMode, ProcessingStatus} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { isExpressionWithTypeArguments } from "typescript";
+import { Gene } from "../model/Gene";
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -57,6 +58,7 @@ interface Props {
     handleZoom: (newScales: any) => void;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
     showCentroids: boolean;
+    driverGenes: Gene[] | null;
 }
 
 interface State {
@@ -247,7 +249,7 @@ export class SampleViz extends React.Component<Props, State> {
                     width={showSidebar ? 600 : 600} 
                     implicitRange={this.state.implicitRange}/>}
             </div>
-            
+
             <HeatMap
                 width={450 - 30 - 30}
                 height={450 - 30 - 30}

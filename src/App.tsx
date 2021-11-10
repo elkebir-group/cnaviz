@@ -14,6 +14,7 @@ import {Genome} from "./model/Genome";
 import Sidebar from "./components/Sidebar";
 import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
+import { Gene } from "./model/Gene";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -120,6 +121,33 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
     })
 }
 
+function parseDriverGenes(data: string): Promise<Gene[]> {
+    return new Promise((resolve, reject) => {
+        parse(data, {
+            cast: true,
+            columns: true,
+            delimiter: "\t",
+            skip_empty_lines: true,
+            // skip_lines_with_error: true
+        }, (error, parsed) => {
+
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            for(const gene of parsed) {
+                const components : string[] = gene["Genome Location"].split(":");
+                const start_end = components[1].split("-");
+                let interval : ChromosomeInterval = new ChromosomeInterval(components[0], Number(start_end[0]), Number(start_end[1]));
+                gene.location = interval;
+            }
+
+            resolve(parsed);
+        });
+    })
+}
+
 /**
  * Possible states of processing input data.
  */
@@ -206,6 +234,7 @@ interface State {
 
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
 
+    driverGenes: Gene[] | null;
 }
 
 
@@ -257,10 +286,13 @@ export class App extends React.Component<{}, State> {
             showCentroidTable: false,
             showCentroids: false,
             syncScales: false,
-            scales: {xScale: null, yScale: null}
+            scales: {xScale: null, yScale: null},
+            driverGenes: null
+
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
+        this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
@@ -365,6 +397,32 @@ export class App extends React.Component<{}, State> {
             indexedData: indexedData,
             processingStatus: ProcessingStatus.done
         });
+    }
+
+    async handleDriverFileChosen(event: React.ChangeEvent<HTMLInputElement>) {
+        const files = event.target.files;
+        if (!files || !files[0]) {
+            return;
+        }
+
+        let contents = "";
+        try {
+            contents = await getFileContentsAsString(files[0]);
+        } catch (error) {
+            console.error(error);
+            return;
+        }
+        
+        let driverGenes = null;
+        try {
+            const parsed = await parseDriverGenes(contents); //parseGenomicBins(contents, this.state.applyLog, );
+            driverGenes = parsed;
+
+        } catch (error) {
+            console.error(error);
+            return;
+        }
+        this.setState({driverGenes: driverGenes});
     }
     
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -561,7 +619,8 @@ export class App extends React.Component<{}, State> {
                 applyLog: this.state.applyLog,
                 onClusterSelected: this.handleClusterSelected,
                 onUndoClick: this.goBackToPreviousCluster,
-                showCentroids: this.state.showCentroids
+                showCentroids: this.state.showCentroids,
+                driverGenes: this.state.driverGenes
             };
 
             chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
@@ -630,6 +689,7 @@ export class App extends React.Component<{}, State> {
                     logData = {actions}
                     onToggleShowCentroids= {this.onToggleShowCentroids}
                     showCentroids= {this.state.showCentroids}
+                    onDriverFileChosen={this.handleDriverFileChosen}
                 />
             </div>
             
