@@ -8,8 +8,10 @@
   z-index: 1;
   background-color: white;
   padding-left: 4px;
-  /* overflow-y: auto; */
+  display: grid;
+  grid-template-rows: auto auto auto auto;
 }
+
 .sidebar.active {
   left: 0;
 }
@@ -18,16 +20,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: 60%;
-  padding: 2px;
 }
 
 .contents2 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: 40%;
-  padding: 2px;
   overflow-y: auto;
 }
 
@@ -45,8 +43,6 @@ input[type="file"] {
   display: none;
 }
 
-
-
 .custom-file-upload {
   display: inline-block;
   cursor: pointer;
@@ -56,7 +52,6 @@ input[type="file"] {
   padding: 3px;
   align-items: center;
 }
-
 
 .title-bar {
   border-top: 2px solid black;
@@ -92,6 +87,5 @@ input[type="file"] {
 }
 
 .clustertable {
-  top: 60%;
   height: 40%;
 }

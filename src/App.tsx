@@ -128,7 +128,7 @@ function parseDriverGenes(data: string): Promise<Gene[]> {
             columns: true,
             delimiter: "\t",
             skip_empty_lines: true,
-            // skip_lines_with_error: true
+            skip_lines_with_error: true
         }, (error, parsed) => {
 
             if (error) {
@@ -417,6 +417,7 @@ export class App extends React.Component<{}, State> {
         try {
             const parsed = await parseDriverGenes(contents); //parseGenomicBins(contents, this.state.applyLog, );
             driverGenes = parsed;
+            
 
         } catch (error) {
             console.error(error);

@@ -83,7 +83,6 @@ function Sidebar(props: Props) {
       
       
       <div className="contents">
-
         <h1>CNA-Viz</h1>
         <div className="title-bar"></div>
         <h2>Import/Export</h2>
@@ -166,6 +165,7 @@ function Sidebar(props: Props) {
               <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
             </label>
           </div>
+
 
           <div className= "row-contents" >
             <ToggleButton

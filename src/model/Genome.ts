@@ -146,6 +146,8 @@ export class Genome {
     getImplicitCoordinates(location: ChromosomeInterval): OpenInterval {
         const {chr, start, end} = location;
         if ( !(chr in this._chrStarts) ) {
+            console.log(this._chromosomes);
+            console.log(this._chrStarts);
             throw new Error(`Chromosome "${chr}" not in this genome`);
         }
         const chrStart = this._chrStarts[chr];

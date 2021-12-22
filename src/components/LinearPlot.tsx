@@ -73,6 +73,8 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _currYScale: d3.ScaleLinear<number, number>;
     private _original_XScale: d3.ScaleLinear<number, number>;
     private _original_YScale: d3.ScaleLinear<number, number>;
+    private previewDriver: Gene | null;
+    private lockedDrivers: Set<Gene>;
 
     constructor(props: Props) {
         super(props);
@@ -89,7 +91,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             .range([this.props.height - PADDING.bottom, PADDING.top]);
         this._original_XScale = this._currXScale;
         this._original_YScale = this._currYScale;
-    }
+        this.previewDriver = null;
+        this.lockedDrivers = new Set();
+    } 
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
@@ -320,8 +324,6 @@ export class LinearPlot extends React.PureComponent<Props> {
         let fillColor = fc.webglFillColor().value(colorFill).data(this.props.data);
         let pointSeries = fc
                 .seriesWebglPoint()
-                // .xScale(xScale)
-                // .yScale(yScale)
                 .size(3)
                 .crossValue((d : any) => genome.getImplicitCoordinates(GenomicBinHelpers.toChromosomeInterval(d)).getCenter())
                 .mainValue((d : any) => d[dataKeyToPlot])
@@ -329,18 +331,16 @@ export class LinearPlot extends React.PureComponent<Props> {
         pointSeries.decorate((program:any) => fillColor(program));
 
         svg
-        .append("clipPath")
-        .attr("id", "clip2")
-        .append("rect")
-            .attr("x", PADDING.left)
-            .attr("y", PADDING.top)
-            .attr("width", width)
-            .attr("height", height)
-            .attr("fill", "red");
+            .append("clipPath")
+            .attr("id", "clip2")
+            .append("rect")
+                .attr("x", PADDING.left)
+                .attr("y", PADDING.top)
+                .attr("width", width)
+                .attr("height", height)
+                .attr("fill", "red");
 
         // Create event-rect that allows for svg points to be overlayed under mouse pointer
-        console.log(width);
-        console.log(height);
         var event_rect = svg
             .append("g")
             .classed("eventrect", true)
@@ -352,6 +352,15 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .style("fill", "none")
                 .style("pointer-events", "all")
                 .attr("clip-path", "url(#clip2)");
+
+        var mouseover = function(d : Gene) {
+            self.previewDriver = d;
+        }
+
+        var mouseleave = function(d : Gene) {
+            self.previewDriver = null;
+        }
+
 
         function redraw() {
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -380,19 +389,25 @@ export class LinearPlot extends React.PureComponent<Props> {
                         .append("g")
                         .attr("clip-path", "url(#clip2)")
                         .classed("Drivers", true)
-                        .selectAll("path")
-                        .data(driverGenes)
-                        .enter()
-                        .append("path")
-                        .attr("class", "point")
-                        .attr("d", d3.symbol().type(d3.symbolCross))
-                        .attr("fill", "red")
-                        .attr("fill-opacity", 1)
-                        .attr("stroke-width", 2)
-                        .attr("stroke", "black") 
-                        .attr("transform", function(d) {
-                            return "translate(" + self._currXScale(genome.getImplicitCoordinates(d.location).getCenter()) + "," + self._currYScale(yr.domain()[0]) + ")"; 
-                        });
+                        .selectAll("circle")
+                        // .selectAll("path")
+                            .data(driverGenes)
+                            .enter()
+                            .append("circle")
+                            // .append("path")
+                            .attr("class", "point")
+                            .attr("d", d3.symbol().type(d3.symbolCircle))
+                            .attr("fill", "red")
+                            .attr("fill-opacity", 1)
+                            .attr("stroke-width", 2)
+                            .attr("r", 2)
+                            // .attr("stroke", "black") 
+                            .attr("transform", function(d) {
+                                return "translate(" + self._currXScale(genome.getImplicitCoordinates(d.location).getCenter()) + "," + self._currYScale(yr.domain()[0]) + ")"; 
+                            })
+                            .on("mouseover", mouseover)
+                            .on("mouseleave", mouseleave )
+                            .on("click", d => (self.lockedDrivers.has(d)) ? self.lockedDrivers.delete(d) : self.lockedDrivers.add(d))   
             }
         }
 
@@ -473,7 +488,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
                         }
                     } catch (error) {}
-                    // this.redraw();
                 })
 
             svg.append('g')
@@ -528,8 +542,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                 style={{position: "relative"}}
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
-            >   
+            >
             {this.renderHighlight()}
+            {this.renderTooltip()}
+            {this.renderLockedDrivers()}
             <canvas
                 ref={node => this._canvas = node}
                 width={width}
@@ -551,5 +567,95 @@ export class LinearPlot extends React.PureComponent<Props> {
                 >Reset View</button>}
             </div>
         </div>;
+    }
+
+    renderLockedDrivers() {
+        const {driverGenes, hoveredLocation, dataKeyToPlot, width, genome, chr, height} = this.props;
+        const drivers = [...this.lockedDrivers];
+
+        return (drivers.map(driver => {
+            const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+            const implicitCoords = genome.getImplicitCoordinates(driver.location);
+            const start = xScale(implicitCoords.start) || 0;
+            const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
+            const driverSymbol = driver.symbol;
+            const contents = <React.Fragment>
+                                <div> {driverSymbol} </div>
+                            </React.Fragment>;
+            if(start > PADDING.left && start < width - PADDING.right) {
+                return (
+                    <div>
+                        <div style={{
+                            position: "absolute",
+                            left: start-20,
+                            bottom: height,
+                            border: "1px solid rgba(0,0,0,0)",
+                            zIndex: 0
+                        }}>
+                            {contents}
+                        </div>
+                        <div style={{
+                            position: "absolute",
+                            left: start,
+                            width: boxWidth,
+                            height: "75%",
+                            backgroundColor: "red",
+                            border: "1px solid rgba(255,255,0,0.7)",
+                            zIndex: 0
+                        }} />   
+                </div>
+                )
+            }
+        }
+        ))
+    }
+
+    renderTooltip() {
+        const {driverGenes, hoveredLocation, dataKeyToPlot, width, genome, chr, height} = this.props;
+
+        if (!hoveredLocation) {
+            return null;
+        }
+
+        if(!driverGenes) {
+            return null;
+        }
+
+        if(!this.previewDriver) {
+            return null;
+        }
+
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+        const implicitCoords = genome.getImplicitCoordinates(this.previewDriver.location);
+        const start = xScale(implicitCoords.start) || 0;
+        const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
+        const driverSymbol = this.previewDriver.symbol;
+        console.log(driverSymbol)
+        const contents = <React.Fragment>
+                            <div> {driverSymbol} </div>
+                        </React.Fragment>
+
+        return (
+            <div>
+                <div style={{
+                    position: "absolute",
+                    left: start-20,
+                    bottom: height,
+                    border: "1px solid rgba(0,0,0,0)",
+                    zIndex: 0
+                }}>
+                    {contents}
+                </div>
+                <div style={{
+                    position: "absolute",
+                    left: start,
+                    width: boxWidth,
+                    height: "75%",
+                    backgroundColor: "red",
+                    border: "1px solid rgba(255,255,0,0.7)",
+                    zIndex: 0
+                }} />   
+            </div>
+        )
     }
 }
