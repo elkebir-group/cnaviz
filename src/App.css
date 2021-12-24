@@ -85,6 +85,21 @@ body {
     overflow: auto;
 }
 
+.Directions2 {
+    position: fixed;
+    top: 25%;
+    left: 25%;
+    width: 50%;
+    height: 50%;
+    padding: 16px;
+    border: 16px solid rgb(81, 47, 173);
+    background-color: rgb(255, 255, 255);
+    z-index:1002;
+    overflow: auto;
+    display: flex;
+    justify-content: right;
+}
+
 .black_overlay{
     position: fixed;
     top: 0%;

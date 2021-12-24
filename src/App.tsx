@@ -15,6 +15,7 @@ import Sidebar from "./components/Sidebar";
 import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
+import { BarPlot } from "./components/BarPlot";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -235,6 +236,8 @@ interface State {
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
 
     driverGenes: Gene[] | null;
+
+    showSilhouttes: boolean;
 }
 
 
@@ -287,8 +290,8 @@ export class App extends React.Component<{}, State> {
             showCentroids: false,
             syncScales: false,
             scales: {xScale: null, yScale: null},
-            driverGenes: null
-
+            driverGenes: null,
+            showSilhouttes: false
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -322,20 +325,22 @@ export class App extends React.Component<{}, State> {
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key == "z") {
-                self.setState({displayMode: DisplayMode.zoom})
+                self.setState({displayMode: DisplayMode.zoom});
             } else if (d3.event.key == "b") {
-                self.setState({displayMode: DisplayMode.select})
+                self.setState({displayMode: DisplayMode.select});
             } else if(d3.event.key == "a") {
-                self.setState({displayMode: DisplayMode.boxzoom})
+                self.setState({displayMode: DisplayMode.boxzoom});
             } else if(d3.event.key == "e") {
-                self.setState({displayMode: DisplayMode.erase})
+                self.setState({displayMode: DisplayMode.erase});
             } else if(d3.event.keyCode == 32) {
                 self.onSideBarChange(!self.state.sidebar);
             } else if(d3.event.key == "l") {
-                self.setState({showLog: !self.state.showLog})
+                self.setState({showLog: !self.state.showLog});
             } else if(d3.event.key == "c") {
-                self.setState({showCentroidTable: !self.state.showCentroidTable})
-            }   
+                self.setState({showCentroidTable: !self.state.showCentroidTable});
+            } else if(d3.event.key == "s") {
+                self.setState({showSilhouttes: !self.state.showSilhouttes});
+            }
         })
 
         d3.select("body").on("keydown", function() {
@@ -466,7 +471,7 @@ export class App extends React.Component<{}, State> {
 
     handleAddSampleClick() {
         const newShowComponents = this.state.showComponents.concat([true]);
-        this.setState({showComponents: newShowComponents})
+        this.setState({showComponents: newShowComponents});
         this.setState({sampleAmount: this.state.sampleAmount + 1});
     }
 
@@ -553,28 +558,28 @@ export class App extends React.Component<{}, State> {
     }
 
     onToggleScatter(){
-        this.setState({showScatterPlot: !this.state.showScatterPlot})
+        this.setState({showScatterPlot: !this.state.showScatterPlot});
     }
 
     onToggleLinear(){
-        this.setState({showLinearPlot: !this.state.showLinearPlot})
+        this.setState({showLinearPlot: !this.state.showLinearPlot});
     }
 
     onToggleSync() {
-        this.setState({syncScales: !this.state.syncScales})
+        this.setState({syncScales: !this.state.syncScales});
     }
 
     onToggleShowCentroids() {
-        this.setState({showCentroids: !this.state.showCentroids})
+        this.setState({showCentroids: !this.state.showCentroids});
     }
 
     goBackToPreviousCluster() {
         this.state.indexedData.undoClusterUpdate();
-        this.setState({indexedData: this.state.indexedData})
+        this.setState({indexedData: this.state.indexedData});
     }
 
     handleZoom(newScales: any) {
-        this.setState({scales: newScales})
+        this.setState({scales: newScales});
     }
 
     updatedClusterTable() {
@@ -744,6 +749,16 @@ export class App extends React.Component<{}, State> {
                             cols={[{name: "Cluster", type: 'key'}, {name: "Sample", type: 'sample'}, {name: "Centroid", type: 'centroid'}]}
                         ></ClusterTable>
 
+                    </div> }
+                
+                {this.state.showSilhouttes && <div className="black_overlay"></div> }
+                {this.state.showSilhouttes && 
+                    <div className="Directions2">
+                        <BarPlot
+                            width={460}
+                            height={200}
+                            data={indexedData.recalculateSilhouttes()}
+                        ></BarPlot>
                     </div> }
             </div>
             

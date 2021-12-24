@@ -18,6 +18,7 @@ import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { isExpressionWithTypeArguments } from "typescript";
 import { Gene } from "../model/Gene";
+import { BarPlot } from "./BarPlot";
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -250,13 +251,14 @@ export class SampleViz extends React.Component<Props, State> {
                     implicitRange={this.state.implicitRange}/>}
             </div>
 
-            <HeatMap
+            {/* <HeatMap
                 width={450 - 30 - 30}
                 height={450 - 30 - 30}
                 data={data.getCentroidDistMatrix(this.state.selectedSample)}
-            ></HeatMap>
+            ></HeatMap> */}
 
-            {/* <div className="SampleViz-clusters"> */}
+            
+
             {(showLinearPlot || showScatterPlot) &&
             <div className={(showLinearPlot && showScatterPlot) ? "SampleViz-clusters" : ""}>
                 <ClusterTable 
