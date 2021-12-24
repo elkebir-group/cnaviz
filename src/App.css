@@ -38,6 +38,7 @@ body {
     padding-top: 25px;
 }
 
+
 .sampleviz-wrapper-col {
     display: flex;
     justify-content: center;
@@ -95,8 +96,10 @@ body {
     border: 16px solid rgb(81, 47, 173);
     background-color: rgb(255, 255, 255);
     z-index:1002;
+}
+
+.pop-up-window-header {
     display: flex;
-    align-items: middle;
     justify-content: center;
 }
 

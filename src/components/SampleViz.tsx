@@ -1,7 +1,6 @@
 import React from "react";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { DataWarehouse } from "../model/DataWarehouse";
-import { CurveState } from "../model/CurveState";
 import { SampleViz2D } from "./SampleViz2D";
 import { SampleViz1D } from "./SampleViz1D";
 import "./SampleViz.css";
@@ -9,6 +8,7 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
+
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -22,8 +22,6 @@ interface Props {
     initialSelectedCluster?: string;
     width?: number;
     height?: number;
-    curveState: CurveState;
-    onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null, record?: GenomicBin | null) => void;
     invertAxis?: boolean;
@@ -240,13 +238,6 @@ export class SampleViz extends React.Component<Props, State> {
                     width={showSidebar ? 600 : 600} 
                     implicitRange={this.state.implicitRange}/>}
             </div>
-
-            {/* <HeatMap
-                width={450 - 30 - 30}
-                height={450 - 30 - 30}
-                data={data.getCentroidDistMatrix(this.state.selectedSample)}
-            ></HeatMap> */}
-
             
 
             {(showLinearPlot || showScatterPlot) &&

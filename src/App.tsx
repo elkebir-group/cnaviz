@@ -4,7 +4,6 @@ import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
-import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 import {SampleViz} from "./components/SampleViz";
 import spinner from "./loading-small.gif";
 import "./App.css";
@@ -16,6 +15,7 @@ import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import { BarPlot } from "./components/BarPlot";
+
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -186,9 +186,6 @@ interface State {
 
     selectedCluster: string;
 
-    /**  */
-    curveState: CurveState;
-
     invertAxis: boolean;
 
     sampleAmount: number;
@@ -267,10 +264,9 @@ export class App extends React.Component<{}, State> {
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
-            curveState: INITIAL_CURVE_STATE,
             invertAxis: false,
-            sampleAmount: 1,
-            showComponents: [true],
+            sampleAmount: 2,
+            showComponents: [true, true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
             assignCluster: false,
@@ -301,7 +297,6 @@ export class App extends React.Component<{}, State> {
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
-        this.handleNewCurveState = _.throttle(this.handleNewCurveState.bind(this), 20);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
         this.handleAddSampleClick = this.handleAddSampleClick.bind(this);
         this.handleColorChange = this.handleColorChange.bind(this);
@@ -492,21 +487,6 @@ export class App extends React.Component<{}, State> {
         this.setState({color: color.hex});
     }
 
-    handleNewCurveState(newState: Partial<CurveState>) {
-        this.setState(prevState => {
-            const nextCurveState = {
-                ...prevState.curveState,
-                ...newState
-            };
-    
-            if (prevState.curveState.pickStatus === CurvePickStatus.pickingNormalLocation) {
-                nextCurveState.state1 = null;
-                nextCurveState.state2 = null;
-            }
-            return {curveState: nextCurveState};
-        });
-    }
-
     getStatusCaption() {
         switch (this.state.processingStatus) {
             case ProcessingStatus.readingFile:
@@ -592,7 +572,7 @@ export class App extends React.Component<{}, State> {
 
 
     render() {
-        const {indexedData, selectedChr, selectedCluster, hoveredLocation, curveState, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
+        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
@@ -606,8 +586,6 @@ export class App extends React.Component<{}, State> {
             const scatterplotProps = {
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
-                curveState,
-                onNewCurveState: this.handleNewCurveState,
                 onLocationHovered: this.handleLocationHovered,
                 invertAxis,
                 chr: selectedChr,
@@ -708,7 +686,7 @@ export class App extends React.Component<{}, State> {
                 {this.state.showDirections && <div className="black_overlay"></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
-                        <h2>Directions</h2>
+                        <h2 className="pop-up-window-header">Directions</h2>
                         <h5> Selection/Erasing </h5>
                         <li> Hold down "Command/Control" in Zoom mode to temporarily enter Select mode </li>
                         <li> Hold down "Alt" in Zoom mode to temporarily enter Erase mode </li>
@@ -728,6 +706,7 @@ export class App extends React.Component<{}, State> {
                 {this.state.showLog && <div className="black_overlay"></div> }
                 {this.state.showLog && 
                     <div className="Directions">
+                        <h2 className="pop-up-window-header"> Previous Actions </h2>
                         <LogTable
                             data={actions}
                             onClusterColorChange={this.onClusterColorChange}
@@ -739,6 +718,7 @@ export class App extends React.Component<{}, State> {
                 {this.state.showCentroidTable && <div className="black_overlay"></div> }
                 {this.state.showCentroidTable && 
                     <div className="Directions">
+                        <h2 className="pop-up-window-header"> Centroid Table </h2>
                         <ClusterTable
                             data={indexedData.getCentroidData()}
                             onClusterColorChange={this.onClusterColorChange}
@@ -757,6 +737,7 @@ export class App extends React.Component<{}, State> {
                 {this.state.showSilhouttes && <div className="black_overlay"></div> }
                 {this.state.showSilhouttes && 
                     <div className="Directions2">
+                        <h2 className="pop-up-window-header"> Approximate Average Sillhoutte Coefficients </h2>
                         <BarPlot
                             width={700}
                             height={400}

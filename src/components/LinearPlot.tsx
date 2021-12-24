@@ -4,7 +4,6 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome, Chromosome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
@@ -13,7 +12,6 @@ import { DisplayMode } from "../App";
 import "./LinearPlot.css";
 import { Gene } from "../model/Gene";
 
-const visutils = require('vis-utils');
 const SCALES_CLASS_NAME = "linearplot-scale";
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
@@ -415,15 +413,20 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .on("start brush", () => {
                     const {selection} = d3.event;
                     if(selection && selection[0][0] !== selection[1][0] && selection[0][1] !== selection[1][1]) {
-                        let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
-                            function(d: GenomicBin){
-                                const location = GenomicBinHelpers.toChromosomeInterval(d);
-                                const range = genome.getImplicitCoordinates(location);
-                                return xScale(range.getCenter());
-                            }, 
-                            function(d: GenomicBin){
-                                return yScale(d[dataKeyToPlot]);
-                            });
+                        function rectContains(rect : any, point : any) {
+                            const X = 0;
+                            const Y = 1;
+                            const TOP_LEFT = 0;
+                            const BOTTOM_RIGHT = 1;
+                            return rect[TOP_LEFT][X] <= point[X] && point[X] <= rect[BOTTOM_RIGHT][X] &&
+                                   rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
+                        }
+                        
+                        let brushed : GenomicBin[] = data.filter(d => {
+                            const location = GenomicBinHelpers.toChromosomeInterval(d);
+                            const range = genome.getImplicitCoordinates(location);
+                            return rectContains(selection, [xScale(range.getCenter()), yScale(d[dataKeyToPlot])])
+                        });
 
                         if (brushed) {
                             if(displayMode === DisplayMode.select) {
@@ -613,7 +616,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const start = xScale(implicitCoords.start) || 0;
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
         const driverSymbol = this.previewDriver.symbol;
-        
+
         const contents = <React.Fragment>
                             <div> {driverSymbol} </div>
                         </React.Fragment>

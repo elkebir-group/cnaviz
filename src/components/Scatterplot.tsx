@@ -5,7 +5,6 @@ import * as fc from "d3fc";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { CurveState} from "../model/CurveState";
 import {GenomicBin, GenomicBinHelpers} from "../model/GenomicBin";
 import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import "./Scatterplot.css";
@@ -22,8 +21,6 @@ const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
-//const HIGHLIGHT_COLOR = "red";
-
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASS_NAME = "circles";
 const CIRCLE_R = 1;
@@ -38,9 +35,7 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
-    curveState: CurveState;
     invertAxis: boolean;
-    onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: GenomicBin | null) => void;
     onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
     customColor: string;
@@ -100,7 +95,6 @@ export class Scatterplot extends React.Component<Props, State> {
         nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
         this.handleMouseMove = this.handleMouseMove.bind(this);
-        this.handleCurveHovered = this.handleCurveHovered.bind(this);
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
@@ -168,10 +162,6 @@ export class Scatterplot extends React.Component<Props, State> {
         } else {
             this.props.onRecordsHovered(null);
         }
-    }
-
-    handleCurveHovered(p: number) {
-        this.props.onNewCurveState({hoveredP: p});
     }
 
     renderTooltipAtRdBaf(rd: number, baf: number, contents: JSX.Element | null) {
@@ -741,7 +731,6 @@ export class Scatterplot extends React.Component<Props, State> {
         if(!this._svg) {return;}
         const {brushedBins, data, yAxisToPlot, displayMode} = this.props;
         if (data) {
-            //try {
             const { selection } = d3.event
             if(selection) {   
 

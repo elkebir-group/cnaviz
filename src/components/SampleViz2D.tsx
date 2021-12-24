@@ -1,7 +1,6 @@
 import React from "react";
 import _ from "lodash";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { CurveState } from "../model/CurveState";
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
@@ -17,8 +16,6 @@ interface Props {
     initialSelectedCluster?: string;
     width?: number;
     height?: number;
-    curveState: CurveState;
-    onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null, record?: GenomicBin | null) => void;
     selectedSample: string;
@@ -51,7 +48,6 @@ interface State {
 
 export class SampleViz2D extends React.Component<Props, State> {
     static defaultProps = {
-        onNewCurveState: _.noop,
         onLocationHovered: _.noop,
         invertAxis: false,
         customColor: "#1b9e77"
@@ -92,8 +88,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
     
     render() {
-        const {data, width, height, curveState, onNewCurveState, 
-                hoveredLocation, invertAxis, customColor, assignCluster, 
+        const {data, width, height, hoveredLocation, invertAxis, customColor, assignCluster, 
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
                 applyLog, scales, centroidPts, showCentroids} = this.props;
 
@@ -105,8 +100,6 @@ export class SampleViz2D extends React.Component<Props, State> {
                     rdRange={rdRange}
                     width={width}
                     height={height}
-                    curveState={curveState}
-                    onNewCurveState={onNewCurveState}
                     hoveredLocation={hoveredLocation}
                     onRecordsHovered={this.handleRecordsHovered}
                     invertAxis= {invertAxis || false} 

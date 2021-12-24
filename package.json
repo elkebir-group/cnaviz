@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@types/jest": "24.0.12",
     "@types/node": "11.13.9",
     "@types/react": "16.8.15",
     "@types/react-dom": "16.8.4",
@@ -11,18 +10,16 @@
     "d3": "^5.9.2",
     "d3fc": "^14.2.3",
     "react": "^16.8.6",
-    "react-annotation": "^2.2.1",
     "react-color": "^2.19.3",
-    "react-csv": "https://github.com/zubairlalani/react-csv.git",
     "react-data-table-component": "^6.11.7",
     "react-dom": "^16.8.6",
     "react-icons": "^4.2.0",
-    "react-keydown": "^1.9.12",
-    "react-router-dom": "^5.2.0",
     "react-scripts": "3.0.0",
-    "styled-components": "^5.3.0",
+    "styled-components": "^5.3.3",
     "typescript": "3.4.5",
-    "vis-utils": "^0.2.1"
+    "csv-parse": "^4.4.1",
+    "lodash": "^4.17.11",
+    "memoize-one": "^5.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -49,15 +46,7 @@
     "@types/d3": "^5.7.2",
     "@types/lodash": "^4.14.123",
     "@types/memoize-one": "^4.1.1",
-    "@types/react-color": "^3.0.4",
-    "@types/react-csv": "^1.1.1",
-    "@types/react-router-dom": "^5.1.8",
-    "@types/styled-components": "^5.1.10",
-    "circos": "^2.1.0",
-    "csv-parse": "^4.4.1",
-    "jest": "^24.7.1",
-    "lodash": "^4.17.11",
-    "memoize-one": "^5.0.4"
+    "@types/react-color": "^3.0.4"
   },
   "resolutions": {
     "babel-jest": "24.7.1"
