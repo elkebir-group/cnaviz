@@ -333,7 +333,6 @@ export class Scatterplot extends React.Component<Props, State> {
             && this.props.scales.xScale[0] !== prevProps.scales.xScale[0] 
             && this.props.scales.xScale[1] !== prevProps.scales.xScale[1]) 
             || (this.props.scales.xScale  && !prevProps.scales.xScale)) {
-                console.log("X SCALE UPDATED");
                 this._currXScale.domain(this.props.scales.xScale);
                 if(this.props.scales.yScale) {
                     this._currYScale.domain(this.props.scales.yScale);
@@ -343,7 +342,6 @@ export class Scatterplot extends React.Component<Props, State> {
             && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
             && this.props.scales.yScale[1] !== prevProps.scales.yScale[1])
             || (this.props.scales.yScale  && !prevProps.scales.yScale)) {
-            console.log("Y SCALE UPDATED");
             if(this.props.scales.xScale) {
                 this._currXScale.domain(this.props.scales.xScale);
             }

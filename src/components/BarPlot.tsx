@@ -76,88 +76,7 @@ export class BarPlot extends React.Component<Props> {
     }
 
     redraw() {
-//         const letters = ['A', 'B', 'C', 'D']
-//         const numbers = [20, 60, 30, 20]
-        const height = 400
-        const width = 700
-//         const barWidth = width / numbers.length
-        
-
-//         const marginRatio = {
-//         left: (margin['left'] / width) * 100 + '%',
-//         top: (margin['top'] / width) * 100 + '%',
-//         right: (margin['right'] / width) * 100 + '%',
-//         bottom: (margin['bottom'] / width) * 100 + '%'
-//         }
-
-//         const svg = d3
-//         .select('div#chart-container')
-//         .append('svg')
-//         .style(
-//             'padding',
-//             marginRatio.top +
-//             ' ' +
-//             marginRatio.right +
-//             ' ' +
-//             marginRatio.bottom +
-//             ' ' +
-//             marginRatio.left +
-//             ' '
-//         )
-//         .attr('preserveAspectRatio', 'xMinYMin meet')
-//         .attr(
-//             'viewBox',
-//             '0 0 ' +
-//             (width + margin.left + margin.right) +
-//             ' ' +
-//             (height + margin.top + margin.bottom)
-//   )
-
-//         const x = d3.scaleBand()
-//         .domain(letters)
-//         .range([0, width])
-//         .padding(0.1)
-
-//         const xAxis = d3.axisBottom(x)
-
-//         const y = d3.scaleLinear()
-//         .domain([d3.max(numbers) || 0, 0])
-//         .range([0, height])
-
-//         const yAxis = d3.axisLeft(y);
-
-//         const bar = svg
-//             .selectAll('g')
-//             .data(numbers)
-//             .enter()
-//             .append('g')
-//             .attr('transform', (_, i) => 'translate(' + i * barWidth + ', 0)')
-
-//         svg
-//             .append('g')
-//             .attr('class', 'x axis')
-//             .call(xAxis)
-//             .attr('transform', 'translate(0,' + height + ')')
-//         svg
-//         .append('g')
-//         .attr('class', 'y axis')
-//         .call(yAxis)
-
-//         bar
-//             .append('rect')
-//             .attr('class', 'bar')
-//             .attr('width', barWidth - 1)
-//             .attr('y', d => y(d) || 0)
-//             .attr('height', d => height - (y(d) || 0))
-
-
-        const {data} = this.props;
-        // if(this._svg == null) {
-        //     return;
-        // }
-
-
-        // const getRatio = (side : any) => (margins[side] / width) * 100 + '%'
+        const {width, height, data} = this.props;
 
         const marginRatio = {
             left: margins.left / width * 100 + "%",//getRatio('left'),
@@ -167,18 +86,18 @@ export class BarPlot extends React.Component<Props> {
         }
 
         var svg = d3.select('div#chart-container')
-        .append('svg')
-        .style(
-            'padding',
-            marginRatio.top +
-                ' ' +
-                marginRatio.right +
-                ' ' +
-                marginRatio.bottom +
-                ' ' +
-                marginRatio.left +
-                ' '
-        )
+            .append('svg')
+            .style(
+                'padding',
+                    marginRatio.top +
+                    ' ' +
+                    marginRatio.right +
+                    ' ' +
+                    marginRatio.bottom +
+                    ' ' +
+                    marginRatio.left +
+                    ' '
+            )
         .attr('preserveAspectRatio', 'xMinYMin meet')
         .attr(
           'viewBox',

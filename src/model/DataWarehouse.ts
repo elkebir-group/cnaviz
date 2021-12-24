@@ -1,14 +1,9 @@
-import _, { first, sample, sortBy } from "lodash";
+import _ from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
-import { MergedGenomicBin, BinMerger, MergedBinHelpers } from "./BinMerger";
-import { cross, group } from "d3-array";
-import { cluster } from "d3-hierarchy";
-import { ChromosomeInterval } from "./ChromosomeInterval";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
-import { visitNode } from "typescript";
-import silhouetteScore2, {calculateEuclideanDist, calculateInterClusterDist, calculateIntraClusterDist, calculateSilhoutteScores, downSample} from "../util"
+import {calculateEuclideanDist, calculateSilhoutteScores} from "../util"
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -93,8 +88,6 @@ export class DataWarehouse {
     private centroidPts: SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
     private chrToClusters: {[chr: string] : Set<string>}
     private centroidDistances: SampleIndexedData<heatMapElem[]>;
-    private clusterIndexed: ClusterIndexedData<GenomicBin[]>;
-    private interClusterDistances: heatMapElem[];
     private shouldCalculateSilhouttes: boolean;
     private currentSilhouttes: {cluster: number,  avg: number}[]
 
@@ -126,7 +119,6 @@ export class DataWarehouse {
         this.centroids = []; // used for displaying centroids in centroid table
         this.chrToClusters = {};
         this.centroidDistances = {};
-        this.interClusterDistances = [];
         this.shouldCalculateSilhouttes = true;
         this.currentSilhouttes = [];
 
@@ -200,21 +192,24 @@ export class DataWarehouse {
         }
 
         this.initializeCentroidDistMatrix();
-        
-        this.clusterIndexed = _.groupBy(rawData, "CLUSTER");
         this.allRecords = this._ndx.all();
-
         this.clusterTableInfo = this.calculateClusterTableInfo();
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
     }
 
-    recalculateSilhouttes() {
+    setShouldRecalculate(shouldRecalculate: boolean) {
+        this.shouldCalculateSilhouttes = shouldRecalculate;
+    }
+
+    recalculateSilhouttes(applyLog: boolean) {
         if(this.shouldCalculateSilhouttes) {
+            console.time("Calculating Silhouttes");
             const samples = this._samples;
             const multiDimData = []; 
             const labels : number[] = [];
             const clusterToData = new Map<Number, Number[][]>();
 
+            const rdKey = (applyLog) ? "logRD" :  "RD";
             // Reformat data into multidimensional format for RDRs and BAFs
             // Assumption: length of data % number of samples == 0
             // Every genome range has the same number of samples
@@ -227,8 +222,8 @@ export class DataWarehouse {
                         if(j === i) {
                             labels.push(c);
                         }
-                        row.push(currentBin.BAF);
-                        row.push(currentBin.RD);
+                        row.push(currentBin.reverseBAF);
+                        row.push(currentBin[rdKey]);
                     } else {
                         throw Error("Out of Range Error. There are bins missing in the data (bin must exist across all samples).")
                     }
@@ -249,9 +244,10 @@ export class DataWarehouse {
             //  calculate silhouttes
         
             const s = calculateSilhoutteScores(multiDimData, clusterToData,labels);
-            console.log("Silhoutte: ", s); 
+            console.log("Silhoutte: ", s);
             this.currentSilhouttes = _.sortBy(s, "cluster");
             this.shouldCalculateSilhouttes = false;
+            console.timeEnd("Calculating Silhouttes");
         }
         return this.currentSilhouttes;
     }

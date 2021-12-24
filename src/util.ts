@@ -127,7 +127,7 @@ export function getMinDistanceIndex<T>(queryPoint: T, searchPoints: T[], xKey: k
     }
 }
 
-export function calculateEuclideanDist(pointOne: number[] | string[], pointTwo: number[] | string[], sqrt?: boolean) : number {
+export function calculateEuclideanDist(pointOne: number[] | string[] | Number[], pointTwo: number[] | string[] | Number[], sqrt?: boolean) : number {
     if(pointOne.length !== pointTwo.length) {
       throw Error("Calculate Euclidean Distance - pointOne dim does not match pointTwo dim");
     }
@@ -190,11 +190,11 @@ export const iterateElements = (selector : any, fn : any) =>
  * @param p point from which distances will be calculated
  * @param other_cluster a cluster that p is NOT a part of
  */
-export const calculateInterClusterDist = (p: GenomicBin, other_cluster: GenomicBin[]) : number => {
-  let pointOne : [number, number] = [p.BAF, p.RD];
+export const calculateInterClusterDist1D = (p: GenomicBin, other_cluster: GenomicBin[]) : number => {
+  let pointOne : [number, number] = [p.reverseBAF, p.RD];
   let dists = [];
   for(const bin of other_cluster) {
-    dists.push(calculateEuclideanDist(pointOne, [bin.BAF, bin.RD], true));
+    dists.push(calculateEuclideanDist(pointOne, [bin.reverseBAF, bin.RD], true));
   }
 
   return _.mean(dists);
@@ -206,7 +206,7 @@ export const calculateInterClusterDist = (p: GenomicBin, other_cluster: GenomicB
  * @param p point from which distances will be calculated
  * @param other_cluster a cluster that p is NOT a part of
  */
- export const calculateInterClusterDist2 = (p: number[], other_cluster: number[][]) : number => {
+ export const calculateInterClusterDist2 = (p: number[] | Number[], other_cluster: number[][] | Number[][]) : number => {
   let dists = [];
   for(const bin of other_cluster) {
     dists.push(calculateEuclideanDist(p, bin, true));
@@ -220,7 +220,7 @@ export const calculateInterClusterDist = (p: GenomicBin, other_cluster: GenomicB
  * @param p a single point within cluster
  * @param cluster cluster from which the distances from p will be calculated
  */
-export const calculateIntraClusterDist = (p: GenomicBin, cluster: GenomicBin[]) => {
+export const calculateIntraClusterDist1D = (p: GenomicBin, cluster: GenomicBin[]) => {
   let pointOne : [number, number] = [p.BAF, p.RD];
   let dists = [];
   if(cluster.length == 1) {
@@ -244,7 +244,7 @@ export const calculateIntraClusterDist = (p: GenomicBin, cluster: GenomicBin[]) 
  * @param p a single point within cluster
  * @param cluster cluster from which the distances from p will be calculated
  */
- export const calculateIntraClusterDist2 = (p: number[], cluster: number[][]) => {
+ export const calculateIntraClusterDist2 = (p: number[], cluster: number[][] | Number[][]) => {
   let dists = [];
   if(cluster.length == 1) {
     return 0;
@@ -259,16 +259,6 @@ export const calculateIntraClusterDist = (p: GenomicBin, cluster: GenomicBin[]) 
 
   return _.mean(dists)
 }
-
-/**
- * Calculates the Sillhoutte Score between 2 clusters
- * @param cluster1 array of points that are part of a single cluster
- * @param cluster2 array of points that are part of another cluster
- */
-export const calculateSillhoutteScore = (cluster1: any[], cluster2: any[]) => {
-  
-}
-
 
 export function distanceMatrix(data : any, distanceFn : any) {
   const result = getMatrix(data.length);
@@ -302,6 +292,9 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
   let possible_clusters = [...clusteredData.keys()];
   let silhouttes = [];
   let clusterToSilhoutte = new Map<number, number[] | undefined>();
+  if(possible_clusters.length === 1) {
+    return [];
+  }
 
   for(let i = 0; i < rawData.length; i++) {
       const bin1 = rawData[i];
@@ -310,7 +303,6 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
       const binsInCluster = clusteredData.get(c);
       if(binsInCluster) {
         if(binsInCluster.length == 1) {
-          // silhouttes.push(0);
           if(clusterToSilhoutte.has(c)) {
             const previousSilhouttes = clusterToSilhoutte.get(c);
             if(previousSilhouttes) {
@@ -347,7 +339,6 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
         let maxAB = _.max([minB, a]);
         if(maxAB) {
           const s = (minB - a) / maxAB;
-          // silhouttes.push(s);
           if(clusterToSilhoutte.has(c)) {
             const previousSilhouttes = clusterToSilhoutte.get(c);
             if(previousSilhouttes) {
@@ -373,7 +364,6 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
   }
 
   return avg_cluster_silhouttes;
-  // return _.mean(silhouttes);
 }
 
 
@@ -464,11 +454,8 @@ function silhouetteReduce(dataChunk : any, labels : any, labelFrequencies : any)
     }
   );
 
-  console.log("CLuster dists: ", clusterDistances);
-
   // Each row in clusterDistances represents a bin and its distances to each cluster
   // So we for each bin we get the distance of that bin to the cluster that the bin is a part of
-  console.log("labels: ", labels);
   let intraDist = clusterDistances.map((val : any, ind : any) => val[labels[ind]]);
 
   let interDist = clusterDistances
@@ -507,14 +494,14 @@ function mulberry32(a : any) {
   }
 }
 
-export function downSample(data: any[], percent: number) {
-  let downSampledData = new Set<any>();
+export function downSample<T>(data: T[], percent: number) : T[] {
+  let downSampledData = new Set<T>();
   const original_len = data.length;
   const new_len = percent * original_len;
-  var seed = xmur3("apples");
+  // var seed = xmur3("testseed");
   while(downSampledData.size < new_len) {
-    // const rand_idx = Math.floor(Math.random() * original_len);
-    const rand_idx = Math.floor(mulberry32(seed())() * original_len);
+    const rand_idx = Math.floor(Math.random() * original_len);
+    // const rand_idx = Math.floor(mulberry32(seed())() * original_len);
     const bin = data[rand_idx];
     downSampledData.add(bin);
   }

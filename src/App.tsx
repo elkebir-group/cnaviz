@@ -524,6 +524,7 @@ export class App extends React.Component<{}, State> {
         this.setState({
             applyLog: !this.state.applyLog
         });
+        this.state.indexedData.setShouldRecalculate(true);
     }
 
     toggleClustering() {
@@ -757,7 +758,7 @@ export class App extends React.Component<{}, State> {
                         <BarPlot
                             width={700}
                             height={400}
-                            data={indexedData.recalculateSilhouttes()}
+                            data={indexedData.recalculateSilhouttes(this.state.applyLog)}
                         ></BarPlot>
                     </div> }
             </div>
