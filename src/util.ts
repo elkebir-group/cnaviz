@@ -136,9 +136,6 @@ export function calculateEuclideanDist(pointOne: number[] | string[] | Number[],
       result += currentDiff * currentDiff;
     }
 
-    // const xDiff = Number(pointOne[0]) - Number(pointTwo[0]);
-    // const yDiff = Number(pointOne[1]) - Number(pointTwo[1]);
-    // const result = xDiff * xDiff + yDiff * yDiff;
     return (sqrt === true) ? Math.sqrt(result): result;
 }
 
@@ -292,7 +289,8 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
   if(possible_clusters.length === 1) {
     return [];
   }
-
+  
+  const downSamplePercent = (rawData.length > 0) ? .01 : 1;
   for(let i = 0; i < rawData.length; i++) {
       const bin1 = rawData[i];
       const c = labels[i];
@@ -309,11 +307,12 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
           } else {
             clusterToSilhoutte.set(c, [0]);
           }
+
           continue;
         }
 
         // downsample both bins_in_clust er and bins_not_in_cluster
-        const downSampledBinsInCluster = downSample(binsInCluster, .01);
+        const downSampledBinsInCluster = downSample(binsInCluster, downSamplePercent);
 
         const a = calculateIntraClusterDist2(bin1, downSampledBinsInCluster);
         let minB = Infinity;
@@ -321,7 +320,7 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
           if(c2 !== c) {
             const otherCluster = clusteredData.get(c2);
             if(otherCluster) {
-              const downSampledOtherCluster = downSample(otherCluster, .01);
+              const downSampledOtherCluster = downSample(otherCluster, downSamplePercent);
               const b = calculateInterClusterDist2(bin1, downSampledOtherCluster);
               if(b < minB) {
                 minB = b;
@@ -336,6 +335,7 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
         let maxAB = _.max([minB, a]);
         if(maxAB) {
           const s = (minB - a) / maxAB;
+
           if(clusterToSilhoutte.has(c)) {
             const previousSilhouttes = clusterToSilhoutte.get(c);
             if(previousSilhouttes) {
@@ -350,7 +350,7 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
         throw new Error("Key error: Cluster not found");
       }
   }
-  
+
   const avg_cluster_silhouttes = [];
   for(const c of possible_clusters) {
     const val = clusterToSilhoutte.get(Number(c));
@@ -609,7 +609,6 @@ export const toCSV = (data: any, headers: any, separator: any, enclosingCharacte
 
 export const buildURI = ((data : any, uFEFF: any, headers: any, separator: any, enclosingCharacter: any) => {
   const csv = toCSV(data, headers, separator, enclosingCharacter);
-  //console.log(csv);
   const type = isSafari() ? 'application/csv' : 'text/csv';
   const blob = new Blob([uFEFF ? '\uFEFF' : '', csv], {type});
   const dataURI = `data:${type};charset=utf-8,${uFEFF ? '\uFEFF' : ''}${csv}`;

@@ -613,7 +613,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const start = xScale(implicitCoords.start) || 0;
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
         const driverSymbol = this.previewDriver.symbol;
-        console.log(driverSymbol)
+        
         const contents = <React.Fragment>
                             <div> {driverSymbol} </div>
                         </React.Fragment>

@@ -60,7 +60,7 @@ export class ClusterTable extends React.Component<Props> {
 
         const conditionalRowStyles : any = [
             {
-              when: (row:any) => "key" in row && Number(row.key) > 0,
+              when: (row:any) => row,
               style: (row:any) => ({
                 backgroundColor: (Number(row.key) === -1) ? UNCLUSTERED_COLOR : colors[Number(row.key) % colors.length],
                 alignItems: 'center',
@@ -70,7 +70,8 @@ export class ClusterTable extends React.Component<Props> {
 
               }),
             }
-          ];
+        ];
+
         const columns = [
             {
               name: colOneName,
@@ -130,16 +131,13 @@ export class ClusterTable extends React.Component<Props> {
         ];
 
         if(centroidTable) {
-            // console.log("CENTROID DATA: ", data);
             let colNames : any[] = [];
             
             if(data !== null && data !== undefined && data.length > 0) {
                 colNames.push({name: "Cluster ID", type: "key"})
                 for(const s of Object.keys(data[0].sample)) {
-                    // console.log("KEY: ", s);
                     colNames.push({name: s, type: "sample."+s});
                 }
-                // console.log("COL NAMES: ", colNames);
             }
         
             const centroidColumns = [];
@@ -173,7 +171,6 @@ export class ClusterTable extends React.Component<Props> {
         }
         
         if(!expandable && !selectable) {
-            // console.log(data);
             return (
                 <DataTable
                     columns={columns3}
@@ -185,8 +182,8 @@ export class ClusterTable extends React.Component<Props> {
                     paginationRowsPerPageOptions={[3, 5, 10, 20]}
                     noContextMenu={true}
                     noHeader={true}
-                    conditionalRowStyles={conditionalRowStyles}
                     noDataComponent={<div style={{padding: 10}}>No Records Selected</div>}
+                    conditionalRowStyles={conditionalRowStyles}
                 />
             )
         }

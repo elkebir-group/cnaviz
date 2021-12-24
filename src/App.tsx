@@ -105,11 +105,19 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
 
             chrNameLength.push({name: lastChr, length: (end - 0)})
 
+            chrNameLength.sort((a: any, b : any) => {
+                return a.name.localeCompare(b.name, undefined, {
+                    numeric: true,
+                    sensitivity: 'base'
+                })
+            })
+
             genome = new Genome(chrNameLength);
             
             for (const bin of parsed) {
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
+
 
             resolve(parsed);
         });
@@ -518,7 +526,7 @@ export class App extends React.Component<{}, State> {
         this.setState({
             applyLog: !this.state.applyLog
         });
-        this.state.indexedData.setShouldRecalculate(true);
+        this.state.indexedData.setShouldRecalculateSilhouttes(true);
     }
 
     toggleClustering() {
@@ -753,6 +761,7 @@ export class App extends React.Component<{}, State> {
                             width={700}
                             height={400}
                             data={indexedData.recalculateSilhouttes(this.state.applyLog)}
+                            colors={CLUSTER_COLORS}
                         ></BarPlot>
                     </div> }
             </div>

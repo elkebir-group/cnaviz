@@ -54,10 +54,7 @@ export class CSV extends React.Component<Props, State> {
         // provide the name for the CSV file to be downloaded
         // Assume that underscore is not in actual filename (only used to separate datetime)
         const fileName = this.props.fileName;
-        
-        
         let nameExt = fileName.split("."); 
-        // console.log("nameExt: " + nameExt);
         let newFileName = "";
         for(let i = 0; i < nameExt.length-1; i++) {
             newFileName += nameExt[i];

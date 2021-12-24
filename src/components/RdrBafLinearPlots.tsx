@@ -62,7 +62,7 @@ export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
             implicitStart, implicitEnd, onZoom, driverGenes} = props;
-    // console.log("XSCALE: ", xScale);
+
     return <LinearPlot
                 data={data}
                 chr={chr}

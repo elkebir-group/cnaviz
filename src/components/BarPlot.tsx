@@ -4,6 +4,7 @@ import "./BarPlot.css";
 
 var margins = {top: 10, right: 40, bottom: 40, left: 40};
 const margin = { left: 100, top: 50, right: 50, bottom: 30 }
+const UNCLUSTERED_COLOR = "#999999";
 
 type clusterAvg = {
     cluster: number,
@@ -14,6 +15,7 @@ interface Props {
     data: clusterAvg[];
     width: number;
     height: number;
+    colors: string[];
 }
 
 
@@ -32,7 +34,6 @@ export class BarPlot extends React.Component<Props> {
 
     componentDidUpdate(prevProps: Props) {
         if(this.propsDidChange(prevProps, [])) {
-            console.log("Component updated");
             this.redraw();
         }
     }
@@ -43,7 +44,6 @@ export class BarPlot extends React.Component<Props> {
 
 
     componentDidMount() { 
-        console.log("Remounting");
         this.redraw();
     }
 
@@ -55,7 +55,7 @@ export class BarPlot extends React.Component<Props> {
     }
 
     redraw() {
-        const {width, height, data} = this.props;
+        const {width, height, data, colors} = this.props;
 
         const marginRatio = {
             left: margins.left / width * 100 + "%",//getRatio('left'),
@@ -116,7 +116,7 @@ export class BarPlot extends React.Component<Props> {
             .attr("y", function(d) { return y(String(d.cluster)) || 0; })
             .attr("width", function(d) { return Math.abs((x(d.avg) || 0) - (x(0) || 0)); })
             .attr("height", y.bandwidth())
-            .attr("fill", "#69b3a2");
+            .attr("fill", row => (row.cluster === -1) ? UNCLUSTERED_COLOR : colors[row.cluster % colors.length]);
             
         svg.append("g")
             .call(d3.axisLeft(y).tickSize(0).tickPadding(6))

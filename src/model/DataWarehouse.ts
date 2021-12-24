@@ -197,7 +197,7 @@ export class DataWarehouse {
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
     }
 
-    setShouldRecalculate(shouldRecalculate: boolean) {
+    setShouldRecalculateSilhouttes(shouldRecalculate: boolean) {
         this.shouldCalculateSilhouttes = shouldRecalculate;
     }
 
@@ -243,7 +243,6 @@ export class DataWarehouse {
             }
 
             //  calculate silhouttes
-        
             const s = calculateSilhoutteScores(multiDimData, clusterToData,labels);
             this.currentSilhouttes = _.sortBy(s, "cluster");
             this.shouldCalculateSilhouttes = false;
