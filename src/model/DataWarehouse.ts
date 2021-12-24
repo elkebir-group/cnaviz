@@ -344,7 +344,6 @@ export class DataWarehouse {
         }
     }
 
-    
     /**
      * @return whether this instance stores any data
      */
@@ -455,7 +454,7 @@ export class DataWarehouse {
         action += "Clusters selected: ";
         for(let i = 0; i < brushedTableData.length; i++) {
             action += brushedTableDataKeys[i] + " (" + Number(brushedTableDataValues[i].value) + "%)";
-            if(i != brushedTableData.length-1) { 
+            if(i != brushedTableData.length-1) {
                 action+= ", ";
             } else {
                 action += " | ";
@@ -523,7 +522,6 @@ export class DataWarehouse {
                 }
                 let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
                 sampleDict[sample] = centroidStr;
-                // this.initializeCentroidOfAllSamples(clus, sample, binsForCluster, "RD");
             }
 
             let centroidTableRow : newCentroidTableRow = {

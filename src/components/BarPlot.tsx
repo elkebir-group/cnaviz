@@ -1,7 +1,9 @@
 import React from "react"
 import * as d3 from "d3";
+import "./BarPlot.css";
 
-var margins = {top: 20, right: 30, bottom: 40, left: 90};
+var margins = {top: 10, right: 40, bottom: 40, left: 40};
+const margin = { left: 100, top: 50, right: 50, bottom: 30 }
 
 type clusterAvg = {
     cluster: number,
@@ -48,23 +50,145 @@ export class BarPlot extends React.Component<Props> {
     render() {
         const {width, height} = this.props;
         return (
-            <div>
-                <svg 
-                    ref={node => this._svg = node}
-                    width={width + margins.left + margins.right} 
-                    height={height + margins.top + margins.bottom}
-                ></svg>
-            </div>)
+            // <div id="BarPlot-Wrapper">
+            //     <svg
+            //         className="BarPlot"
+            //         ref={node => this._svg = node}
+            //         preserveAspectRatio="xMinYMin meet"
+            //         viewBox={"0 0 " + width + margins.left + margins.right + " " +  height + margins.top + margins.bottom}
+            //         // width={width + margins.left + margins.right} 
+            //         // height={height + margins.top + margins.bottom}
+                    
+            //         style={{
+            //             zIndex: 4
+            //         }}
+            //     ></svg>
+            // </div>
+            <div id="chart-container">
+                {/* <svg
+                    id="chart"
+                    preserveAspectRatio="xMinYMin meet"
+                    viewBox="0 0 800 440"
+                >
+                </svg> */}
+            </div>
+        )
     }
 
     redraw() {
-        const {width, height, data} = this.props;
-        if(this._svg == null) {
-            return;
+//         const letters = ['A', 'B', 'C', 'D']
+//         const numbers = [20, 60, 30, 20]
+        const height = 400
+        const width = 700
+//         const barWidth = width / numbers.length
+        
+
+//         const marginRatio = {
+//         left: (margin['left'] / width) * 100 + '%',
+//         top: (margin['top'] / width) * 100 + '%',
+//         right: (margin['right'] / width) * 100 + '%',
+//         bottom: (margin['bottom'] / width) * 100 + '%'
+//         }
+
+//         const svg = d3
+//         .select('div#chart-container')
+//         .append('svg')
+//         .style(
+//             'padding',
+//             marginRatio.top +
+//             ' ' +
+//             marginRatio.right +
+//             ' ' +
+//             marginRatio.bottom +
+//             ' ' +
+//             marginRatio.left +
+//             ' '
+//         )
+//         .attr('preserveAspectRatio', 'xMinYMin meet')
+//         .attr(
+//             'viewBox',
+//             '0 0 ' +
+//             (width + margin.left + margin.right) +
+//             ' ' +
+//             (height + margin.top + margin.bottom)
+//   )
+
+//         const x = d3.scaleBand()
+//         .domain(letters)
+//         .range([0, width])
+//         .padding(0.1)
+
+//         const xAxis = d3.axisBottom(x)
+
+//         const y = d3.scaleLinear()
+//         .domain([d3.max(numbers) || 0, 0])
+//         .range([0, height])
+
+//         const yAxis = d3.axisLeft(y);
+
+//         const bar = svg
+//             .selectAll('g')
+//             .data(numbers)
+//             .enter()
+//             .append('g')
+//             .attr('transform', (_, i) => 'translate(' + i * barWidth + ', 0)')
+
+//         svg
+//             .append('g')
+//             .attr('class', 'x axis')
+//             .call(xAxis)
+//             .attr('transform', 'translate(0,' + height + ')')
+//         svg
+//         .append('g')
+//         .attr('class', 'y axis')
+//         .call(yAxis)
+
+//         bar
+//             .append('rect')
+//             .attr('class', 'bar')
+//             .attr('width', barWidth - 1)
+//             .attr('y', d => y(d) || 0)
+//             .attr('height', d => height - (y(d) || 0))
+
+
+        const {data} = this.props;
+        // if(this._svg == null) {
+        //     return;
+        // }
+
+
+        // const getRatio = (side : any) => (margins[side] / width) * 100 + '%'
+
+        const marginRatio = {
+            left: margins.left / width * 100 + "%",//getRatio('left'),
+            top: margins.top / width * 100 + "%",
+            right: margins.right / width * 100 + "%",
+            bottom: margins.bottom / width * 100 + "%"
         }
 
-        var svg = d3.select(this._svg);
-        
+        var svg = d3.select('div#chart-container')
+        .append('svg')
+        .style(
+            'padding',
+            marginRatio.top +
+                ' ' +
+                marginRatio.right +
+                ' ' +
+                marginRatio.bottom +
+                ' ' +
+                marginRatio.left +
+                ' '
+        )
+        .attr('preserveAspectRatio', 'xMinYMin meet')
+        .attr(
+          'viewBox',
+          '0 0 ' +
+            (width + margin.left + margin.right) +
+            ' ' +
+            (height + margin.top + margin.bottom)
+        )
+
+       
         // Add X axis
         var x = d3.scaleLinear()
         .domain([-1, 1])
@@ -79,13 +203,10 @@ export class BarPlot extends React.Component<Props> {
 
         // Y axis
         var y = d3.scaleBand()
-            .range([ 0, height ])
+            .range([ 0, height])
             .domain(data.map(d => String(d.cluster)))
             .padding(.1);
         
-
-        
-            
 
         //Bars
         svg.selectAll("myRect")
@@ -98,10 +219,6 @@ export class BarPlot extends React.Component<Props> {
             .attr("width", function(d) { return Math.abs((x(d.avg) || 0) - (x(0) || 0)); })
             .attr("height", y.bandwidth())
             .attr("fill", "#69b3a2");
-            // .attr("x", x(0) || 0 )
-            // .attr("y", d => y(String(d.cluster)) || 0)
-            // .attr("width",d => x(d.avg) || 0)
-            // .attr("height", y.bandwidth() )
             
         svg.append("g")
             .call(d3.axisLeft(y).tickSize(0).tickPadding(6))

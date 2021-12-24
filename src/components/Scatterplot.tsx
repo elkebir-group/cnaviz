@@ -102,7 +102,7 @@ export class Scatterplot extends React.Component<Props, State> {
     //private selectedCluster: string;
 
     constructor(props: Props) {
-        super(props);
+        super(props);   
         this._svg = null;
         this._canvas = null;
         this.scatter = null;

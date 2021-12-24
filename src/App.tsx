@@ -755,8 +755,8 @@ export class App extends React.Component<{}, State> {
                 {this.state.showSilhouttes && 
                     <div className="Directions2">
                         <BarPlot
-                            width={460}
-                            height={200}
+                            width={700}
+                            height={400}
                             data={indexedData.recalculateSilhouttes()}
                         ></BarPlot>
                     </div> }
