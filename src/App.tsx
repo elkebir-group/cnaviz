@@ -1,8 +1,8 @@
 import React from "react";
 import parse from "csv-parse";
-import _, { last, remove, sample } from "lodash";
+import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
-import { GenomicBin, GenomicBinHelpers} from "./model/GenomicBin";
+import { GenomicBin } from "./model/GenomicBin";
 import { DataWarehouse } from "./model/DataWarehouse";
 import { CurveState, CurvePickStatus, INITIAL_CURVE_STATE } from "./model/CurveState";
 import {SampleViz} from "./components/SampleViz";
@@ -82,10 +82,11 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 return;
             }
 
-            let start = Number(parsed[0].START); // Keeps track of the start of each chr
+            
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];
+
             for (const bin of parsed) {
                 if(!applyClustering) {
                     bin.CLUSTER = -1;
@@ -95,7 +96,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
 
                 if(lastChr !==  bin["#CHR"]) {
                     chrNameLength.push({name: lastChr, length: (end - 0)})
-                    start = Number(bin.START);
                     lastChr = bin["#CHR"]
                 }
 
@@ -104,12 +104,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             }
 
             chrNameLength.push({name: lastChr, length: (end - 0)})
-            const sortedChrNameLength = chrNameLength.sort((a: any, b : any) => {
-                return a.name.localeCompare(b.name, undefined, {
-                    numeric: true,
-                    sensitivity: 'base'
-                })
-            })
 
             genome = new Genome(chrNameLength);
             
@@ -324,45 +318,45 @@ export class App extends React.Component<{}, State> {
 
         let self = this;
         d3.select("body").on("keypress", function(){
-            if (d3.event.key == "z") {
+            if (d3.event.key === "z") {
                 self.setState({displayMode: DisplayMode.zoom});
-            } else if (d3.event.key == "b") {
+            } else if (d3.event.key === "b") {
                 self.setState({displayMode: DisplayMode.select});
-            } else if(d3.event.key == "a") {
+            } else if(d3.event.key === "a") {
                 self.setState({displayMode: DisplayMode.boxzoom});
-            } else if(d3.event.key == "e") {
+            } else if(d3.event.key === "e") {
                 self.setState({displayMode: DisplayMode.erase});
-            } else if(d3.event.keyCode == 32) {
+            } else if(d3.event.keyCode === 32) {
                 self.onSideBarChange(!self.state.sidebar);
-            } else if(d3.event.key == "l") {
+            } else if(d3.event.key === "l") {
                 self.setState({showLog: !self.state.showLog});
-            } else if(d3.event.key == "c") {
+            } else if(d3.event.key === "c") {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
-            } else if(d3.event.key == "s") {
+            } else if(d3.event.key === "s") {
                 self.setState({showSilhouttes: !self.state.showSilhouttes});
             }
         })
 
         d3.select("body").on("keydown", function() {
-            if (self.state.displayMode === DisplayMode.zoom && d3.event.key == "Shift") {
+            if (self.state.displayMode === DisplayMode.zoom && d3.event.key === "Shift") {
                 self.setState({displayMode: DisplayMode.boxzoom})
-            } else if(d3.event.key == "/" || d3.event.key == "?") {
+            } else if(d3.event.key === "/" || d3.event.key === "?") {
                 self.setState({showDirections: true})
-            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && d3.event.key == "Meta") {
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && d3.event.key === "Meta") {
                 self.setState({displayMode: DisplayMode.select})
-            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.select) && d3.event.key == "Alt") {
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.select) && d3.event.key === "Alt") {
                 self.setState({displayMode: DisplayMode.erase})
             } 
         })
 
         d3.select("body").on("keyup", function(){
-            if (self.state.displayMode === DisplayMode.boxzoom && d3.event.key == "Shift") {
+            if (self.state.displayMode === DisplayMode.boxzoom && d3.event.key === "Shift") {
                 self.setState({displayMode: DisplayMode.zoom})
-            } else if(d3.event.key == "/" || d3.event.key == "?") {
+            } else if(d3.event.key === "/" || d3.event.key === "?") {
                 self.setState({showDirections: false})
-            } else if(self.state.displayMode === DisplayMode.select && d3.event.key == "Meta") {
+            } else if(self.state.displayMode === DisplayMode.select && d3.event.key === "Meta") {
                 self.setState({displayMode: DisplayMode.zoom})
-            } else if(self.state.displayMode === DisplayMode.erase && d3.event.key == "Alt") {
+            } else if(self.state.displayMode === DisplayMode.erase && d3.event.key === "Alt") {
                 self.setState({displayMode: DisplayMode.zoom})
             }
         });

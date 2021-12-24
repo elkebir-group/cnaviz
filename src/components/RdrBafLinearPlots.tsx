@@ -4,7 +4,6 @@ import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";
-import { MergedGenomicBin } from "../model/BinMerger";
 import { Gene } from "../model/Gene";
 
 interface Props {

@@ -210,6 +210,7 @@ export class DataWarehouse {
             const clusterToData = new Map<Number, Number[][]>();
 
             const rdKey = (applyLog) ? "logRD" :  "RD";
+
             // Reformat data into multidimensional format for RDRs and BAFs
             // Assumption: length of data % number of samples == 0
             // Every genome range has the same number of samples
@@ -244,10 +245,8 @@ export class DataWarehouse {
             //  calculate silhouttes
         
             const s = calculateSilhoutteScores(multiDimData, clusterToData,labels);
-            console.log("Silhoutte: ", s);
             this.currentSilhouttes = _.sortBy(s, "cluster");
             this.shouldCalculateSilhouttes = false;
-            console.timeEnd("Calculating Silhouttes");
         }
         return this.currentSilhouttes;
     }
@@ -396,7 +395,7 @@ export class DataWarehouse {
     }
 
     setChrFilters(chrs?: string[]) {
-        if(chrs && ((chrs.length === 1 && chrs[0] == DataWarehouse.ALL_CHRS_KEY))) {
+        if(chrs && ((chrs.length === 1 && chrs[0] === DataWarehouse.ALL_CHRS_KEY))) {
             this._chr_dim.filterAll();
         } else if(chrs) {
             this._chr_dim.filterAll();
@@ -406,7 +405,7 @@ export class DataWarehouse {
 
 
     setClusterFilters(clusters?: String[]) {
-        if(clusters && ((clusters.length === 1 && clusters[0] == DataWarehouse.ALL_CLUSTERS_KEY))) {
+        if(clusters && ((clusters.length === 1 && clusters[0] === DataWarehouse.ALL_CLUSTERS_KEY))) {
             this._cluster_dim.filterAll();
         } else if(clusters) {
             this._cluster_dim.filterAll();
@@ -450,7 +449,7 @@ export class DataWarehouse {
         action += "Clusters selected: ";
         for(let i = 0; i < brushedTableData.length; i++) {
             action += brushedTableDataKeys[i] + " (" + Number(brushedTableDataValues[i].value) + "%)";
-            if(i != brushedTableData.length-1) {
+            if(i !== brushedTableData.length-1) {
                 action+= ", ";
             } else {
                 action += " | ";

@@ -48,29 +48,8 @@ export class BarPlot extends React.Component<Props> {
     }
 
     render() {
-        const {width, height} = this.props;
         return (
-            // <div id="BarPlot-Wrapper">
-            //     <svg
-            //         className="BarPlot"
-            //         ref={node => this._svg = node}
-            //         preserveAspectRatio="xMinYMin meet"
-            //         viewBox={"0 0 " + width + margins.left + margins.right + " " +  height + margins.top + margins.bottom}
-            //         // width={width + margins.left + margins.right} 
-            //         // height={height + margins.top + margins.bottom}
-                    
-            //         style={{
-            //             zIndex: 4
-            //         }}
-            //     ></svg>
-            // </div>
             <div id="chart-container">
-                {/* <svg
-                    id="chart"
-                    preserveAspectRatio="xMinYMin meet"
-                    viewBox="0 0 800 440"
-                >
-                </svg> */}
             </div>
         )
     }

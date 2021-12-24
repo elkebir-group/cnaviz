@@ -1,8 +1,6 @@
 import * as d3 from "d3";
 import { GenomicBin } from "./model/GenomicBin";
-import { heatMapElem, ClusterIndexedData} from "./model/DataWarehouse";
-import _, { isNaN } from "lodash";
-import { cluster, max } from "d3";
+import _ from "lodash";
 
 export interface Coordinate {
     x: number;
@@ -141,7 +139,7 @@ export function calculateEuclideanDist(pointOne: number[] | string[] | Number[],
     // const xDiff = Number(pointOne[0]) - Number(pointTwo[0]);
     // const yDiff = Number(pointOne[1]) - Number(pointTwo[1]);
     // const result = xDiff * xDiff + yDiff * yDiff;
-    return (sqrt == true) ? Math.sqrt(result): result;
+    return (sqrt === true) ? Math.sqrt(result): result;
 }
 
 
@@ -223,7 +221,7 @@ export const calculateInterClusterDist1D = (p: GenomicBin, other_cluster: Genomi
 export const calculateIntraClusterDist1D = (p: GenomicBin, cluster: GenomicBin[]) => {
   let pointOne : [number, number] = [p.BAF, p.RD];
   let dists = [];
-  if(cluster.length == 1) {
+  if(cluster.length === 1) {
     return 0;
   }
 
@@ -246,7 +244,7 @@ export const calculateIntraClusterDist1D = (p: GenomicBin, cluster: GenomicBin[]
  */
  export const calculateIntraClusterDist2 = (p: number[], cluster: number[][] | Number[][]) => {
   let dists = [];
-  if(cluster.length == 1) {
+  if(cluster.length === 1) {
     return 0;
   }
 
@@ -290,7 +288,6 @@ function getMatrix(size : number) {
 
 export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[]) => {
   let possible_clusters = [...clusteredData.keys()];
-  let silhouttes = [];
   let clusterToSilhoutte = new Map<number, number[] | undefined>();
   if(possible_clusters.length === 1) {
     return [];
@@ -302,7 +299,7 @@ export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map
 
       const binsInCluster = clusteredData.get(c);
       if(binsInCluster) {
-        if(binsInCluster.length == 1) {
+        if(binsInCluster.length === 1) {
           if(clusterToSilhoutte.has(c)) {
             const previousSilhouttes = clusterToSilhoutte.get(c);
             if(previousSilhouttes) {
@@ -472,27 +469,27 @@ function silhouetteReduce(dataChunk : any, labels : any, labelFrequencies : any)
   };
 }
 
-function xmur3(str : string) {
-  for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
-      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-      h = h << 13 | h >>> 19;
-  }
+// function xmur3(str : string) {
+//   for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+//       h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+//       h = h << 13 | h >>> 19;
+//   }
 
-  return function() {
-      h = Math.imul(h ^ h >>> 16, 2246822507);
-      h = Math.imul(h ^ h >>> 13, 3266489909);
-      return (h ^= h >>> 16) >>> 0;
-  }
-}
+//   return function() {
+//       h = Math.imul(h ^ h >>> 16, 2246822507);
+//       h = Math.imul(h ^ h >>> 13, 3266489909);
+//       return (h ^= h >>> 16) >>> 0;
+//   }
+// }
 
-function mulberry32(a : any) {
-  return function() {
-    var t = a += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  }
-}
+// function mulberry32(a : any) {
+//   return function() {
+//     var t = a += 0x6D2B79F5;
+//     t = Math.imul(t ^ t >>> 15, t | 1);
+//     t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+//     return ((t ^ t >>> 14) >>> 0) / 4294967296;
+//   }
+// }
 
 export function downSample<T>(data: T[], percent: number) : T[] {
   let downSampledData = new Set<T>();
@@ -566,6 +563,7 @@ export const getHeaderValue = (property: any, obj: any) => {
       // if at any point the nested keys passed do not exist, splice the array so it doesnt keep reducing
       if (o[p] === undefined) {
         arr.splice(1);
+        return null;
       } else {
         return o[p];
       }

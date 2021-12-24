@@ -118,7 +118,7 @@ export class LinearPlot extends React.PureComponent<Props> {
     componentDidUpdate(prevProps: Props) {
         
         if(this.propsDidChange(prevProps, ["chr"])) {
-            if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+            if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                 this.props.onLinearPlotZoom(null, null, true);
             } else {
                 this.props.onLinearPlotZoom(null, null, false);
@@ -181,7 +181,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
-        let xAxis;
+
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
         let chrStarts = genome.getChrStartMap();
@@ -191,29 +191,8 @@ export class LinearPlot extends React.PureComponent<Props> {
                 chrs.push(chr);
             }
         }
-        let nonImplicitXScale = d3.scaleLinear() // Single chr scale
-            .domain([0, genome.getLength(chr)])
-            .range(xScale.range())
-        if (this.props.implicitStart && this.props.implicitEnd) {
-            const selectedNonImplicitStart = genome.getChromosomeLocation(this.props.implicitStart);
-            const selectedNonImplicitEnd = genome.getChromosomeLocation(this.props.implicitEnd);
-            nonImplicitXScale = d3.scaleLinear()
-            .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
-            .range(xScale.range())
-        }
-        if (!chr) {
-            xAxis = d3.axisBottom(xScale)
-                .tickValues(genome.getChromosomeStarts2(chrs, xScale.domain()[0], xScale.domain()[1]))
-                .tickFormat((unused, i) => findChrNumber(chrs[i].name));
-        } else {
-            xAxis = d3.axisBottom(xScale);
-        }
-        
-        const yAxis = d3.axisLeft(yScale)
-            .ticks((yScale.range()[0] - yScale.range()[1]) / 15); // Every ~10 pixels
 
         const svg = d3.select(this._svg);
-        
 
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
@@ -290,7 +269,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                 } else {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
@@ -341,7 +320,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .attr("fill", "red");
 
         // Create event-rect that allows for svg points to be overlayed under mouse pointer
-        var event_rect = svg
+        svg
             .append("g")
             .classed("eventrect", true)
             .append("rect")
@@ -447,9 +426,9 @@ export class LinearPlot extends React.PureComponent<Props> {
                             });
 
                         if (brushed) {
-                            if(displayMode == DisplayMode.select) {
+                            if(displayMode === DisplayMode.select) {
                                 brushed = _.uniq(_.union(brushed, brushedBins));  
-                            } else if(displayMode == DisplayMode.erase) {
+                            } else if(displayMode === DisplayMode.erase) {
                                 brushed = _.difference(brushedBins, brushed);
                             }
         
@@ -482,7 +461,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         const implicitStart = xScale.invert(startEnd.start);
                         const implicitEnd = xScale.invert(startEnd.end);
                     
-                        if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                        if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                         } else {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
@@ -570,48 +549,52 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     renderLockedDrivers() {
-        const {driverGenes, hoveredLocation, dataKeyToPlot, width, genome, chr, height} = this.props;
+        const {width, genome, chr, height} = this.props;
         const drivers = [...this.lockedDrivers];
 
-        return (drivers.map(driver => {
-            const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
-            const implicitCoords = genome.getImplicitCoordinates(driver.location);
-            const start = xScale(implicitCoords.start) || 0;
-            const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
-            const driverSymbol = driver.symbol;
-            const contents = <React.Fragment>
-                                <div> {driverSymbol} </div>
-                            </React.Fragment>;
-            if(start > PADDING.left && start < width - PADDING.right) {
-                return (
-                    <div>
-                        <div style={{
-                            position: "absolute",
-                            left: start-20,
-                            bottom: height,
-                            border: "1px solid rgba(0,0,0,0)",
-                            zIndex: 0
-                        }}>
-                            {contents}
+        return (
+            drivers.map(
+                driver => {
+                    const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+                    const implicitCoords = genome.getImplicitCoordinates(driver.location);
+                    const start = xScale(implicitCoords.start) || 0;
+                    const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
+                    const driverSymbol = driver.symbol;
+                    const contents = <React.Fragment>
+                                        <div> {driverSymbol} </div>
+                                    </React.Fragment>;
+                    if(start > PADDING.left && start < width - PADDING.right) {
+                        return (
+                            <div>
+                                <div style={{
+                                    position: "absolute",
+                                    left: start-20,
+                                    bottom: height,
+                                    border: "1px solid rgba(0,0,0,0)",
+                                    zIndex: 0
+                                }}>
+                                    {contents}
+                                </div>
+                                <div style={{
+                                    position: "absolute",
+                                    left: start,
+                                    width: boxWidth,
+                                    height: "75%",
+                                    backgroundColor: "red",
+                                    border: "1px solid rgba(255,255,0,0.7)",
+                                    zIndex: 0
+                                }} />   
                         </div>
-                        <div style={{
-                            position: "absolute",
-                            left: start,
-                            width: boxWidth,
-                            height: "75%",
-                            backgroundColor: "red",
-                            border: "1px solid rgba(255,255,0,0.7)",
-                            zIndex: 0
-                        }} />   
-                </div>
-                )
-            }
-        }
-        ))
+                        )
+                    } else {
+                        return null;
+                    }
+                }
+            ))
     }
 
     renderTooltip() {
-        const {driverGenes, hoveredLocation, dataKeyToPlot, width, genome, chr, height} = this.props;
+        const {driverGenes, hoveredLocation, width, genome, chr, height} = this.props;
 
         if (!hoveredLocation) {
             return null;

@@ -1,13 +1,10 @@
 import React from "react"
 import _ from "lodash";
 import DataTable from 'react-data-table-component';
-import {HuePicker, SliderPicker, GithubPicker, BlockPicker} from "react-color";
-import {CSVLink} from "react-csv"
+import {BlockPicker} from "react-color";
 import "./ClusterTable.css"
-import { cluster } from "d3-hierarchy";
 
 const UNCLUSTERED_COLOR = "#999999";
-const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 
 interface Props {
     data : any;
@@ -25,11 +22,8 @@ interface Props {
     updatedClusterTable?: () => void;
 }
 
-const ExpandedComponent =(data:any, initialColor: any, handleColorChnage: any) => <HuePicker width="100%" color={initialColor} onChange={handleColorChnage} />;//<pre>{JSON.stringify(data, null, 2)}</pre>;
-
 export class ClusterTable extends React.Component<Props> {
     private readonly table_data : any;
-    //private colors : any;
     
     constructor(props: Props) {
         super(props);
@@ -44,7 +38,6 @@ export class ClusterTable extends React.Component<Props> {
     handleColorChange(color : any, index: any) {
         this.props.colors[index] = color.hex;
         const tempColors = _.cloneDeep(this.props.colors);
-        //this.colors = tempColors
         this.props.onClusterColorChange(tempColors);
         this.forceUpdate();
     }
@@ -55,7 +48,7 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, colThreeName, cols, data, expandable, selectable, colors, centroidTable} = this.props;
+        const {colOneName, colTwoName, colThreeName, data, expandable, selectable, colors, centroidTable} = this.props;
         const ExpandedComponent =(data:any) => 
         <div> 
             <BlockPicker 
@@ -67,9 +60,9 @@ export class ClusterTable extends React.Component<Props> {
 
         const conditionalRowStyles : any = [
             {
-              when: (row:any) => row,
+              when: (row:any) => "key" in row && Number(row.key) > 0,
               style: (row:any) => ({
-                backgroundColor: (Number(row.key)===-1) ? UNCLUSTERED_COLOR : colors[Number(row.key) % colors.length],
+                backgroundColor: (Number(row.key) === -1) ? UNCLUSTERED_COLOR : colors[Number(row.key) % colors.length],
                 alignItems: 'center',
                 justifyContent: 'center',
                 innerWidth: 50,
@@ -140,7 +133,7 @@ export class ClusterTable extends React.Component<Props> {
             // console.log("CENTROID DATA: ", data);
             let colNames : any[] = [];
             
-            if(data != null && data != undefined && data.length > 0) {
+            if(data !== null && data !== undefined && data.length > 0) {
                 colNames.push({name: "Cluster ID", type: "key"})
                 for(const s of Object.keys(data[0].sample)) {
                     // console.log("KEY: ", s);

@@ -1,18 +1,11 @@
 import React from "react";
-import _, { assign } from "lodash";
-
+import _ from "lodash";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { DataWarehouse } from "../model/DataWarehouse";
-import { MergedGenomicBin } from "../model/BinMerger";
 import { CurveState } from "../model/CurveState";
-
 import { Scatterplot } from "./Scatterplot";
 import { DivWithBullseye } from "./DivWithBullseye";
-import * as d3 from "d3";
-
 import "./SampleViz.css";
-import { zoom } from "d3-zoom";
-import {DisplayMode, ProcessingStatus} from "../App"
+import {DisplayMode} from "../App"
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 
 interface Props {
@@ -99,10 +92,10 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
     
     render() {
-        const {data, chr, width, height, curveState, onNewCurveState, 
+        const {data, width, height, curveState, onNewCurveState, 
                 hoveredLocation, invertAxis, customColor, assignCluster, 
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                selectedSample, applyLog, implicitRange, scales, centroidPts, showCentroids} = this.props;
+                applyLog, scales, centroidPts, showCentroids} = this.props;
 
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">

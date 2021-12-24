@@ -1,12 +1,9 @@
-  
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
 import "./Sidebar.css";
 import {ClusterTable} from "./ClusterTable";
 import {DisplayMode} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
-import * as d3 from "d3";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
 import { ToggleButton } from "./ToggleButton";
 
@@ -66,14 +63,14 @@ function Sidebar(props: Props) {
           }
       </div>
 
-      {props.currentDisplayMode == DisplayMode.select && <div className="closemenu2" onClick={() => {
+      {props.currentDisplayMode === DisplayMode.select && <div className="closemenu2" onClick={() => {
                 if(props.currentDisplayMode === DisplayMode.zoom) { 
                   props.setDisplayMode(DisplayMode.select)
                 } else {
                   props.setDisplayMode(DisplayMode.zoom)
                 }
               }}><FiMousePointer></FiMousePointer>  </div>}
-      {props.currentDisplayMode == DisplayMode.zoom && <div className="closemenu2" onClick={() => {
+      {props.currentDisplayMode === DisplayMode.zoom && <div className="closemenu2" onClick={() => {
                 if(props.currentDisplayMode === DisplayMode.zoom) { 
                   props.setDisplayMode(DisplayMode.select)
                 } else {

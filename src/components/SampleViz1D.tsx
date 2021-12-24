@@ -1,11 +1,9 @@
 import React from "react";
-import { DataWarehouse } from "../model/DataWarehouse";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { DivWithBullseye } from "./DivWithBullseye";
 import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
 
 import "./SampleViz.css";
-import { MergedGenomicBin } from "../model/BinMerger";
 import { GenomicBin } from "../model/GenomicBin";
 import { DisplayMode } from "../App";
 import { Gene } from "../model/Gene";
@@ -55,7 +53,6 @@ export class SampleViz1D extends React.Component<Props, State> {
     render() {
         const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
              customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes} = this.props;
-        const selectedSample = this.props.selectedSample;
 
         let visualization: React.ReactNode = null;
             visualization = <DivWithBullseye className="SampleViz-pane">

@@ -1,8 +1,5 @@
 import React from "react"
-import _ from "lodash";
 import DataTable from 'react-data-table-component';
-import {HuePicker, SliderPicker, GithubPicker, BlockPicker} from "react-color";
-import {CSVLink} from "react-csv"
 import "./ClusterTable.css";
 
 interface Props {

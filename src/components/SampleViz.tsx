@@ -1,24 +1,14 @@
 import React from "react";
-import _, { assign } from "lodash";
-
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { DataWarehouse } from "../model/DataWarehouse";
-import { MergedGenomicBin } from "../model/BinMerger";
 import { CurveState } from "../model/CurveState";
-
 import { SampleViz2D } from "./SampleViz2D";
 import { SampleViz1D } from "./SampleViz1D";
-import {HeatMap} from "./HeatMap";
-
-import { Scatterplot } from "./Scatterplot";
-import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
-import {DisplayMode, ProcessingStatus} from "../App"
+import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
-import { isExpressionWithTypeArguments } from "typescript";
 import { Gene } from "../model/Gene";
-import { BarPlot } from "./BarPlot";
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -96,8 +86,8 @@ export class SampleViz extends React.Component<Props, State> {
         }
 
         while(this._clusters.length > 0 
-            && (this._clusters[0] == UNCLUSTERED_ID 
-            || this._clusters[0] == DELETED_ID)) {
+            && (this._clusters[0] === UNCLUSTERED_ID 
+            || this._clusters[0] === DELETED_ID)) {
             this._clusters.shift();
         }
 
@@ -137,7 +127,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     
     render() {
-        const {data, initialSelectedSample, plotId, applyLog, 
+        const {data, initialSelectedSample, applyLog, 
             showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales} = this.props;
         const {implicitRange} = this.state;
         
