@@ -169,7 +169,8 @@ function Sidebar(props: Props) {
                 displayMode={props.currentDisplayMode}
                 setDisplayMode={() => {
                   if(props.currentDisplayMode === DisplayMode.zoom) { 
-                    props.setDisplayMode(DisplayMode.select)
+                    // setDisplayMode is what the toggle should should change to when clicked (so whatever displayMode that it isn't currently on)
+                    props.setDisplayMode(DisplayMode.select) 
                   } else {
                     props.setDisplayMode(DisplayMode.zoom)
                   }
