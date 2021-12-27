@@ -57,7 +57,21 @@ input[type="file"] {
   border-top: 2px solid black;
   margin: 3px;
 }
-  
+
+.closemenu3 {
+  color: #000;
+  position: absolute;
+  right: -25px;
+  z-index: 9999;
+  line-height: 20px;
+  height: 3%;
+  width: 7%;
+  font-weight: bold;
+  font-size: 22px;
+  top: 46%;
+  cursor: pointer;
+}
+
 .closemenu {
   color: #000;
   position: absolute;

@@ -283,84 +283,87 @@ function getMatrix(size : number) {
   return matrix;
 }
 
-export const calculateSilhoutteScores = (rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[]) => {
+export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[]) {
   let possible_clusters = [...clusteredData.keys()];
-  let clusterToSilhoutte = new Map<number, number[] | undefined>();
-  if(possible_clusters.length === 1) {
-    return [];
-  }
-  
-  const downSamplePercent = (rawData.length > 0) ? .01 : 1;
-  for(let i = 0; i < rawData.length; i++) {
-      const bin1 = rawData[i];
-      const c = labels[i];
-
-      const binsInCluster = clusteredData.get(c);
-      if(binsInCluster) {
-        if(binsInCluster.length === 1) {
-          if(clusterToSilhoutte.has(c)) {
-            const previousSilhouttes = clusterToSilhoutte.get(c);
-            if(previousSilhouttes) {
-              previousSilhouttes.push(0);
-              clusterToSilhoutte.set(c, previousSilhouttes);
-            }
-          } else {
-            clusterToSilhoutte.set(c, [0]);
-          }
-
-          continue;
-        }
-
-        // downsample both bins_in_clust er and bins_not_in_cluster
-        const downSampledBinsInCluster = downSample(binsInCluster, downSamplePercent);
-
-        const a = calculateIntraClusterDist2(bin1, downSampledBinsInCluster);
-        let minB = Infinity;
-        for(let c2 of possible_clusters) {
-          if(c2 !== c) {
-            const otherCluster = clusteredData.get(c2);
-            if(otherCluster) {
-              const downSampledOtherCluster = downSample(otherCluster, downSamplePercent);
-              const b = calculateInterClusterDist2(bin1, downSampledOtherCluster);
-              if(b < minB) {
-                minB = b;
-              }
-
-            } else {
-              throw new Error("Key error: Cluster not found");
-            }
-          }
-        }
-
-        let maxAB = _.max([minB, a]);
-        if(maxAB) {
-          const s = (minB - a) / maxAB;
-
-          if(clusterToSilhoutte.has(c)) {
-            const previousSilhouttes = clusterToSilhoutte.get(c);
-            if(previousSilhouttes) {
-              previousSilhouttes.push(s);
-              clusterToSilhoutte.set(c, previousSilhouttes);
-            }
-          } else {
-            clusterToSilhoutte.set(c, [s]);
-          }
-        }
-      } else {
-        throw new Error("Key error: Cluster not found");
-      }
-  }
-
-  const avg_cluster_silhouttes = [];
-  for(const c of possible_clusters) {
-    const val = clusterToSilhoutte.get(Number(c));
-    if(val !== undefined) {
-      const avg = {cluster: Number(c), avg : _.mean(val)};
-      avg_cluster_silhouttes.push(avg);
+    let clusterToSilhoutte = new Map<number, number[] | undefined>();
+    if(possible_clusters.length === 1) {
+      return [];
     }
-  }
+    
+    const downSamplePercent = (rawData.length > 0) ? .01 : 1;
+    for(let i = 0; i < rawData.length; i++) {
+      
+        const bin1 = rawData[i];
+        const c = labels[i];
 
-  return avg_cluster_silhouttes;
+        const binsInCluster = clusteredData.get(c);
+        if(binsInCluster) {
+          if(binsInCluster.length === 1) {
+            if(clusterToSilhoutte.has(c)) {
+              const previousSilhouttes = clusterToSilhoutte.get(c);
+              if(previousSilhouttes) {
+                previousSilhouttes.push(0);
+                clusterToSilhoutte.set(c, previousSilhouttes);
+              }
+            } else {
+              clusterToSilhoutte.set(c, [0]);
+            }
+
+            continue;
+          }
+
+          // downsample both bins_in_clust er and bins_not_in_cluster
+          const downSampledBinsInCluster = downSample(binsInCluster, downSamplePercent);
+
+          const a = calculateIntraClusterDist2(bin1, downSampledBinsInCluster);
+          let minB = Infinity;
+          for(let c2 of possible_clusters) {
+            if(c2 !== c) {
+              const otherCluster = clusteredData.get(c2);
+              if(otherCluster) {
+                const downSampledOtherCluster = downSample(otherCluster, downSamplePercent);
+                const b = calculateInterClusterDist2(bin1, downSampledOtherCluster);
+                if(b < minB) {
+                  minB = b;
+                }
+
+              } else {
+                throw new Error("Key error: Cluster not found");
+                // reject("Key error: Cluster not found");
+              }
+            }
+          }
+
+          let maxAB = _.max([minB, a]);
+          if(maxAB) {
+            const s = (minB - a) / maxAB;
+
+            if(clusterToSilhoutte.has(c)) {
+              const previousSilhouttes = clusterToSilhoutte.get(c);
+              if(previousSilhouttes) {
+                previousSilhouttes.push(s);
+                clusterToSilhoutte.set(c, previousSilhouttes);
+              }
+            } else {
+              clusterToSilhoutte.set(c, [s]);
+            }
+          }
+        } else {
+          throw new Error("Key error: Cluster not found");
+          // reject("Key error: Cluster not found");
+        }
+    }
+
+    const avg_cluster_silhouttes = [];
+    for(const c of possible_clusters) {
+      const val = clusterToSilhoutte.get(Number(c));
+      if(val !== undefined) {
+        const avg = {cluster: Number(c), avg : _.mean(val)};
+        avg_cluster_silhouttes.push(avg);
+      }
+    }
+    const sorted = _.sortBy(avg_cluster_silhouttes, "cluster");
+    return sorted;
 }
 
 

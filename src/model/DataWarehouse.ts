@@ -5,7 +5,58 @@ import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
 import {calculateEuclideanDist, calculateSilhoutteScores} from "../util"
 import { brush } from "d3";
+import { resolve } from "dns";
 
+function silhouttePromise(multiDimData : number[][], clusterToData : Map<Number, Number[][]>, labels : number[]) : Promise<{cluster: number, avg:number}[]>{
+    return new Promise((resolve : any, reject : any)=> {
+        resolve(calculateSilhoutteScores(multiDimData, clusterToData, labels));
+    })
+}
+
+export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
+    return new Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}>((resolve, reject) => {
+        // const samples = samples;
+        const multiDimData = []; 
+        const labels : number[] = [];
+        const clusterToData = new Map<Number, Number[][]>();
+
+        const rdKey = (applyLog) ? "logRD" :  "RD";
+
+        // Reformat data into multidimensional format for RDRs and BAFs
+        // Assumption: length of data % number of samples == 0
+        // Every genome range has the same number of samples
+        for(let i = 0; i < allRecords.length; i += samples.length) {
+            const row = [];
+            const c = allRecords[i].CLUSTER;
+            for(let j = i; j < i + samples.length; j++) {
+                if(j < allRecords.length) {
+                    const currentBin = allRecords[j];
+                    if(j === i) {
+                        labels.push(c);
+                    }
+                    row.push(currentBin.reverseBAF);
+                    row.push(currentBin[rdKey]);
+                } else {
+                    throw Error("Out of Range Error. There are bins missing in the data (bin must exist across all samples).")
+                }
+            }
+
+            multiDimData.push(row);
+            if(clusterToData.has(c)) {
+                let original = clusterToData.get(c);
+                if(original !== undefined) {
+                    original.push(row);
+                    clusterToData.set(c, original);
+                }
+            } else {
+                clusterToData.set(c, [row]);
+            }
+        }
+         
+        let returnVal = {multiDimData: multiDimData, clusterToData: clusterToData, labels: labels};
+        resolve(returnVal);
+    });
+}
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
  * 
@@ -197,49 +248,18 @@ export class DataWarehouse {
         this.shouldCalculateSilhouttes = shouldRecalculate;
     }
 
-    recalculateSilhouttes(applyLog: boolean) {
+    async recalculateSilhouttes(applyLog: boolean) {
         if(this.shouldCalculateSilhouttes) {
-            const samples = this._samples;
-            const multiDimData = []; 
-            const labels : number[] = [];
-            const clusterToData = new Map<Number, Number[][]>();
-
-            const rdKey = (applyLog) ? "logRD" :  "RD";
-
-            // Reformat data into multidimensional format for RDRs and BAFs
-            // Assumption: length of data % number of samples == 0
-            // Every genome range has the same number of samples
-            for(let i = 0; i < this.allRecords.length; i += samples.length) {
-                const row = [];
-                const c = this.allRecords[i].CLUSTER;
-                for(let j = i; j < i + samples.length; j++) {
-                    if(j < this.allRecords.length) {
-                        const currentBin = this.allRecords[j];
-                        if(j === i) {
-                            labels.push(c);
-                        }
-                        row.push(currentBin.reverseBAF);
-                        row.push(currentBin[rdKey]);
-                    } else {
-                        throw Error("Out of Range Error. There are bins missing in the data (bin must exist across all samples).")
-                    }
-                }
-
-                multiDimData.push(row);
-                if(clusterToData.has(c)) {
-                    let original = clusterToData.get(c);
-                    if(original !== undefined) {
-                        original.push(row);
-                        clusterToData.set(c, original);
-                    }
-                } else {
-                    clusterToData.set(c, [row]);
-                }
+            let contents = null;
+            try {
+                contents = await reformatBins(this._samples, applyLog, this.allRecords);
+            } catch (error) {
+                console.error(error);
+                return;
             }
 
-            //  calculate silhouttes
-            const s = calculateSilhoutteScores(multiDimData, clusterToData,labels);
-            this.currentSilhouttes = _.sortBy(s, "cluster");
+            const s = calculateSilhoutteScores(contents.multiDimData, contents.clusterToData, contents.labels);
+            this.currentSilhouttes = s;
             this.shouldCalculateSilhouttes = false;
         }
         return this.currentSilhouttes;
@@ -421,10 +441,7 @@ export class DataWarehouse {
 
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
         let brushedTableData  = this.brushedTableData();
-        console.log("Brushed Table Data: ", brushedTableData);
         
-        // let brushedTableDataKeys = Object.keys(brushedTableData);
-        // let brushedTableDataValues = Object.values(brushedTableData);
         let action = "Assigned to cluster " + cluster + " | ";
         action += "Clusters selected: ";
         for(const row of brushedTableData) {
@@ -566,6 +583,7 @@ export class DataWarehouse {
         
         
         this.setClusterFilters(this._cluster_filters);
+        this.setShouldRecalculateSilhouttes(true);
     }
 
     brushedTableData() {

@@ -1,11 +1,13 @@
 import React from "react";
 import "./Sidebar.css";
 import {ClusterTable} from "./ClusterTable";
-import {DisplayMode} from "../App";
+import {DisplayMode, ProcessingStatus} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
 import { ToggleButton } from "./ToggleButton";
+import spinner from "../loading-small.gif";
+import {BsQuestionCircle} from "react-icons/bs";
 
 interface Props {
     selectedChr : string;
@@ -39,7 +41,8 @@ interface Props {
     syncScales: boolean;
     onToggleSync: () => void;
     onToggleSilhouttes: () => void;
-    showSilhouttes: boolean;
+    showSilhouttes: ProcessingStatus;
+    onToggleDirections: () => void;
 }
 
 
@@ -49,7 +52,11 @@ function Sidebar(props: Props) {
   };
 
   return (
+
     <div className={props.show ? "sidebar active" : "sidebar"}>
+      <div className="closemenu3" onClick={() => {
+              props.onToggleDirections();
+          }}><BsQuestionCircle></BsQuestionCircle></div>
       <div className="closemenu" onClick={showSidebar}>
           <div> </div>
           {props.show ? (
@@ -158,10 +165,12 @@ function Sidebar(props: Props) {
             </label>
           </div>
            <div className= "row-contents" >
-            <label>
+           {/* {(props.showSilhouttes === ProcessingStatus.processing || props.showSilhouttes === ProcessingStatus.done)  && <img src={spinner} alt="Loading" />} */}
+            {(props.showSilhouttes === ProcessingStatus.none ||props.showSilhouttes === ProcessingStatus.done)   && <label>
               <span className="App-CheckBox-explanation">Show Silhoutte Plot: </span>
-              <input type="checkbox" onClick={props.onToggleSilhouttes} checked={props.showSilhouttes} readOnly/>
-            </label>
+              <input type="checkbox" onChange={props.onToggleSilhouttes} checked={props.showSilhouttes === ProcessingStatus.done} readOnly/>
+            </label>}
+            
           </div>
 
           <div className= "row-contents" >

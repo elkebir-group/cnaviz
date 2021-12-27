@@ -3,7 +3,7 @@ import parse from "csv-parse";
 import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
-import { DataWarehouse } from "./model/DataWarehouse";
+import { DataWarehouse, reformatBins } from "./model/DataWarehouse";
 import {SampleViz} from "./components/SampleViz";
 import spinner from "./loading-small.gif";
 import "./App.css";
@@ -16,6 +16,7 @@ import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import { BarPlot } from "./components/BarPlot";
 import {FiX} from "react-icons/fi";
+import {calculateSilhoutteScores} from "./util"
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -236,7 +237,12 @@ interface State {
 
     driverGenes: Gene[] | null;
 
-    showSilhouttes: boolean;
+    showSilhouttes: ProcessingStatus;
+
+    silhouttes: {
+        cluster: number;
+        avg: number;
+    }[];
 }
 
 
@@ -289,7 +295,8 @@ export class App extends React.Component<{}, State> {
             syncScales: false,
             scales: {xScale: null, yScale: null},
             driverGenes: null,
-            showSilhouttes: false
+            showSilhouttes: ProcessingStatus.none,
+            silhouttes: []
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -318,6 +325,7 @@ export class App extends React.Component<{}, State> {
         this.handleZoom = this.handleZoom.bind(this);
         this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
         this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
+        this.onToggleDirections = this.onToggleDirections.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -336,7 +344,7 @@ export class App extends React.Component<{}, State> {
             } else if(d3.event.key === "c") {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
-                self.setState({showSilhouttes: !self.state.showSilhouttes});
+                self.onToggleSilhoutteBarPlot();
             }
         })
 
@@ -502,11 +510,16 @@ export class App extends React.Component<{}, State> {
         }
     }
 
+    onToggleDirections() {
+        this.setState({showDirections: !this.state.showDirections});
+    }
+
     toggleLog() {
         this.setState({
             applyLog: !this.state.applyLog
         });
         this.state.indexedData.setShouldRecalculateSilhouttes(true);
+        
     }
 
     toggleClustering() {
@@ -565,8 +578,18 @@ export class App extends React.Component<{}, State> {
         this.setState({scales: newScales});
     }
 
-    onToggleSilhoutteBarPlot() {
-        this.setState({showSilhouttes: !this.state.showSilhouttes})
+    async onToggleSilhoutteBarPlot() {
+        if(this.state.showSilhouttes === ProcessingStatus.none) {
+            this.setState({showSilhouttes: ProcessingStatus.processing});
+            this.state.indexedData.recalculateSilhouttes(this.state.applyLog).then((data: {cluster: number, avg: number}[] | undefined) => {
+                if(data !== undefined) {
+                    this.setState({silhouttes: data});
+                    this.setState({showSilhouttes: ProcessingStatus.done});
+                }
+            });
+        } else {
+            this.setState({showSilhouttes: ProcessingStatus.none});
+        }
     }
 
 
@@ -576,7 +599,6 @@ export class App extends React.Component<{}, State> {
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
-
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
@@ -642,7 +664,7 @@ export class App extends React.Component<{}, State> {
         }
         
         const status = this.getStatusCaption();
-        
+
         return <div className="container-fluid">
             <div>
                 <Sidebar 
@@ -678,16 +700,21 @@ export class App extends React.Component<{}, State> {
                     onDriverFileChosen={this.handleDriverFileChosen}
                     onToggleSilhouttes={this.onToggleSilhoutteBarPlot}
                     showSilhouttes={this.state.showSilhouttes}
+                    onToggleDirections = {this.onToggleDirections}
                 />
             </div>
             
             <div className={this.state.sidebar ? "marginContent" : ""}>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
+
                 {this.state.showDirections && <div className="black_overlay"></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header">Directions</h2>
+                        <div className="Exit-Popup" onClick={this.onToggleDirections}> 
+                            <FiX/>
+                        </div>
                         <h5> Selection/Erasing </h5>
                         <li> Hold down "Command/Control" in Zoom mode to temporarily enter Select mode </li>
                         <li> Hold down "Alt" in Zoom mode to temporarily enter Erase mode </li>
@@ -702,12 +729,17 @@ export class App extends React.Component<{}, State> {
                         <li> Click space to toggle the sidebar </li>
                         <li> Hold down "?" or "/" button to open direction panel </li>
                         <li> Click "c" to toggle a table of the centroids of each cluster for each sample </li>
+                        <li> Click "s" to toggle a bar plot displaying approximate average silhoutte scores for each cluster </li>
+
                     </div> }
 
                 {this.state.showLog && <div className="black_overlay"></div> }
                 {this.state.showLog && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Previous Actions </h2>
+                        <div className="Exit-Popup" onClick={()=> this.setState({showLog: !this.state.showLog})}> 
+                            <FiX/>
+                        </div>
                         <LogTable
                             data={actions}
                             onClusterColorChange={this.onClusterColorChange}
@@ -720,6 +752,9 @@ export class App extends React.Component<{}, State> {
                 {this.state.showCentroidTable && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Centroid Table </h2>
+                        <div className="Exit-Popup" onClick={()=> this.setState({showCentroidTable: !this.state.showCentroidTable})}> 
+                            <FiX/>
+                        </div>
                         <ClusterTable
                             data={indexedData.getCentroidData()}
                             onClusterColorChange={this.onClusterColorChange}
@@ -735,8 +770,8 @@ export class App extends React.Component<{}, State> {
 
                     </div> }
                 
-                {this.state.showSilhouttes && <div className="black_overlay"></div> }
-                {this.state.showSilhouttes && 
+                {this.state.showSilhouttes === ProcessingStatus.done && <div className="black_overlay"></div> }
+                {this.state.showSilhouttes === ProcessingStatus.done && 
                     <div className="Directions2">
                         <h2 className="pop-up-window-header"> Approximate Average Sillhoutte Coefficients </h2>
                         <div className="Exit-Popup" onClick={this.onToggleSilhoutteBarPlot}> 
@@ -745,7 +780,7 @@ export class App extends React.Component<{}, State> {
                         <BarPlot
                             width={700}
                             height={360}
-                            data={indexedData.recalculateSilhouttes(this.state.applyLog)}
+                            data={this.state.silhouttes}
                             colors={CLUSTER_COLORS}
                         ></BarPlot>
                     </div> }
