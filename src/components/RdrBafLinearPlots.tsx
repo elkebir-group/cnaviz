@@ -26,16 +26,18 @@ interface Props {
     implicitEnd: number | null;
     onZoom: (newScales: any) => void;
     driverGenes: Gene[] | null;
+    handleDriverGenesChange: (sentGene: {gene: Gene | null, destination: string | null}) => void;
+    driverGeneUpdate: {gene: Gene | null, destination: string | null};
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
         brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
         displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes} = props;
-
     return <LinearPlot
                 data={data}
                 dataKeyToPlot={applyLog ? "logRD" : "RD"}
+                applyLog={applyLog}
                 genome={genome}
                 chr={chr}
                 hoveredLocation={hoveredLocation}
@@ -55,18 +57,21 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
                 implicitStart={implicitStart}
                 implicitEnd={implicitEnd}
                 driverGenes={driverGenes}
+                driverGeneUpdate={props.driverGeneUpdate}
+                handleDriverGenesChange={props.handleDriverGenesChange}
         />
 }
 
 export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
-            implicitStart, implicitEnd, onZoom, driverGenes} = props;
+            implicitStart, implicitEnd, onZoom, driverGenes, applyLog} = props;
 
     return <LinearPlot
                 data={data}
                 chr={chr}
                 dataKeyToPlot="reverseBAF"
+                applyLog={applyLog}
                 genome={genome}
                 hoveredLocation={hoveredLocation}
                 onLocationHovered={onLocationHovered}
@@ -85,5 +90,7 @@ export function BAFLinearPlot(props: Props) {
                 implicitEnd={implicitEnd}
                 onZoom={onZoom}
                 driverGenes={driverGenes}
+                driverGeneUpdate={props.driverGeneUpdate}
+                handleDriverGenesChange={props.handleDriverGenesChange}
         />;
 }

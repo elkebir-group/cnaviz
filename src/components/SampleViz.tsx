@@ -95,6 +95,9 @@ export class SampleViz extends React.Component<Props, State> {
     componentDidUpdate(prevProps: Props) {
         if(this.props.clusterTableData !== prevProps.clusterTableData) {
             this.initializeListOfClusters();
+        } else if(this.props.applyLog !== prevProps.applyLog) {
+            let newScale = {xScale: this.state.scales.xScale, yScale: null};
+            this.setState({scales: newScale});
         }
     }
 
@@ -229,8 +232,8 @@ export class SampleViz extends React.Component<Props, State> {
                     data={selectedRecords}
                     onLinearPlotZoom={this.handleLinearPlotZoom}
                     onZoom={this.handleZoom}
-                    yScale={(syncScales) ? this.props.scales.yScale : this.state.scales.yScale} 
-                    xScale={(syncScales) ? this.props.scales.xScale : this.state.scales.xScale} 
+                    yScale={this.state.scales.yScale} 
+                    xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}

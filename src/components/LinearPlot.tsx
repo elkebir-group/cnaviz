@@ -35,6 +35,7 @@ interface Props {
     data: GenomicBin[];
     chr: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF">;
+    applyLog: boolean;
     width: number;
     height: number;
     hoveredLocation?: ChromosomeInterval;
@@ -54,6 +55,8 @@ interface Props {
     onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) => void;
     onZoom: (newScales: any) => void;
     driverGenes: Gene[] | null;
+    handleDriverGenesChange: (sentGene: {gene: Gene | null, destination: string | null}) => void;
+    driverGeneUpdate: {gene: Gene | null, destination: string | null};
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -114,7 +117,17 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        
+        if(this.props.driverGeneUpdate.gene !== null) {
+            if(this.props.driverGeneUpdate.destination === this.props.dataKeyToPlot) {
+                if(this.lockedDrivers.has(this.props.driverGeneUpdate.gene)) {
+                    this.lockedDrivers.delete(this.props.driverGeneUpdate.gene);
+                } else {
+                    this.lockedDrivers.add(this.props.driverGeneUpdate.gene);
+                }
+                this.props.handleDriverGenesChange({gene: null, destination: null});
+            }
+        }
+
         if(this.propsDidChange(prevProps, ["chr"])) {
             if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                 this.props.onLinearPlotZoom(null, null, true);
@@ -343,7 +356,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.clearColor(255,255,255,1);
             const yr = ty().rescaleY(yScale);
-        
             gy.call(yAx, yr);
             self._currYScale = yr;
             if(!chr) {
@@ -367,24 +379,33 @@ export class LinearPlot extends React.PureComponent<Props> {
                         .attr("clip-path", "url(#clip2)")
                         .classed("Drivers", true)
                         .selectAll("circle")
-                        // .selectAll("path")
-                            .data(driverGenes)
+                        .data(driverGenes)
                             .enter()
                             .append("circle")
-                            // .append("path")
                             .attr("class", "point")
                             .attr("d", d3.symbol().type(d3.symbolCircle))
                             .attr("fill", "red")
                             .attr("fill-opacity", 1)
                             .attr("stroke-width", 2)
                             .attr("r", 2)
-                            // .attr("stroke", "black") 
                             .attr("transform", function(d) {
-                                return "translate(" + self._currXScale(genome.getImplicitCoordinates(d.location).getCenter()) + "," + self._currYScale(yr.domain()[0]) + ")"; 
+                                return "translate(" + self._currXScale(genome.getImplicitCoordinates(d.location).getCenter()) + "," + ((self._currYScale(yr.domain()[0]) || 0) + 3) + ")"; 
                             })
                             .on("mouseover", mouseover)
                             .on("mouseleave", mouseleave )
-                            .on("click", d => (self.lockedDrivers.has(d)) ? self.lockedDrivers.delete(d) : self.lockedDrivers.add(d))   
+                            .on("click", d => {
+                                let dest = "";
+                                if(dataKeyToPlot === "reverseBAF" && self.props.applyLog) {
+                                    dest = "logRD"
+                                } else if(dataKeyToPlot === "reverseBAF") {
+                                    dest = "RD"
+                                } else {
+                                    dest = "reverseBAF"
+                                }
+
+                                (self.lockedDrivers.has(d)) ? self.lockedDrivers.delete(d) : self.lockedDrivers.add(d);
+                                self.props.handleDriverGenesChange({gene: d, destination: dest});
+                            })
             }
         }
 
@@ -525,7 +546,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
             >
-            {this.renderHighlight()}
+            {/* {this.renderHighlight()} */}
             {this.renderTooltip()}
             {this.renderLockedDrivers()}
             <canvas
@@ -553,7 +574,16 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     renderLockedDrivers() {
         const {width, genome, chr, height} = this.props;
+        let shouldAddBack = false;
+        if(this.previewDriver != null && this.lockedDrivers.has(this.previewDriver)) {
+            this.lockedDrivers.delete(this.previewDriver);
+            shouldAddBack = true;
+        }
+
         const drivers = [...this.lockedDrivers];
+        if(this.previewDriver != null && shouldAddBack) {
+            this.lockedDrivers.add(this.previewDriver);
+        }
 
         return (
             drivers.map(
@@ -566,9 +596,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                     const contents = <React.Fragment>
                                         <div> {driverSymbol} </div>
                                     </React.Fragment>;
+
                     if(start > PADDING.left && start < width - PADDING.right) {
                         return (
-                            <div>
+                            <div key={this.props.dataKeyToPlot + driverSymbol}>
                                 <div style={{
                                     position: "absolute",
                                     left: start-20,
@@ -583,8 +614,8 @@ export class LinearPlot extends React.PureComponent<Props> {
                                     left: start,
                                     width: boxWidth,
                                     height: "75%",
-                                    backgroundColor: "red",
-                                    border: "1px solid rgba(255,255,0,0.7)",
+                                    backgroundColor: "rgba(255,165,0,1)",
+                                    border: "1px solid rgba(255,165,0,1)",
                                     zIndex: 0
                                 }} />   
                         </div>
@@ -635,10 +666,9 @@ export class LinearPlot extends React.PureComponent<Props> {
                 <div style={{
                     position: "absolute",
                     left: start,
-                    width: boxWidth,
+                    width: boxWidth + 1,
                     height: "75%",
-                    backgroundColor: "red",
-                    border: "1px solid rgba(255,255,0,0.7)",
+                    backgroundColor: (this.lockedDrivers.has(this.previewDriver)) ?"red" : "rgba(0, 200 , 0, 1)",
                     zIndex: 0
                 }} />   
             </div>

@@ -34,20 +34,27 @@ interface Props {
 
 interface State {
     selectedSample: string;
+    sentDriver: {gene: Gene | null, destination: string | null} // keeps baf and RD driver markers in sync by sending what update was done to the lockedDrivers set
 }
 
 export class SampleViz1D extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            selectedSample: props.initialSelectedSample
+            selectedSample: props.initialSelectedSample,
+            sentDriver: {gene: null, destination: null}
         };
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
+        this.handleDriverGenesChange = this.handleDriverGenesChange.bind(this);
     }
 
     handleSelectedSampleChanged(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedSample: event.target.value});
+    }
+
+    handleDriverGenesChange(sentGene: {gene: Gene | null, destination: string | null}) {
+        this.setState({sentDriver: sentGene});
     }
 
     render() {
@@ -77,6 +84,8 @@ export class SampleViz1D extends React.Component<Props, State> {
                     implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}
                     onZoom={onZoom}
                     driverGenes={driverGenes}
+                    handleDriverGenesChange={this.handleDriverGenesChange}
+                    driverGeneUpdate={this.state.sentDriver}
                     />
                     
                 <div className="SampleViz-separator" />
@@ -99,7 +108,10 @@ export class SampleViz1D extends React.Component<Props, State> {
                     onZoom={onZoom}
                     implicitStart={(implicitRange) ? implicitRange[0] : implicitRange}
                     implicitEnd={(implicitRange) ? implicitRange[1] : implicitRange}
-                    driverGenes={driverGenes}/>
+                    driverGenes={driverGenes}
+                    handleDriverGenesChange={this.handleDriverGenesChange}
+                    driverGeneUpdate={this.state.sentDriver}
+                />
                     
             </DivWithBullseye>;
 

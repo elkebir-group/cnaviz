@@ -4,6 +4,7 @@ import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
 import {calculateEuclideanDist, calculateSilhoutteScores} from "../util"
+import { brush } from "d3";
 
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
@@ -198,7 +199,6 @@ export class DataWarehouse {
 
     recalculateSilhouttes(applyLog: boolean) {
         if(this.shouldCalculateSilhouttes) {
-            console.time("Calculating Silhouttes");
             const samples = this._samples;
             const multiDimData = []; 
             const labels : number[] = [];
@@ -300,22 +300,6 @@ export class DataWarehouse {
             {
                 key: Number(row.key), 
                 value: value
-            });
-        }
-        return clusterTable;
-    }
-
-    calculateSelectTableInfo() : selectionTableRow[] {
-        const clusterInfo = this._cluster_dim.group().all();
-        const clusterTable : selectionTableRow[] = [];
-        for(const row of clusterInfo) {
-            let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
-            let selectPerc = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
-            clusterTable.push(
-            {
-                key: Number(row.key), 
-                value: value,
-                selectPerc: selectPerc
             });
         }
         return clusterTable;
@@ -437,19 +421,16 @@ export class DataWarehouse {
 
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
         let brushedTableData  = this.brushedTableData();
-        let brushedTableDataKeys = Object.keys(brushedTableData);
-        let brushedTableDataValues = Object.values(brushedTableData);
+        console.log("Brushed Table Data: ", brushedTableData);
+        
+        // let brushedTableDataKeys = Object.keys(brushedTableData);
+        // let brushedTableDataValues = Object.values(brushedTableData);
         let action = "Assigned to cluster " + cluster + " | ";
         action += "Clusters selected: ";
-        for(let i = 0; i < brushedTableData.length; i++) {
-            action += brushedTableDataKeys[i] + " (" + Number(brushedTableDataValues[i].value) + "%)";
-            if(i !== brushedTableData.length-1) {
-                action+= ", ";
-            } else {
-                action += " | ";
-            }
+        for(const row of brushedTableData) {
+            action += String(row.key) + " (" + String(row.value) + "%), ";
         }
-
+        action += " | "
         let currentRdRange : [number, number] = [_.minBy(this.brushedBins, "RD")!.RD, _.maxBy(this.brushedBins, "RD")!.RD];
         let currentBAFRange : [number, number] = [_.minBy(this.brushedBins, "reverseBAF")!.reverseBAF, _.maxBy(this.brushedBins, "reverseBAF")!.reverseBAF];
         
@@ -590,7 +571,7 @@ export class DataWarehouse {
     brushedTableData() {
         
         const sampleAmount = this._samples.length;
-        const clusterInfo = this._clusterAmounts;//this._cluster_dim.group().all();
+        const clusterInfo = this._clusterAmounts;
         // map each cluster to the amount of points in a single sample 
         // (Each sample contains the same amount of points so we divide by total amount of samples)
         let clusterIdToAmount : clusterIdMap = {};
@@ -598,7 +579,7 @@ export class DataWarehouse {
         const amountInSelection = this.brushedBins.length;
         const clusterTable = this.brushedClusterDim.group().all();
         //clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
-        
+
         const clusterTable2 : selectionTableRow[] = [];
         for(const row of clusterTable) {
             clusterTable2.push(
