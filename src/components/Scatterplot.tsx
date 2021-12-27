@@ -52,6 +52,7 @@ interface Props {
     scales: any;
     centroidPts: {cluster: number, point: [number, number]}[];
     showCentroids: boolean;
+    
 }
 
 interface State {

@@ -38,7 +38,8 @@ interface Props {
     showLinear: boolean;
     syncScales: boolean;
     onToggleSync: () => void;
-    updatedClusterTable: () => void;
+    onToggleSilhouttes: () => void;
+    showSilhouttes: boolean;
 }
 
 
@@ -150,19 +151,18 @@ function Sidebar(props: Props) {
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
           </div>
-          {/* <div className= "row-contents" >
-            <label>
-              <span className="App-CheckBox-explanation">Sync Scales: </span>
-              <input type="checkbox" onClick={props.onToggleSync} checked={props.syncScales} readOnly/>
-            </label>
-          </div> */}
           <div className= "row-contents" >
             <label>
               <span className="App-CheckBox-explanation">Show Centroids: </span>
               <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
             </label>
           </div>
-
+           <div className= "row-contents" >
+            <label>
+              <span className="App-CheckBox-explanation">Show Silhoutte Plot: </span>
+              <input type="checkbox" onClick={props.onToggleSilhouttes} checked={props.showSilhouttes} readOnly/>
+            </label>
+          </div>
 
           <div className= "row-contents" >
             <ToggleButton
@@ -190,7 +190,6 @@ function Sidebar(props: Props) {
                 expandable={true}
                 selectable={true}
                 colors={props.colors}
-                updatedClusterTable={props.updatedClusterTable}
             ></ClusterTable>
           
         </div>

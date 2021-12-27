@@ -15,7 +15,7 @@ import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import { BarPlot } from "./components/BarPlot";
-
+import {FiX} from "react-icons/fi";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -316,8 +316,8 @@ export class App extends React.Component<{}, State> {
         this.onToggleSync = this.onToggleSync.bind(this);
         this.goBackToPreviousCluster = this.goBackToPreviousCluster.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
-        this.updatedClusterTable = this.updatedClusterTable.bind(this);
         this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
+        this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -565,8 +565,8 @@ export class App extends React.Component<{}, State> {
         this.setState({scales: newScales});
     }
 
-    updatedClusterTable() {
-        // this.setState({updatingStatus: ProcessingStatus.done});
+    onToggleSilhoutteBarPlot() {
+        this.setState({showSilhouttes: !this.state.showSilhouttes})
     }
 
 
@@ -672,11 +672,12 @@ export class App extends React.Component<{}, State> {
                     showLinear={this.state.showLinearPlot}
                     onToggleSync={this.onToggleSync}
                     syncScales={this.state.syncScales}
-                    updatedClusterTable = {this.updatedClusterTable}
                     logData = {actions}
                     onToggleShowCentroids= {this.onToggleShowCentroids}
                     showCentroids= {this.state.showCentroids}
                     onDriverFileChosen={this.handleDriverFileChosen}
+                    onToggleSilhouttes={this.onToggleSilhoutteBarPlot}
+                    showSilhouttes={this.state.showSilhouttes}
                 />
             </div>
             
@@ -738,9 +739,12 @@ export class App extends React.Component<{}, State> {
                 {this.state.showSilhouttes && 
                     <div className="Directions2">
                         <h2 className="pop-up-window-header"> Approximate Average Sillhoutte Coefficients </h2>
+                        <div className="Exit-Popup" onClick={this.onToggleSilhoutteBarPlot}> 
+                            <FiX/>
+                        </div>
                         <BarPlot
                             width={700}
-                            height={400}
+                            height={360}
                             data={indexedData.recalculateSilhouttes(this.state.applyLog)}
                             colors={CLUSTER_COLORS}
                         ></BarPlot>

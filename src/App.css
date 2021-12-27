@@ -98,6 +98,17 @@ body {
     z-index:1002;
 }
 
+.Exit-Popup {
+    height: 25px;
+    position: absolute;
+    top: 0%;
+    left: 752px;
+    align-items: right;
+    color: red;
+    fill: red;
+    cursor: pointer;
+}
+
 .pop-up-window-header {
     display: flex;
     justify-content: center;

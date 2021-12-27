@@ -30,10 +30,6 @@ type SampleIndexedData<T> = {
     [sample: string] : T
 }
 
-type ChrIndexedData<T> = {
-    [sample: string] : T
-}
-
 type LogTableRow = {
     action: string
 }
@@ -41,7 +37,6 @@ type LogTableRow = {
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
 type selectionTableRow =  {key: number, value: number, selectPerc: number}
-type centroidTableRow = {key: number, sample: string, centroid: string}
 type centroidPoint = {cluster: number, point: [number, number]}
 type newCentroidTableRow = {key: string, sample: {[sampleName: string] : string}}
 export type heatMapElem = {cluster1: number, cluster2: number, dist: number}

@@ -2,8 +2,10 @@ import React from "react"
 import * as d3 from "d3";
 import "./BarPlot.css";
 
-var margins = {top: 10, right: 40, bottom: 40, left: 40};
-const margin = { left: 100, top: 50, right: 50, bottom: 30 }
+// const margins = {top: 10, right: 40, bottom: 40, left: 40};
+const margins = {top: 0, right: 0, bottom: 0, left: 0};
+// const margin = { left: 100, top: 50, right: 50, bottom: 30 };
+const margin = { left: 0, top: 0, right: 0, bottom: 30};
 const UNCLUSTERED_COLOR = "#999999";
 
 type clusterAvg = {
@@ -90,7 +92,7 @@ export class BarPlot extends React.Component<Props> {
         // Add X axis
         var x = d3.scaleLinear()
         .domain([-1, 1])
-        .range([0, width]);
+        .range([15, width-10]);
 
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
