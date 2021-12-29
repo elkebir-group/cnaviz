@@ -326,7 +326,8 @@ export class App extends React.Component<{}, State> {
         this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
         this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
         this.onToggleDirections = this.onToggleDirections.bind(this);
-
+        this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
+        
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key === "z") {
@@ -569,6 +570,10 @@ export class App extends React.Component<{}, State> {
         this.setState({showCentroids: !this.state.showCentroids});
     }
 
+    onToggleShowCentroidTable() {
+        this.setState({showCentroidTable: !this.state.showCentroidTable});
+    }
+
     goBackToPreviousCluster() {
         this.state.indexedData.undoClusterUpdate();
         this.setState({indexedData: this.state.indexedData});
@@ -701,6 +706,7 @@ export class App extends React.Component<{}, State> {
                     onToggleSilhouttes={this.onToggleSilhoutteBarPlot}
                     showSilhouttes={this.state.showSilhouttes}
                     onToggleDirections = {this.onToggleDirections}
+                    onToggleShowCentroidTable={this.onToggleShowCentroidTable}
                 />
             </div>
             

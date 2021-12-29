@@ -43,6 +43,7 @@ interface Props {
     onToggleSilhouttes: () => void;
     showSilhouttes: ProcessingStatus;
     onToggleDirections: () => void;
+    onToggleShowCentroidTable: () => void;
 }
 
 
@@ -59,9 +60,6 @@ function Sidebar(props: Props) {
   return (
 
     <div className={props.show ? "sidebar active" : "sidebar"}>
-      <div className="closemenu3" onClick={() => {
-              props.onToggleDirections();
-          }}><BsQuestionCircle></BsQuestionCircle></div>
       <div className="closemenu" onClick={showSidebar}>
           <div> </div>
           {props.show ? (
@@ -75,22 +73,6 @@ function Sidebar(props: Props) {
               )
           }
       </div>
-
-      {props.currentDisplayMode === DisplayMode.select && <div className="closemenu2" onClick={() => {
-                if(props.currentDisplayMode === DisplayMode.zoom) { 
-                  props.setDisplayMode(DisplayMode.select)
-                } else {
-                  props.setDisplayMode(DisplayMode.zoom)
-                }
-              }}><FiMousePointer></FiMousePointer>  </div>}
-      {props.currentDisplayMode === DisplayMode.zoom && <div className="closemenu2" onClick={() => {
-                if(props.currentDisplayMode === DisplayMode.zoom) { 
-                  props.setDisplayMode(DisplayMode.select)
-                } else {
-                  props.setDisplayMode(DisplayMode.zoom)
-                }
-              }}><FiZoomIn></FiZoomIn></div>}
-      
       
       <div className="contents">
       <div className="row-contents" > <h1>CNA-Viz</h1> </div>
@@ -145,7 +127,7 @@ function Sidebar(props: Props) {
         
           <div className= "row-contents" >
             <label>
-              <span className="App-CheckBox-explanation">Log RD: </span>
+              <span className="App-CheckBox-explanation">Log RDR: </span>
               <input type="checkbox" onClick={props.onToggleLog}/>
             </label>
           </div>
@@ -174,7 +156,6 @@ function Sidebar(props: Props) {
               <span className="App-CheckBox-explanation">Silhoutte Plot: </span>
               <input type="checkbox" onChange={props.onToggleSilhouttes} checked={props.showSilhouttes === ProcessingStatus.done} readOnly/>
             </label>}
-            
           </div>
 
           <div className= "row-contents" >
@@ -190,10 +171,14 @@ function Sidebar(props: Props) {
                 }}
               />
           </div>
+          <div className= "row-contents" >
+            <button onClick={props.onToggleSilhouttes}> Analytics </button>
+            <button onClick={props.onToggleShowCentroidTable}> Centroid Table </button>
+            <button onClick={props.onToggleDirections}> Usage </button>
+          </div>
 
       </div>
         <div className="contents2">
-          {/* <div className="title-bar"></div> */}
           <ClusterTable 
                 data={props.tableData} 
                 onClusterRowsChange={props.onClusterRowsChange} 
