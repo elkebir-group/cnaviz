@@ -212,15 +212,17 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr("text-anchor", "middle")
             .attr("font-size", 11)
             .attr("x", _.mean(xScale.range()))
-            .attr("y", height - PADDING.bottom + 30)
+            .attr("y", height - PADDING.bottom)
             .text(chr || genome.getName());
 
         // Y axis stuff
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `rotate(-90, ${PADDING.left- 30}, ${_.mean(yScale.range())})`)
+            .attr("transform", `rotate(-90, ${PADDING.left}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
-            .attr("y", _.mean(yScale.range()));
+            .attr("x", (height - PADDING.bottom - PADDING.top) / 2 - 1)
+            .attr("y", PADDING.left/2+5)
+            .attr("text-anchor", "middle");
 
         let xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
@@ -546,7 +548,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
             >
-            {/* {this.renderHighlight()} */}
             {this.renderTooltip()}
             {this.renderLockedDrivers()}
             <canvas
