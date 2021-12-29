@@ -110,7 +110,7 @@ export class CSV extends React.Component<Props, State> {
     render() {
         let csvButton = <div>
                 
-            <button type="button" onClick={this.handleFileDownload}>Export</button>
+            <button type="button" onClick={this.handleFileDownload} style={{display: "none"}}>Export</button>
             {this.state.loading && <div>Reading file... <img src={spinner} alt="Loading" /></div>}
         </div>
         return csvButton;

@@ -44,6 +44,8 @@ interface Props {
     showSilhouttes: ProcessingStatus;
     onToggleDirections: () => void;
     onToggleShowCentroidTable: () => void;
+    onTogglePreviousActionLog: () => void;
+    onClearClustering: () => void;
 }
 
 
@@ -79,23 +81,23 @@ function Sidebar(props: Props) {
         <div className="title-bar"></div>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
-            <label className="custom-file-upload">
-              <input type="file" id="fileUpload" onChange={
-                (event: any) =>
-                props.onFileChosen(event, false)
-              } />
-              Import
-            </label>
-          </div>
-          
-          <div className="row-contents" >
-            <label className="custom-file-upload">
-              <input type="file" id="fileUpload" onChange={
-                (event: any) =>
-                props.onFileChosen(event, true)
-              }/>
-              Import with Clustering
-            </label>
+              <label className="custom-file-upload">
+                <input type="file" id="fileUpload" onChange={
+                  (event: any) =>
+                  props.onFileChosen(event, true)
+                } />
+                Import
+              </label>
+              <label className="custom-file-upload">
+                <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
+                Export
+              </label>
+              <label className="custom-file-upload">
+                <input type="button" id="custom-button" onClick={
+                    (event: any) => console.log("Demo")
+                }/>
+                Demo
+              </label>
           </div>
           
           <div className="row-contents" >
@@ -106,10 +108,13 @@ function Sidebar(props: Props) {
               }/>
               Import Driver Genes
             </label>
-          </div>
 
-          <div className="row-contents">
-            <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={
+                  (event: any) => console.log("Demo Drivers")
+              }/>
+              Demo Drivers
+            </label> 
           </div>
   
           <div className= "row-contents" >
@@ -144,21 +149,7 @@ function Sidebar(props: Props) {
               <span className="App-CheckBox-explanation">Linear Plots: </span>
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
-            
           </div>
-          {/* <div className= "row-contents" >
-            <label>
-              <span className="App-CheckBox-explanation">Linear Plots: </span>
-              <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
-            </label>
-          </div> */}
-          {/* <div className= "row-contents" >
-            <label>
-              <span className="App-CheckBox-explanation">Centroids: </span>
-              <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
-            </label>
-          </div> */}
-          
 
           <div className= "row-contents" >
             <ToggleButton
@@ -177,6 +168,10 @@ function Sidebar(props: Props) {
             <button onClick={props.onToggleSilhouttes}> Analytics (s) </button>
             <button onClick={props.onToggleShowCentroidTable}> Centroids (c) </button>
             <button onClick={props.onToggleDirections}> Usage (?) </button>
+          </div>
+          <div className= "row-contents" >
+            <button onClick={props.onClearClustering}> Clear Clustering </button>
+            <button onClick={props.onTogglePreviousActionLog}> Previous Actions (l) </button>
           </div>
 
       </div>

@@ -327,7 +327,8 @@ export class App extends React.Component<{}, State> {
         this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
         this.onToggleDirections = this.onToggleDirections.bind(this);
         this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
-        
+        this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
+        this.onClearClustering = this.onClearClustering.bind(this);
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key === "z") {
@@ -380,7 +381,7 @@ export class App extends React.Component<{}, State> {
         if (!files || !files[0]) {
             return;
         }
-
+        
         this.setState({chosenFile: files[0].name})
         this.setState({processingStatus: ProcessingStatus.readingFile});
         let contents = "";
@@ -415,7 +416,7 @@ export class App extends React.Component<{}, State> {
         if (!files || !files[0]) {
             return;
         }
-
+        
         let contents = "";
         try {
             contents = await getFileContentsAsString(files[0]);
@@ -583,6 +584,15 @@ export class App extends React.Component<{}, State> {
         this.setState({scales: newScales});
     }
 
+    onTogglePreviousActionLog() {
+        this.setState({showLog: !this.state.showLog});
+    }
+
+    onClearClustering() {
+        this.state.indexedData.clearClustering();
+        this.setState({indexedData: this.state.indexedData});
+    }
+
     async onToggleSilhoutteBarPlot() {
         if(this.state.showSilhouttes === ProcessingStatus.none) {
             this.setState({showSilhouttes: ProcessingStatus.processing});
@@ -707,6 +717,8 @@ export class App extends React.Component<{}, State> {
                     showSilhouttes={this.state.showSilhouttes}
                     onToggleDirections = {this.onToggleDirections}
                     onToggleShowCentroidTable={this.onToggleShowCentroidTable}
+                    onTogglePreviousActionLog={this.onTogglePreviousActionLog}
+                    onClearClustering={this.onClearClustering}
                 />
             </div>
             

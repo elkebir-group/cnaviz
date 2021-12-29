@@ -43,12 +43,34 @@
   flex: 1 1 0;
 }
 
+.row-contents2 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 50px;
+  /* height: 50px; */
+  /* width: 200px; */
+  /* margin-bottom: 10px; */
+  flex: 1 1 0;
+}
+
+.right-margin {
+  margin-right: 5px;
+}
+
+.left-margin {
+  margin-left: 5px;
+}
+
 input[type="file"] {
   display: none;
 }
 
+#custom-button {
+  display: none;
+}
 .custom-file-upload {
-  display: inline-block;
+  /* display: inline-block; */
   cursor: pointer;
   background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
   border: 2px solid #4d4949;

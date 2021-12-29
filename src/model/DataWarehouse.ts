@@ -541,6 +541,11 @@ export class DataWarehouse {
         this.shouldCalculateSilhouttes = true;
     }
 
+    clearClustering() {
+        this.brushedBins = [...this.allRecords];
+        this.updateCluster(-1);
+    }
+
     undoClusterUpdate() {
         if(this.historyStack.length === 0) {
             return;
