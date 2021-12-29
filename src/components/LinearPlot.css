@@ -21,6 +21,10 @@
     background-color: #13a613;
 } */
 
+.highlight {
+    pointer-events: none;
+}
+
 .LinearPlot-tools {
     position: absolute;
     top: calc(0%);

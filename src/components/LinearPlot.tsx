@@ -510,18 +510,22 @@ export class LinearPlot extends React.PureComponent<Props> {
             return null;
         }
 
+        if(this.previewDriver != null) {
+            return null;
+        }
+
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
-        return <div style={{
+        return <div className="highlight" style={{
             position: "absolute",
             left: start,
             width: boxWidth,
             height: "100%",
             backgroundColor: "rgba(255,255,0,0.2)",
             border: "1px solid rgba(255,255,0,0.7)",
-            zIndex: -1
+            zIndex: 1,
         }} />
     }
 
@@ -550,8 +554,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
             >
-            {this.renderTooltip()}
             {this.renderLockedDrivers()}
+            {this.renderTooltip()}
+            {this.renderHighlight()}
+            
             <canvas
                 ref={node => this._canvas = node}
                 width={width}
@@ -608,18 +614,18 @@ export class LinearPlot extends React.PureComponent<Props> {
                                     left: start-20,
                                     bottom: height,
                                     border: "1px solid rgba(0,0,0,0)",
-                                    zIndex: 0
+                                    zIndex: 2
                                 }}>
                                     {contents}
                                 </div>
-                                <div style={{
+                                <div className="highlight" style={{
                                     position: "absolute",
                                     left: start,
                                     width: boxWidth,
                                     height: "75%",
                                     backgroundColor: "rgba(255,165,0,1)",
                                     border: "1px solid rgba(255,165,0,1)",
-                                    zIndex: 0
+                                    zIndex: 2
                                 }} />   
                         </div>
                         )
@@ -666,7 +672,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 }}>
                     {contents}
                 </div>
-                <div style={{
+                <div className="highlight" style={{
                     position: "absolute",
                     left: start,
                     width: boxWidth + 1,

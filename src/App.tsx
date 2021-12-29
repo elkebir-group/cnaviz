@@ -381,20 +381,19 @@ export class App extends React.Component<{}, State> {
         if (!files || !files[0]) {
             return;
         }
-        
+    
         this.setState({chosenFile: files[0].name})
         this.setState({processingStatus: ProcessingStatus.readingFile});
-        
+
         let contents = "";
         try {
             contents = await getFileContentsAsString(files[0]);
-            console.log(contents);
         } catch (error) {
             console.error(error);
             this.setState({processingStatus: ProcessingStatus.error});
             return;
         }
-
+       
         this.setState({processingStatus: ProcessingStatus.processing});
         let indexedData = null;
         try {
