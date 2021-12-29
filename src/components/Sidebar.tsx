@@ -93,9 +93,8 @@ function Sidebar(props: Props) {
       
       
       <div className="contents">
-        <h1>CNA-Viz</h1>
+      <div className="row-contents" > <h1>CNA-Viz</h1> </div>
         <div className="title-bar"></div>
-        <h2>Import/Export</h2>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
             <label className="custom-file-upload">
@@ -130,49 +129,49 @@ function Sidebar(props: Props) {
           <div className="row-contents">
             <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
           </div>
-          
-        <div className="title-bar"></div>
-        <h2 >Display Settings</h2>
+  
           <div className= "row-contents" >
-            <label htmlFor="Select Chromosome"> Select a Chromosome: </label>
-            <select
-                name="Select Chromosome" 
-                id="Select Chromosome"
-                value={props.selectedChr}
-                onChange={props.onChrSelected} >
-                    {props.chrOptions}
-            </select>
+            <div>
+              <label htmlFor="Select Chromosome" style={{margin: 10}}> Chromosome: </label>
+              <select
+                  name="Select Chromosome" 
+                  id="Select Chromosome"
+                  value={props.selectedChr}
+                  onChange={props.onChrSelected} >
+                      {props.chrOptions}
+              </select>
+            </div>
           </div>
         
           <div className= "row-contents" >
             <label>
-              <span className="App-CheckBox-explanation">Apply log to RD: </span>
+              <span className="App-CheckBox-explanation">Log RD: </span>
               <input type="checkbox" onClick={props.onToggleLog}/>
             </label>
           </div>
           <div className= "row-contents" >
             <label>
-              <span className="App-CheckBox-explanation">Display Scatterplots: </span>
+              <span className="App-CheckBox-explanation">Scatterplots: </span>
               <input type="checkbox" onClick={props.onToggleScatter} checked={props.showScatter} readOnly/>
             </label>
             
           </div>
           <div className= "row-contents" >
             <label>
-              <span className="App-CheckBox-explanation">Display Linear Plots: </span>
+              <span className="App-CheckBox-explanation">Linear Plots: </span>
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
           </div>
           <div className= "row-contents" >
             <label>
-              <span className="App-CheckBox-explanation">Show Centroids: </span>
+              <span className="App-CheckBox-explanation">Centroids: </span>
               <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
             </label>
           </div>
            <div className= "row-contents" >
            {/* {(props.showSilhouttes === ProcessingStatus.processing || props.showSilhouttes === ProcessingStatus.done)  && <img src={spinner} alt="Loading" />} */}
             {(props.showSilhouttes === ProcessingStatus.none ||props.showSilhouttes === ProcessingStatus.done)   && <label>
-              <span className="App-CheckBox-explanation">Show Silhoutte Plot: </span>
+              <span className="App-CheckBox-explanation">Silhoutte Plot: </span>
               <input type="checkbox" onChange={props.onToggleSilhouttes} checked={props.showSilhouttes === ProcessingStatus.done} readOnly/>
             </label>}
             
@@ -194,6 +193,7 @@ function Sidebar(props: Props) {
 
       </div>
         <div className="contents2">
+          {/* <div className="title-bar"></div> */}
           <ClusterTable 
                 data={props.tableData} 
                 onClusterRowsChange={props.onClusterRowsChange} 
