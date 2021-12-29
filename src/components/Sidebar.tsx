@@ -130,33 +130,35 @@ function Sidebar(props: Props) {
               <span className="App-CheckBox-explanation">Log RDR: </span>
               <input type="checkbox" onClick={props.onToggleLog}/>
             </label>
+            <label>
+              <span className="App-CheckBox-explanation">Centroids: </span>
+              <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
+            </label>
           </div>
           <div className= "row-contents" >
             <label>
               <span className="App-CheckBox-explanation">Scatterplots: </span>
               <input type="checkbox" onClick={props.onToggleScatter} checked={props.showScatter} readOnly/>
             </label>
-            
-          </div>
-          <div className= "row-contents" >
             <label>
               <span className="App-CheckBox-explanation">Linear Plots: </span>
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
+            
           </div>
-          <div className= "row-contents" >
+          {/* <div className= "row-contents" >
+            <label>
+              <span className="App-CheckBox-explanation">Linear Plots: </span>
+              <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
+            </label>
+          </div> */}
+          {/* <div className= "row-contents" >
             <label>
               <span className="App-CheckBox-explanation">Centroids: </span>
               <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
             </label>
-          </div>
-           <div className= "row-contents" >
-           {/* {(props.showSilhouttes === ProcessingStatus.processing || props.showSilhouttes === ProcessingStatus.done)  && <img src={spinner} alt="Loading" />} */}
-            {(props.showSilhouttes === ProcessingStatus.none ||props.showSilhouttes === ProcessingStatus.done)   && <label>
-              <span className="App-CheckBox-explanation">Silhoutte Plot: </span>
-              <input type="checkbox" onChange={props.onToggleSilhouttes} checked={props.showSilhouttes === ProcessingStatus.done} readOnly/>
-            </label>}
-          </div>
+          </div> */}
+          
 
           <div className= "row-contents" >
             <ToggleButton
@@ -172,9 +174,9 @@ function Sidebar(props: Props) {
               />
           </div>
           <div className= "row-contents" >
-            <button onClick={props.onToggleSilhouttes}> Analytics </button>
-            <button onClick={props.onToggleShowCentroidTable}> Centroid Table </button>
-            <button onClick={props.onToggleDirections}> Usage </button>
+            <button onClick={props.onToggleSilhouttes}> Analytics (s) </button>
+            <button onClick={props.onToggleShowCentroidTable}> Centroids (c) </button>
+            <button onClick={props.onToggleDirections}> Usage (?) </button>
           </div>
 
       </div>

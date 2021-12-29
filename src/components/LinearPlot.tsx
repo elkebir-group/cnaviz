@@ -207,15 +207,17 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
+        
+        // X axis text
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
             .attr("font-size", 11)
             .attr("x", _.mean(xScale.range()))
-            .attr("y", height - PADDING.bottom)
+            .attr("y", height - PADDING.bottom + 30)
             .text(chr || genome.getName());
 
-        // Y axis stuff
+        // Y axis Text
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `rotate(-90, ${PADDING.left}, ${_.mean(yScale.range())})`)
