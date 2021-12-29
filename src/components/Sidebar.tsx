@@ -51,6 +51,11 @@ function Sidebar(props: Props) {
     props.onSidebarChange(!props.show)
   };
 
+  let chosenFile = props.chosenFile;
+  if(chosenFile.length > 35) {
+    chosenFile = chosenFile.substring(0, 34) + "...";
+  }
+
   return (
 
     <div className={props.show ? "sidebar active" : "sidebar"}>
@@ -91,7 +96,7 @@ function Sidebar(props: Props) {
         <h1>CNA-Viz</h1>
         <div className="title-bar"></div>
         <h2>Import/Export</h2>
-          <div className="row-contents" > Chosen File: {props.chosenFile}</div>
+          <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
             <label className="custom-file-upload">
               <input type="file" id="fileUpload" onChange={
