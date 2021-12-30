@@ -16,6 +16,7 @@ interface Props {
     colOneName : string;
     colTwoName: string;
     colThreeName?: string;
+    colFourName?: string;
     cols: any;
     centroidTable?: boolean;
     colors : string[];
@@ -48,7 +49,7 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, colThreeName, data, expandable, selectable, colors, centroidTable} = this.props;
+        const {colOneName, colTwoName, colThreeName, colFourName, data, expandable, selectable, colors, centroidTable} = this.props;
         const ExpandedComponent =(data:any) => 
         <div> 
             <BlockPicker 
@@ -128,6 +129,15 @@ export class ClusterTable extends React.Component<Props> {
                 center: true
                 // width: "50"
             },
+            {
+                name: colFourName,
+                selector: 'binPerc',
+                sortable: true,
+                right: true,
+                compact: true,
+                wrap: true,
+                center: true
+            }
         ];
 
         if(centroidTable) {
@@ -170,7 +180,7 @@ export class ClusterTable extends React.Component<Props> {
 
         }
         
-        if(!expandable && !selectable) {
+        if(!expandable && !selectable) { // selection table
             return (
                 <DataTable
                     columns={columns3}

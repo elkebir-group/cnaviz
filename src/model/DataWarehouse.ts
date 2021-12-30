@@ -88,7 +88,7 @@ type LogTableRow = {
 
 type clusterIdMap = {[id: string] : number}
 type clusterTableRow =  {key: number, value: number}
-type selectionTableRow =  {key: number, value: number, selectPerc: number}
+type selectionTableRow =  {key: number, value: number, selectPerc: number, binPerc: number}
 type centroidPoint = {cluster: number, point: [number, number]}
 type newCentroidTableRow = {key: string, sample: {[sampleName: string] : string}}
 export type heatMapElem = {cluster1: number, cluster2: number, dist: number}
@@ -569,9 +569,7 @@ export class DataWarehouse {
 
         const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
         let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
-        
-        
-        
+
         this.initializeCentroidDistMatrix();
         this._ndx.remove();
         this._ndx = crossfilter(flattenNestedBins);
@@ -601,7 +599,6 @@ export class DataWarehouse {
         clusterInfo.forEach(row => clusterIdToAmount[Number(row.key)] = Number(row.value)/sampleAmount);
         const amountInSelection = this.brushedBins.length;
         const clusterTable = this.brushedClusterDim.group().all();
-        //clusterTable.forEach(d => d.value = (Number(d.value)/Number(clusterIdToAmount[Number(d.key)]) * 100).toFixed(2));
 
         const clusterTable2 : selectionTableRow[] = [];
         for(const row of clusterTable) {
@@ -609,7 +606,8 @@ export class DataWarehouse {
             {
                 key: Number(row.key), 
                 value: Number((Number(row.value)/Number(clusterIdToAmount[Number(row.key)]) * 100).toFixed(2)),
-                selectPerc: Number((Number(row.value)/Number(amountInSelection) * 100).toFixed(2))
+                selectPerc: Number((Number(row.value)/Number(amountInSelection) * 100).toFixed(2)),
+                binPerc: Number((Number(row.value)/Number(this.allRecords.length / sampleAmount) * 100).toFixed(2))
             });
         }
 

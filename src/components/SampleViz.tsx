@@ -252,6 +252,7 @@ export class SampleViz extends React.Component<Props, State> {
                     colOneName={"Cluster ID"}
                     colTwoName={"Cluster (%)"}
                     colThreeName={"Selection (%)"}
+                    colFourName={"Bin (%)"}
                     cols={""}
                     expandable={false}
                     selectable={false}
