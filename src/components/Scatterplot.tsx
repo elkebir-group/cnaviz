@@ -243,8 +243,7 @@ export class Scatterplot extends React.Component<Props, State> {
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
         
-        let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" >
-                            
+        let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{width: width, height: height}}>
                             <canvas
                                 ref={node => this._canvas = node}
                                 width={width}
@@ -269,11 +268,13 @@ export class Scatterplot extends React.Component<Props, State> {
                                         width: width-PADDING.left - PADDING.right, 
                                         height: height-PADDING.top-PADDING.bottom}}
                             />
+
                             <svg
                                 ref={node => this._svg = node}
-                                width={width} height={height}
+                                // width={width} height={height}
                                 style={{zIndex: 100}}
-                                // preserveAspectRatio={'xMinYMin'}
+                                preserveAspectRatio={'xMinYMin meet'}
+                                viewBox={'0 0 ' + (width) + ' ' + (height)}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">

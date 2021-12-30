@@ -550,7 +550,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const {width, height, dataKeyToPlot} = this.props;
         return <div
                 className="LinearPlot"
-                style={{position: "relative"}}
+                style={{position: "relative", width: width, height: height}}
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
             >
@@ -570,7 +570,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         width: width-PADDING.left - PADDING.right, 
                         height: height-PADDING.top-PADDING.bottom}} />
             
-            <svg ref={node => this._svg = node} width={width} height={height}/>
+            <svg ref={node => this._svg = node} preserveAspectRatio={'xMinYMin meet'} viewBox={'0 0 ' + (width) + ' ' + (height)}/>
             <div className="LinearPlot-tools">
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
                 && <button onClick={() => {
