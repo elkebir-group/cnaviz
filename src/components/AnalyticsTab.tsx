@@ -69,7 +69,7 @@ export class AnalyticsTab extends React.Component<Props, State> {
             </div>
             <div className="BarPlots">
                 <div className="Bar-Select">
-                    <div style={{marginBottom: "25px"}}></div>
+                    <div style={{marginBottom: "24px"}}></div>
                     <SilhouetteBarPlot
                         width={700}
                         height={700}
