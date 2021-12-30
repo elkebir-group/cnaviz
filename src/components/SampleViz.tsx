@@ -166,8 +166,8 @@ export class SampleViz extends React.Component<Props, State> {
                 <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.props.onAddSample} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
-                <button onClick={this.props.onRemovePlot} disabled={sampleAmount <= 1}> Remove Sample </button>
+                <button className="custom-button" onClick={this.props.onAddSample} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
+                <button className="custom-button" onClick={this.props.onRemovePlot} disabled={sampleAmount <= 1}> Remove Sample </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
@@ -183,15 +183,14 @@ export class SampleViz extends React.Component<Props, State> {
                     onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
                     {clusterOptions}
                     </select>
-                        
-
-                    <button onClick={() => {
+                   
+                   <button className="custom-button" onClick={() => {
                         this.props.parentCallBack(this.state.selectedCluster);
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions}>Assign Cluster</button>
 
-                    <button onClick={()=>{
+                    <button className="custom-button" onClick={()=>{
                         this.initializeListOfClusters();
                         let clusters = this._clusters;
                         clusters.sort((a: string, b:string) => (Number(a) - Number(b)))
@@ -209,7 +208,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions} >New Cluster</button>
-                    <button onClick={this.props.onUndoClick}> Undo</button>
+                    <button className="custom-button" onClick={this.props.onUndoClick}> Undo</button>
                 </div>}
             </div>
 

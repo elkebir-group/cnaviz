@@ -48,6 +48,13 @@ interface Props {
     onClearClustering: () => void;
 }
 
+// function selectFile() {
+//   if(document === null) {
+//     return null;
+//   }
+//   document.getElementById("fileSelector").click();
+//     // document?.getElementById("fileSelector").click();
+// }
 
 function Sidebar(props: Props) {
   const showSidebar = () => {
@@ -88,6 +95,7 @@ function Sidebar(props: Props) {
                 } />
                 Import
               </label>
+              
               <label className="custom-file-upload">
                 <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
                 Export
@@ -165,13 +173,28 @@ function Sidebar(props: Props) {
               />
           </div>
           <div className= "row-contents" >
-            <button onClick={props.onToggleSilhouttes}> Analytics (s) </button>
-            <button onClick={props.onToggleShowCentroidTable}> Centroids (c) </button>
-            <button onClick={props.onToggleDirections}> Usage (?) </button>
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={props.onToggleSilhouttes}/>
+              Analytics (s)
+            </label>
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={props.onToggleShowCentroidTable}/>
+              Centroids (c)
+            </label>
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={props.onToggleDirections}/>
+              Usage (?)
+            </label>
           </div>
           <div className= "row-contents" >
-            <button onClick={props.onClearClustering}> Clear Clustering </button>
-            <button onClick={props.onTogglePreviousActionLog}> Previous Actions (l) </button>
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={props.onClearClustering}/>
+              Clear Clustering
+            </label>
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
+              Previous Actions (l)
+            </label>
           </div>
 
       </div>

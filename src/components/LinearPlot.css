@@ -1,26 +1,3 @@
-/* .LinearPlot-tools {
-    position: absolute;
-    top: calc(0%);
-    left: calc(100%);
-    align-items: center;
-    visibility: visible;
-}
-
-.LinearPlot-tools button {
-    font-size: small;
-    cursor: pointer;
-    display: block;
-    margin-bottom: 5px;
-    margin-left: 10px;
-
-    width: 100px;
-    outline: 0;
-}
-
-.LinearPlot-tools button.active { 
-    background-color: #13a613;
-} */
-
 .highlight {
     pointer-events: none;
 }
