@@ -468,7 +468,7 @@ export class App extends React.Component<{}, State> {
     }
 
     async handleDemoDrivers() {
-        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/testdata4.tsv")
+        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/drivers.tsv")
         .then(r => r.text())
         .then(text => {
             parseDriverGenes(text)
