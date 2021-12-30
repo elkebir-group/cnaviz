@@ -7,15 +7,15 @@ import {calculateEuclideanDist, calculateSilhoutteScores} from "../util"
 import { brush } from "d3";
 import { resolve } from "dns";
 
-function silhouttePromise(multiDimData : number[][], clusterToData : Map<Number, Number[][]>, labels : number[]) : Promise<{cluster: number, avg:number}[]>{
-    return new Promise((resolve : any, reject : any)=> {
-        resolve(calculateSilhoutteScores(multiDimData, clusterToData, labels));
-    })
-}
+// function silhouttePromise(multiDimData : number[][], clusterToData : Map<Number, Number[][]>, labels : number[]) : Promise<{cluster: number, avg:number}[]>{
+//     return new Promise((resolve : any, reject : any)=> {
+//         let clusterDistanceMatrix : Map<number, Map<number, number>> = new Map<number, Map<number, number>>();
+//         resolve(calculateSilhoutteScores(multiDimData, clusterToData, labels, clusterDistanceMatrix));
+//     })
+// }
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
     return new Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}>((resolve, reject) => {
-        // const samples = samples;
         const multiDimData = []; 
         const labels : number[] = [];
         const clusterToData = new Map<Number, Number[][]>();
@@ -137,7 +137,7 @@ export class DataWarehouse {
     private centroidDistances: SampleIndexedData<heatMapElem[]>;
     private shouldCalculateSilhouttes: boolean;
     private currentSilhouttes: {cluster: number,  avg: number}[]
-
+    private clusterDistanceMatrix : Map<number, Map<number, number>>;
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -168,6 +168,7 @@ export class DataWarehouse {
         this.centroidDistances = {};
         this.shouldCalculateSilhouttes = true;
         this.currentSilhouttes = [];
+        this.clusterDistanceMatrix = new Map<number, Map<number, number>>();
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -248,6 +249,10 @@ export class DataWarehouse {
         this.shouldCalculateSilhouttes = shouldRecalculate;
     }
 
+    getClusterDistanceMatrix() {
+        return this.clusterDistanceMatrix;
+    }
+
     async recalculateSilhouttes(applyLog: boolean) {
         if(this.shouldCalculateSilhouttes) {
             let contents = null;
@@ -257,8 +262,9 @@ export class DataWarehouse {
                 console.error(error);
                 return;
             }
+            
+            const s = calculateSilhoutteScores(contents.multiDimData, contents.clusterToData, contents.labels, this.clusterDistanceMatrix);
 
-            const s = calculateSilhoutteScores(contents.multiDimData, contents.clusterToData, contents.labels);
             this.currentSilhouttes = s;
             this.shouldCalculateSilhouttes = false;
         }

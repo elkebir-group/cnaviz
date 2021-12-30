@@ -1,6 +1,12 @@
 #chart-container {
     height: auto;
-    width: 100%;
+    width: 50%;
+}
+
+#chart-container2 {
+    height: auto;
+    width: 50%;
+    left: 50%;
 }
 
 .axis text {

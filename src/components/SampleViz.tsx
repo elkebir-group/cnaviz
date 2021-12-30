@@ -9,7 +9,6 @@ import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
 
-
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
 

@@ -3,7 +3,7 @@ import parse from "csv-parse";
 import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
-import { DataWarehouse, reformatBins } from "./model/DataWarehouse";
+import { DataWarehouse} from "./model/DataWarehouse";
 import {SampleViz} from "./components/SampleViz";
 import spinner from "./loading-small.gif";
 import "./App.css";
@@ -14,9 +14,11 @@ import Sidebar from "./components/Sidebar";
 import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
-import { BarPlot } from "./components/BarPlot";
+import { SilhouetteBarPlot } from "./components/SilhouetteBarPlot";
 import {FiX} from "react-icons/fi";
 import {calculateSilhoutteScores} from "./util"
+import {ClusterDistancesBarPlot} from "./components/ClusterDistancesBarPlot";
+import {AnalyticsTab} from "./components/AnalyticsTab";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -837,18 +839,14 @@ export class App extends React.Component<{}, State> {
                 
                 {this.state.showSilhouttes === ProcessingStatus.done && <div className="black_overlay"></div> }
                 {this.state.showSilhouttes === ProcessingStatus.done && 
-                    <div className="Directions2">
-                        <h2 className="pop-up-window-header"> Approximate Average Sillhoutte Coefficients </h2>
-                        <div className="Exit-Popup" onClick={this.onToggleSilhoutteBarPlot}> 
-                            <FiX/>
-                        </div>
-                        <BarPlot
-                            width={700}
-                            height={360}
-                            data={this.state.silhouttes}
+                        <AnalyticsTab
+                            silhoutteData={this.state.silhouttes}
+                            clusterDistances={this.state.indexedData.getClusterDistanceMatrix()}
+                            clusterTableData={clusterTableData}
                             colors={CLUSTER_COLORS}
-                        ></BarPlot>
-                    </div> }
+                            onToggleSilhoutteBarPlot={this.onToggleSilhoutteBarPlot}
+                        ></AnalyticsTab>}
+           
             </div>
             
         </div>;

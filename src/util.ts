@@ -283,18 +283,20 @@ function getMatrix(size : number) {
   return matrix;
 }
 
-export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[]) {
+export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[], clusterDistanceMatrix : Map<number, Map<number, number>>) {
   let possible_clusters = [...clusteredData.keys()];
     let clusterToSilhoutte = new Map<number, number[] | undefined>();
     if(possible_clusters.length === 1) {
       return [];
     }
-    
+    // let clusterDistanceMatrix : Map<number, Map<number, number>> = new Map<number, Map<number, number>>();
     const downSamplePercent = (rawData.length > 0) ? .01 : 1;
     for(let i = 0; i < rawData.length; i++) {
-      
+
         const bin1 = rawData[i];
         const c = labels[i];
+       
+        let cMap : Map<number, number> = new Map<number, number>();
 
         const binsInCluster = clusteredData.get(c);
         if(binsInCluster) {
@@ -323,13 +325,15 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
               if(otherCluster) {
                 const downSampledOtherCluster = downSample(otherCluster, downSamplePercent);
                 const b = calculateInterClusterDist2(bin1, downSampledOtherCluster);
+                // clusterDistanceMatrix.get(c)
+                cMap.set(Number(c2), b);
+
                 if(b < minB) {
                   minB = b;
                 }
 
               } else {
                 throw new Error("Key error: Cluster not found");
-                // reject("Key error: Cluster not found");
               }
             }
           }
@@ -350,8 +354,8 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
           }
         } else {
           throw new Error("Key error: Cluster not found");
-          // reject("Key error: Cluster not found");
         }
+        clusterDistanceMatrix.set(c, cMap);
     }
 
     const avg_cluster_silhouttes = [];

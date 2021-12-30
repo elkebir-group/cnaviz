@@ -88,10 +88,18 @@ body {
 
 .Directions2 {
     position: fixed;
-    top: 25%;
-    left: 25%;
-    width: 800px;
-    height: 500px;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    /* margin-left: (1000/2);
+    margin-top: (700/2); */
+    width: 60%;
+    height: 70%;
+    min-height: 600px;
     padding: 16px;
     border: 16px solid rgb(81, 47, 173);
     background-color: rgb(255, 255, 255);
