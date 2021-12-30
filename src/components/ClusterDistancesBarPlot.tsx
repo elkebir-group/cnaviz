@@ -3,8 +3,8 @@ import * as d3 from "d3";
 import "./BarPlot.css";
 import _ from "lodash"
 
-const margins = {top: 0, right: 0, bottom: 0, left: 10};
-const margin = { left: 0, top: 0, right: 0, bottom: 30};
+const margins = {top: 0, right: 0, bottom: 0, left: 0};
+const margin = { left: 10, top: 0, right: 0, bottom: 50};
 const UNCLUSTERED_COLOR = "#999999";
 
 type clusterAvg = {
@@ -70,13 +70,12 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
     }
 
     redraw() {
-        console.log("REDRAWING");
         const {width, height, data, colors} = this.props;
-        // console.log("Data: ", data);
+
         if(!this._svg) {
             return;
         }
-        // console.log("DATA is Not Defined");
+
         let dataObjectArr : any[] = [];
         if(data !== undefined) {
             dataObjectArr = Array.from(data, function (item) {
@@ -84,10 +83,9 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
             });          
         }
         
-        // console.log(dataObjectArr);
         dataObjectArr = _.sortBy(dataObjectArr, "value");
         const marginRatio = {
-            left: margins.left / width * 100 + "%",//getRatio('left'),
+            left: margins.left / width * 100 + "%",
             top: margins.top / width * 100 + "%",
             right: margins.right / width * 100 + "%",
             bottom: margins.bottom / width * 100 + "%"
@@ -95,20 +93,20 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
 
         var svg = d3.select(this._svg)
         svg.selectAll(".scales").remove();
+
         // Add X axis
-        console.log("MAX: ", _.maxBy(dataObjectArr, "value"));
         let max = _.maxBy(dataObjectArr, "value");
         
         var x = d3.scaleLinear()
         .domain([0,  (max) ? max.value : 0])
-        .range([15, width-10]);
+        .range([30, width-10]);
 
         svg.append("text")
             .classed("scales", true)
             .attr("text-anchor", "middle")
-            .attr("font-size", 12)
-            .attr("x", _.mean([15, width-10]))
-            .attr("y", height + 30)
+            .attr("font-size", 14)
+            .attr("x", _.mean([0, width]))
+            .attr("y", height + 40)
             .text("Approximate Average Euclidean Distance");
 
         svg.append("g")
@@ -119,14 +117,14 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
                 .attr("transform", "translate(-10,0)rotate(-45)")
                 .style("text-anchor", "end");
 
-        // // Y axis
+        // Y axis
         var y = d3.scaleBand()
             .range([ 0, height])
             .domain(dataObjectArr.map(d => String(d.key)))
             .padding(.1);
         
 
-        // //Bars
+        // Bars
         svg.selectAll(".bar").remove();
         svg.selectAll("myRect")
             .classed("bars", true)

@@ -70,26 +70,30 @@ export class AnalyticsTab extends React.Component<Props, State> {
             <div className="BarPlots">
                 <SilhouetteBarPlot
                     width={700}
-                    height={360}
+                    height={700}
                     data={silhoutteData}
                     colors={colors}
                 ></SilhouetteBarPlot> 
-                <span > Cluster: </span>
-                <select
-                    name="Select Cluster" 
-                    title="Cluster"
-                    className="Sampleviz-cluster-select"
-                    value={this.state.selectedCluster}
-                    onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
-                    {clusterOptions}
-                </select>
-                <ClusterDistancesBarPlot
-                    data={clusterDistances.get(Number(this.state.selectedCluster))}
-                    selectedCluster={Number(this.state.selectedCluster)}
-                    width={700}
-                    height={360}
-                    colors={colors}
-                ></ClusterDistancesBarPlot>
+             
+                <div className="Bar-Select">
+                    <div className="ClusterDistances-Select">
+                        <span> Cluster: </span>
+                        <select
+                            name="Select Cluster" 
+                            title="Cluster"
+                            value={this.state.selectedCluster}
+                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
+                            {clusterOptions}
+                        </select>
+                    </div>
+                    <ClusterDistancesBarPlot
+                        data={clusterDistances.get(Number(this.state.selectedCluster))}
+                        selectedCluster={Number(this.state.selectedCluster)}
+                        width={700}
+                        height={700}
+                        colors={colors}
+                    ></ClusterDistancesBarPlot> 
+                </div>
             </div>
         </div>
     }

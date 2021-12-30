@@ -1,7 +1,15 @@
-.BarPlot {
+.BarPlots {
     display: flex;
     flex-direction: row;
-    width: 100%;
-    /* flex-wrap: wrap;
-    justify-content: space-between; */
+    flex-wrap: wrap;
+}
+
+.Bar-Select {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+}
+
+.ClusterDistances-Select {
+    margin-left: 15px
 }

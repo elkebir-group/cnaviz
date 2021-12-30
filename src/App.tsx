@@ -458,7 +458,7 @@ export class App extends React.Component<{}, State> {
         
         let driverGenes = null;
         try {
-            const parsed = await parseDriverGenes(contents); //parseGenomicBins(contents, this.state.applyLog, );
+            const parsed = await parseDriverGenes(contents);
             driverGenes = parsed;
             
 
@@ -653,8 +653,6 @@ export class App extends React.Component<{}, State> {
             this.setState({showSilhouttes: ProcessingStatus.none});
         }
     }
-
-
 
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;

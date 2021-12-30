@@ -2,10 +2,9 @@ import React from "react"
 import * as d3 from "d3";
 import "./BarPlot.css";
 import _ from "lodash";
-// const margins = {top: 10, right: 40, bottom: 40, left: 40};
+
 const margins = {top: 0, right: 0, bottom: 0, left: 0};
-// const margin = { left: 100, top: 50, right: 50, bottom: 30 };
-const margin = { left: 0, top: 0, right: 0, bottom: 30};
+const margin = { left: 0, top: 0, right: 0, bottom: 50};
 const UNCLUSTERED_COLOR = "#999999";
 
 export type clusterAvg = {
@@ -97,9 +96,9 @@ export class SilhouetteBarPlot extends React.Component<Props> {
         svg.append("text")
             .classed("scale", true)
             .attr("text-anchor", "middle")
-            .attr("font-size", 12)
+            .attr("font-size", 14)
             .attr("x", _.mean([15, width-10]))
-            .attr("y", height + 30)
+            .attr("y", height + 40)
             .text("Approximate Average Silhoutte Coefficient");
 
         svg.append("g")
