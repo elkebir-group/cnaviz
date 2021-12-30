@@ -11,5 +11,9 @@
 }
 
 .ClusterDistances-Select {
-    margin-left: 15px
+    margin-left: 15px;
+}
+
+.ClusterDistances-Select2 {
+    display: none;
 }

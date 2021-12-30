@@ -60,7 +60,7 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
             <div id="chart-container2">
                 <svg 
                     ref={node => this._svg = node}
-                    style={{padding: marginRatio.top + ' ' + marginRatio.right +' ' + marginRatio.bottom + ' ' + marginRatio.left + ' '}}
+                    style={{padding: marginRatio.top + ' ' + marginRatio.right + ' ' + marginRatio.bottom + ' ' + marginRatio.left + ' '}}
                     preserveAspectRatio="xMinYMin meet"
                     viewBox={'0 0 ' + (width + margin.left + margin.right) + ' ' + (height + margin.top + margin.bottom)}
                     
@@ -98,8 +98,9 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
         let max = _.maxBy(dataObjectArr, "value");
         
         var x = d3.scaleLinear()
-        .domain([0,  (max) ? max.value : 0])
+        .domain([0,  (max) ? max.value : 1])
         .range([30, width-10]);
+
 
         svg.append("text")
             .classed("scales", true)
@@ -141,6 +142,6 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
         svg.append("g")
             .classed("scales", true)
             .call(d3.axisLeft(y).tickSize(0).tickPadding(6))
-            .attr("transform", "translate(" + x(0) + ",0)")
+            .attr("transform", "translate(" + x.range()[0] + ",0)")
     }
  }

@@ -68,12 +68,15 @@ export class AnalyticsTab extends React.Component<Props, State> {
                 <FiX/>
             </div>
             <div className="BarPlots">
-                <SilhouetteBarPlot
-                    width={700}
-                    height={700}
-                    data={silhoutteData}
-                    colors={colors}
-                ></SilhouetteBarPlot> 
+                <div className="Bar-Select">
+                    <div style={{marginBottom: "25px"}}></div>
+                    <SilhouetteBarPlot
+                        width={700}
+                        height={700}
+                        data={silhoutteData}
+                        colors={colors}
+                    ></SilhouetteBarPlot> 
+                </div>
              
                 <div className="Bar-Select">
                     <div className="ClusterDistances-Select">
