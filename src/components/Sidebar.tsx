@@ -9,6 +9,7 @@ import { ToggleButton } from "./ToggleButton";
 import spinner from "../loading-small.gif";
 import {BsQuestionCircle} from "react-icons/bs";
 
+
 interface Props {
     selectedChr : string;
     onChrSelected : any;
@@ -46,15 +47,8 @@ interface Props {
     onToggleShowCentroidTable: () => void;
     onTogglePreviousActionLog: () => void;
     onClearClustering: () => void;
+    handleDemoFileInput: (applyClustering: boolean) => void;
 }
-
-// function selectFile() {
-//   if(document === null) {
-//     return null;
-//   }
-//   document.getElementById("fileSelector").click();
-//     // document?.getElementById("fileSelector").click();
-// }
 
 function Sidebar(props: Props) {
   const showSidebar = () => {
@@ -102,7 +96,7 @@ function Sidebar(props: Props) {
               </label>
               <label className="custom-file-upload">
                 <input type="button" id="custom-button" onClick={
-                    (event: any) => console.log("Demo")
+                    (event: any) => props.handleDemoFileInput(true)
                 }/>
                 Demo
               </label>

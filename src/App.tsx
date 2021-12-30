@@ -300,6 +300,7 @@ export class App extends React.Component<{}, State> {
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
+        this.handleDemoFileInput = this.handleDemoFileInput.bind(this);
         this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
@@ -381,7 +382,7 @@ export class App extends React.Component<{}, State> {
         if (!files || !files[0]) {
             return;
         }
-    
+
         this.setState({chosenFile: files[0].name})
         this.setState({processingStatus: ProcessingStatus.readingFile});
 
@@ -393,7 +394,7 @@ export class App extends React.Component<{}, State> {
             this.setState({processingStatus: ProcessingStatus.error});
             return;
         }
-       
+
         this.setState({processingStatus: ProcessingStatus.processing});
         let indexedData = null;
         try {
@@ -410,6 +411,30 @@ export class App extends React.Component<{}, State> {
             indexedData: indexedData,
             processingStatus: ProcessingStatus.done
         });
+    }
+
+    async handleDemoFileInput(applyClustering: boolean) {
+        this.setState({chosenFile: "a12.tsv"})
+        this.setState({processingStatus: ProcessingStatus.readingFile});
+        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/a12.tsv")
+            .then(r => r.text())
+            .then(text => {
+                this.setState({processingStatus: ProcessingStatus.processing});
+                // let indexedData = null;
+                parseGenomicBins(text, this.state.applyLog, applyClustering)
+                .then(parsed => {
+                    let indexedData = new DataWarehouse(parsed);
+                    this.setState({
+                        indexedData: indexedData,
+                        processingStatus: ProcessingStatus.done
+                    });
+                })
+                .catch(error => {
+                    console.error(error);
+                    this.setState({processingStatus: ProcessingStatus.error});
+                    return;
+                }) 
+            });
     }
 
     async handleDriverFileChosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -721,6 +746,7 @@ export class App extends React.Component<{}, State> {
                     onToggleShowCentroidTable={this.onToggleShowCentroidTable}
                     onTogglePreviousActionLog={this.onTogglePreviousActionLog}
                     onClearClustering={this.onClearClustering}
+                    handleDemoFileInput={this.handleDemoFileInput}
                 />
             </div>
             
