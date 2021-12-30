@@ -84,11 +84,11 @@ export class SampleViz extends React.Component<Props, State> {
         }
 
         while(this._clusters.length > 0 
-            && (this._clusters[0] === UNCLUSTERED_ID 
-            || this._clusters[0] === DELETED_ID)) {
+            && (Number(this._clusters[0]) === Number(UNCLUSTERED_ID)
+            || Number(this._clusters[0]) === Number(DELETED_ID))) {
             this._clusters.shift();
         }
-
+        
         return this._clusters;
     }
 
@@ -151,7 +151,7 @@ export class SampleViz extends React.Component<Props, State> {
         
         rdRange[1] += 0.5;
         
-        let clusterOptions = this._clusters.map(clusterName =>
+        let clusterOptions = this._clusters.map((clusterName) =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
         
@@ -203,7 +203,7 @@ export class SampleViz extends React.Component<Props, State> {
                                 break;
                             }
                         }
-
+                        
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
                     }}

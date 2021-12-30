@@ -502,7 +502,7 @@ export class DataWarehouse {
                 } else if(this.centroidPts[sample]) {
                     this.centroidPts[sample][clus] = [centroidPt];
                 } else  { 
-                    let dataKey : string = clus; //.toString();
+                    let dataKey : string = clus;
                     let tempMap : ClusterIndexedData<centroidPoint[]> = {};
                     tempMap[dataKey] = [centroidPt];
                     this.centroidPts[sample] = tempMap;
