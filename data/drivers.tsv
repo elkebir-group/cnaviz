@@ -1,0 +1,271 @@
+symbol	Name	Genome Location	Chr Band	Role in Cancer
+A1CF	APOBEC1 complementation factor	chr10:50799421-50885675	11.23	oncogene
+ACVR2A	activin A receptor type 2A	chr2:147844517-147930824	23.1		
+AKAP9	A kinase (PRKA) anchor protein (yotiao) 9	chr7:91940867-92110673	21.2	fusion
+AKT1	v-akt murine thymoma viral oncogene homolog 1	chr14:104769349-104794124	32.33	
+AKT2	v-akt murine thymoma viral oncogene homolog 2	chr19:40230317-40285395	13.2	Dom
+AKT3	v-akt murine thymoma viral oncogene homolog 3	chr1:243499720-243843282	44	oncogene
+ALDH2	aldehyde dehydrogenase 2 family (mitochondrial)	chr12:111766922-111817529	24.12	fusion
+ALK	anaplastic lymphoma kinase (Ki-1)	chr2:29192774-29921566	23.2	neuroblastoma
+ANK1	ankyrin 1	chr8:41653225-41896762	11.21	
+APC	adenomatous polyposis of the colon gene	chr5:112737888-112846239	22.2	 other CNS"			
+ARHGAP26	Rho GTPase activating protein 26	chr5:142770377-143229011	31.3	Dom
+ARHGAP5	Rho GTPase activating protein 5	chr14:32077289-32159728	12	" O"""
+ARHGEF10	Rho guanine nucleotide exchange factor 10	chr8:1824015-1958641	23.3	TSG
+ARHGEF10L	Rho guanine nucleotide exchange factor 10 like	chr1:17539835-17697869	36.13	TSG
+ATF1	activating transcription factor 1	chr12:50764292-50821122	13.12	" M"""
+ATIC	5-aminoimidazole-4-carboxamide ribonucleotide formyltransferase/IMP cyclohydrolase	chr2:215311817-215349763	35	fusion
+ATM	ataxia telangiectasia mutated	chr11:108222832-108369099	22.3	ataxia-telangiectasia
+ATR	ATR serine/threonine kinase	chr3:142449237-142578826	23	familial cutaneous telangiectasia and cancer syndrome
+AXIN1	axin 1	chr16:287440-352659	13.3	" sporadic medulloblastoma"""
+AXIN2	axin 2	chr17:65528563-65561647	24.1	E
+BAZ1A	bromodomain adjacent to zinc finger domain 1A	chr14:34752737-34875647	13.2	
+BCL6	B-cell CLL/lymphoma 6	chr3:187721377-187745727	27.3	Dom
+BCL7A	B-cell CLL/lymphoma 7A	chr12:122019422-122062044	24.31	fusion
+BCR	breakpoint cluster region	chr22:23180210-23318037	11.23	L
+BIRC3	baculoviral IAP repeat-containing 3	chr11:102317495-102337734	22.2	
+BIRC6	baculoviral IAP repeat containing 6	chr2:32357028-32618899	22.3	E
+BLM	Bloom Syndrome	chr15:90717327-90816165	26.1	Bloom syndrome
+BMP5	bone morphogenetic protein 5	chr6:55753645-55875564	12.1	
+BRD4	bromodomain containing 4	chr19:15235519-15280451	13.12	"oncogene
+BRIP1	BRCA1 interacting protein C-terminal helicase 1	chr17:61681266-61863521	23.2	 breast cancer susceptiblity"
+CALR	calreticulin	chr19:12938607-12944489	13.13	Dom
+CASP9	caspase 9	chr1:15492270-15524295	36.21	TSG
+CBL	Cas-Br-M (murine) ecotropic retroviral transforming	chr11:119206276-119308149	23.3	L
+CBLB	Cas-Br-M (murine) ecotropic retroviral transforming sequence b	chr3:105655461-105869043	13.11	TSG
+CCNC	cyclin C	chr6:99542380-99568973	16.2	TSG
+CCNE1	cyclin E1	chr19:29811898-29824308	12	oncogene
+CCR4	C-C motif chemokine receptor 4	chr3:32951574-32956349	22.3	oncogene
+CCR7	C-C motif chemokine receptor 7	chr17:40553769-40565472	21.2	oncogene
+CD209	CD209 molecule	chr19:7739994-7747534	13.2	
+CD274	CD274 molecule	chr9:5450525-5470547	24.1	Dom
+CD28	CD28 molecule	chr2:203706548-203738912	33.2	oncogene
+CDC73	cell division cycle 73	chr1:193122017-193253901	31.2	" M"""
+CDH10	cadherin 10	chr5:24487100-24644978	14.2	TSG
+CDH17	cadherin 17	chr8:94127171-94208587	22.1	oncogene
+CDK12	cyclin-dependent kinase 12	chr17:39462039-39535146	12	TSG
+CDK4	cyclin-dependent kinase 4	chr12:57747727-57752521	14.1	oncogene
+CEP89	centrosomal protein 89kDa	chr19:32875925-32971963	13.11	fusion
+CHCHD7	coiled-coil-helix-coiled-coil-helix domain containing 7	chr8:56211756-56218615	12.1	fusion
+CHD2	chromodomain helicase DNA binding protein 2	chr15:92900320-93028005	26.1	
+CHD4	chromodomain helicase DNA binding protein 4	chr12:6570088-6607476	13.31	oncogene
+CHEK2	CHK2 checkpoint homolog (S. pombe)	chr22:28687763-28741838	12.1	TSG
+CHIC2	cysteine-rich hydrophobic domain 2	chr4:54009789-54064690	12	fusion
+CHST11	carbohydrate sulfotransferase 11	chr12:104456973-104762014	23.3	"oncogene
+CIC	capicua homolog	chr19:42284665-42295797	13.2	 M"
+CLIP1	CAP-GLY domain containing linker protein 1	chr12:122271434-122422569	24.31	fusion
+CLP1	cleavage and polyadenylation factor I subunit 1	chr11:57657158-57661868	12.1	fusion
+CNBD1	cyclic nucleotide binding domain containing 1	chr8:86866445-87382859	21.3	
+CNOT3	CCR4-NOT transcription complex subunit 3	chr19:54141396-54155680	13.42	TSG
+CNTNAP2	contactin associated protein like 2	chr7:146116359-148420998	36.1	 O"			
+CNTRL	centriolin	chr9:121075012-121177608	33.2	Dom
+COL3A1	collagen type III alpha 1 chain	chr2:188974320-189012746	32.2	fusion
+COX6C	cytochrome c oxidase subunit VIc	chr8:99877866-99894062	22.2	fusion
+CPEB3	cytoplasmic polyadenylation element binding protein 3	chr10:92048642-92243279	23.32	TSG
+CREB1	cAMP responsive element binding protein 1	chr2:207529892-207603431	33.3	Dom
+CREBBP	CREB binding protein (CBP)	chr16:3725054-3880726	13.3	
+CRNKL1	crooked neck pre-mRNA splicing factor 1	chr20:20034368-20056046	11.23	
+CRTC1	CREB regulated transcription coactivator 1	chr19:18683678-18782333	13.11	"oncogene
+CRTC3	CREB regulated transcription coactivator 3	chr15:90530068-90642813	26.1	fusion
+CSF1R	colony stimulating factor 1 receptor	chr5:150053291-150113372	32	
+CSF3R	colony stimulating factor 3 receptor (granulocyte)	chr1:36466043-36483278	34.3	 MDS"
+CSMD3	CUB and Sushi multiple domains 3	chr8:112222928-113437099	23.3	E
+CTCF	CCCTC-binding factor	chr16:67562467-67639176	22.1	E
+CTNNA2	catenin alpha 2	chr2:79651552-80648689	12	oncogene
+CTNND1	catenin delta 1	chr11:57761797-57819178	12.1	
+CTNND2	catenin delta 2	chr5:10971840-11904043	15.2	
+CUL3	cullin 3	chr2:224470150-224585348	36.2	TSG
+CUX1	cut-like homeobox 1	chr7:101816011-102258233	22.1	" other tumour types"""
+CXCR4	C-X-C motif chemokine receptor 4	chr2:136114349-136116243	22.1	oncogene
+CYLD	familial cylindromatosis gene	chr16:50742760-50801935	12.1	E
+CYP2C8	cytochrome P450 family 2 subfamily C member 8	chr10:95036773-95069497	23.33	
+CYSLTR2	cysteinyl leukotriene receptor 2	chr13:48706555-48711226	14.2	oncogene
+DAXX	death-domain associated protein	chr6:33318558-33323014	21.32	Rec
+DCC	DCC netrin 1 receptor	chr18:52340172-53535899	21.2	E
+DCTN1	dynactin 1	chr2:74361154-74380355	13.1	Dom
+DDB2	damage-specific DNA binding protein 2	chr11:47214942-47239240	11.2	E
+DUX4L1	double homeobox 4 like 1	chr4:190084412-190085686	35.2	fusion
+ELN	elastin	chr7:74027789-74069907	11.23	fusion
+EML4	echinoderm microtubule associated protein like 4	chr2:42169350-42332548	21	fusion
+EP300	300 kd E1A-Binding protein gene	chr22:41091786-41180079	13.2	" DLBCL"""
+ERBB3	erb-b2 receptor tyrosine kinase 3	chr12:56079861-56103505	13.2	
+ERBB4	erb-b2 receptor tyrosine kinase 4	chr2:211375717-212538841	34	E
+ERC1	ELKS/RAB6-interacting/CAST family member 1	chr12:1027747-1495924	13.33	Dom
+ETNK1	ethanolamine kinase 1	chr12:22625075-22690665	12.1	
+ETV1	ets variant gene 1	chr7:13891228-13989946	21.2	" E"""
+EZR	ezrin	chr6:158765748-158819412	25.3	fusion
+FGFR4	fibroblast growth factor receptor 4	chr5:177086886-177098144	35.2	oncogene
+FH	fumarate hydratase	chr1:241497603-241519761	43	" M"""
+GAS7	growth arrest-specific 7	chr17:9913850-10198551	13.1	fusion
+GLI1	GLI family zinc finger 1	chr12:57460138-57472262	13.3	
+GMPS	guanine monphosphate synthetase	chr3:155870536-155944026	25.31	fusion
+GPC5	glypican 5	chr13:91398607-92867237	31.3	TSG
+GPHN	gephyrin (GPH)	chr14:66507407-67181803	23.3	fusion
+GRM3	glutamate metabotropic receptor 3	chr7:86643914-86864884	21.12	
+HEY1	hairy/enhancer-of-split related with YRPW motif 1	chr8:79764013-79767857	21.13	"oncogene
+HIF1A	hypoxia inducible factor 1 alpha subunit	chr14:61697622-61748259	23.2	 pancreatic"
+HIP1	huntingtin interacting protein 1	chr7:75533300-75738947	11.23	" E"""
+HLF	hepatic leukemia factor	chr17:55265012-55325065	22	"oncogene
+HMGA1	high mobility group AT-hook 1	chr6:34236873-34246230	21.31	 M"
+HMGA2	high mobility group AT-hook 2 (HMGIC)	chr12:65824460-65915447	14.3	M
+HMGN2P46	high mobility group nucleosomal binding domain 2 pseudogene 46	chr15:45511136-45556730	21.1	fusion
+HNF1A	HNF1 homeobox A	chr12:120978749-121001269	24.31	E
+HRAS	v-Ha-ras Harvey rat sarcoma viral oncogene homolog	chr11:532243-535550	15.5	Costello syndrome
+IKZF1	IKAROS family zinc finger 1	chr7:50304669-50405101	12.2	Dom/Rec
+IL2	interleukin 2	chr4:122451470-122456725	27	fusion
+IL21R	interleukin 21 receptor	chr16:27402162-27452042	12.1	fusion
+ISX	intestine specific homeobox	chr22:35066136-35087387	12.3	
+ITGAV	integrin subunit alpha V	chr2:186590065-186680901	32.1	
+ITK	IL2-inducible T-cell kinase	chr5:157180826-157255191	33.3	fusion
+KAT6B	K(lysine) acetyltransferase 6B	chr10:74826625-75032622	22.2	" M"""
+KAT7	lysine acetyltransferase 7	chr17:49788555-49835030	21.33	oncogene
+KCNJ5	potassium inwardly-rectifying channel; subfamily J; member 5	chr11:128891356-128921035	24.3	oncogene
+KDR	vascular endothelial growth factor receptor 2	chr4:55078259-55125595	12	Dom
+KDSR	3-ketodihydrosphingosine reductase	chr18:63327726-63367510	21.33	fusion
+KEAP1	kelch like ECH associated protein 1	chr19:10486120-10503741	13.2	
+KIAA1549	KIAA1549	chr7:138837525-138981318	34	fusion
+KIF5B	kinesin family member 5B	chr10:32009010-32056431	11.22	Dom
+KLF6	Kruppel-like factor 6	chr10:3775996-3785275	15.2	" O"""
+KLK2	kallikrein-related peptidase 2	chr19:50873249-50880567	13.33	fusion
+KMT2A	lysine (K)-specific methyltransferase 2A	chr11:118436490-118526832	23.3	Dom
+KMT2C	lysine (K)-specific methyltransferase 2C	chr7:152134925-152436005	36.1	TSG
+KMT2D	lysine (K)-specific methyltransferase 2D	chr12:49018975-49055324	13.12	" E"""
+KNL1	cancer susceptibility candidate 5	chr15:40594020-40664342	15.1	"TSG
+KNSTRN	kinetochore localized astrin/SPAG5 binding protein	chr15:40382721-40394245	15.1	oncogene
+KRAS	v-Ki-ras2 Kirsten rat sarcoma 2 viral oncogene homolog	chr12:25209431-25250803	12.1	 other tumour types"
+KTN1	kinectin 1 (kinesin receptor)	chr14:55580317-55684579	22.3	fusion
+LARP4B	La ribonucleoprotein domain family member 4B	chr10:806914-931705	15.3	" O"""
+LASP1	LIM and SH3 protein 1	chr17:38869859-38921770	12	fusion
+LATS1	large tumor suppressor kinase 1	chr6:149658153-149718256	25.1	TSG
+LATS2	large tumor suppressor kinase 2	chr13:20973032-21061547	12.11	TSG
+LPP	LIM domain containing preferred translocation partner in lipoma	chr3:188212933-188890671	28	" M"""
+MAP2K1	mitogen-activated protein kinase kinase 1	chr15:66386817-66492312	22.31	E
+MAP2K2	mitogen-activated protein kinase kinase 2	chr19:4090321-4124129	13.3	Dom
+MAP2K4	mitogen-activated protein kinase kinase 4	chr17:12020834-12143830	12	E
+MB21D2	Mab-21 domain containing 2	chr3:192796815-192918161	29	
+MDM2	Mdm2 p53 binding protein homolog	chr12:68808176-68850686	15	
+MDM4	Mdm4 p53 binding protein homolog	chr1:204516383-204558120	32.1	M
+MDS2	myelodysplastic syndrome 2	chr1:23581495-23640568	36.12	fusion
+MECOM	MDS1 and EVI1 complex locus	chr3:169083499-169146305	26.2	L
+MEN1	multiple endocrine neoplasia type 1 gene	chr11:64803524-64811294	13.1	 carcinoid"
+MET	met proto-oncogene (hepatocyte growth factor receptor)	chr7:116672405-116796342	31.2	Dom
+MGMT	O-6-methylguanine-DNA methyltransferase	chr10:129467184-129768007	26.3	TSG
+MITF	melanogenesis-associated transcription factor	chr3:69739435-69968336	13	oncogene
+MRTFA	megakaryoblastic leukemia (translocation) 1	chr22:40411390-40533635	13.2	"oncogene
+MSH2	mutS homolog 2 (E. coli)	chr2:47402969-47483228	21	 ovarian"
+MSH6	mutS homolog 6 (E. coli)	chr2:47783082-47810101	16.3	E
+MTOR	mechanistic target of rapamycin	chr1:11106535-11262507	36.22	 central nervous system tumours
+MYD88	myeloid differentiation primary response gene (88)	chr3:38138478-38143019	22.2	oncogene
+MYOD1	myogenic differentiation 1	chr11:17719568-17722131	15.1	oncogene
+N4BP2	NEDD4 binding protein 2	chr4:40056826-40158252	14	TSG
+NAB2	NGFI-A binding protein 2	chr12:57088894-57095476	13.3	 O"			
+NACA	nascent-polypeptide-associated complex alpha polypeptide	chr12:56712433-56725299	13.3	fusion
+NBEA	neurobeachin	chr13:34942287-35672735	13.3	" L"""
+NBN	nibrin	chr8:89933336-89984716	21.3	Nijmegen breakage syndrome
+NCKIPSD	NCK interacting protein with SH3 domain	chr3:48673844-48685927	21.31	fusion
+NCOA1	nuclear receptor coactivator 1	chr2:24491932-24770702	23.3	fusion
+NCOR1	nuclear receptor corepressor 1	chr17:16029157-16215549	12	TSG
+NCOR2	nuclear receptor corepressor 2	chr12:124324415-124495252	24.31	TSG
+NFE2L2	nuclear factor (erythroid-derived 2)-like 2 (NRF2)	chr2:177230305-177265131	31.2	Dom
+NFIB	nuclear factor I/B	chr9:14087569-14313667	23	Dom
+NIN	ninein (GSK3B interacting protein)	chr14:50725840-50831121	22.1	fusion
+NRAS	neuroblastoma RAS viral (v-ras) oncogene homolog	chr1:114704469-114716894	13.2	
+NTHL1	nth like DNA glycosylase 1	chr16:2039815-2047866	13.3	TSG
+NUMA1	nuclear mitotic apparatus protein 1	chr11:72002864-72080687	13.4	fusion
+NUP214	nucleoporin 214kDa (CAN)	chr9:131125561-131234670	34.13	Dom
+NUTM2B	NUT family member 2B	chr10:79703227-79712757	22.3	fusion
+NUTM2D	NUT family member 2A	chr10:87357668-87367195	23.2	fusion
+PABPC1	poly(A) binding protein cytoplasmic 1	chr8:100702916-100722712	22.3	
+PAX3	paired box gene 3	chr2:222199888-222298981	36.1	"oncogene
+PAX5	paired box gene 5 (B-cell lineage specific activator protein)	chr9:36833275-37034185	13.2	L
+PAX7	paired box gene 7	chr1:18631006-18736138	36.13	fusion
+PAX8	paired box gene 8	chr2:113215997-113278921	14.1	fusion
+PBRM1	polybromo 1	chr3:52547841-52685836	21.1	Rec
+PBX1	pre-B-cell leukemia transcription factor 1	chr1:164559635-164851831	23.3	 M"
+PCBP1	poly(rC) binding protein 1	chr2:70087454-70089203	13.3	
+PER1	period homolog 1 (Drosophila)	chr17:8140472-8152435	13.1	Dom
+PHOX2B	paired-like homeobox 2b	chr4:41744082-41748970	13	TSG
+PICALM	phosphatidylinositol binding clathrin assembly protein (CALM)	chr11:85958814-86068929	14.2	Dom
+PML	promyelocytic leukemia	chr15:73994717-74046771	24.1	Dom
+PMS1	PMS1 postmeiotic segregation increased 1 (S. cerevisiae)	chr2:189784381-189877629	32.2	E
+PMS2	PMS2 postmeiotic segregation increased 2 (S. cerevisiae)	chr7:5973239-6009125	22.1	" glioma"""
+POT1	protection of telomeres 1	chr7:124822386-124929981	31.33	TSG
+PRDM16	PR domain containing 16	chr1:3069211-3438621	36.32	Dom
+PRDM2	PR/SET domain 2	chr1:13704855-13825079	36.21	
+PRF1	perforin 1 (pore forming protein)	chr10:70597349-70602775	22.1	Rec
+PRKACA	protein kinase cAMP-activated catalytic subunit alpha	chr19:14091688-14117744	13.12	Dom
+PRKCB	protein kinase C beta	chr16:23835983-24220611	12.2	
+PWWP2A	PWWP domain containing 2A	chr5:160091339-160119423	33.3	fusion
+RAD17	RAD17 checkpoint clamp loader component	chr5:69369806-69414801	13.2	" L"""
+RAD21	RAD21 homolog (S. pombe)	chr8:116845935-116874866	24.11	
+RAD51B	RAD51 paralog B	chr14:67819779-68611565	24.1	Dom
+RAF1	v-raf-1 murine leukemia viral oncogene homolog 1	chr3:12583601-12664226	25.2	" E"""
+RALGDS	ral guanine nucleotide dissociation stimulator	chr9:133097720-133121176	34.2	L
+RFWD3	ring finger and WD repeat domain 3	chr16:74621394-74666881	23.1	TSG
+RGPD3	RANBP2-like and GRIP domain containing 3	chr2:106404990-106468376	12.2	
+RGS7	regulator of G protein signaling 7	chr1:240775515-241357230	43	
+RMI2	RecQ mediated genome instability 2	chr16:11345431-11351762	13.13	Dom
+RNF213	ring finger protein 213	chr17:80260868-80398786	25.3	fusion
+RNF43	ring finger protein 43	chr17:58353676-58417533	22	E
+ROBO2	roundabout guidance receptor 2	chr3:75906695-77647510	12.3	
+ROS1	v-ros UR2 sarcoma virus oncogene homolog 1 (avian)	chr6:117288300-117425855	22.1	
+RPL22	ribosomal protein L22 (EAP)	chr1:6185020-6199612	36.31	Dom
+RPL5	ribososomal protein L5	chr1:92831983-92841924	22.1	TSG
+RPN1	ribophorin I	chr3:128619970-128650849	21.3	fusion
+RUNX1	runt-related transcription factor 1  (AML1)	chr21:34787801-35049344	22.12	L
+S100A7	S100 calcium binding protein A7	chr1:153457744-153460701	21.3	 L"			
+SALL4	spalt like transcription factor 4	chr20:51782331-51802520	13.2	
+SBDS	Shwachman-Bodian-Diamond syndrome protein	chr7:66987677-66995601	11.21	Rec
+SDC4	syndecan 4	chr20:45325288-45348424	13.12	fusion
+SDHAF2	succinate dehydrogenase complex assembly factor 2	chr11:61430073-61447529	12.2	TSG
+SEPT5	septin 5	chr22:19714464-19723319	11.21	fusion
+SEPT9	septin 9	chr17:77281410-77500592	25.3	fusion
+SHTN1	KIAA1598	chr10:116883377-117005577	25.3	fusion
+SIRPA	signal regulatory protein alpha	chr20:1894508-1940592	13	E
+SIX1	SIX homeobox 1	chr14:60643415-60649462	23.1	oncogene
+SIX2	SIX homeobox 2	chr2:45005161-45009430	21	oncogene
+SKI	SKI proto-oncogene	chr1:2228695-2310119	36.33	oncogene
+SMAD2	SMAD family member 2	chr18:47808957-47930559	21.1	Rec
+SMAD3	SMAD family member 3	chr15:67065845-67195195	22.33	Rec
+SMAD4	SMAD family member 4	chr18:51030213-51085039	21.2	E
+SNX29	RUN domain containing 2A	chr16:11976738-12574289	13.13	Dom
+SOCS1	suppressor of cytokine signaling 1	chr16:11254417-11256200	13.13	Rec
+SOX2	SRY (sex determining region Y)-box 2	chr3:181711924-181714436	26.33	Dom
+SOX21	SRY-box 21	chr13:94709622-94712399	32.1	TSG
+SPECC1	sperm antigen with calponin homology and coiled-coil domains 1	chr17:20087022-20314755	11.2	fusion
+SPEN	spen family transcriptional repressor	chr1:15847864-15940460	36.21	L
+SPOP	speckle type POZ protein	chr17:49598884-49678110	21.33	Rec
+STAG1	stromal antigen 1	chr3:136336233-136752368	22.3	" L"""
+STAT3	signal transducer and activator of transcription 3 (acute-phase response factor)	chr17:42313324-42388568	21.2	oncogene
+STIL	SCL/TAL1 interrupting locus	chr1:47250142-47314140	33	"oncogene
+STK11	serine/threonine kinase 11 gene (LKB1)	chr19:1206464-1228435	13.3	 pancreatic"
+SYK	spleen tyrosine kinase	chr9:90801787-90898549	22.2	Dom
+TBL1XR1	transducin (beta)-like 1 X-linked receptor 1	chr3:177019355-177196478	26.32	
+TBX3	T-box 3	chr12:114670255-114683590	24.21	E
+TET2	tet oncogene family member 2	chr4:105146293-105279816	24	TSG
+TFEB	transcription factor EB	chr6:41683978-41736259	21.1	Dom
+TFG	TRK-fused gene	chr3:100709425-100748966	12.2	
+TFPT	TCF3 (E2A) fusion partner (in childhood leukaemia)	chr19:54107013-54115675	13.42	fusion
+TMEM127	transmembrane protein 127	chr2:96248516-96265994	11.2	 E"			
+TOP1	topoisomerase (DNA) I	chr20:41028818-41124487	12	fusion
+TP53	tumor protein p53	chr17:7668402-7687538	13.1	 glioma
+TP63	tumor protein p63	chr3:189631427-189897279	28	
+TPM3	tropomyosin 3	chr1:154167465-154192211	21.3	
+TPM4	tropomyosin 4	chr19:16067538-16102943	13.12	fusion
+TPR	translocated promoter region	chr1:186311652-186375325	31.1	Dom
+TRAF7	tumour necrosis factor receptor-associated factor 7	chr16:2155765-2178129	13.3	TSG
+TRIP11	thyroid hormone receptor interactor 11	chr14:91965991-92040059	32.12	fusion
+TRRAP	transformation/transcription domain-associated protein	chr7:98878490-99013243	22.1	oncogene
+TSC1	tuberous sclerosis 1 gene	chr9:132891348-132944633	34.13	Tuberous sclerosis 1
+TSC2	tuberous sclerosis 2 gene	chr16:2047465-2088720	13.3	 tuberous sclerosis tuber"			
+TSHR	thyroid stimulating hormone receptor	chr14:80955043-81146302	31.1	oncogene
+U2AF1	U2 small nuclear RNA auxiliary factor 1	chr21:43092956-43107587	22.3	Dom
+USP8	ubiquitin specific peptidase 8	chr15:50424382-50514419	21.2	oncogene
+VAV1	vav guanine nucleotide exchange factor 1	chr19:6772726-6857107	13.3	fusion
+VHL	von Hippel-Lindau syndrome gene	chr3:10141008-10152220	25.3	" pheochromocytoma"""
+VTI1A	vesicle transport through interaction with t-SNAREs homolog 1A	chr10:112447258-112818744	25.2	fusion
+WDCP	chromosome 2 open reading frame 44	chr2:24029340-24047353	23.3	fusion
+WT1	Wilms tumour 1 gene	chr11:32387775-32435630	13	" familial Wilms tumour"""
+ZNF384	zinc finger protein 384 (CIZ/NMP4)	chr12:6666648-6689510	13.31	fusion
+ZNF429	zinc finger protein 429	chr19:21505564-21538078	12	
+ZNF479	zinc finger protein 479	chr7:57119614-57139864	11.2	E
