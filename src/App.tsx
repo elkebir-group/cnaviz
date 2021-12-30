@@ -302,6 +302,7 @@ export class App extends React.Component<{}, State> {
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
         this.handleDemoFileInput = this.handleDemoFileInput.bind(this);
         this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
+        this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
@@ -330,6 +331,7 @@ export class App extends React.Component<{}, State> {
         this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
         this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
         this.onClearClustering = this.onClearClustering.bind(this);
+
         let self = this;
         d3.select("body").on("keypress", function(){
             if (d3.event.key === "z") {
@@ -464,6 +466,22 @@ export class App extends React.Component<{}, State> {
         }
         this.setState({driverGenes: driverGenes});
     }
+
+    async handleDemoDrivers() {
+        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/testdata4.tsv")
+        .then(r => r.text())
+        .then(text => {
+            parseDriverGenes(text)
+            .then(parsed => {
+               this.setState({driverGenes: parsed});
+            })
+            .catch(error => {
+                console.error(error);
+                return;
+            }) 
+        });
+    }
+
     
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
@@ -747,6 +765,7 @@ export class App extends React.Component<{}, State> {
                     onTogglePreviousActionLog={this.onTogglePreviousActionLog}
                     onClearClustering={this.onClearClustering}
                     handleDemoFileInput={this.handleDemoFileInput}
+                    handleDemoDrivers={this.handleDemoDrivers}
                 />
             </div>
             

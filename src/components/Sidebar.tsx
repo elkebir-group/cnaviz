@@ -48,6 +48,7 @@ interface Props {
     onTogglePreviousActionLog: () => void;
     onClearClustering: () => void;
     handleDemoFileInput: (applyClustering: boolean) => void;
+    handleDemoDrivers: () => void;
 }
 
 function Sidebar(props: Props) {
@@ -113,7 +114,7 @@ function Sidebar(props: Props) {
 
             <label className="custom-file-upload">
               <input type="button" id="custom-button" onClick={
-                  (event: any) => console.log("Demo Drivers")
+                  (event: any) => props.handleDemoDrivers()
               }/>
               Demo Drivers
             </label> 
