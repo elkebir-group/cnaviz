@@ -19,13 +19,23 @@ interface Props {
     colors: string[];
 }
 
+interface State {
+    showTooltip: boolean;
+    tooltipX: number;
+    tooltipY: number;
+}
 
-export class SilhouetteBarPlot extends React.Component<Props> {
+export class SilhouetteBarPlot extends React.Component<Props, State> {
 
     private _svg: SVGSVGElement | null;
 
     constructor(props: Props) {
         super(props);
+        this.state = {
+            showTooltip: false,
+            tooltipX: 0,
+            tooltipY: 0
+        }
         this._svg = null;
     }
 
@@ -48,9 +58,42 @@ export class SilhouetteBarPlot extends React.Component<Props> {
         this.redraw();
     }
 
+    renderTooltipContent(contents: JSX.Element | null) {
+        const {width, height} = this.props;
+        const {showTooltip, tooltipX, tooltipY} = this.state;
+        if (!contents) {
+            return null;
+        }
+
+        if(!showTooltip) {
+            return null;
+        }
+
+        const x = tooltipX;
+        const y = tooltipY;
+        const OFFSET = 0;
+        const OFFSETY = 30;
+        return <div
+            className="Scatterplot-tooltip"
+            style={{
+                position: "absolute",
+                top: "90%",
+                left: "1%",
+                pointerEvents: "none"
+            }}
+        >
+            {contents}
+        </div>;
+    }
+    
+    renderTooltip() {
+        return this.renderTooltipContent(<React.Fragment><div>Note: The Silhoutte coefficient ranges from -1 to 1 where the larger the number the more tightly grouped the cluster </div></React.Fragment>)
+    }
+
     render() {
         return (
             <div id="chart-container">
+                {this.renderTooltip()}
             </div>
         )
     }
@@ -86,12 +129,14 @@ export class SilhouetteBarPlot extends React.Component<Props> {
             ' ' +
             (height + margin.top + margin.bottom)
         )
-
        
         // Add X axis
         var x = d3.scaleLinear()
         .domain([-1, 1])
         .range([15, width-10]);
+        const self = this;
+        const container = d3.select(".Directions2").node();
+    //  console.log(container);
 
         svg.append("text")
             .classed("scale", true)
@@ -99,14 +144,26 @@ export class SilhouetteBarPlot extends React.Component<Props> {
             .attr("font-size", 14)
             .attr("x", _.mean([15, width-10]))
             .attr("y", height + 40)
-            .text("Approximate Average Silhoutte Coefficient");
+            .text("Approximate Average Silhoutte Coefficient")
+            .on("mouseover", () => {
+                // console.log(d3.event);
+                // if(container !== null) {
+                //     console.log(container);
+                //     d3.mouse(container);
+                // }
+                this.setState({showTooltip: true});
+                this.setState({tooltipX: d3.event.offsetX, tooltipY: d3.event.offsetY});
+            })
+            .on("mouseleave", () => {
+                this.setState({showTooltip: false});
+            });
 
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x))
             .selectAll("text")
                 .attr("transform", "translate(-10,0)rotate(-45)")
-                .style("text-anchor", "end");
+                .style("text-anchor", "end")
 
         // Y axis
         var y = d3.scaleBand()

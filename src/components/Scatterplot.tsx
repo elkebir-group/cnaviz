@@ -765,6 +765,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!this._svg || !hoveredLocation || !this._canvas) {
             return [];
         }
+        
         const {data, yAxisToPlot} = this.props;
 
         let hoveredRecords : GenomicBin[] = [];
