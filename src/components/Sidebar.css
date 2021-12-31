@@ -126,6 +126,20 @@ input[type="file"] {
   cursor: pointer;
 }
 
+.closemenu4{
+  color: #000;
+  position: absolute;
+  right: -25px;
+  z-index: 9999;
+  line-height: 20px;
+  height: 3%;
+  width: 7%;
+  font-weight: bold;
+  font-size: 22px;
+  top: 58%;
+  cursor: pointer;
+}
+
 .clustertable {
   height: 40%;
 }

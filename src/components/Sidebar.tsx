@@ -8,6 +8,7 @@ import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "
 import { ToggleButton } from "./ToggleButton";
 import spinner from "../loading-small.gif";
 import {BsQuestionCircle} from "react-icons/bs";
+import {BiEraser} from "react-icons/bi";
 
 
 interface Props {
@@ -77,7 +78,30 @@ function Sidebar(props: Props) {
               )
           }
       </div>
+      <div className="closemenu2" onClick={() => props.setDisplayMode(DisplayMode.select)}>
+            <div className="arrow-container"> 
+              <FiMousePointer
+                color={props.currentDisplayMode === DisplayMode.select ? "red" : "black"}
+              />
+            </div>
+      </div>
+
+      <div className="closemenu3" onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
+            <div className="arrow-container"> 
+              <FiZoomIn
+                color={props.currentDisplayMode === DisplayMode.zoom ? "red" : "black"}
+              />
+            </div>
+      </div>
       
+      <div className="closemenu4" onClick={() => props.setDisplayMode(DisplayMode.erase)}>
+            <div className="arrow-container"> 
+              <BiEraser
+                color={props.currentDisplayMode === DisplayMode.erase ? "red" : "black"}
+              />
+            </div>
+      </div>
+
       <div className="contents">
       <div className="row-contents" > <h1>CNA-Viz</h1> </div>
         <div className="title-bar"></div>
@@ -116,7 +140,7 @@ function Sidebar(props: Props) {
               <input type="button" id="custom-button" onClick={
                   (event: any) => props.handleDemoDrivers()
               }/>
-              Demo Drivers
+              CGC Drivers
             </label> 
           </div>
   
@@ -154,19 +178,6 @@ function Sidebar(props: Props) {
             </label>
           </div>
 
-          <div className= "row-contents" >
-            <ToggleButton
-                displayMode={props.currentDisplayMode}
-                setDisplayMode={() => {
-                  if(props.currentDisplayMode === DisplayMode.zoom) { 
-                    // setDisplayMode is what the toggle should should change to when clicked (so whatever displayMode that it isn't currently on)
-                    props.setDisplayMode(DisplayMode.select) 
-                  } else {
-                    props.setDisplayMode(DisplayMode.zoom)
-                  }
-                }}
-              />
-          </div>
           <div className= "row-contents" >
             <label className="custom-file-upload">
               <input type="button" id="custom-button" onClick={props.onToggleSilhouttes}/>
