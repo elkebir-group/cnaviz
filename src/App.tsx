@@ -92,7 +92,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             let chrNameLength: any = [];
 
             for (const bin of parsed) {
-                if(!applyClustering) {
+                if(!applyClustering || bin.CLUSTER === undefined) {
                     bin.CLUSTER = -1;
                 }
 

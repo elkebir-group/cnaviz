@@ -271,14 +271,13 @@ export class Scatterplot extends React.Component<Props, State> {
 
                             <svg
                                 ref={node => this._svg = node}
-                                // width={width} height={height}
                                 style={{zIndex: 100}}
                                 preserveAspectRatio={'xMinYMin meet'}
                                 viewBox={'0 0 ' + (width) + ' ' + (height)}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                <button id="reset" onClick={this.resetZoom}>Reset View</button>
+                                <button className="custom-button" onClick={this.resetZoom}>Reset View</button>
                             </div>
 
                             {this.renderTooltip()}

@@ -1,11 +1,11 @@
 import pandas as pd
 import sys
 
-data = pd.read_csv("/Users/zubairlalani/Code/Research/cnaviz/data/driver_genes_reduced.tsv", sep='\t', engine="python", error_bad_lines=False)
+data = pd.read_csv("/Users/zubairlalani/Code/Research/cnaviz/data/a12.tsv", sep='\t', engine="python", error_bad_lines=False)
 
 # data['Genome Location'] = "chr" + data['Genome Location']
 
-cols_to_del = ["Chr Band", "Role in Cancer"]
+cols_to_del = ["CLUSTER"]
 
 for col in cols_to_del:
     del data[col]
@@ -14,7 +14,7 @@ for col in cols_to_del:
 
 print(data)
 
-# data.to_csv("/Users/zubairlalani/Code/Research/cnaviz/data/testdata5.tsv", sep='\t', index=False)
+data.to_csv("/Users/zubairlalani/Code/Research/cnaviz/data/a12_no_cluster_col.tsv", sep='\t', index=False)
 
 # p
 

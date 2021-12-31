@@ -536,8 +536,7 @@ export class DataWarehouse {
         this.brushedCrossfilter.remove();
         this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
         this.allRecords =  this._ndx.all(); 
-        let test = this.calculateClusterTableInfo();
-        this.clusterTableInfo = test;
+        this.clusterTableInfo = this.calculateClusterTableInfo();
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
 
         if(!this._cluster_filters.includes(String(cluster))) {
@@ -585,9 +584,8 @@ export class DataWarehouse {
         this.brushedBins = [];
         this.brushedCrossfilter.remove();
         this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
-        this.allRecords =  this._ndx.all(); 
-        let test = this.calculateClusterTableInfo();
-        this.clusterTableInfo = test;
+        this.allRecords =  this._ndx.all();
+        this.clusterTableInfo = this.calculateClusterTableInfo();
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
         
         
@@ -607,13 +605,14 @@ export class DataWarehouse {
         const clusterTable = this.brushedClusterDim.group().all();
 
         const clusterTable2 : selectionTableRow[] = [];
+        const totalBins = this._ndx.all().length;
         for(const row of clusterTable) {
             clusterTable2.push(
             {
                 key: Number(row.key), 
                 value: Number((Number(row.value)/Number(clusterIdToAmount[Number(row.key)]) * 100).toFixed(2)),
                 selectPerc: Number((Number(row.value)/Number(amountInSelection) * 100).toFixed(2)),
-                binPerc: Number((Number(row.value)/Number(this.allRecords.length / sampleAmount) * 100).toFixed(2))
+                binPerc: Number((Number(row.value)/Number(totalBins / sampleAmount) * 100).toFixed(2))
             });
         }
 

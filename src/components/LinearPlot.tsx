@@ -523,8 +523,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             left: start,
             width: boxWidth,
             height: "100%",
-            backgroundColor: "rgba(255,255,0,0.2)",
-            border: "1px solid rgba(255,255,0,0.7)",
+            backgroundColor: "rgba(0,0,0,1)",
+            border: "1px solid rgba(0,0,0,1)",
             zIndex: 1,
         }} />
     }
@@ -573,7 +573,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             <svg ref={node => this._svg = node} preserveAspectRatio={'xMinYMin meet'} viewBox={'0 0 ' + (width) + ' ' + (height)}/>
             <div className="LinearPlot-tools">
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
-                && <button onClick={() => {
+                && <button className="custom-button linear-plot-button" onClick={() => {
                     this.props.onLinearPlotZoom(null, null, true, true);
                 }}
                 >Reset View</button>}
