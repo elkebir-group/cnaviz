@@ -596,7 +596,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         return (
             drivers.map(
-                driver => {
+                (driver, idx) => {
                     const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
                     const implicitCoords = genome.getImplicitCoordinates(driver.location);
                     const start = xScale(implicitCoords.start) || 0;
@@ -606,6 +606,18 @@ export class LinearPlot extends React.PureComponent<Props> {
                                         <div> {driverSymbol} </div>
                                     </React.Fragment>;
 
+                    let shouldRenderLabel = true;
+                    // for(let otherDriver of drivers) {
+                    //     if(driver !== otherDriver) {
+                    //         const endOfCurrent = (start - 20) + 26;
+                    //         const implicitCoordsOther = genome.getImplicitCoordinates(otherDriver.location);
+                    //         const startOther = xScale(implicitCoordsOther.start) || 0;
+                    //         if(endOfCurrent > (startOther - 20)) {
+                    //             shouldRenderLabel = false;
+                    //         }
+                    //     } 
+                    // }
+
                     if(start > PADDING.left && start < width - PADDING.right) {
                         return (
                             <div key={this.props.dataKeyToPlot + driverSymbol}>
@@ -614,7 +626,9 @@ export class LinearPlot extends React.PureComponent<Props> {
                                     left: start-20,
                                     bottom: height,
                                     border: "1px solid rgba(0,0,0,0)",
-                                    zIndex: 2
+                                    zIndex: 2,
+                                    pointerEvents: "none",
+                                    display: (shouldRenderLabel) ? "" : "none",
                                 }}>
                                     {contents}
                                 </div>
@@ -625,7 +639,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                                     height: "75%",
                                     backgroundColor: "rgba(255,165,0,1)",
                                     border: "1px solid rgba(255,165,0,1)",
-                                    zIndex: 2
+                                    zIndex: idx,
                                 }} />   
                         </div>
                         )

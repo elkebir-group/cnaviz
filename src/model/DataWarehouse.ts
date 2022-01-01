@@ -695,7 +695,10 @@ export class DataWarehouse {
     }
 
     setbrushedBins(brushedBins: GenomicBin[]) {
+        console.log("Setting Brushed Bins: ", brushedBins.length);
+        this.brushedBins = [];
         this.brushedBins = brushedBins;
+        this.brushedCrossfilter.remove();
         this.brushedCrossfilter = crossfilter(brushedBins);
         this.brushedClusterDim = this.brushedCrossfilter.dimension((d:GenomicBin) => d.CLUSTER);
     }
