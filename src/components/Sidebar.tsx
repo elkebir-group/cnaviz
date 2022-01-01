@@ -103,7 +103,7 @@ function Sidebar(props: Props) {
       </div>
 
       <div className="contents">
-      <div className="row-contents" > <h1>CNA-Viz</h1> </div>
+      <div className="row-contents" > <h1>CNAViz</h1> </div>
         <div className="title-bar"></div>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
@@ -211,7 +211,7 @@ function Sidebar(props: Props) {
                 onClusterColorChange={props.onClusterColorChange}
                 currentFilters={props.currentClusterFilters}
                 colOneName={"Cluster ID"}
-                colTwoName={"Bins (%)"}
+                colTwoName={"Bin (%)"}
                 cols={""}
                 expandable={true}
                 selectable={true}

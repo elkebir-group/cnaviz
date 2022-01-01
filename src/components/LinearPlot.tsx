@@ -455,13 +455,14 @@ export class LinearPlot extends React.PureComponent<Props> {
 
                         if (brushed) {
                             if(displayMode === DisplayMode.select) {
-                                brushed = _.uniq(_.union(brushed, brushedBins));  
+                                brushed = _.uniqBy(_.union(brushed, brushedBins), element => element["#CHR"] + "_" + element.START);  
                             } else if(displayMode === DisplayMode.erase) {
                                 brushed = _.difference(brushedBins, brushed);
                             }
         
                             this.brushedNodes = new Set(brushed);                  
                         }
+                        
                     } else {
                         this.brushedNodes = new Set([]);
                     }

@@ -748,8 +748,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 
                 if (brushNodes) {
                     if(displayMode === DisplayMode.select) {
-                        brushNodes = _.uniqBy(_.union(brushNodes, brushedBins), element => element["#CHR"] + "_" + element.START); 
-                         
+                        brushNodes = _.uniqBy(_.union(brushNodes, brushedBins), element => element["#CHR"] + "_" + element.START);
                     } else if(displayMode === DisplayMode.erase) {
                         brushNodes = _.difference(brushedBins, brushNodes);
                     }
