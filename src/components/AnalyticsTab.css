@@ -1,17 +1,22 @@
 .BarPlots {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; */
 }
 
 .Bar-Select {
-    display: flex;
+    /* display: flex;
     flex-direction: column;
-    width: 50%;
+    width: 100%; */
 }
 
 .ClusterDistances-Select {
-    margin-left: 15px;
+    /* margin-bottom: 10px; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 50%;
+
 }
 
 .ClusterDistances-Select2 {

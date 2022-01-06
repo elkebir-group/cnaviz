@@ -67,20 +67,9 @@ export class AnalyticsTab extends React.Component<Props, State> {
             <div className="Exit-Popup" onClick={this.props.onToggleSilhoutteBarPlot}> 
                 <FiX/>
             </div>
-            <div className="BarPlots">
-                <div className="Bar-Select">
-                    <div style={{marginBottom: "0px"}}></div>
-                    <SilhouetteBarPlot
-                        width={700}
-                        height={700}
-                        data={silhoutteData}
-                        colors={colors}
-                    ></SilhouetteBarPlot> 
-                </div>
-             
-                <div className="Bar-Select">
-                    <div className="ClusterDistances-Select">
-                        <span> Cluster: </span>
+            <div className="Bar-Select">
+                <div className="ClusterDistances-Select">
+                    <label> Cluster:
                         <select
                             name="Select Cluster" 
                             title="Cluster"
@@ -88,7 +77,15 @@ export class AnalyticsTab extends React.Component<Props, State> {
                             onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
                             {clusterOptions}
                         </select>
-                    </div>
+                    </label>
+                </div>
+                <div className="BarPlots">
+                    <SilhouetteBarPlot
+                        width={700}
+                        height={700}
+                        data={silhoutteData}
+                        colors={colors}
+                    ></SilhouetteBarPlot> 
                     <ClusterDistancesBarPlot
                         data={clusterDistances.get(Number(this.state.selectedCluster))}
                         selectedCluster={Number(this.state.selectedCluster)}
