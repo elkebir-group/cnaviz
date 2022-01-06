@@ -89,7 +89,7 @@ function Sidebar(props: Props) {
       <div className="closemenu3" onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
             <div className="arrow-container"> 
               <FiZoomIn
-                color={props.currentDisplayMode === DisplayMode.zoom ? "red" : "black"}
+                color={props.currentDisplayMode === DisplayMode.zoom || props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
               />
             </div>
       </div>

@@ -74,7 +74,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private previous_brushed_nodes: Set<string>;
     private quadTree: d3.Quadtree<GenomicBin>;
     private _canvas: HTMLCanvasElement | null;
-    private _canvas2: HTMLCanvasElement | null;
+    // private _canvas2: HTMLCanvasElement | null;
     private _currXScale: d3.ScaleLinear<number, number>;
     private _currYScale: d3.ScaleLinear<number, number>;
     private _original_XScale: d3.ScaleLinear<number, number>;
@@ -91,7 +91,7 @@ export class Scatterplot extends React.Component<Props, State> {
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
-        this._canvas2 = null;
+        // this._canvas2 = null;
         this._circleIdPrefix = nextCircleIdPrefix;
         nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
@@ -223,7 +223,6 @@ export class Scatterplot extends React.Component<Props, State> {
                     <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
-                    {/* <div> Genome Position: {record.genomicPosition}</div> */}
                     
                 </React.Fragment>);
             } 
@@ -252,18 +251,6 @@ export class Scatterplot extends React.Component<Props, State> {
                                 style={{position: "absolute", 
                                         top: PADDING.top, 
                                         zIndex: -4, 
-                                        left: PADDING.left, 
-                                        width: width-PADDING.left - PADDING.right, 
-                                        height: height-PADDING.top-PADDING.bottom}}
-                            />
-                            <canvas
-                                ref={node => this._canvas2 = node}
-                                width={width}
-                                height={height}
-                                className={"canvas"}
-                                style={{position: "absolute", 
-                                        top: PADDING.top, 
-                                        zIndex: -1, 
                                         left: PADDING.left, 
                                         width: width-PADDING.left - PADDING.right, 
                                         height: height-PADDING.top-PADDING.bottom}}
@@ -426,7 +413,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     redraw() {
-        if (!this._svg || !this._canvas || !this.scatter || !this._canvas2) {
+        if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
         let self = this;
@@ -528,9 +515,9 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         const gl = this._canvas.getContext("webgl")!;
-        const gl2 = this._canvas2.getContext("webgl")!;
+        // const gl2 = this._canvas2.getContext("webgl")!;
         gl.clearColor(0,0,0,1);
-        gl2.clearColor(0, 0, 0, 1);
+        // gl2.clearColor(0, 0, 0, 1);
 
         let languageFill = (d:any) => {
             return webglColor(chooseColor(d));

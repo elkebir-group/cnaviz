@@ -86,7 +86,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 return;
             }
 
-            
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];

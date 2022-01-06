@@ -1,5 +1,5 @@
 import React from "react"
-import { GenomicBin} from "../model/GenomicBin";
+import {GenomicBin} from "../model/GenomicBin";
 import {toCSV} from "../util";
 import spinner from "../loading-small.gif";
 
@@ -17,7 +17,7 @@ function convertToTsv(data: readonly GenomicBin[]): Promise<string> {
     return new Promise((resolve, reject) => {
         let keys = Object.keys(data[0]);
             
-        const headings = keys.slice(0, keys.length-3);//.join('\t');
+        const headings = keys.slice(0, keys.length-3);
 
         // iterate over the data
         const rows : string = toCSV(data, headings, "\t", " ");

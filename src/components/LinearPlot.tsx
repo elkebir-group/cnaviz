@@ -15,6 +15,8 @@ import { Gene } from "../model/Gene";
 const SCALES_CLASS_NAME = "linearplot-scale";
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
+const DRIVER_LABEL_WIDTH = 40;
+
 const PADDING = { // For the SVG
     left: 50,
     right: 10,
@@ -555,6 +557,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
             >
+
             {this.renderLockedDrivers()}
             {this.renderTooltip()}
             {this.renderHighlight()}
@@ -590,11 +593,13 @@ export class LinearPlot extends React.PureComponent<Props> {
             shouldAddBack = true;
         }
 
-        const drivers = [...this.lockedDrivers];
+        const drivers = [...this.lockedDrivers].sort((a:Gene, b: Gene) => a.location.start - b.location.start);
         if(this.previewDriver != null && shouldAddBack) {
             this.lockedDrivers.add(this.previewDriver);
         }
 
+        const label_divs : number[][] = [];
+        
         return (
             drivers.map(
                 (driver, idx) => {
@@ -608,26 +613,31 @@ export class LinearPlot extends React.PureComponent<Props> {
                                     </React.Fragment>;
 
                     let shouldRenderLabel = true;
-                    // for(let otherDriver of drivers) {
-                    //     if(driver !== otherDriver) {
-                    //         const endOfCurrent = (start - 20) + 26;
-                    //         const implicitCoordsOther = genome.getImplicitCoordinates(otherDriver.location);
-                    //         const startOther = xScale(implicitCoordsOther.start) || 0;
-                    //         if(endOfCurrent > (startOther - 20)) {
-                    //             shouldRenderLabel = false;
-                    //         }
-                    //     } 
-                    // }
-
+                    const w = (driverSymbol.length > 4) ? DRIVER_LABEL_WIDTH + 5*(driverSymbol.length-4) : DRIVER_LABEL_WIDTH;
+                    const currentCoord = [start-w/2, start + w/2];
+                    for(const coord of label_divs) {
+                        if(coord[0] > currentCoord[0] && coord[0] < currentCoord[1]) {
+                            shouldRenderLabel = false;
+                            break;
+                        } else if(currentCoord[0] > coord[0] && currentCoord[0] < coord[1]) {
+                            shouldRenderLabel = false;
+                            break;
+                        }
+                    }
+                    if(shouldRenderLabel) {
+                        label_divs.push(currentCoord);
+                    }
                     if(start > PADDING.left && start < width - PADDING.right) {
+                        
                         return (
                             <div key={this.props.dataKeyToPlot + driverSymbol}>
                                 <div style={{
                                     position: "absolute",
-                                    left: start-20,
+                                    left: start-w/2,
+                                    width: w,
                                     bottom: height,
                                     border: "1px solid rgba(0,0,0,0)",
-                                    zIndex: 2,
+                                    zIndex: idx,
                                     pointerEvents: "none",
                                     display: (shouldRenderLabel) ? "" : "none",
                                 }}>
@@ -676,11 +686,13 @@ export class LinearPlot extends React.PureComponent<Props> {
                             <div> {driverSymbol} </div>
                         </React.Fragment>
 
+        const w = (driverSymbol.length > 4) ? DRIVER_LABEL_WIDTH + 5*(driverSymbol.length-4) : DRIVER_LABEL_WIDTH;
+
         return (
             <div>
                 <div style={{
                     position: "absolute",
-                    left: start-20,
+                    left: start-w/2,
                     bottom: height,
                     border: "1px solid rgba(0,0,0,0)",
                     zIndex: 0
