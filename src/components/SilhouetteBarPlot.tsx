@@ -135,9 +135,6 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
         var x = d3.scaleLinear()
         .domain([-1, 1])
         .range([15, width-10]);
-        const self = this;
-        const container = d3.select(".Directions2").node();
-    //  console.log(container);
 
         svg.append("text")
             .classed("scale", true)
@@ -147,11 +144,6 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
             .attr("y", height + 40)
             .text("Approximate Average Silhoutte Coefficient")
             .on("mouseover", () => {
-                // console.log(d3.event);
-                // if(container !== null) {
-                //     console.log(container);
-                //     d3.mouse(container);
-                // }
                 this.setState({showTooltip: true});
                 this.setState({tooltipX: d3.event.offsetX, tooltipY: d3.event.offsetY});
             })

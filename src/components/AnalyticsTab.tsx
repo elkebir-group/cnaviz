@@ -70,7 +70,7 @@ export class AnalyticsTab extends React.Component<Props, State> {
             </div>
             <div className="Bar-Select">
                 <div className="ClusterDistances-Select">
-                    <div className="Overall-Average"> Average Cluster Silhoutte Score: <b>{this.props.avgClusterSilhoutte}</b> </div>
+                    <div className="Overall-Average"> Average Cluster Silhoutte Score: <b>{this.props.avgClusterSilhoutte || 0}</b> </div>
                     <label className="cluster-select"> Cluster:
                         <select
                             name="Select Cluster" 
