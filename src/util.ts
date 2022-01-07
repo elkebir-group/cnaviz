@@ -283,6 +283,10 @@ function getMatrix(size : number) {
   return matrix;
 }
 
+export function calculateOverallSilhoutte(clusterSilhouttes: {cluster: Number, avg: Number}[]) {
+  return _.meanBy(clusterSilhouttes, "avg");
+}
+
 export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[], clusterDistanceMatrix : Map<number, Map<number, number>>) {
   let possible_clusters = [...clusteredData.keys()];
     let clusterToSilhoutte = new Map<number, number[] | undefined>();

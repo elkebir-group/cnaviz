@@ -3,7 +3,7 @@ import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
-import {calculateEuclideanDist, calculateSilhoutteScores} from "../util"
+import {calculateEuclideanDist, calculateSilhoutteScores, calculateOverallSilhoutte} from "../util"
 import { brush } from "d3";
 import { resolve } from "dns";
 
@@ -136,7 +136,8 @@ export class DataWarehouse {
     private chrToClusters: {[chr: string] : Set<string>}
     private centroidDistances: SampleIndexedData<heatMapElem[]>;
     private shouldCalculateSilhouttes: boolean;
-    private currentSilhouttes: {cluster: number,  avg: number}[]
+    private currentSilhouttes: {cluster: number,  avg: number}[];
+    private overallSilhoutte: number;
     private clusterDistanceMatrix : Map<number, Map<number, number>>;
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -169,6 +170,7 @@ export class DataWarehouse {
         this.shouldCalculateSilhouttes = true;
         this.currentSilhouttes = [];
         this.clusterDistanceMatrix = new Map<number, Map<number, number>>();
+        this.overallSilhoutte = 0;
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -253,6 +255,10 @@ export class DataWarehouse {
         return this.clusterDistanceMatrix;
     }
 
+    getAvgSilhoutte() {
+        return this.overallSilhoutte;
+    }
+
     async recalculateSilhouttes(applyLog: boolean) {
         if(this.shouldCalculateSilhouttes) {
             let contents = null;
@@ -264,7 +270,7 @@ export class DataWarehouse {
             }
             
             const s = calculateSilhoutteScores(contents.multiDimData, contents.clusterToData, contents.labels, this.clusterDistanceMatrix);
-
+            this.overallSilhoutte = Number(calculateOverallSilhoutte(s).toFixed(3));
             this.currentSilhouttes = s;
             this.shouldCalculateSilhouttes = false;
         }

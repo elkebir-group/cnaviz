@@ -10,13 +10,21 @@
     width: 100%; */
 }
 
+.Overall-Average {
+    margin-left: 5%;
+}
+
+.cluster-select {
+    margin-left: 30%;
+}
+
 .ClusterDistances-Select {
     /* margin-bottom: 10px; */
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 50%;
-
+    flex-direction: row;
+    /* justify-content: space-evenly; */
+    /* align-items: center; */
+    /* margin-left: 50%; */
 }
 
 .ClusterDistances-Select2 {

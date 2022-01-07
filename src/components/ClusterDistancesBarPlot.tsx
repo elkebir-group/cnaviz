@@ -63,7 +63,6 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
                     style={{padding: marginRatio.top + ' ' + marginRatio.right + ' ' + marginRatio.bottom + ' ' + marginRatio.left + ' '}}
                     preserveAspectRatio="xMinYMin meet"
                     viewBox={'0 0 ' + (width + margin.left + margin.right) + ' ' + (height + margin.top + margin.bottom)}
-                    
                 ></svg>
             </div>
         )
@@ -105,7 +104,7 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
         svg.append("text")
             .classed("scales", true)
             .attr("text-anchor", "middle")
-            .attr("font-size", 14)
+            .attr("font-size", 20)
             .attr("x", _.mean([0, width]))
             .attr("y", height + 40)
             .text("Approximate Average Euclidean Distance");

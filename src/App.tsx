@@ -837,6 +837,7 @@ export class App extends React.Component<{}, State> {
                 {this.state.showSilhouttes === ProcessingStatus.done && 
                         <AnalyticsTab
                             silhoutteData={this.state.silhouttes}
+                            avgClusterSilhoutte={this.state.indexedData.getAvgSilhoutte()}
                             clusterDistances={this.state.indexedData.getClusterDistanceMatrix()}
                             clusterTableData={clusterTableData}
                             colors={CLUSTER_COLORS}

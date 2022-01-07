@@ -14,6 +14,7 @@ export type clusterAvg = {
 
 interface Props {
     data: clusterAvg[];
+    avgClusterSilhoutte: number;
     width: number;
     height: number;
     colors: string[];
@@ -141,7 +142,7 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
         svg.append("text")
             .classed("scale", true)
             .attr("text-anchor", "middle")
-            .attr("font-size", 14)
+            .attr("font-size", 20)
             .attr("x", _.mean([15, width-10]))
             .attr("y", height + 40)
             .text("Approximate Average Silhoutte Coefficient")

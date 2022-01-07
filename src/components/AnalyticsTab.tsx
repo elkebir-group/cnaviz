@@ -10,6 +10,7 @@ const DELETED_ID = "-2";
 
 interface Props {
     silhoutteData: clusterAvg[],
+    avgClusterSilhoutte: number,
     clusterDistances: Map<number, Map<number, number>>,
     clusterTableData: any,
     colors: string[],
@@ -69,7 +70,8 @@ export class AnalyticsTab extends React.Component<Props, State> {
             </div>
             <div className="Bar-Select">
                 <div className="ClusterDistances-Select">
-                    <label> Cluster:
+                    <div className="Overall-Average"> Average Cluster Silhoutte Score: <b>{this.props.avgClusterSilhoutte}</b> </div>
+                    <label className="cluster-select"> Cluster:
                         <select
                             name="Select Cluster" 
                             title="Cluster"
@@ -79,11 +81,13 @@ export class AnalyticsTab extends React.Component<Props, State> {
                         </select>
                     </label>
                 </div>
+
                 <div className="BarPlots">
                     <SilhouetteBarPlot
                         width={700}
                         height={700}
                         data={silhoutteData}
+                        avgClusterSilhoutte={this.props.avgClusterSilhoutte}
                         colors={colors}
                     ></SilhouetteBarPlot> 
                     <ClusterDistancesBarPlot
