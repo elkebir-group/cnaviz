@@ -89,9 +89,8 @@ export class CSV extends React.Component<Props, State> {
         if(sec.length < 2) {
             sec = "0" + sec;
         }
+
         let time = hrs + min + sec;
-        hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
-        hiddenElement.click();
         
         let actions = [];
         for(let action of this.props.logData) {
@@ -103,6 +102,12 @@ export class CSV extends React.Component<Props, State> {
         hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);
         hiddenElement2.download = removeDateTime[0] + "-log_" + date + "_" + time;  
         hiddenElement2.click();
+
+        
+        hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
+        hiddenElement.click();
+        
+       
 
         this.setState({loading: false})
     }
