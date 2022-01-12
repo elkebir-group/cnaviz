@@ -50,6 +50,7 @@ interface Props {
     onClearClustering: () => void;
     handleDemoFileInput: (applyClustering: boolean) => void;
     handleDemoDrivers: () => void;
+    setProcessingStatus: (status: ProcessingStatus) => void;
 }
 
 function Sidebar(props: Props) {
@@ -180,7 +181,11 @@ function Sidebar(props: Props) {
 
           <div className= "row-contents" >
             <label className="custom-file-upload">
-              <input type="button" id="custom-button" onClick={props.onToggleSilhouttes}/>
+              <input type="button" id="custom-button" onClick={() => { 
+                // props.setProcessingStatus(ProcessingStatus.processing);
+                props.onToggleSilhouttes();
+                // props.setProcessingStatus(ProcessingStatus.done);
+              }}/>
               Analytics (s)
             </label>
             <label className="custom-file-upload">

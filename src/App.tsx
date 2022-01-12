@@ -32,6 +32,22 @@ function getFileContentsAsString(file: File) {
     });
 }
 
+function testWork() {
+    return new Promise<string>((resolve, reject) => {
+        let count = 0;
+        let test : any[] = [];
+        for(let i=0; i < 1000000000; i++) {
+            count++;
+            count = count % 3;
+            count--;
+            count++;
+            test.push(count);
+            test = [];
+        }
+        console.log(test);
+        resolve("Finished");
+    });
+}
 // Colors picked using the following tool: http://jnnnnn.github.io/category-colors-constrained.html
 const CLUSTER_COLORS = [
     "#d3fe14", "#c9080a", "#fec7f8", "#0b7b3e", "#3957ff", "#0bf0e9", "#c203c8", "#fd9b39", 
@@ -89,7 +105,7 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];
-
+            
             for (const bin of parsed) {
                 if(!applyClustering || bin.CLUSTER === undefined) {
                     bin.CLUSTER = -1;
@@ -333,6 +349,7 @@ export class App extends React.Component<{}, State> {
         this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
         this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
         this.onClearClustering = this.onClearClustering.bind(this);
+        this.setProcessingStatus = this.setProcessingStatus.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -350,6 +367,11 @@ export class App extends React.Component<{}, State> {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
                 self.onToggleSilhoutteBarPlot();
+            } else if(d3.event.key === 'd') {
+                // self.setProcessingStatus(ProcessingStatus.done);
+                self.onToggleSilhoutteBarPlot();
+            } else if(d3.event.key === 'p') {
+                // self.setProcessingStatus(ProcessingStatus.processing);
             }
         })
 
@@ -422,7 +444,7 @@ export class App extends React.Component<{}, State> {
             .then(r => r.text())
             .then(text => {
                 this.setState({processingStatus: ProcessingStatus.processing});
-                // let indexedData = null;
+                let indexedData = null;
                 parseGenomicBins(text, this.state.applyLog, applyClustering)
                 .then(parsed => {
                     let indexedData = new DataWarehouse(parsed);
@@ -437,6 +459,10 @@ export class App extends React.Component<{}, State> {
                     return;
                 }) 
             });
+    }
+
+    setProcessingStatus(status: ProcessingStatus) {
+        this.setState({processingStatus: status});
     }
 
     async handleDriverFileChosen(event: React.ChangeEvent<HTMLInputElement>) {
@@ -639,9 +665,11 @@ export class App extends React.Component<{}, State> {
     }
 
     async onToggleSilhoutteBarPlot() {
+        this.setState({processingStatus: ProcessingStatus.processing});
         if(this.state.showSilhouttes === ProcessingStatus.none) {
             this.setState({showSilhouttes: ProcessingStatus.processing});
-            this.state.indexedData.recalculateSilhouttes(this.state.applyLog).then((data: {cluster: number, avg: number}[] | undefined) => {
+            this.state.indexedData.recalculateSilhouttes(this.state.applyLog)
+            .then((data: {cluster: number, avg: number}[] | undefined) => {
                 if(data !== undefined) {
                     this.setState({silhouttes: data});
                     this.setState({showSilhouttes: ProcessingStatus.done});
@@ -650,6 +678,8 @@ export class App extends React.Component<{}, State> {
         } else {
             this.setState({showSilhouttes: ProcessingStatus.none});
         }
+    
+        this.setState({processingStatus: ProcessingStatus.done});
     }
 
     render() {
@@ -764,6 +794,7 @@ export class App extends React.Component<{}, State> {
                     onClearClustering={this.onClearClustering}
                     handleDemoFileInput={this.handleDemoFileInput}
                     handleDemoDrivers={this.handleDemoDrivers}
+                    setProcessingStatus={this.setProcessingStatus}
                 />
             </div>
             

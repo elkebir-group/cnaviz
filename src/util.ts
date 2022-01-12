@@ -293,6 +293,8 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
     if(possible_clusters.length === 1) {
       return [];
     }
+
+    let overall = 0;
     // let clusterDistanceMatrix : Map<number, Map<number, number>> = new Map<number, Map<number, number>>();
     const downSamplePercent = (rawData.length > 0) ? .01 : 1;
     for(let i = 0; i < rawData.length; i++) {
@@ -345,7 +347,7 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
           let maxAB = _.max([minB, a]);
           if(maxAB) {
             const s = (minB - a) / maxAB;
-
+            overall += s;
             if(clusterToSilhoutte.has(c)) {
               const previousSilhouttes = clusterToSilhoutte.get(c);
               if(previousSilhouttes) {
@@ -370,6 +372,8 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
         avg_cluster_silhouttes.push(avg);
       }
     }
+    const overall_sil = overall / rawData.length;
+    console.log(overall_sil);
     const sorted = _.sortBy(avg_cluster_silhouttes, "cluster");
     return sorted;
 }
