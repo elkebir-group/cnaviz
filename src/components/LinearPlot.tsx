@@ -696,7 +696,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     bottom: height+1,
                     backgroundColor: "white",
                     border: "1px solid rgba(0,0,0,0)",
-                    zIndex: 0
+                    zIndex: 2
                 }}>
                     {contents}
                 </div>
