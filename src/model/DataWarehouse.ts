@@ -3,14 +3,14 @@ import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
-import {calculateEuclideanDist, calculateSilhoutteScores, calculateOverallSilhoutte} from "../util"
+import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette} from "../util"
 import { brush } from "d3";
 import { resolve } from "dns";
 
 // function silhouttePromise(multiDimData : number[][], clusterToData : Map<Number, Number[][]>, labels : number[]) : Promise<{cluster: number, avg:number}[]>{
 //     return new Promise((resolve : any, reject : any)=> {
 //         let clusterDistanceMatrix : Map<number, Map<number, number>> = new Map<number, Map<number, number>>();
-//         resolve(calculateSilhoutteScores(multiDimData, clusterToData, labels, clusterDistanceMatrix));
+//         resolve(calculatesilhouettescores(multiDimData, clusterToData, labels, clusterDistanceMatrix));
 //     })
 // }
 
@@ -135,9 +135,9 @@ export class DataWarehouse {
     private centroidPts: SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
     private chrToClusters: {[chr: string] : Set<string>}
     private centroidDistances: SampleIndexedData<heatMapElem[]>;
-    private shouldCalculateSilhouttes: boolean;
-    private currentSilhouttes: {cluster: number,  avg: number}[];
-    private overallSilhoutte: number;
+    private shouldCalculatesilhouettes: boolean;
+    private currentsilhouettes: {cluster: number,  avg: number}[];
+    private overallSilhouette: number;
     private clusterDistanceMatrix : Map<number, Map<number, number>>;
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -167,10 +167,10 @@ export class DataWarehouse {
         this.centroids = []; // used for displaying centroids in centroid table
         this.chrToClusters = {};
         this.centroidDistances = {};
-        this.shouldCalculateSilhouttes = true;
-        this.currentSilhouttes = [];
+        this.shouldCalculatesilhouettes = true;
+        this.currentsilhouettes = [];
         this.clusterDistanceMatrix = new Map<number, Map<number, number>>();
-        this.overallSilhoutte = 0;
+        this.overallSilhouette = 0;
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -247,20 +247,20 @@ export class DataWarehouse {
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
     }
 
-    setShouldRecalculateSilhouttes(shouldRecalculate: boolean) {
-        this.shouldCalculateSilhouttes = shouldRecalculate;
+    setShouldRecalculatesilhouettes(shouldRecalculate: boolean) {
+        this.shouldCalculatesilhouettes = shouldRecalculate;
     }
 
     getClusterDistanceMatrix() {
         return this.clusterDistanceMatrix;
     }
 
-    getAvgSilhoutte() {
-        return this.overallSilhoutte;
+    getAvgSilhouette() {
+        return this.overallSilhouette;
     }
 
-    async recalculateSilhouttes(applyLog: boolean) {
-        if(this.shouldCalculateSilhouttes) {
+    async recalculatesilhouettes(applyLog: boolean) {
+        if(this.shouldCalculatesilhouettes) {
             let contents = null;
             try {
                 contents = await reformatBins(this._samples, applyLog, this.allRecords);
@@ -269,12 +269,12 @@ export class DataWarehouse {
                 return;
             }
             
-            const s = calculateSilhoutteScores(contents.multiDimData, contents.clusterToData, contents.labels, this.clusterDistanceMatrix);
-            this.overallSilhoutte = Number(calculateOverallSilhoutte(s).toFixed(3));
-            this.currentSilhouttes = s;
-            this.shouldCalculateSilhouttes = false;
+            const s = calculatesilhouettescores(contents.multiDimData, contents.clusterToData, contents.labels, this.clusterDistanceMatrix);
+            this.overallSilhouette = Number(calculateoverallSilhouette(s).toFixed(3));
+            this.currentsilhouettes = s;
+            this.shouldCalculatesilhouettes = false;
         }
-        return this.currentSilhouttes;
+        return this.currentsilhouettes;
     }
 
     initializeCentroidDistMatrix() {
@@ -549,7 +549,7 @@ export class DataWarehouse {
             this._cluster_filters.push(String(cluster));
         }
         this.setClusterFilters(this._cluster_filters);
-        this.shouldCalculateSilhouttes = true;
+        this.shouldCalculatesilhouettes = true;
     }
 
     clearClustering() {
@@ -596,7 +596,7 @@ export class DataWarehouse {
         
         
         this.setClusterFilters(this._cluster_filters);
-        this.setShouldRecalculateSilhouttes(true);
+        this.setShouldRecalculatesilhouettes(true);
     }
 
     brushedTableData() {

@@ -42,8 +42,8 @@ interface Props {
     showLinear: boolean;
     syncScales: boolean;
     onToggleSync: () => void;
-    onToggleSilhouttes: () => void;
-    showSilhouttes: ProcessingStatus;
+    onTogglesilhouettes: () => void;
+    showSilhouettes: ProcessingStatus;
     onToggleDirections: () => void;
     onToggleShowCentroidTable: () => void;
     onTogglePreviousActionLog: () => void;
@@ -183,7 +183,7 @@ function Sidebar(props: Props) {
             <label className="custom-file-upload">
               <input type="button" id="custom-button" onClick={() => { 
                 // props.setProcessingStatus(ProcessingStatus.processing);
-                props.onToggleSilhouttes();
+                props.onTogglesilhouettes();
                 // props.setProcessingStatus(ProcessingStatus.done);
               }}/>
               Analytics (s)

@@ -283,11 +283,11 @@ function getMatrix(size : number) {
   return matrix;
 }
 
-export function calculateOverallSilhoutte(clusterSilhouttes: {cluster: Number, avg: Number}[]) {
-  return _.meanBy(clusterSilhouttes, "avg");
+export function calculateoverallSilhouette(clustersilhouettes: {cluster: Number, avg: Number}[]) {
+  return _.meanBy(clustersilhouettes, "avg");
 }
 
-export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[], clusterDistanceMatrix : Map<number, Map<number, number>>) {
+export function calculatesilhouettescores(rawData: number[][], clusteredData: Map<Number, Number[][]>,  labels: number[], clusterDistanceMatrix : Map<number, Map<number, number>>) {
   let possible_clusters = [...clusteredData.keys()];
     let clusterToSilhoutte = new Map<number, number[] | undefined>();
     if(possible_clusters.length === 1) {
@@ -308,10 +308,10 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
         if(binsInCluster) {
           if(binsInCluster.length === 1) {
             if(clusterToSilhoutte.has(c)) {
-              const previousSilhouttes = clusterToSilhoutte.get(c);
-              if(previousSilhouttes) {
-                previousSilhouttes.push(0);
-                clusterToSilhoutte.set(c, previousSilhouttes);
+              const previoussilhouettes = clusterToSilhoutte.get(c);
+              if(previoussilhouettes) {
+                previoussilhouettes.push(0);
+                clusterToSilhoutte.set(c, previoussilhouettes);
               }
             } else {
               clusterToSilhoutte.set(c, [0]);
@@ -349,10 +349,10 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
             const s = (minB - a) / maxAB;
             overall += s;
             if(clusterToSilhoutte.has(c)) {
-              const previousSilhouttes = clusterToSilhoutte.get(c);
-              if(previousSilhouttes) {
-                previousSilhouttes.push(s);
-                clusterToSilhoutte.set(c, previousSilhouttes);
+              const previoussilhouettes = clusterToSilhoutte.get(c);
+              if(previoussilhouettes) {
+                previoussilhouettes.push(s);
+                clusterToSilhoutte.set(c, previoussilhouettes);
               }
             } else {
               clusterToSilhoutte.set(c, [s]);
@@ -364,17 +364,17 @@ export function calculateSilhoutteScores(rawData: number[][], clusteredData: Map
         clusterDistanceMatrix.set(c, cMap);
     }
 
-    const avg_cluster_silhouttes = [];
+    const avg_cluster_silhouettes = [];
     for(const c of possible_clusters) {
       const val = clusterToSilhoutte.get(Number(c));
       if(val !== undefined) {
         const avg = {cluster: Number(c), avg : _.mean(val)};
-        avg_cluster_silhouttes.push(avg);
+        avg_cluster_silhouettes.push(avg);
       }
     }
     const overall_sil = overall / rawData.length;
     console.log(overall_sil);
-    const sorted = _.sortBy(avg_cluster_silhouttes, "cluster");
+    const sorted = _.sortBy(avg_cluster_silhouettes, "cluster");
     return sorted;
 }
 

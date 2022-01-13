@@ -9,8 +9,8 @@ const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
 
 interface Props {
-    silhoutteData: clusterAvg[],
-    avgClusterSilhoutte: number,
+    silhouetteData: clusterAvg[],
+    avgClusterSilhouette: number,
     clusterDistances: Map<number, Map<number, number>>,
     clusterTableData: any,
     colors: string[],
@@ -57,7 +57,7 @@ export class AnalyticsTab extends React.Component<Props, State> {
     }
     
     render() {
-        const {silhoutteData, clusterDistances, colors} = this.props;
+        const {silhouetteData, clusterDistances, colors} = this.props;
         
         let clusterOptions = this._clusters.map((clusterName) =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
@@ -70,7 +70,7 @@ export class AnalyticsTab extends React.Component<Props, State> {
             </div>
             <div className="Bar-Select">
                 <div className="ClusterDistances-Select">
-                    <div className="Overall-Average"> Average Cluster Silhoutte Score: <b>{this.props.avgClusterSilhoutte || 0}</b> </div>
+                    <div className="Overall-Average"> Average Cluster Silhouette Score: <b>{this.props.avgClusterSilhouette || 0}</b> </div>
                     <label className="cluster-select"> Cluster:
                         <select
                             name="Select Cluster" 
@@ -86,8 +86,8 @@ export class AnalyticsTab extends React.Component<Props, State> {
                     <SilhouetteBarPlot
                         width={700}
                         height={700}
-                        data={silhoutteData}
-                        avgClusterSilhoutte={this.props.avgClusterSilhoutte}
+                        data={silhouetteData}
+                        avgClusterSilhouette={this.props.avgClusterSilhouette}
                         colors={colors}
                     ></SilhouetteBarPlot> 
                     <ClusterDistancesBarPlot

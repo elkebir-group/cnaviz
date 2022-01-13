@@ -14,7 +14,7 @@ export type clusterAvg = {
 
 interface Props {
     data: clusterAvg[];
-    avgClusterSilhoutte: number;
+    avgClusterSilhouette: number;
     width: number;
     height: number;
     colors: string[];
@@ -88,7 +88,7 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
     }
     
     renderTooltip() {
-        return this.renderTooltipContent(<React.Fragment><div>Note: The Silhoutte coefficient ranges from -1 to 1 where the larger the number the more tightly grouped the cluster </div></React.Fragment>)
+        return this.renderTooltipContent(<React.Fragment><div>Note: The Silhouette coefficient ranges from -1 to 1 where the larger the number the more tightly grouped the cluster </div></React.Fragment>)
     }
 
     render() {
@@ -142,7 +142,7 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
             .attr("font-size", 20)
             .attr("x", _.mean([15, width-10]))
             .attr("y", height + 40)
-            .text("Approximate Average Silhoutte Coefficient")
+            .text("Approximate Average Silhouette Coefficient")
             .on("mouseover", () => {
                 this.setState({showTooltip: true});
                 this.setState({tooltipX: d3.event.offsetX, tooltipY: d3.event.offsetY});

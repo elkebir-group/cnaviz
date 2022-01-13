@@ -16,7 +16,7 @@ import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import { SilhouetteBarPlot } from "./components/SilhouetteBarPlot";
 import {FiX} from "react-icons/fi";
-import {calculateSilhoutteScores} from "./util"
+import {calculatesilhouettescores} from "./util"
 import {ClusterDistancesBarPlot} from "./components/ClusterDistancesBarPlot";
 import {AnalyticsTab} from "./components/AnalyticsTab";
 
@@ -255,9 +255,9 @@ interface State {
 
     driverGenes: Gene[] | null;
 
-    showSilhouttes: ProcessingStatus;
+    showSilhouettes: ProcessingStatus;
 
-    silhouttes: {
+    silhouettes: {
         cluster: number;
         avg: number;
     }[];
@@ -313,8 +313,8 @@ export class App extends React.Component<{}, State> {
             syncScales: false,
             scales: {xScale: null, yScale: null},
             driverGenes: null,
-            showSilhouttes: ProcessingStatus.none,
-            silhouttes: []
+            showSilhouettes: ProcessingStatus.none,
+            silhouettes: []
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -591,7 +591,7 @@ export class App extends React.Component<{}, State> {
         this.setState({
             applyLog: !this.state.applyLog
         });
-        this.state.indexedData.setShouldRecalculateSilhouttes(true);
+        this.state.indexedData.setShouldRecalculatesilhouettes(true);
         
     }
 
@@ -666,17 +666,17 @@ export class App extends React.Component<{}, State> {
 
     async onToggleSilhoutteBarPlot() {
         this.setState({processingStatus: ProcessingStatus.processing});
-        if(this.state.showSilhouttes === ProcessingStatus.none) {
-            this.setState({showSilhouttes: ProcessingStatus.processing});
-            this.state.indexedData.recalculateSilhouttes(this.state.applyLog)
+        if(this.state.showSilhouettes === ProcessingStatus.none) {
+            this.setState({showSilhouettes: ProcessingStatus.processing});
+            this.state.indexedData.recalculatesilhouettes(this.state.applyLog)
             .then((data: {cluster: number, avg: number}[] | undefined) => {
                 if(data !== undefined) {
-                    this.setState({silhouttes: data});
-                    this.setState({showSilhouttes: ProcessingStatus.done});
+                    this.setState({silhouettes: data});
+                    this.setState({showSilhouettes: ProcessingStatus.done});
                 }
             });
         } else {
-            this.setState({showSilhouttes: ProcessingStatus.none});
+            this.setState({showSilhouettes: ProcessingStatus.none});
         }
     
         this.setState({processingStatus: ProcessingStatus.done});
@@ -786,8 +786,8 @@ export class App extends React.Component<{}, State> {
                     onToggleShowCentroids= {this.onToggleShowCentroids}
                     showCentroids= {this.state.showCentroids}
                     onDriverFileChosen={this.handleDriverFileChosen}
-                    onToggleSilhouttes={this.onToggleSilhoutteBarPlot}
-                    showSilhouttes={this.state.showSilhouttes}
+                    onTogglesilhouettes={this.onToggleSilhoutteBarPlot}
+                    showSilhouettes={this.state.showSilhouettes}
                     onToggleDirections = {this.onToggleDirections}
                     onToggleShowCentroidTable={this.onToggleShowCentroidTable}
                     onTogglePreviousActionLog={this.onTogglePreviousActionLog}
@@ -864,11 +864,11 @@ export class App extends React.Component<{}, State> {
 
                     </div> }
                 
-                {this.state.showSilhouttes === ProcessingStatus.done && <div className="black_overlay"></div> }
-                {this.state.showSilhouttes === ProcessingStatus.done && 
+                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay"></div> }
+                {this.state.showSilhouettes === ProcessingStatus.done && 
                         <AnalyticsTab
-                            silhoutteData={this.state.silhouttes}
-                            avgClusterSilhoutte={this.state.indexedData.getAvgSilhoutte()}
+                            silhouetteData={this.state.silhouettes}
+                            avgClusterSilhouette={this.state.indexedData.getAvgSilhouette()}
                             clusterDistances={this.state.indexedData.getClusterDistanceMatrix()}
                             clusterTableData={clusterTableData}
                             colors={CLUSTER_COLORS}

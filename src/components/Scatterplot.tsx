@@ -302,6 +302,12 @@ export class Scatterplot extends React.Component<Props, State> {
                 if(this.props.scales.yScale) {
                     this._currYScale.domain(this.props.scales.yScale);
                 }
+                let data : GenomicBin[] = this.props.data;
+                this.quadTree = d3
+                    .quadtree<GenomicBin>()
+                    .x((d : GenomicBin) => d.reverseBAF)
+                    .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
+                    .addAll(data)
                 this.redraw();
         } else if((this.props.scales.yScale &&  prevProps.scales.yScale 
             && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
@@ -311,6 +317,12 @@ export class Scatterplot extends React.Component<Props, State> {
                 this._currXScale.domain(this.props.scales.xScale);
             }
             this._currYScale.domain(this.props.scales.yScale);
+            let data : GenomicBin[] = this.props.data;
+            this.quadTree = d3
+                .quadtree<GenomicBin>()
+                .x((d : GenomicBin) => d.reverseBAF)
+                .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
+                .addAll(data)
             this.redraw();
         } else if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
