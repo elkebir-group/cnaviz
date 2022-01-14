@@ -37,3 +37,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 3)  Click Assign Cluster
 4)  Assigning points to cluster -2 will prevent those points from being exported when you download to csv
 5)  Points under cluster -1 are considered unclustered
+
+### Screencasts and Data Analysis
+Screencasts, data and analysis files are available on the [cnaviz-paper repo](https://github.com/elkebir-group/cnaviz-paper).
+
