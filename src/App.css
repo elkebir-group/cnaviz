@@ -38,6 +38,7 @@ body {
     padding-top: 25px;
 }
 
+
 .sampleviz-wrapper-col {
     display: flex;
     justify-content: center;
@@ -83,6 +84,42 @@ body {
     background-color: rgb(255, 255, 255);
     z-index:1002;
     overflow: auto;
+}
+
+.Directions2 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    /* margin-left: (1000/2);
+    margin-top: (700/2); */
+    width: 60%;
+    height: 70%;
+    min-height: 600px;
+    padding: 16px;
+    border: 16px solid rgb(81, 47, 173);
+    background-color: rgb(255, 255, 255);
+    z-index:1002;
+}
+
+.Exit-Popup {
+    height: 25px;
+    position: absolute;
+    top: 0%;
+    left: 98%;
+    align-items: right;
+    color: red;
+    fill: red;
+    cursor: pointer;
+}
+
+.pop-up-window-header {
+    display: flex;
+    justify-content: center;
 }
 
 .black_overlay{

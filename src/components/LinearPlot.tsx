@@ -4,18 +4,19 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { Genome, Chromosome } from "../model/Genome";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import { DisplayMode } from "../App";
 import "./LinearPlot.css";
+import { Gene } from "../model/Gene";
 
-const visutils = require('vis-utils');
 const SCALES_CLASS_NAME = "linearplot-scale";
 const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
+const DRIVER_LABEL_WIDTH = 40;
+
 const PADDING = { // For the SVG
     left: 50,
     right: 10,
@@ -36,6 +37,7 @@ interface Props {
     data: GenomicBin[];
     chr: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF">;
+    applyLog: boolean;
     width: number;
     height: number;
     hoveredLocation?: ChromosomeInterval;
@@ -54,6 +56,9 @@ interface Props {
     displayMode: DisplayMode;
     onLinearPlotZoom: (genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) => void;
     onZoom: (newScales: any) => void;
+    driverGenes: Gene[] | null;
+    handleDriverGenesChange: (sentGene: {gene: Gene | null, destination: string | null}) => void;
+    driverGeneUpdate: {gene: Gene | null, destination: string | null};
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -71,6 +76,8 @@ export class LinearPlot extends React.PureComponent<Props> {
     private _currYScale: d3.ScaleLinear<number, number>;
     private _original_XScale: d3.ScaleLinear<number, number>;
     private _original_YScale: d3.ScaleLinear<number, number>;
+    private previewDriver: Gene | null;
+    private lockedDrivers: Set<Gene>;
 
     constructor(props: Props) {
         super(props);
@@ -87,7 +94,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             .range([this.props.height - PADDING.bottom, PADDING.top]);
         this._original_XScale = this._currXScale;
         this._original_YScale = this._currYScale;
-    }
+        this.previewDriver = null;
+        this.lockedDrivers = new Set();
+    } 
 
     initializeListOfClusters() : string[] {
         let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
@@ -110,15 +119,25 @@ export class LinearPlot extends React.PureComponent<Props> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        
+        if(this.props.driverGeneUpdate.gene !== null) {
+            if(this.props.driverGeneUpdate.destination === this.props.dataKeyToPlot) {
+                if(this.lockedDrivers.has(this.props.driverGeneUpdate.gene)) {
+                    this.lockedDrivers.delete(this.props.driverGeneUpdate.gene);
+                } else {
+                    this.lockedDrivers.add(this.props.driverGeneUpdate.gene);
+                }
+                this.props.handleDriverGenesChange({gene: null, destination: null});
+            }
+        }
+
         if(this.propsDidChange(prevProps, ["chr"])) {
-            if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+            if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                 this.props.onLinearPlotZoom(null, null, true);
             } else {
                 this.props.onLinearPlotZoom(null, null, false);
             }
 
-        } else if (this.propsDidChange(prevProps, ["displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
+        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
@@ -168,14 +187,14 @@ export class LinearPlot extends React.PureComponent<Props> {
 
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
-            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode} = this.props;
+            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode, driverGenes} = this.props;
 
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
         const yScale =
             d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
-        let xAxis;
+
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
         let chrStarts = genome.getChrStartMap();
@@ -185,32 +204,13 @@ export class LinearPlot extends React.PureComponent<Props> {
                 chrs.push(chr);
             }
         }
-        let nonImplicitXScale = d3.scaleLinear() // Single chr scale
-            .domain([0, genome.getLength(chr)])
-            .range(xScale.range())
-        if (this.props.implicitStart && this.props.implicitEnd) {
-            const selectedNonImplicitStart = genome.getChromosomeLocation(this.props.implicitStart);
-            const selectedNonImplicitEnd = genome.getChromosomeLocation(this.props.implicitEnd);
-            nonImplicitXScale = d3.scaleLinear()
-            .domain([selectedNonImplicitStart.start, selectedNonImplicitEnd.end])
-            .range(xScale.range())
-        }
-        if (!chr) {
-            xAxis = d3.axisBottom(xScale)
-                .tickValues(genome.getChromosomeStarts2(chrs, xScale.domain()[0], xScale.domain()[1]))
-                .tickFormat((unused, i) => findChrNumber(chrs[i].name));
-        } else {
-            xAxis = d3.axisBottom(xScale);
-        }
-        
-        const yAxis = d3.axisLeft(yScale)
-            .ticks((yScale.range()[0] - yScale.range()[1]) / 15); // Every ~10 pixels
 
         const svg = d3.select(this._svg);
-        
 
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
+        
+        // X axis text
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
@@ -219,12 +219,14 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr("y", height - PADDING.bottom + 30)
             .text(chr || genome.getName());
 
-        // Y axis stuff
+        // Y axis Text
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `rotate(-90, ${PADDING.left- 30}, ${_.mean(yScale.range())})`)
+            .attr("transform", `rotate(-90, ${PADDING.left}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
-            .attr("y", _.mean(yScale.range()));
+            .attr("x", (height - PADDING.bottom - PADDING.top) / 2 - 1)
+            .attr("y", PADDING.left/2+5)
+            .attr("text-anchor", "middle");
 
         let xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
@@ -284,7 +286,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                 } else {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
@@ -318,19 +320,48 @@ export class LinearPlot extends React.PureComponent<Props> {
         let fillColor = fc.webglFillColor().value(colorFill).data(this.props.data);
         let pointSeries = fc
                 .seriesWebglPoint()
-                // .xScale(xScale)
-                // .yScale(yScale)
                 .size(3)
                 .crossValue((d : any) => genome.getImplicitCoordinates(GenomicBinHelpers.toChromosomeInterval(d)).getCenter())
                 .mainValue((d : any) => d[dataKeyToPlot])
                 .context(gl);
         pointSeries.decorate((program:any) => fillColor(program));
 
+        svg
+            .append("clipPath")
+            .attr("id", "clip2")
+            .append("rect")
+                .attr("x", PADDING.left)
+                .attr("y", PADDING.top)
+                .attr("width", width)
+                .attr("height", height)
+                .attr("fill", "red");
+
+        // Create event-rect that allows for svg points to be overlayed under mouse pointer
+        svg
+            .append("g")
+            .classed("eventrect", true)
+            .append("rect")
+                .attr("x", PADDING.left)
+                .attr("y", PADDING.top)
+                .attr("width", width - PADDING.right - PADDING.left)
+                .attr("height", height - PADDING.bottom - PADDING.top)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .attr("clip-path", "url(#clip2)");
+
+        var mouseover = function(d : Gene) {
+            self.previewDriver = d;
+        }
+
+        var mouseleave = function(d : Gene) {
+            self.previewDriver = null;
+        }
+
+
         function redraw() {
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.clearColor(255,255,255,1);
             const yr = ty().rescaleY(yScale);
-        
             gy.call(yAx, yr);
             self._currYScale = yr;
             if(!chr) {
@@ -346,26 +377,45 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
             
             pointSeries(data);
+            if(driverGenes) {
+                
+                svg.select(".Drivers").remove();
+                svg.select(".eventrect")
+                        .append("g")
+                        .attr("clip-path", "url(#clip2)")
+                        .classed("Drivers", true)
+                        .selectAll("circle")
+                        .data(driverGenes)
+                            .enter()
+                            .append("circle")
+                            .attr("class", "point")
+                            .attr("d", d3.symbol().type(d3.symbolCircle))
+                            .attr("fill", "red")
+                            .attr("fill-opacity", 1)
+                            .attr("stroke-width", 2)
+                            .attr("r", 2)
+                            .attr("transform", function(d) {
+                                return "translate(" + self._currXScale(genome.getImplicitCoordinates(d.location).getCenter()) + "," + ((self._currYScale(yr.domain()[0]) || 0) + 3) + ")"; 
+                            })
+                            .on("mouseover", mouseover)
+                            .on("mouseleave", mouseleave )
+                            .on("click", d => {
+                                let dest = "";
+                                if(dataKeyToPlot === "reverseBAF" && self.props.applyLog) {
+                                    dest = "logRD"
+                                } else if(dataKeyToPlot === "reverseBAF") {
+                                    dest = "RD"
+                                } else {
+                                    dest = "reverseBAF"
+                                }
+
+                                (self.lockedDrivers.has(d)) ? self.lockedDrivers.delete(d) : self.lockedDrivers.add(d);
+                                self.props.handleDriverGenesChange({gene: d, destination: dest});
+                            })
+            }
         }
 
         redraw();
-        // const yr = ty().rescaleY(yScale);
-        
-        // gy.call(yAx, yr);
-        // self._currYScale = yr;
-        // if(!chr) {
-        //     const xr = tx().rescaleX(xScale);
-        //     gx.call(xAx , xr);
-        //     self._currXScale = xr;
-        //     pointSeries.xScale(xr).yScale(yr);
-        // } else {
-        //     const xr = tx().rescaleX(xScale);
-        //     gx.call(xAx2 , xr);
-        //     self._currXScale = xr;
-        //     pointSeries.xScale(xr).yScale(yr);
-        // }
-        
-        // pointSeries(data);
 
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
@@ -389,27 +439,32 @@ export class LinearPlot extends React.PureComponent<Props> {
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
                     const {selection} = d3.event;
-                    // if(selection) {
                     if(selection && selection[0][0] !== selection[1][0] && selection[0][1] !== selection[1][1]) {
-                        let brushed : GenomicBin[] = visutils.filterInRect(data, selection, 
-                            function(d: GenomicBin){
-                                const location = GenomicBinHelpers.toChromosomeInterval(d);
-                                const range = genome.getImplicitCoordinates(location);
-                                return xScale(range.getCenter());
-                            }, 
-                            function(d: GenomicBin){
-                                return yScale(d[dataKeyToPlot]);
-                            });
+                        function rectContains(rect : any, point : any) {
+                            const X = 0;
+                            const Y = 1;
+                            const TOP_LEFT = 0;
+                            const BOTTOM_RIGHT = 1;
+                            return rect[TOP_LEFT][X] <= point[X] && point[X] <= rect[BOTTOM_RIGHT][X] &&
+                                   rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
+                        }
+                        
+                        let brushed : GenomicBin[] = data.filter(d => {
+                            const location = GenomicBinHelpers.toChromosomeInterval(d);
+                            const range = genome.getImplicitCoordinates(location);
+                            return rectContains(selection, [xScale(range.getCenter()), yScale(d[dataKeyToPlot])])
+                        });
 
                         if (brushed) {
-                            if(displayMode == DisplayMode.select) {
-                                brushed = _.uniq(_.union(brushed, brushedBins));  
-                            } else if(displayMode == DisplayMode.erase) {
+                            if(displayMode === DisplayMode.select) {
+                                brushed = _.uniqBy(_.union(brushed, brushedBins), element => element["#CHR"] + "_" + element.START);  
+                            } else if(displayMode === DisplayMode.erase) {
                                 brushed = _.difference(brushedBins, brushed);
                             }
         
                             this.brushedNodes = new Set(brushed);                  
                         }
+                        
                     } else {
                         this.brushedNodes = new Set([]);
                     }
@@ -437,13 +492,12 @@ export class LinearPlot extends React.PureComponent<Props> {
                         const implicitStart = xScale.invert(startEnd.start);
                         const implicitEnd = xScale.invert(startEnd.end);
                     
-                        if(this.props["dataKeyToPlot"] == "RD" || this.props["dataKeyToPlot"] == "logRD") {
+                        if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                         } else {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
                         }
                     } catch (error) {}
-                    // this.redraw();
                 })
 
             svg.append('g')
@@ -459,18 +513,22 @@ export class LinearPlot extends React.PureComponent<Props> {
             return null;
         }
 
+        if(this.previewDriver != null) {
+            return null;
+        }
+
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
-        return <div style={{
+        return <div className="highlight" style={{
             position: "absolute",
             left: start,
             width: boxWidth,
             height: "100%",
-            backgroundColor: "rgba(255,255,0,0.2)",
-            border: "1px solid rgba(255,255,0,0.7)",
-            zIndex: -1
+            backgroundColor: "rgba(0,0,0,1)",
+            border: "1px solid rgba(0,0,0,1)",
+            zIndex: 1,
         }} />
     }
 
@@ -495,11 +553,15 @@ export class LinearPlot extends React.PureComponent<Props> {
         const {width, height, dataKeyToPlot} = this.props;
         return <div
                 className="LinearPlot"
-                style={{position: "relative"}}
+                style={{position: "relative", width: width, height: height}}
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.handleMouseLeave}
-            >   
+            >
+
+            {this.renderLockedDrivers()}
+            {this.renderTooltip()}
             {this.renderHighlight()}
+            
             <canvas
                 ref={node => this._canvas = node}
                 width={width}
@@ -512,14 +574,141 @@ export class LinearPlot extends React.PureComponent<Props> {
                         width: width-PADDING.left - PADDING.right, 
                         height: height-PADDING.top-PADDING.bottom}} />
             
-            <svg ref={node => this._svg = node} width={width} height={height} />
+            <svg ref={node => this._svg = node} preserveAspectRatio={'xMinYMin meet'} viewBox={'0 0 ' + (width) + ' ' + (height)}/>
             <div className="LinearPlot-tools">
                 {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
-                && <button onClick={() => {
+                && <button className="custom-button linear-plot-button" onClick={() => {
                     this.props.onLinearPlotZoom(null, null, true, true);
                 }}
                 >Reset View</button>}
             </div>
         </div>;
+    }
+
+    renderLockedDrivers() {
+        const {width, genome, chr, height} = this.props;
+        let shouldAddBack = false;
+        if(this.previewDriver != null && this.lockedDrivers.has(this.previewDriver)) {
+            this.lockedDrivers.delete(this.previewDriver);
+            shouldAddBack = true;
+        }
+
+        const drivers = [...this.lockedDrivers].sort((a:Gene, b: Gene) => a.location.start - b.location.start);
+        if(this.previewDriver != null && shouldAddBack) {
+            this.lockedDrivers.add(this.previewDriver);
+        }
+
+        const label_divs : number[][] = [];
+        
+        return (
+            drivers.map(
+                (driver, idx) => {
+                    const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+                    const implicitCoords = genome.getImplicitCoordinates(driver.location);
+                    const start = xScale(implicitCoords.start) || 0;
+                    const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
+                    const driverSymbol = driver.symbol;
+                    const contents = <React.Fragment>
+                                        <div> {driverSymbol} </div>
+                                    </React.Fragment>;
+
+                    let shouldRenderLabel = true;
+                    const w = (driverSymbol.length > 4) ? DRIVER_LABEL_WIDTH + 5*(driverSymbol.length-4) : DRIVER_LABEL_WIDTH;
+                    const currentCoord = [start-w/2, start + w/2];
+                    for(const coord of label_divs) {
+                        if(coord[0] > currentCoord[0] && coord[0] < currentCoord[1]) {
+                            shouldRenderLabel = false;
+                            break;
+                        } else if(currentCoord[0] > coord[0] && currentCoord[0] < coord[1]) {
+                            shouldRenderLabel = false;
+                            break;
+                        }
+                    }
+                    if(shouldRenderLabel) {
+                        label_divs.push(currentCoord);
+                    }
+                    if(start > PADDING.left && start < width - PADDING.right) {
+                        
+                        return (
+                            <div key={this.props.dataKeyToPlot + driverSymbol}>
+                                <div style={{
+                                    position: "absolute",
+                                    left: start-w/2,
+                                    width: w,
+                                    bottom: height,
+                                    border: "1px solid rgba(0,0,0,0)",
+                                    zIndex: idx,
+                                    pointerEvents: "none",
+                                    display: (shouldRenderLabel) ? "" : "none",
+                                }}>
+                                    {contents}
+                                </div>
+                                <div className="highlight" style={{
+                                    position: "absolute",
+                                    left: start,
+                                    width: boxWidth,
+                                    height: "75%",
+                                    backgroundColor: "rgba(255,165,0,1)",
+                                    border: "1px solid rgba(255,165,0,1)",
+                                    zIndex: idx,
+                                }} />   
+                        </div>
+                        )
+                    } else {
+                        return null;
+                    }
+                }
+            ))
+    }
+
+    renderTooltip() {
+        const {driverGenes, hoveredLocation, width, genome, chr, height} = this.props;
+
+        if (!hoveredLocation) {
+            return null;
+        }
+
+        if(!driverGenes) {
+            return null;
+        }
+
+        if(!this.previewDriver) {
+            return null;
+        }
+
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+        const implicitCoords = genome.getImplicitCoordinates(this.previewDriver.location);
+        const start = xScale(implicitCoords.start) || 0;
+        const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
+        const driverSymbol = this.previewDriver.symbol;
+
+        const contents = <React.Fragment>
+                            <div> {driverSymbol} </div>
+                        </React.Fragment>
+
+        const w = (driverSymbol.length > 4) ? DRIVER_LABEL_WIDTH + 5*(driverSymbol.length-4) : DRIVER_LABEL_WIDTH;
+
+        return (
+            <div>
+                <div style={{
+                    position: "absolute",
+                    left: start-w/2,
+                    bottom: height+1,
+                    backgroundColor: "white",
+                    border: "1px solid rgba(0,0,0,0)",
+                    zIndex: 2
+                }}>
+                    {contents}
+                </div>
+                <div className="highlight" style={{
+                    position: "absolute",
+                    left: start,
+                    width: boxWidth + 1,
+                    height: "75%",
+                    backgroundColor: (this.lockedDrivers.has(this.previewDriver)) ?"red" : "rgba(0, 200 , 0, 1)",
+                    zIndex: 0
+                }} />   
+            </div>
+        )
     }
 }

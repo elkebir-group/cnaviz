@@ -4,7 +4,7 @@ import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";
-import { MergedGenomicBin } from "../model/BinMerger";
+import { Gene } from "../model/Gene";
 
 interface Props {
     data: GenomicBin[];
@@ -25,16 +25,19 @@ interface Props {
     implicitStart: number | null;
     implicitEnd: number | null;
     onZoom: (newScales: any) => void;
+    driverGenes: Gene[] | null;
+    handleDriverGenesChange: (sentGene: {gene: Gene | null, destination: string | null}) => void;
+    driverGeneUpdate: {gene: Gene | null, destination: string | null};
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
         brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
-        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom} = props;
-
+        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes} = props;
     return <LinearPlot
                 data={data}
                 dataKeyToPlot={applyLog ? "logRD" : "RD"}
+                applyLog={applyLog}
                 genome={genome}
                 chr={chr}
                 hoveredLocation={hoveredLocation}
@@ -53,18 +56,22 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
                 onLinearPlotZoom={onLinearPlotZoom}
                 implicitStart={implicitStart}
                 implicitEnd={implicitEnd}
+                driverGenes={driverGenes}
+                driverGeneUpdate={props.driverGeneUpdate}
+                handleDriverGenesChange={props.handleDriverGenesChange}
         />
 }
 
 export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
-            implicitStart, implicitEnd, onZoom} = props;
-    // console.log("XSCALE: ", xScale);
+            implicitStart, implicitEnd, onZoom, driverGenes, applyLog} = props;
+
     return <LinearPlot
                 data={data}
                 chr={chr}
                 dataKeyToPlot="reverseBAF"
+                applyLog={applyLog}
                 genome={genome}
                 hoveredLocation={hoveredLocation}
                 onLocationHovered={onLocationHovered}
@@ -82,5 +89,8 @@ export function BAFLinearPlot(props: Props) {
                 implicitStart={implicitStart}
                 implicitEnd={implicitEnd}
                 onZoom={onZoom}
+                driverGenes={driverGenes}
+                driverGeneUpdate={props.driverGeneUpdate}
+                handleDriverGenesChange={props.handleDriverGenesChange}
         />;
 }

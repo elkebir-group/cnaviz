@@ -2,24 +2,13 @@ import React from "react";
 import * as d3 from "d3";
 // @ts-ignore: Unreachable code error
 import * as fc from "d3fc";
-import _, { assign } from "lodash";
+import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { CopyNumberCurveDrawer } from "./CopyNumberCurveDrawer";
-import { MergedBinHelpers, MergedGenomicBin } from "../model/BinMerger";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
-import { CurveState, CurvePickStatus } from "../model/CurveState";
-import { CopyNumberCurve } from "../model/CopyNumberCurve";
-import { getCopyStateFromRdBaf, copyStateToString } from "../model/CopyNumberState";
-//import { niceBpCount, getRelativeCoordinates } from "../util";
 import {GenomicBin, GenomicBinHelpers} from "../model/GenomicBin";
-import {webglColor, getRelativeCoordinates, applyRetinaFix, niceBpCount } from "../util";
+import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import "./Scatterplot.css";
-import {DisplayMode, ProcessingStatus} from "../App"
-import {ClusterTable} from "./ClusterTable";
-import { start } from "repl";
-import { cluster, ContainerElement } from "d3";
-
-const visutils = require('vis-utils');
+import {DisplayMode} from "../App"
 
 const PADDING = { // For the SVG
     left: 60,
@@ -32,12 +21,9 @@ const UNCLUSTERED_COLOR = "#999999";
 const DELETED_COLOR = "rgba(232, 232, 232, 1)";
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
-//const HIGHLIGHT_COLOR = "red";
-
 const SCALES_CLASS_NAME = "scatterplot-scale";
 const CIRCLE_GROUP_CLASS_NAME = "circles";
 const CIRCLE_R = 1;
-const SELECTED_CIRCLE_R_INCREASE = 2;
 const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
@@ -49,9 +35,7 @@ interface Props {
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
-    curveState: CurveState;
     invertAxis: boolean;
-    onNewCurveState: (state: Partial<CurveState>) => void;
     onRecordsHovered: (record: GenomicBin | null) => void;
     onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
     customColor: string;
@@ -68,6 +52,7 @@ interface Props {
     scales: any;
     centroidPts: {cluster: number, point: [number, number]}[];
     showCentroids: boolean;
+    
 }
 
 interface State {
@@ -89,7 +74,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private previous_brushed_nodes: Set<string>;
     private quadTree: d3.Quadtree<GenomicBin>;
     private _canvas: HTMLCanvasElement | null;
-    private _canvas2: HTMLCanvasElement | null;
+    // private _canvas2: HTMLCanvasElement | null;
     private _currXScale: d3.ScaleLinear<number, number>;
     private _currYScale: d3.ScaleLinear<number, number>;
     private _original_XScale: d3.ScaleLinear<number, number>;
@@ -106,12 +91,11 @@ export class Scatterplot extends React.Component<Props, State> {
         this._svg = null;
         this._canvas = null;
         this.scatter = null;
-        this._canvas2 = null;
+        // this._canvas2 = null;
         this._circleIdPrefix = nextCircleIdPrefix;
         nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
         this.handleMouseMove = this.handleMouseMove.bind(this);
-        this.handleCurveHovered = this.handleCurveHovered.bind(this);
         this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
@@ -155,8 +139,8 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         while(this._clusters.length > 0 
-            && (this._clusters[0] == UNCLUSTERED_ID 
-            || this._clusters[0] == DELETED_ID)) {
+            && (this._clusters[0] === UNCLUSTERED_ID 
+            || this._clusters[0] === DELETED_ID)) {
             this._clusters.shift();
         }
 
@@ -181,17 +165,11 @@ export class Scatterplot extends React.Component<Props, State> {
         }
     }
 
-    handleCurveHovered(p: number) {
-        this.props.onNewCurveState({hoveredP: p});
-    }
-
     renderTooltipAtRdBaf(rd: number, baf: number, contents: JSX.Element | null) {
         if (!contents) {
             return null;
         }
 
-        const {rdRange, width, height, invertAxis} = this.props;
-        //const {bafScale, rdrScale} = this.computeScales(rdRange, width, height);
         const top =  (this._currYScale(rd) || 0);
         const left = ((this._currXScale(baf) || 0) + TOOLTIP_OFFSET);
         const tooltipHeight = 150;
@@ -245,7 +223,6 @@ export class Scatterplot extends React.Component<Props, State> {
                     <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
-                    {/* <div> Genome Position: {record.genomicPosition}</div> */}
                     
                 </React.Fragment>);
             } 
@@ -265,8 +242,7 @@ export class Scatterplot extends React.Component<Props, State> {
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
         
-        let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" >
-                            
+        let scatterUI = <div ref={node => this.scatter= node} className="Scatterplot" style={{width: width, height: height}}>
                             <canvas
                                 ref={node => this._canvas = node}
                                 width={width}
@@ -279,27 +255,16 @@ export class Scatterplot extends React.Component<Props, State> {
                                         width: width-PADDING.left - PADDING.right, 
                                         height: height-PADDING.top-PADDING.bottom}}
                             />
-                            <canvas
-                                ref={node => this._canvas2 = node}
-                                width={width}
-                                height={height}
-                                className={"canvas"}
-                                style={{position: "absolute", 
-                                        top: PADDING.top, 
-                                        zIndex: -1, 
-                                        left: PADDING.left, 
-                                        width: width-PADDING.left - PADDING.right, 
-                                        height: height-PADDING.top-PADDING.bottom}}
-                            />
+
                             <svg
                                 ref={node => this._svg = node}
-                                width={width} height={height}
                                 style={{zIndex: 100}}
-                                // preserveAspectRatio={'xMinYMin'}
+                                preserveAspectRatio={'xMinYMin meet'}
+                                viewBox={'0 0 ' + (width) + ' ' + (height)}
                                 onMouseMove={this.handleMouseMove}
                             ></svg>
                             <div className="Scatterplot-tools">
-                                <button id="reset" onClick={this.resetZoom}>Reset View</button>
+                                <button className="custom-button" onClick={this.resetZoom}>Reset View</button>
                             </div>
 
                             {this.renderTooltip()}
@@ -333,21 +298,31 @@ export class Scatterplot extends React.Component<Props, State> {
             && this.props.scales.xScale[0] !== prevProps.scales.xScale[0] 
             && this.props.scales.xScale[1] !== prevProps.scales.xScale[1]) 
             || (this.props.scales.xScale  && !prevProps.scales.xScale)) {
-                console.log("X SCALE UPDATED");
                 this._currXScale.domain(this.props.scales.xScale);
                 if(this.props.scales.yScale) {
                     this._currYScale.domain(this.props.scales.yScale);
                 }
+                let data : GenomicBin[] = this.props.data;
+                this.quadTree = d3
+                    .quadtree<GenomicBin>()
+                    .x((d : GenomicBin) => d.reverseBAF)
+                    .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
+                    .addAll(data)
                 this.redraw();
         } else if((this.props.scales.yScale &&  prevProps.scales.yScale 
             && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
             && this.props.scales.yScale[1] !== prevProps.scales.yScale[1])
             || (this.props.scales.yScale  && !prevProps.scales.yScale)) {
-            console.log("Y SCALE UPDATED");
             if(this.props.scales.xScale) {
                 this._currXScale.domain(this.props.scales.xScale);
             }
             this._currYScale.domain(this.props.scales.yScale);
+            let data : GenomicBin[] = this.props.data;
+            this.quadTree = d3
+                .quadtree<GenomicBin>()
+                .x((d : GenomicBin) => d.reverseBAF)
+                .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
+                .addAll(data)
             this.redraw();
         } else if(this.props["assignCluster"]) {
             this.onTrigger(this.state.selectedCluster);
@@ -450,7 +425,7 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     redraw() {
-        if (!this._svg || !this._canvas || !this.scatter || !this._canvas2) {
+        if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
         let self = this;
@@ -552,9 +527,9 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         const gl = this._canvas.getContext("webgl")!;
-        const gl2 = this._canvas2.getContext("webgl")!;
+        // const gl2 = this._canvas2.getContext("webgl")!;
         gl.clearColor(0,0,0,1);
-        gl2.clearColor(0, 0, 0, 1);
+        // gl2.clearColor(0, 0, 0, 1);
 
         let languageFill = (d:any) => {
             return webglColor(chooseColor(d));
@@ -601,7 +576,7 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("height", height - PADDING.bottom - PADDING.top);
 
         // Create event-rect that allows for svg points to be overlayed under mouse pointer
-        var event_rect = svg
+        svg
             .append("g")
             .classed("eventrect", true)
             .append("rect")
@@ -671,7 +646,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
                     .on("end", () => {
                         this.updatePoints(d3.event)
-                        svg.selectAll("." + "brush").remove();
+                        svg.selectAll(".brush").remove();
                         this.onBrushedBinsUpdated([...this.brushedNodes]);
                     });
             
@@ -682,7 +657,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 .call(brush);
 
         } else if(displayMode === DisplayMode.zoom) {
-            svg.selectAll("." + "brush").remove();
+            svg.selectAll(".brush").remove();
         } else if(displayMode === DisplayMode.boxzoom) {
             const brush = d3.brush()
             .keyModifiers(false)
@@ -690,7 +665,7 @@ export class Scatterplot extends React.Component<Props, State> {
                     [this.props.width - PADDING.right + 2*CIRCLE_R , this.props.height - PADDING.bottom + 2*CIRCLE_R]])
                     .on("start brush", () => this.updatePoints(d3.event))
                     .on("end", () => {
-                        svg.selectAll("." + "brush").remove();
+                        svg.selectAll(".brush").remove();
                         brush_endEvent();
                 });
                
@@ -707,10 +682,7 @@ export class Scatterplot extends React.Component<Props, State> {
             const {data} = self.props;
             if (data) {
                 const { selection } = d3.event;
-                if(selection) {
-                    let rect = [[self._currXScale.invert(selection[0][0]), self._currYScale.invert(selection[1][1])], // bottom left (x y)
-                                [self._currXScale.invert(selection[1][0]), self._currYScale.invert(selection[0][1])]]; // top right (x y)
-                                
+                if(selection) { 
                     let newRdRange : [number, number] = [Number(self._currYScale.invert(selection[1][1])), 
                                                         Number(self._currYScale.invert(selection[0][1]))];
                     let newBafRange : [number, number] = [Number(self._currXScale.invert(selection[0][0])), 
@@ -730,9 +702,9 @@ export class Scatterplot extends React.Component<Props, State> {
         function chooseColor(d: GenomicBin) {
             if(previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                 return customColor;
-            } else if (d.CLUSTER == -1){
+            } else if (d.CLUSTER === -1){
                 return UNCLUSTERED_COLOR;
-            } else if(d.CLUSTER == -2){
+            } else if(d.CLUSTER === -2){
                 return DELETED_COLOR;
             } else {
                 const cluster = d.CLUSTER;
@@ -742,9 +714,9 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         function chooseColor2(c: number) {
-            if (c == -1){
+            if (c === -1){
                 return UNCLUSTERED_COLOR;
-            } else if(c == -2){
+            } else if(c === -2){
                 return DELETED_COLOR;
             } else {
                 const cluster = c;
@@ -759,14 +731,9 @@ export class Scatterplot extends React.Component<Props, State> {
         if(!this._svg) {return;}
         const {brushedBins, data, yAxisToPlot, displayMode} = this.props;
         if (data) {
-            //try {
             const { selection } = d3.event
-            if(selection) {
-                let rect = [[this._currXScale.invert(selection[0][0]), 
-                            this._currYScale.invert(selection[1][1])], 
-                            [this._currXScale.invert(selection[1][0]) , 
-                            this._currYScale.invert(selection[0][1])]];
-               
+            if(selection) {   
+
                 function rectContains(rect : any, point : any) {
                     const X = 0;
                     const Y = 1;
@@ -775,12 +742,13 @@ export class Scatterplot extends React.Component<Props, State> {
                     return rect[TOP_LEFT][X] <= point[X] && point[X] <= rect[BOTTOM_RIGHT][X] &&
                            rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
                 }
+
                 let brushNodes = data.filter(d => rectContains(selection, [this._currXScale(d.reverseBAF), this._currYScale(d[yAxisToPlot])]));
                 
                 if (brushNodes) {
-                    if(displayMode == DisplayMode.select) {
-                        brushNodes = _.uniq(_.union(brushNodes, brushedBins));  
-                    } else if(displayMode == DisplayMode.erase) {
+                    if(displayMode === DisplayMode.select) {
+                        brushNodes = _.uniqBy(_.union(brushNodes, brushedBins), element => element["#CHR"] + "_" + element.START);
+                    } else if(displayMode === DisplayMode.erase) {
                         brushNodes = _.difference(brushedBins, brushNodes);
                     }
 
@@ -796,6 +764,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if (!this._svg || !hoveredLocation || !this._canvas) {
             return [];
         }
+        
         const {data, yAxisToPlot} = this.props;
 
         let hoveredRecords : GenomicBin[] = [];
@@ -834,9 +803,9 @@ export class Scatterplot extends React.Component<Props, State> {
                     .attr("fill", d => {
                         if(this.previous_brushed_nodes.has(GenomicBinHelpers.toChromosomeInterval(d).toString())) {
                             return this.props.customColor;
-                        } else if (d.CLUSTER == -1){
+                        } else if (d.CLUSTER === -1){
                             return UNCLUSTERED_COLOR;
-                        } else if(d.CLUSTER == -2){
+                        } else if(d.CLUSTER === -2){
                             return DELETED_COLOR;
                         } else {
                             const cluster = d.CLUSTER;

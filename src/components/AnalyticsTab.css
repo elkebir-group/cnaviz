@@ -1,0 +1,32 @@
+.BarPlots {
+    display: flex;
+    flex-direction: row;
+    /* flex-wrap: wrap; */
+}
+
+.Bar-Select {
+    /* display: flex;
+    flex-direction: column;
+    width: 100%; */
+}
+
+.Overall-Average {
+    margin-left: 5%;
+}
+
+.cluster-select {
+    margin-left: 30%;
+}
+
+.ClusterDistances-Select {
+    /* margin-bottom: 10px; */
+    display: flex;
+    flex-direction: row;
+    /* justify-content: space-evenly; */
+    /* align-items: center; */
+    /* margin-left: 50%; */
+}
+
+.ClusterDistances-Select2 {
+    display: none;
+}

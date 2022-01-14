@@ -1,22 +1,13 @@
 import React from "react";
-import _, { assign } from "lodash";
-
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { DataWarehouse } from "../model/DataWarehouse";
-import { MergedGenomicBin } from "../model/BinMerger";
-import { CurveState } from "../model/CurveState";
-
 import { SampleViz2D } from "./SampleViz2D";
 import { SampleViz1D } from "./SampleViz1D";
-import {HeatMap} from "./HeatMap";
-
-import { Scatterplot } from "./Scatterplot";
-import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
-import {DisplayMode, ProcessingStatus} from "../App"
+import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
-import { isExpressionWithTypeArguments } from "typescript";
+import { Gene } from "../model/Gene";
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -30,8 +21,6 @@ interface Props {
     initialSelectedCluster?: string;
     width?: number;
     height?: number;
-    curveState: CurveState;
-    onNewCurveState: (newState: Partial<CurveState>) => void;
     hoveredLocation?: ChromosomeInterval;
     onLocationHovered: (location: ChromosomeInterval | null, record?: GenomicBin | null) => void;
     invertAxis?: boolean;
@@ -57,6 +46,7 @@ interface Props {
     handleZoom: (newScales: any) => void;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
     showCentroids: boolean;
+    driverGenes: Gene[] | null;
 }
 
 interface State {
@@ -93,17 +83,20 @@ export class SampleViz extends React.Component<Props, State> {
         }
 
         while(this._clusters.length > 0 
-            && (this._clusters[0] == UNCLUSTERED_ID 
-            || this._clusters[0] == DELETED_ID)) {
+            && (Number(this._clusters[0]) === Number(UNCLUSTERED_ID)
+            || Number(this._clusters[0]) === Number(DELETED_ID))) {
             this._clusters.shift();
         }
-
+        
         return this._clusters;
     }
 
     componentDidUpdate(prevProps: Props) {
         if(this.props.clusterTableData !== prevProps.clusterTableData) {
             this.initializeListOfClusters();
+        } else if(this.props.applyLog !== prevProps.applyLog) {
+            let newScale = {xScale: this.state.scales.xScale, yScale: null};
+            this.setState({scales: newScale});
         }
     }
 
@@ -134,7 +127,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     
     render() {
-        const {data, initialSelectedSample, plotId, applyLog, 
+        const {data, initialSelectedSample, applyLog, 
             showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales} = this.props;
         const {implicitRange} = this.state;
         
@@ -157,7 +150,7 @@ export class SampleViz extends React.Component<Props, State> {
         
         rdRange[1] += 0.5;
         
-        let clusterOptions = this._clusters.map(clusterName =>
+        let clusterOptions = this._clusters.map((clusterName) =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
         
@@ -172,8 +165,8 @@ export class SampleViz extends React.Component<Props, State> {
                 <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
-                <button onClick={this.props.onAddSample} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
-                <button onClick={this.props.onRemovePlot} disabled={sampleAmount <= 1}> Remove Sample </button>
+                <button className="custom-button" onClick={this.props.onAddSample} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
+                <button className="custom-button" onClick={this.props.onRemovePlot} disabled={sampleAmount <= 1}> Remove Sample </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
@@ -189,15 +182,14 @@ export class SampleViz extends React.Component<Props, State> {
                     onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {this.setState({selectedCluster: event.target.value})}} >
                     {clusterOptions}
                     </select>
-                        
-
-                    <button onClick={() => {
+                   
+                   <button className="custom-button" onClick={() => {
                         this.props.parentCallBack(this.state.selectedCluster);
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions}>Assign Cluster</button>
 
-                    <button onClick={()=>{
+                    <button className="custom-button" onClick={()=>{
                         this.initializeListOfClusters();
                         let clusters = this._clusters;
                         clusters.sort((a: string, b:string) => (Number(a) - Number(b)))
@@ -210,12 +202,12 @@ export class SampleViz extends React.Component<Props, State> {
                                 break;
                             }
                         }
-
+                        
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions} >New Cluster</button>
-                    <button onClick={this.props.onUndoClick}> Undo</button>
+                    <button className="custom-button" onClick={this.props.onUndoClick}> Undo</button>
                 </div>}
             </div>
 
@@ -238,8 +230,8 @@ export class SampleViz extends React.Component<Props, State> {
                     data={selectedRecords}
                     onLinearPlotZoom={this.handleLinearPlotZoom}
                     onZoom={this.handleZoom}
-                    yScale={(syncScales) ? this.props.scales.yScale : this.state.scales.yScale} 
-                    xScale={(syncScales) ? this.props.scales.xScale : this.state.scales.xScale} 
+                    yScale={this.state.scales.yScale} 
+                    xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}
@@ -248,13 +240,7 @@ export class SampleViz extends React.Component<Props, State> {
                     implicitRange={this.state.implicitRange}/>}
             </div>
             
-            <HeatMap
-                width={450 - 30 - 30}
-                height={450 - 30 - 30}
-                data={data.getCentroidDistMatrix(this.state.selectedSample)}
-            ></HeatMap>
 
-            {/* <div className="SampleViz-clusters"> */}
             {(showLinearPlot || showScatterPlot) &&
             <div className={(showLinearPlot && showScatterPlot) ? "SampleViz-clusters" : ""}>
                 <ClusterTable 
@@ -265,6 +251,7 @@ export class SampleViz extends React.Component<Props, State> {
                     colOneName={"Cluster ID"}
                     colTwoName={"Cluster (%)"}
                     colThreeName={"Selection (%)"}
+                    colFourName={"Bin (%)"}
                     cols={""}
                     expandable={false}
                     selectable={false}

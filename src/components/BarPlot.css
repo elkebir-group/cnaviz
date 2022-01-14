@@ -1,0 +1,21 @@
+#chart-container {
+    height: auto;
+    width: 50%;
+}
+
+#chart-container2 {
+    height: auto;
+    width: 50%;
+    margin: 5px;
+}
+
+.axis text {
+    font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}

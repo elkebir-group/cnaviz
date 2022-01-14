@@ -1,10 +1,8 @@
-// import {CSVLink} from "react-csv"
-import { head } from "lodash";
 import React from "react"
-import { GenomicBin} from "../model/GenomicBin";
+import {GenomicBin} from "../model/GenomicBin";
 import {toCSV} from "../util";
 import spinner from "../loading-small.gif";
-const fs = require('fs')
+
 interface Props {
     data : readonly GenomicBin[];
     logData: any[];
@@ -19,7 +17,7 @@ function convertToTsv(data: readonly GenomicBin[]): Promise<string> {
     return new Promise((resolve, reject) => {
         let keys = Object.keys(data[0]);
             
-        const headings = keys.slice(0, keys.length-3);//.join('\t');
+        const headings = keys.slice(0, keys.length-3);
 
         // iterate over the data
         const rows : string = toCSV(data, headings, "\t", " ");
@@ -39,13 +37,8 @@ export class CSV extends React.Component<Props, State> {
         this.handleFileDownload = this.handleFileDownload.bind(this);
     }
 
-    // shouldComponentUpdate(nextProps: Props) {
-    //     return this.props["data"] !== nextProps["data"];
-    // }
     async handleFileDownload() {
-        this.setState({loading: true})
-        //let promise = new Promise((resolve, reject) => {
-            //setTimeout(() => resolve("I am a done promise!"), 3000)
+        this.setState({loading: true});
 
         let csvContent = "";
         try {
@@ -61,14 +54,11 @@ export class CSV extends React.Component<Props, State> {
         // provide the name for the CSV file to be downloaded
         // Assume that underscore is not in actual filename (only used to separate datetime)
         const fileName = this.props.fileName;
-        
-        
         let nameExt = fileName.split("."); 
-        // console.log("nameExt: " + nameExt);
         let newFileName = "";
         for(let i = 0; i < nameExt.length-1; i++) {
             newFileName += nameExt[i];
-            if(i != nameExt.length-2) {
+            if(i !== nameExt.length - 2) {
                 newFileName += ".";
             }
         }
@@ -99,9 +89,8 @@ export class CSV extends React.Component<Props, State> {
         if(sec.length < 2) {
             sec = "0" + sec;
         }
+
         let time = hrs + min + sec;
-        hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
-        hiddenElement.click();
         
         let actions = [];
         for(let action of this.props.logData) {
@@ -110,40 +99,23 @@ export class CSV extends React.Component<Props, State> {
         let logFileContent = "";
         logFileContent = actions.join("\n");
         var hiddenElement2 = document.createElement('a');  
-        hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);  
-        const fileName2 = this.props.fileName;
-        hiddenElement2.download = removeDateTime[0] + "-" + "log" + "_" + date + "_" + time;  
+        hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);
+        hiddenElement2.download = removeDateTime[0] + "-log_" + date + "_" + time;  
         hiddenElement2.click();
+
+        
+        hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
+        hiddenElement.click();
+        
+       
 
         this.setState({loading: false})
     }
 
     render() {
-        // console.log(this.state.loading);
-        const separator = "\t"
-        const enclosing_char = "";
-        function download(filename : string, textInput  : string) {
-            var element = document.createElement('a');
-            element.setAttribute('href','data:text/plain;charset=utf-8, ' + encodeURIComponent(textInput));
-            element.setAttribute('download', filename);
-            document.body.appendChild(element);
-            element.click();
-            //document.body.removeChild(element);
-        }
-
-        let self = this;
-        const toggleLoader = () => {
-            if (!this.state.loading) {
-                //console.log("Test");
-              this.setState({ loading: true });
-            } else {
-              this.setState({ loading: false });
-            }
-          };
-
         let csvButton = <div>
                 
-            <button type="button" onClick={this.handleFileDownload}>Export</button>
+            <button type="button" onClick={this.handleFileDownload} style={{display: "none"}}>Export</button>
             {this.state.loading && <div>Reading file... <img src={spinner} alt="Loading" /></div>}
         </div>
         return csvButton;

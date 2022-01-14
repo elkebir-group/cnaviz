@@ -18,9 +18,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "preserve"
+    "jsx": "react",
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src"
+    "src",
+    "webpack.config.js"
   ]
 }
