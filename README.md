@@ -1,4 +1,6 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Click [here](https://elkebir-group.github.io/cnaviz/) to try out CNAViz!
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). 
 
 ## Quickstart
 1) Run `yarn install` which will download all the required packages. A node_modules folder and yarn.lock file should be in the directory
