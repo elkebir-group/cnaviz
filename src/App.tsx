@@ -804,15 +804,16 @@ export class App extends React.Component<{}, State> {
                         <div className="Exit-Popup" onClick={this.onToggleDirections}> 
                             <FiX/>
                         </div>
-                        <h5> Selection/Erasing </h5>
-                        <li> Hold down "Command/Control" in Zoom mode to temporarily enter Select mode </li>
-                        <li> Hold down "Alt" in Zoom mode to temporarily enter Erase mode </li>
-                        <li> To completely clear your selection, click anywhere in the plot while in Select/Erase mode </li>
-                        <li> To stay in Select mode without holding a button, you can click b or switch the toggle button in the sidebar </li>
-                        <li> To stay in Erase mode without holding a button, you can click e </li>
-                        <h5> Zoom Mode </h5>
-                        <li> The default mode is zoom mode</li>
-                        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom (in the scatterplot) </li>
+                        <h5> Selection </h5>
+                        <li> Hold down "Command/Control" in Zoom mode to temporarily enter add-to-selection mode </li>
+                        <li> Hold down "Alt" in Zoom mode to temporarily enter remove-from-selection mode </li>
+                        <li> To completely clear your selection, click anywhere in the plot while in add-to-selection or remove-from-selection modes </li>
+                        <li> To stay in add-to-select mode without holding a button, you can click b or click the mouse pointer button next to the sidebar</li>
+                        <li> To stay in remove-from-select mode without holding a button, you can click e or click the eraser icon next to the sidebar </li>
+                        <h5> Zoom/Pan Mode </h5>
+                        <li> To enter zoom/pan mode, click the magnifying glass icon next to the sidebar </li>
+                        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom </li>
+                        <li> To pan, just click and drag on the scatter plot or axes </li>
                         <h5> Other Key Modifiers </h5>
                         <li> Click "l" to toggle a log of previous actions </li>
                         <li> Click space to toggle the sidebar </li>
