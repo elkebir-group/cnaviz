@@ -26,13 +26,15 @@ Clicking the `Add/Remove Sample` buttons above the scatter plot will add/remove 
 
 ## Zooming / Panning
 ### Zooming
-When in zoom/pan mode, the magnifying icon to the right of the sidebar will be highlighted red. To zoom in/out, hover over a plot and use the mouse wheel or trackpad.
+To enter zoom/pan mode, click on the magnifying glass to the right of the sidebar. When in zoom/pan mode, the magnifying glass icon should be highlighted red. To zoom in/out, hover over a plot and use the mouse wheel or trackpad.
 ### Bounding Box Zoom
 A bounding box zoom can be used by holding down `Shift` and then clicking and dragging on a plot (while in zoom/pan mode).
 ### Panning
 To pan on the scatter plot, simply click and drag while in zoom/pan mode.
 ### Reset Zoom
 To reset any zooming/panning applied to a plot, click the `Reset View` button at the top right of the plot.
+
+![ZoomPan Gif](ZoomingPanning.gif)
 
 ## Selecting Bins
 ### Adding to Selection
@@ -43,6 +45,8 @@ To remove bins from a selection, first enter remove-from-selection mode by click
 
 ### Clear Selection
 To quickly remove all bins from the selection, click (without dragging) on the plot while in add-to-selection mode.
+
+![Selection Gif](Selecting_Erasing_Clearing.gif)
 
 ## Clustering
 Once points are selected, they can now be assigned to a cluster.
