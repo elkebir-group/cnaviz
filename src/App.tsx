@@ -14,10 +14,7 @@ import Sidebar from "./components/Sidebar";
 import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
-import { SilhouetteBarPlot } from "./components/SilhouetteBarPlot";
 import {FiX} from "react-icons/fi";
-import {calculatesilhouettescores} from "./util"
-import {ClusterDistancesBarPlot} from "./components/ClusterDistancesBarPlot";
 import {AnalyticsTab} from "./components/AnalyticsTab";
 
 function getFileContentsAsString(file: File) {
@@ -32,22 +29,6 @@ function getFileContentsAsString(file: File) {
     });
 }
 
-function testWork() {
-    return new Promise<string>((resolve, reject) => {
-        let count = 0;
-        let test : any[] = [];
-        for(let i=0; i < 1000000000; i++) {
-            count++;
-            count = count % 3;
-            count--;
-            count++;
-            test.push(count);
-            test = [];
-        }
-        console.log(test);
-        resolve("Finished");
-    });
-}
 // Colors picked using the following tool: http://jnnnnn.github.io/category-colors-constrained.html
 const CLUSTER_COLORS = [
     "#d3fe14", "#c9080a", "#fec7f8", "#0b7b3e", "#3957ff", "#0bf0e9", "#c203c8", "#fd9b39", 
@@ -191,19 +172,16 @@ export enum ProcessingStatus {
 }
 
 interface State {
-    /** Current status of reading/processing input data */
-    processingStatus: ProcessingStatus;
 
-    /** Indexed data */
-    indexedData: DataWarehouse;
-    
-    /** Current genomic location that the user has selected.  Null if no such location. */
-    hoveredLocation: ChromosomeInterval | null;
+    processingStatus: ProcessingStatus; //  Current status of reading/processing input data
+   
+    indexedData: DataWarehouse; // Holds all the genomic bins
 
-    /** Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected. */
-    selectedChr: string;
+    hoveredLocation: ChromosomeInterval | null; // Current genomic location that the user has selected.  Null if no such location.
 
-    selectedCluster: string;
+    selectedChr: string;  // Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected.
+
+    selectedCluster: string; // cluster selected to be assigned to
 
     invertAxis: boolean;
 
@@ -435,7 +413,7 @@ export class App extends React.Component<{}, State> {
     async handleDemoFileInput(applyClustering: boolean) {
         this.setState({chosenFile: "a12.tsv"})
         this.setState({processingStatus: ProcessingStatus.readingFile});
-        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/a12.tsv")
+        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/a12.tsv")
             .then(r => r.text())
             .then(text => {
                 this.setState({processingStatus: ProcessingStatus.processing});
@@ -489,7 +467,7 @@ export class App extends React.Component<{}, State> {
     }
 
     async handleDemoDrivers() {
-        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/drivers.tsv")
+        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/drivers.tsv")
         .then(r => r.text())
         .then(text => {
             parseDriverGenes(text)
