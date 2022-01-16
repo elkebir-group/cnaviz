@@ -1,7 +1,6 @@
 Click [here](https://www.youtube.com/watch?v=svOtiBadekw) to see a demo of the various features in CNAViz.
 
 ## Importing and Exporting
-![ImportExport Screenshot](Import:Export.png)
 
 ### Import
 To import data, click the `Import` button at the top of the sidebar. The data must be a TSV file with the following columns: `#CHR`, `START`, `END`, `RD`, `BAF`, and optionally `CLUSTER`. If the `CLUSTER` column is not provided, then all bins are considered not clustered and assigned a temporary cluster ID of -1.
@@ -54,6 +53,8 @@ Once points are selected, they can now be assigned to a cluster.
 ### Adding selected bins to an existing cluster
 To add the points to an existing cluster, choose the desired cluster from the `Cluster` dropdown above any of the scatter-linear plot pair. Then, click `Assign Cluster`.
 
+![AssignCluster Gif](AssigningCluster.gif)
+
 ### Erasing bins
 The `Cluster` dropdown has an option of -2 which represents an erased state. This state means that those bins will not be included in the exported file.
 
@@ -79,6 +80,8 @@ The first bar plot has the approximate average silhouette score for every cluste
 
 The second bar plot contains approximate average euclidean inter-cluster distances. To choose which cluster the distances should be calculated from, use the dropdown above the bar plot.
 
+![ClusterAnalytics Gif](ClusterAnalytics.gif)
+
 ## Filtering
 There are a number of ways to filter the bins displayed in the scatter plots and linear plots.
 
@@ -91,8 +94,12 @@ To filter by chromosome, use the `Chromosome` dropdown in the sidebar.
 ### Filter to a specified genomic range
 To filter to a genomic range, use the bounding box zoom on the linear plot. The scatter plot will be kept in sync with the linear plot and show the same points.
 
+![Filtering Gif](Filtering.gif)
+
 ## Driver Genes
-To mark important driver genes along the x-axis of the linear plots, use the `Import Driver Genes` button in the sidebar. The uploaded file should be a TSV file with the following columns: `symbol` and `Genomic Position`. The `Genomic Position` column should be of the format [CHR]:[START]-[END]. See drivers.tsv in the data folder for an example of a file that would be considered as valid input.
+To mark important driver genes along the x-axis of the linear plots, use the `Import Driver Genes` button in the sidebar. The uploaded file should be a TSV file with the following columns: `symbol` and `Genomic Position`. The `Genomic Position` column should be of the format [CHR]:[START]-[END]. See drivers.tsv in the data folder for an example of a file that would be considered as valid input. Once uploaded, the driver genes will be represented as red dots along the x-axis of the linear plots. Hovering over one of these red dots will preview the driver gene it represents. Each red dot acts as a toggle button where clicking on it once will lock it in place, and clicking against will remove it.
+
+![Drivers Screenshot](Drivers_01132022.png)
 
 ## Other features
 Here are some other features provided that may be helpful.
@@ -112,7 +119,6 @@ To display the centroids of each cluster, use the `Centroids` checkbox in the si
 
 To view the exact location of the centroids in each sample, click the `Centroids (c)` button in the sidebar. This button will bring up a pop-up with a table containing the centroids of every cluster.
 
-![Centroids Screenshot](CentroidTableButton.png)
 ![Centroids Screenshot](CentroidTable.png)
 
 ### View usage reference
