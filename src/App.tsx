@@ -367,11 +367,6 @@ export class App extends React.Component<{}, State> {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
                 self.onToggleSilhoutteBarPlot();
-            } else if(d3.event.key === 'd') {
-                // self.setProcessingStatus(ProcessingStatus.done);
-                self.onToggleSilhoutteBarPlot();
-            } else if(d3.event.key === 'p') {
-                // self.setProcessingStatus(ProcessingStatus.processing);
             }
         })
 

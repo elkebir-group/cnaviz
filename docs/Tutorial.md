@@ -16,12 +16,10 @@ This button will download two files:
 ## Demo Buttons
 To immediately get started with CNAViz, there are 2 demo buttons available in the sidebar. The `Demo` button will automatically import the a12.tsv file from the data folder. The `CGC Drivers` button will automatically import a list of driver genes from the COSMIC Cancer gene census.
 
-![DemoButtons Screenshot](DemoButtons.png)
-
 ## Viewing Multiple Samples
 Clicking the `Add/Remove Sample` buttons above the scatter plot will add/remove a scatter-linear plot pair to/from the screen. The `Add Sample` button will be disabled when there are no more samples to add. The `Remove sample` is disabled when there is only 1 sample being viewed. To switch which sample is being viewed by a scatter-linear plot pair, the sample dropdown above the scatter plot can be used.
 
-![AddRemoveSamples Screenshot](AddRemoveSamples.png)
+![AddRemoveSamples Screenshot](ScatterLinear%20Plots.png)
 
 ## Zooming / Panning
 ### Zooming
@@ -97,7 +95,7 @@ To filter to a genomic range, use the bounding box zoom on the linear plot. The 
 ![Filtering Gif](Filtering.gif)
 
 ## Driver Genes
-To mark important driver genes along the x-axis of the linear plots, use the `Import Driver Genes` button in the sidebar. The uploaded file should be a TSV file with the following columns: `symbol` and `Genomic Position`. The `Genomic Position` column should be of the format [CHR]:[START]-[END]. See drivers.tsv in the data folder for an example of a file that would be considered as valid input. Once uploaded, the driver genes will be represented as red dots along the x-axis of the linear plots. Hovering over one of these red dots will preview the driver gene it represents. Each red dot acts as a toggle button where clicking on it once will lock it in place, and clicking against will remove it.
+To mark important driver genes along the x-axis of the linear plots, use the `Import Driver Genes` button in the sidebar. The uploaded file should be a TSV file with the following columns: `symbol` and `Genomic Position`. The `Genomic Position` column should be of the format [CHR]:[START]-[END]. See drivers.tsv in the data folder for an example of a file that would be considered as valid input. Once uploaded, the driver genes will be represented as red dots along the x-axis of the linear plots. Hovering over one of these red dots will preview the driver gene it represents. Each red dot acts as a toggle button where clicking on it once will lock it in place, and clicking again will remove it.
 
 ![Drivers Screenshot](Drivers_01132022.png)
 
@@ -126,14 +124,24 @@ To view directions about different shortucts and functionality, click the `Usage
 
 ## Key Modifiers Summary
 `Command/Ctrl` -> temporarily enter add-to-selection mode (once released goes back to zoom/pan mode)
+
 `Option/Alt` -> temporarily enter remove-from-selection mode (once released goes back to zoom/pan mode)
+
 `Shift` (in zoom/pan mode) -> bounding box zoom
+
 `e` -> enter remove-from-selection mode
+
 `b` -> enter add-to-selection mode
+
 `z` -> enter zoom/pan mode
+
 `c` -> toggle centroid table
+
 `s` -> toggle cluster analytics
+
 `l` -> toggle previous actions table
+
 `?` or `/` -> usage reference
+
 `Space` -> toggle sidebar
 
