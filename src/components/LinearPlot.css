@@ -34,3 +34,9 @@
 .LinearPlot-tools button.active { 
     background-color: #13a613;
 }
+
+#Grid line {
+    stroke: lightgrey;
+    stroke-opacity: 0.7;
+    shape-rendering: crispEdges;
+}

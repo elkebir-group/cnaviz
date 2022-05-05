@@ -1,18 +1,12 @@
-import _ from "lodash";
+import _, { mean, sample, memoize, MemoizedFunction} from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
-import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette} from "../util"
-import { brush } from "d3";
+import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette, scaleRD} from "../util"
+import { brush, cluster } from "d3";
 import { resolve } from "dns";
-
-// function silhouttePromise(multiDimData : number[][], clusterToData : Map<Number, Number[][]>, labels : number[]) : Promise<{cluster: number, avg:number}[]>{
-//     return new Promise((resolve : any, reject : any)=> {
-//         let clusterDistanceMatrix : Map<number, Map<number, number>> = new Map<number, Map<number, number>>();
-//         resolve(calculatesilhouettescores(multiDimData, clusterToData, labels, clusterDistanceMatrix));
-//     })
-// }
+import { DEFAULT_PLOIDY, CN_STATES } from "../constants";
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
     return new Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}>((resolve, reject) => {
@@ -57,6 +51,7 @@ export function reformatBins(samples: string[], applyLog: boolean, allRecords: r
         resolve(returnVal);
     });
 }
+
 /**
  * Nested dictionary type.  First level key is the sample name; second level key is cluster in that sample; third level key is the chromosome in the given sample with the given cluster.
  * 
@@ -139,6 +134,12 @@ export class DataWarehouse {
     private currentsilhouettes: {cluster: number,  avg: number}[];
     private overallSilhouette: number;
     private clusterDistanceMatrix : Map<number, Map<number, number>>;
+    private rdMeans: SampleIndexedData<number>;
+    private _updateFractionalCopyNumbers: any;
+    private currentDataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">;
+    private sampleToPloidy: SampleIndexedData<number>;
+
+
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
      * data set, and could be computationally costly if the data set is large.
@@ -150,8 +151,10 @@ export class DataWarehouse {
     constructor(rawData: GenomicBin[]) {
         this._locationGroupedData = {};
         this.initializeLocationGroupedData(rawData);
+        // console.log(this._locationGroupedData)
         this._sampleGroupedData = {};
         this._rdRanges = {};
+        this.rdMeans = {};
         this._logRdRanges = {};
         this._samples = [];
         this._chrs = [];
@@ -171,6 +174,8 @@ export class DataWarehouse {
         this.currentsilhouettes = [];
         this.clusterDistanceMatrix = new Map<number, Map<number, number>>();
         this.overallSilhouette = 0;
+        this.currentDataKey="RD";
+        this.sampleToPloidy = {};
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -190,13 +195,14 @@ export class DataWarehouse {
             }
         }
 
-
         const groupedByCluster = _.groupBy(rawData, "CLUSTER");
         for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
             const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
             let sampleDict : {[sampleName: string] : string} = {};
             for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
-                const centroid = this.calculateCentroid(binsForSample, "RD");
+                this.sampleToPloidy[sample] = DEFAULT_PLOIDY;
+
+                const centroid = this.calculateCentroid(binsForSample, this.currentDataKey);
                 let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
 
                 if(this.centroidPts[sample] && this.centroidPts[clus]) {
@@ -204,7 +210,7 @@ export class DataWarehouse {
                 } else if(this.centroidPts[sample]) {
                     this.centroidPts[sample][clus] = [centroidPt];
                 } else  { 
-                    let dataKey : string = clus; //.toString();
+                    let dataKey : string = clus;
                     let tempMap : ClusterIndexedData<centroidPoint[]> = {};
                     tempMap[dataKey] = [centroidPt];
                     this.centroidPts[sample] = tempMap;
@@ -230,11 +236,13 @@ export class DataWarehouse {
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
         this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
         
+
         if (rawData.length > 0) {
             for(const sample of this._samples) {
                 let currentSampleBins = this._sampleGroupedData[sample];
                 let currentRdRange : [number, number] = [_.minBy(currentSampleBins, "RD")!.RD, _.maxBy(currentSampleBins, "RD")!.RD];
                 let currentLogRdRange : [number, number] = [_.minBy(currentSampleBins, "logRD")!.logRD, _.maxBy(currentSampleBins, "logRD")!.logRD];
+                this.rdMeans[sample] = _.meanBy(currentSampleBins, "RD");
                 this._rdRanges[sample] = currentRdRange;
                 this._logRdRanges[sample] = currentLogRdRange;
                 
@@ -245,6 +253,11 @@ export class DataWarehouse {
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
+
+        this._updateFractionalCopyNumbers = memoize(this.updateFractionalCopyNumbers, (...args) => {
+            return "" + args[0] + "_" + args[1] + "_" + args[2].length + "_" + args[3].join(".");
+        });
+        
     }
 
     setShouldRecalculatesilhouettes(shouldRecalculate: boolean) {
@@ -257,6 +270,10 @@ export class DataWarehouse {
 
     getAvgSilhouette() {
         return this.overallSilhouette;
+    }
+
+    setSamplePloidy(sample: string, ploidy: number) {
+
     }
 
     async recalculatesilhouettes(applyLog: boolean) {
@@ -294,7 +311,7 @@ export class DataWarehouse {
         return this.centroidDistances[sample];
     }
 
-    calculateCentroid(points: GenomicBin[], yAxis: keyof Pick<GenomicBin, "RD" | "logRD">):  [number, number] {
+    calculateCentroid(points: GenomicBin[], yAxis: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">):  [number, number] {
         return [_.meanBy(points, d => d.reverseBAF), _.meanBy(points, d => d[yAxis])];
     }
 
@@ -302,7 +319,7 @@ export class DataWarehouse {
         return this.centroids;
     }
 
-    getCentroidPoints(sample: string, chr?: string) {
+    getCentroidPoints(sample: string, chr?: string, scaleFactor?: number) {
         const samplePts = this.centroidPts[sample]; // Get centroids for a specific sample
         
         let clustersAssociatedWithChr = this._cluster_filters;
@@ -318,6 +335,12 @@ export class DataWarehouse {
             if(setOfClustersInChr.has(cluster) && samplePts[cluster.valueOf()]) { // Check that the cluster appears when filtered by chr 
                 sampleSpecificCentroids.push(samplePts[cluster.valueOf()][0]);
             }
+        }
+
+        if(scaleFactor && scaleFactor !== 1) {
+            const copy = _.cloneDeep(sampleSpecificCentroids);
+            copy.forEach(d => d.point[1] = d.point[1] * scaleFactor);
+            return copy;
         }
 
         return sampleSpecificCentroids;
@@ -362,11 +385,24 @@ export class DataWarehouse {
      * 
      * @return the range of read depth ratios represented in this data set
      */
-    getRdRange(sample : string, log?: boolean): [number, number] {
+    getRdRange(sample : string, log?: boolean, ploidy?: number): [number, number] {
         const rdRange = (log) ? this._logRdRanges[sample] : this._rdRanges[sample];
-        return [rdRange[0], rdRange[1]];
+        const scaleFactor = 1;//(ploidy && !log) ?  ploidy / this.rdMeans[sample] : 1;
+        return [rdRange[0] * scaleFactor, rdRange[1] * scaleFactor];
     }
 
+    getFractionCNRange(purity: number, startCN: number, endCN: number) : [number, number] {
+        return [purity * (startCN) + 2*(1 - purity),  purity * (endCN) + 2*(1 - purity)]
+    }
+
+    getFractionalCNTicks(purity: number, startCN: number, endCN: number) : number[] {
+        const fractionalCNs : number[] = [];
+        for(let i = startCN; i <= endCN; i++) {
+            fractionalCNs.push(purity * (i) + 2*(1 - purity));
+        }
+        
+        return fractionalCNs;
+    }
     /**
      * @return a list of sample names represented in this data set
      */
@@ -413,6 +449,40 @@ export class DataWarehouse {
         }
     }
 
+    recalculateCentroids(key: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, data?: GenomicBin[]) {
+        // console.log("Recalculating centroids");
+        this.centroids = [];
+        this.centroidPts = {};
+        const bins = (data) ? data : this.allRecords
+        const groupedByCluster = _.groupBy(bins, "CLUSTER");
+        for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
+            const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
+            let sampleDict : {[sampleName: string] : string} = {};
+            for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
+                const centroid = this.calculateCentroid(binsForSample, key);
+                let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
+
+                if(this.centroidPts[sample] && this.centroidPts[clus]) {
+                    this.centroidPts[sample][clus].push(centroidPt);
+                } else if(this.centroidPts[sample]) {
+                    this.centroidPts[sample][clus] = [centroidPt];
+                } else  { 
+                    let dataKey : string = clus;
+                    let tempMap : ClusterIndexedData<centroidPoint[]> = {};
+                    tempMap[dataKey] = [centroidPt];
+                    this.centroidPts[sample] = tempMap;
+                }
+                let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
+                sampleDict[sample] = centroidStr;
+            }
+
+            let centroidTableRow : newCentroidTableRow = {
+                key: clus,
+                sample: sampleDict
+            };
+            this.centroids.push(centroidTableRow);
+        }
+    }
 
     setClusterFilters(clusters?: String[]) {
         if(clusters && ((clusters.length === 1 && clusters[0] === DataWarehouse.ALL_CLUSTERS_KEY))) {
@@ -454,21 +524,21 @@ export class DataWarehouse {
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
         let brushedTableData  = this.brushedTableData();
         
+        // Create a description of the cluster update and store it
         let action = "Assigned to cluster " + cluster + " | ";
         action += "Clusters selected: ";
         for(const row of brushedTableData) {
             action += String(row.key) + " (" + String(row.value) + "%), ";
         }
         action += " | "
-        let currentRdRange : [number, number] = [_.minBy(this.brushedBins, "RD")!.RD, _.maxBy(this.brushedBins, "RD")!.RD];
+        let currentRdRange : [number, number] = [_.minBy(this.brushedBins, this.currentDataKey)![this.currentDataKey], _.maxBy(this.brushedBins, this.currentDataKey)![this.currentDataKey]];
         let currentBAFRange : [number, number] = [_.minBy(this.brushedBins, "reverseBAF")!.reverseBAF, _.maxBy(this.brushedBins, "reverseBAF")!.reverseBAF];
         
-        action += "RD Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
-
+        action += this.currentDataKey + " Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
         action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "]";
-
         this.logOfActions.unshift({action: action});
         
+        // For each bin that was selected, update the cluster of that bin in every sample
         for(let i = 0; i < this.brushedBins.length; i++) {
             let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
             if(this._locationGroupedData[locKey]) {
@@ -478,10 +548,13 @@ export class DataWarehouse {
             }
         }
 
-        const allMergedBins : GenomicBin[][] = Object.values(this._locationGroupedData);
-        let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allMergedBins);
+        const allBins : GenomicBin[][] = Object.values(this._locationGroupedData);
+        let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allBins);
+
         this.centroids = [];
         this.centroidPts = {};
+
+        // Update the clusters that correspond to each chromosome
         this.chrToClusters = {};
         for(const d of flattenNestedBins) {
             if(this.chrToClusters[d["#CHR"]]) {
@@ -492,6 +565,7 @@ export class DataWarehouse {
             }   
         }
 
+        
         // Steps to find centroids (in a format that can be displayed in the table properly)
         // 1. group by cluster
         // 2. Get each group of points with all matching cluster
@@ -501,36 +575,38 @@ export class DataWarehouse {
         // 6. Add dictionary to table row
         // 7. Push table row into list of table rows
         // 8. Move on to next cluster and repeat
-        const groupedByCluster = _.groupBy(flattenNestedBins, "CLUSTER");
-        for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
-            const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
-            let sampleDict : {[sampleName: string] : string} = {};
-            for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
-                const centroid = this.calculateCentroid(binsForSample, "RD");
-                let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
 
-                if(this.centroidPts[sample] && this.centroidPts[clus]) {
-                    this.centroidPts[sample][clus].push(centroidPt);
-                } else if(this.centroidPts[sample]) {
-                    this.centroidPts[sample][clus] = [centroidPt];
-                } else  { 
-                    let dataKey : string = clus;
-                    let tempMap : ClusterIndexedData<centroidPoint[]> = {};
-                    tempMap[dataKey] = [centroidPt];
-                    this.centroidPts[sample] = tempMap;
-                }
-                let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
-                sampleDict[sample] = centroidStr;
-            }
+        // recalculate centroids because they will change when the clusters are updated
+        // const groupedByCluster = _.groupBy(flattenNestedBins, "CLUSTER");
+        // for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
+        //     const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
+        //     let sampleDict : {[sampleName: string] : string} = {};
+        //     for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
+        //         const centroid = this.calculateCentroid(binsForSample, this.currentDataKey);
+        //         let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
 
-            let centroidTableRow : newCentroidTableRow = {
-                key: clus,
-                sample: sampleDict
-            };
-            this.centroids.push(centroidTableRow);
-            
-        }
-        
+        //         if(this.centroidPts[sample] && this.centroidPts[clus]) {
+        //             this.centroidPts[sample][clus].push(centroidPt);
+        //         } else if(this.centroidPts[sample]) {
+        //             this.centroidPts[sample][clus] = [centroidPt];
+        //         } else  { 
+        //             let dataKey : string = clus;
+        //             let tempMap : ClusterIndexedData<centroidPoint[]> = {};
+        //             tempMap[dataKey] = [centroidPt];
+        //             this.centroidPts[sample] = tempMap;
+        //         }
+        //         let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
+        //         sampleDict[sample] = centroidStr;
+        //     }
+
+        //     let centroidTableRow : newCentroidTableRow = {
+        //         key: clus,
+        //         sample: sampleDict
+        //     };
+        //     this.centroids.push(centroidTableRow);
+        // }
+        this.recalculateCentroids(this.currentDataKey, flattenNestedBins);
+
         this.initializeCentroidDistMatrix();
 
         this._ndx.remove();
@@ -548,13 +624,24 @@ export class DataWarehouse {
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
         }
+
         this.setClusterFilters(this._cluster_filters);
         this.shouldCalculatesilhouettes = true;
+
+        this._updateFractionalCopyNumbers.cache = new _.memoize.Cache
     }
 
     clearClustering() {
         this.brushedBins = [...this.allRecords];
         this.updateCluster(-1);
+    }
+
+    getMeanRD(selectedSample: string) {
+        return this.rdMeans[selectedSample];
+    }
+
+    setDataKeyType(dataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">) {
+        this.currentDataKey = dataKey;
     }
 
     undoClusterUpdate() {
@@ -599,6 +686,27 @@ export class DataWarehouse {
         this.setShouldRecalculatesilhouettes(true);
     }
 
+    
+    // Note clusters isn't used but is needed for the memoize to realize that the filters have changed
+    updateFractionalCopyNumbers(ploidy: number, sample: string, data: GenomicBin[], clusters: String[]) { 
+        const meanRD = this.rdMeans[sample];
+        const scalingFactor = ploidy / meanRD;
+        let sampleGroupedData = _.cloneDeep(data);
+        sampleGroupedData.forEach(d => d.fractional_cn = d.RD * scalingFactor)
+        return sampleGroupedData;
+    }
+
+    getBAFLines(purity: number) {
+        const BAF_Ticks = []
+        for(const state of CN_STATES) {
+            const A = state[0];
+            const B = state[1];
+            const BAF_Tick = (B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
+            BAF_Ticks.push(BAF_Tick);
+        }
+        console.log(BAF_Ticks);
+    }
+
     brushedTableData() {
         
         const sampleAmount = this._samples.length;
@@ -635,16 +743,21 @@ export class DataWarehouse {
      * @param chr chromosome name for which to find matching records
      * @return a list of matching records
      */
-    getRecords(sample: string, applyLog: boolean, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null): GenomicBin[] {
+    getRecords(sample: string, dataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null, meanRD: number, ploidy: number): GenomicBin[] {
         if(sample in this._sampleGroupedData) {
-            return this.filterRecordsByScales(this._sampleGroupedData[sample], applyLog, implicitStart, implicitEnd, xScale, yScale);
+            // console.log(this._cluster_filters.length)
+            if(dataKey === "fractional_cn") {
+                let fractionalSampleData = this._updateFractionalCopyNumbers(ploidy, sample, this._sampleGroupedData[sample], this._cluster_filters);
+                return this.filterRecordsByScales(fractionalSampleData, dataKey, implicitStart, implicitEnd, xScale, yScale, meanRD, ploidy);
+                
+            } else {
+                return this.filterRecordsByScales(this._sampleGroupedData[sample], dataKey, implicitStart, implicitEnd, xScale, yScale, meanRD, ploidy);
+            }
         }
         return [];
     }
 
-    filterRecordsByScales(records: GenomicBin[], applyLog: boolean, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null) : GenomicBin[]{
-       
-       let dataKey : keyof Pick<GenomicBin, "RD" | "logRD"> = (applyLog) ? "logRD" : "RD"
+    filterRecordsByScales(records: GenomicBin[], dataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null, meanRD: number, ploidy: number) : GenomicBin[] {
         if((implicitStart && implicitEnd) && xScale && yScale) {
             return records.filter(record => record.genomicPosition > implicitStart 
                 && record.genomicPosition < implicitEnd 
@@ -701,7 +814,6 @@ export class DataWarehouse {
     }
 
     setbrushedBins(brushedBins: GenomicBin[]) {
-        console.log("Setting Brushed Bins: ", brushedBins.length);
         this.brushedBins = [];
         this.brushedBins = brushedBins;
         this.brushedCrossfilter.remove();
@@ -716,7 +828,7 @@ export class DataWarehouse {
     getClusterDim() {
         return this._cluster_dim;
     }
-    
+
     /**
      * Helper function for performing queries.
      * 

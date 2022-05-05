@@ -9,6 +9,7 @@ import {GenomicBin, GenomicBinHelpers} from "../model/GenomicBin";
 import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
+import { quadtree } from "d3";
 
 const PADDING = { // For the SVG
     left: 60,
@@ -31,7 +32,7 @@ interface Props {
     parentCallBack: any;
     data: GenomicBin[];
     rdRange: [number, number];
-    yAxisToPlot: keyof Pick<GenomicBin, "RD" | "logRD">;
+    yAxisToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">;
     hoveredLocation?: ChromosomeInterval;
     width: number;
     height: number;
@@ -41,7 +42,6 @@ interface Props {
     customColor: string;
     col: string;
     colors: string[];
-    assignCluster: boolean;
     brushedBins: GenomicBin[];
     updatedBins: boolean;
     displayMode: DisplayMode;
@@ -52,11 +52,16 @@ interface Props {
     scales: any;
     centroidPts: {cluster: number, point: [number, number]}[];
     showCentroids: boolean;
-    
+    purity: number;
+    ploidy: number;
+    meanRD: number;
+    fractionalCNTicks: number[];
+    showPurityPloidy: boolean;
 }
 
 interface State {
     selectedCluster: string;
+    quadTree: d3.Quadtree<GenomicBin>;
 }
 
 export class Scatterplot extends React.Component<Props, State> {
@@ -72,7 +77,7 @@ export class Scatterplot extends React.Component<Props, State> {
     private _clusters : string[];
     private brushedNodes: Set<GenomicBin>;
     private previous_brushed_nodes: Set<string>;
-    private quadTree: d3.Quadtree<GenomicBin>;
+    // private quadTree: d3.Quadtree<GenomicBin>;
     private _canvas: HTMLCanvasElement | null;
     // private _canvas2: HTMLCanvasElement | null;
     private _currXScale: d3.ScaleLinear<number, number>;
@@ -84,7 +89,6 @@ export class Scatterplot extends React.Component<Props, State> {
     private _current_transform: any;
     private scatter: any;
     private zoom: any;
-    //private selectedCluster: string;
 
     constructor(props: Props) {
         super(props);   
@@ -96,12 +100,9 @@ export class Scatterplot extends React.Component<Props, State> {
         nextCircleIdPrefix++;
         this.computeScales = memoizeOne(this.computeScales);
         this.handleMouseMove = this.handleMouseMove.bind(this);
-        this.onTrigger = this.onTrigger.bind(this);
         this.onBrushedBinsUpdated = this.onBrushedBinsUpdated.bind(this);
         this._clusters = this.initializeListOfClusters();
-        this.state = {
-            selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID
-        }
+        
         this.brushedNodes = new Set();
         this.previous_brushed_nodes = new Set();
         this.onZoom = this.onZoom.bind(this);
@@ -115,14 +116,21 @@ export class Scatterplot extends React.Component<Props, State> {
         this._original_YScale = this._currYScale;
 
         let data : GenomicBin[] = props.data;
-        this.quadTree = d3
-            .quadtree<GenomicBin>()
-            .x((d : GenomicBin) => d.reverseBAF)
-            .y((d : GenomicBin)  => d[props.yAxisToPlot])
-            .addAll(data)
+        // this.quadTree = d3
+        //     .quadtree<GenomicBin>()
+        //     .x((d : GenomicBin) => d.reverseBAF)
+        //     .y((d : GenomicBin)  => d[props.yAxisToPlot])
+        //     .addAll(data)
 
         this._original_transform = d3.zoomIdentity.translate(0, 0).scale(1);
         this._current_transform = this._original_transform;
+        this.state = {
+            selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID,
+            quadTree: d3.quadtree<GenomicBin>()
+            .x((d : GenomicBin) => d.reverseBAF)
+            .y((d : GenomicBin)  => d[props.yAxisToPlot])
+            .addAll(data)
+        }
     }
 
     initializeListOfClusters() : string[] {
@@ -159,7 +167,8 @@ export class Scatterplot extends React.Component<Props, State> {
             && hoveredRdBaf.rd > this._currYScale.domain()[0] && hoveredRdBaf.rd < this._currYScale.domain()[1] ) {
             
             const radius = Math.abs(this._currXScale.invert(x) - this._currXScale.invert(x - 20));
-            this.props.onRecordsHovered(this.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius) || null);
+            // console.log(this.props.ploidy, " ", this.state.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius));
+            this.props.onRecordsHovered(this.state.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius) || null);
         } else {
             this.props.onRecordsHovered(null);
         }
@@ -234,7 +243,7 @@ export class Scatterplot extends React.Component<Props, State> {
     render() {
         
         const {width, height} = this.props;
-        
+
         let clusterOptions = this._clusters.map(clusterName =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
@@ -291,63 +300,103 @@ export class Scatterplot extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if(!this.props.scales.xScale && !this.props.scales.yScale && prevProps.scales.xScale && prevProps.scales.yScale) {
-            this.resetZoom();
-        } else if((this.props.scales.xScale  // sync scales
-            && prevProps.scales.xScale
-            && this.props.scales.xScale[0] !== prevProps.scales.xScale[0] 
-            && this.props.scales.xScale[1] !== prevProps.scales.xScale[1]) 
-            || (this.props.scales.xScale  && !prevProps.scales.xScale)) {
-                this._currXScale.domain(this.props.scales.xScale);
-                if(this.props.scales.yScale) {
-                    this._currYScale.domain(this.props.scales.yScale);
+        const xScale = this.props.scales.xScale
+        const yScale =  this.props.scales.yScale
+        const prevXScale = prevProps.scales.xScale
+        const prevYScale = prevProps.scales.yScale
+
+        function scalesUpdated(scaleOne: any, scaleTwo:any) {
+            if(scaleOne && !scaleTwo) {
+                return true;
+            }
+            if(scaleOne && scaleTwo) {
+                if((scaleOne[0] !== scaleTwo[0] || scaleOne[1] !== scaleTwo[1])) {
+                    
+                    return true;
                 }
+            }
+            return false;
+        }
+
+        function scalesUpdated2(scaleOne: number[] | null, scaleTwo: number[] | null) {
+            if(scaleOne && !scaleTwo) {
+                return true;
+            }
+            if(scaleOne && scaleTwo) {
+                if((Math.abs(scaleOne[0]-scaleTwo[0]) > .0001) || (Math.abs(scaleOne[1]-scaleTwo[1]) > .0001)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if(!xScale && !yScale && prevXScale && prevYScale) {
+            // Scales prop is not passed if we are at the original zoom, 
+            // so when previously we had scales passed, but now we don't we must reset the zoom
+            this.resetZoom();
+        } else if(scalesUpdated(xScale, prevXScale) || scalesUpdated(yScale, prevYScale)) {
+                // If either scale was changed, then update scales 
+                // and update the quadtree so that tooltip stays in accurate
+                // Then rerender points with the updated scales
+
+                if(xScale) {
+                    this._currXScale.domain(xScale);
+                }
+
+                if(yScale) {
+                    this._currYScale.domain(yScale);
+                }
+
                 let data : GenomicBin[] = this.props.data;
-                this.quadTree = d3
+
+                let q = d3
                     .quadtree<GenomicBin>()
                     .x((d : GenomicBin) => d.reverseBAF)
                     .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
-                    .addAll(data)
+                    .addAll(data);
+
+                this.setState({quadTree: q});
                 this.redraw();
-        } else if((this.props.scales.yScale &&  prevProps.scales.yScale 
-            && this.props.scales.yScale[0] !== prevProps.scales.yScale[0]
-            && this.props.scales.yScale[1] !== prevProps.scales.yScale[1])
-            || (this.props.scales.yScale  && !prevProps.scales.yScale)) {
-            if(this.props.scales.xScale) {
-                this._currXScale.domain(this.props.scales.xScale);
-            }
-            this._currYScale.domain(this.props.scales.yScale);
+
+        } if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
+            this.forceUnhover();
+            this.forceHover(this.props.hoveredLocation); 
+        } else if (this.propsDidChange(prevProps, ["purity", "ploidy"])) {
+            
             let data : GenomicBin[] = this.props.data;
-            this.quadTree = d3
+            const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
+            this._currYScale = rdrScale; 
+            // Update quadtree so that when hovering works on new points that appear 
+            // (when assigning to an existing cluster - all the points in that cluster show up even if it has been filtered out)
+            // console.log("Rebuilding Quadtree2: ", this.props.ploidy)
+            let q = d3
                 .quadtree<GenomicBin>()
                 .x((d : GenomicBin) => d.reverseBAF)
                 .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
                 .addAll(data)
+            
+            this.setState({quadTree: q});
+
             this.redraw();
-        } else if(this.props["assignCluster"]) {
-            this.onTrigger(this.state.selectedCluster);
-            this.brushedNodes = new Set();
-        } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
-            this.forceUnhover();
-            this.forceHover(this.props.hoveredLocation); 
         } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height"])) {
             let data : GenomicBin[] = this.props.data;
             // Update quadtree so that when hovering works on new points that appear 
             // (when assigning to an existing cluster - all the points in that cluster show up even if it has been filtered out)
-            this.quadTree = d3
+
+            let q = d3
                 .quadtree<GenomicBin>()
                 .x((d : GenomicBin) => d.reverseBAF)
                 .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
-                .addAll(data)
+                .addAll(data);
+            
+            this.setState({quadTree: q});
             this.redraw();
             this.forceHover(this.props.hoveredLocation);
-        } else if((!(_.isEqual(this.props["data"], prevProps["data"])) || this.props.yAxisToPlot !== prevProps.yAxisToPlot)) {
+        } else if((!(_.isEqual(this.props["data"], prevProps["data"])) || this.props.yAxisToPlot !== prevProps.yAxisToPlot)) { 
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
 
-            if((this._currXScale.domain()[0] === this._original_XScale.domain()[0] 
-                && this._currXScale.domain()[1] === this._original_XScale.domain()[1]
-                && this._currYScale.domain()[0] === this._original_YScale.domain()[0]
-                && this._currYScale.domain()[1] === this._original_YScale.domain()[1])) {  
+            if(!scalesUpdated2(this._currXScale.domain(), this._original_XScale.domain()) 
+            && !scalesUpdated2(this._currYScale.domain(), this._original_YScale.domain())) { // zoom not applied
                 // When the sample filter changes, the y-axis max will also change so must recaculate the scales
                 // Original scales saves the scales to which we should reset the view
                 this._currXScale = bafScale;
@@ -355,34 +404,43 @@ export class Scatterplot extends React.Component<Props, State> {
                 this._original_XScale = this._currXScale;
                 this._original_YScale = this._currYScale;
             } else { // If zoom is applied, then update original scales but don't change current zoom
-                // CASE 1: going to log
-                if(this.props.yAxisToPlot !== prevProps.yAxisToPlot){
+                if(this.props.yAxisToPlot !== prevProps.yAxisToPlot){ // When changing to log scale
                     let currentYDomain = this._currYScale.domain();
-                    if (this.props.yAxisToPlot==="logRD") {  
-                        if(currentYDomain[0] <= 0) {
-                            currentYDomain[0] = 0.1;
-                        }
-                        if(currentYDomain[1] <= 0) {
-                            currentYDomain[1] = 0.1;
-                        }
+                    if (this.props.yAxisToPlot=== "logRD") {   // previous was RD
+                        if(currentYDomain[0] <= 0) { currentYDomain[0] = 0.1; }
+                        if(currentYDomain[1] <= 0) { currentYDomain[1] = 0.1; }
                         const newYDomain = [Math.log2(currentYDomain[0]), Math.log2(currentYDomain[1])];
-                        this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
-                    } else {
+                        this._currYScale.domain(newYDomain).range(this._currYScale.range());
+                        console.log("Switching to logRD");
+                    } else if(this.props.yAxisToPlot === "fractional_cn"){ // Switched to fractional_cn from RD
+                        const newYDomain = [currentYDomain[0] * this.props.ploidy / this.props.meanRD, currentYDomain[1] * this.props.ploidy / this.props.meanRD]
+                        this._currYScale.domain(newYDomain).range(this._currYScale.range());
+                        console.log("Switching to fractional_cn");
+                    } else if(prevProps.yAxisToPlot=== "logRD"){ // Switched to RD from logRD
                         const newYDomain = [Math.pow(2, currentYDomain[0]), Math.pow(2, currentYDomain[1])];
-                        this._currYScale = d3.scaleLinear().domain(newYDomain).range(this._currYScale.range());
+                        this._currYScale.domain(newYDomain).range(this._currYScale.range());
+                        console.log("Switching to RD from logRD");
+                    } else if(prevProps.yAxisToPlot === "fractional_cn") {
+                        const newYDomain = [currentYDomain[0] * this.props.meanRD / this.props.ploidy, currentYDomain[1] * this.props.meanRD / this.props.ploidy]
+                        this._currYScale.domain(newYDomain).range(this._currYScale.range());
+                        console.log("Switching to RD from fractional_cn");
                     }
-                   
-                } 
+                }
+
                 this._original_XScale = bafScale;
                 this._original_YScale = rdrScale;
             }
             
+            
+            // Rebuild quadtree since scale changed (when going to log scale, sample change, etc)
             let data : GenomicBin[] = this.props.data;
-            this.quadTree = d3
+            let q = d3
                 .quadtree<GenomicBin>()
                 .x((d : GenomicBin) => d.reverseBAF)
                 .y((d : GenomicBin)  => d[this.props.yAxisToPlot])
-                .addAll(data)
+                .addAll(data);
+            
+            this.setState({quadTree: q});
 
             let newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
             this.props.onZoom(newScales);
@@ -399,7 +457,12 @@ export class Scatterplot extends React.Component<Props, State> {
                     bafRange?: [number, number], useLowerBound?: boolean) {
         let bafScaleRange = [PADDING.left, width - PADDING.right];
         let rdrScaleRange = [height - PADDING.bottom, PADDING.top];
-        const rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
+        let rdLowerBound = (useLowerBound) ? rdRange[0] :((this.props.applyLog) ? -2 : 0);
+
+        if(this.props.showPurityPloidy) {
+            rdLowerBound = rdRange[0];
+        }
+
         let baf = bafRange ? bafRange : [-.0001, 0.5001] // .0001 allows for points exactly on the axis to still be seen
         
         return {
@@ -412,10 +475,6 @@ export class Scatterplot extends React.Component<Props, State> {
         };
     }
 
-    onTrigger = (selectedCluster: string | number) => {
-        this.props.parentCallBack(selectedCluster);
-    }
-
     onBrushedBinsUpdated = (brushedNodes: GenomicBin[]) => {
         this.props.onBrushedBinsUpdated(brushedNodes);
     }
@@ -424,17 +483,25 @@ export class Scatterplot extends React.Component<Props, State> {
         this.props.onZoom(newScales);
     }
 
+    filterFractionalCNTicks() {
+        let currDomain = this._currYScale.domain();
+        return this.props.fractionalCNTicks.filter(value => value > currDomain[0] && value < currDomain[1]);
+        
+    }
+
     redraw() {
         if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
+        
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts} = this.props;
+        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy} = this.props;
+
         let {displayMode} = this.props;
         let xScale = this._currXScale;
         let yScale = this._currYScale;
         let xLabel = "Allelic Imbalance (0.5 - BAF)";
-        let yLabel = yAxisToPlot === "RD" ? "RDR" : "log RDR";
+        let yLabel = yAxisToPlot === "RD" ? "RDR" : ((yAxisToPlot === "fractional_cn") ? "Copy Number" : "log RDR");
         
         const svg = d3.select(this._svg);
         
@@ -464,11 +531,24 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(d3.axisBottom(scale))
         
+        // console.log(this.props.fractionalCNTicks);
+        // console.log("3) Scatterplot Filtered Ticks: ", this.filterFractionalCNTicks());
+        
         let yAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
+            .attr("id", "Grid")
             .attr("transform", `translate(${PADDING.left}, 0)`)
             .call(d3.axisLeft(scale))
-            
+        if(showPurityPloidy) {
+            const filteredTicks = this.filterFractionalCNTicks();
+            yAx = (g : any, scale : any) => g
+                .classed(SCALES_CLASS_NAME, true)
+                .attr("id", "Grid")
+                .attr("transform", `translate(${PADDING.left}, 0)`)
+                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 80).tickFormat((d, i) => d3.format(".1f")(filteredTicks[i])))
+        }
+        
+        
 
         let previous : string[] = [];
         
@@ -527,9 +607,7 @@ export class Scatterplot extends React.Component<Props, State> {
         }
 
         const gl = this._canvas.getContext("webgl")!;
-        // const gl2 = this._canvas2.getContext("webgl")!;
         gl.clearColor(0,0,0,1);
-        // gl2.clearColor(0, 0, 0, 1);
 
         let languageFill = (d:any) => {
             return webglColor(chooseColor(d));
@@ -636,8 +714,6 @@ export class Scatterplot extends React.Component<Props, State> {
         this._canvas.height = height;
 
         redraw();
-
-        
 
         if(displayMode === DisplayMode.select || displayMode === DisplayMode.erase) {
             const brush = d3.brush()

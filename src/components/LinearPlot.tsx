@@ -36,7 +36,7 @@ function findChrNumber(chr: string) {
 interface Props {
     data: GenomicBin[];
     chr: string;
-    dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF">;
+    dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF" | "fractional_cn">;
     applyLog: boolean;
     width: number;
     height: number;
@@ -59,6 +59,11 @@ interface Props {
     driverGenes: Gene[] | null;
     handleDriverGenesChange: (sentGene: {gene: Gene | null, destination: string | null}) => void;
     driverGeneUpdate: {gene: Gene | null, destination: string | null};
+    purity: number;
+    ploidy: number;
+    meanRD: number;
+    fractionalCNTicks: number[];
+    showPurityPloidy: boolean;
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -92,6 +97,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         this._currYScale = d3.scaleLinear()
             .domain([this.props.yMin, this.props.yMax])
             .range([this.props.height - PADDING.bottom, PADDING.top]);
+
         this._original_XScale = this._currXScale;
         this._original_YScale = this._currYScale;
         this.previewDriver = null;
@@ -131,13 +137,13 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         if(this.propsDidChange(prevProps, ["chr"])) {
-            if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
+            if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD" || this.props["dataKeyToPlot"] === "fractional_cn") {
                 this.props.onLinearPlotZoom(null, null, true);
             } else {
                 this.props.onLinearPlotZoom(null, null, false);
             }
 
-        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr"])) {
+        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr", "purity", "ploidy"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
@@ -163,6 +169,10 @@ export class LinearPlot extends React.PureComponent<Props> {
             .range([PADDING.left, width - PADDING.right]);
     }
 
+    getScaledYScale(height: number, purity: number) {
+        return d3.scaleLinear().domain([2*(1 - purity), purity * 10 + 2*(1-purity)]).range([height - PADDING.bottom, PADDING.top])
+    }
+
     createNewBrush() {
         const svg = d3.select(this._svg);
         const brush = d3.brush()
@@ -180,21 +190,26 @@ export class LinearPlot extends React.PureComponent<Props> {
             .call(brush);
     }
 
+    filterFractionalCNTicks(ticks: number[], domain: number[]) {
+        return ticks.filter((value, i) => value > domain[0] && value < domain[1]);
+    }
+
     redraw() {
         if (!this._svg) {
             return;
         }
 
+        
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
-            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode, driverGenes} = this.props;
+            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode, driverGenes, purity, ploidy, meanRD} = this.props;
 
         const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
-        const yScale =
-            d3.scaleLinear()
+        const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
-
+        
+        // Stores all chrs that are within the xscale bounds
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
         let chrStarts = genome.getChrStartMap();
@@ -205,22 +220,18 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
         }
 
-        const svg = d3.select(this._svg);
+        console.log(yLabel);
 
-        // Remove any previous scales
-        svg.selectAll("." + SCALES_CLASS_NAME).remove();
-        
-        // X axis text
-        svg.append("text")
+        const svg = d3.select(this._svg);
+        svg.selectAll("." + SCALES_CLASS_NAME).remove(); // Remove any previous scales
+        svg.append("text")       // X axis text
             .classed(SCALES_CLASS_NAME, true)
             .attr("text-anchor", "middle")
             .attr("font-size", 11)
             .attr("x", _.mean(xScale.range()))
             .attr("y", height - PADDING.bottom + 30)
             .text(chr || genome.getName());
-
-        // Y axis Text
-        svg.append("text")
+        svg.append("text")      // Y axis Text
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `rotate(-90, ${PADDING.left}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
@@ -228,6 +239,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr("y", PADDING.left/2+5)
             .attr("text-anchor", "middle");
 
+        
         let xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
@@ -243,12 +255,23 @@ export class LinearPlot extends React.PureComponent<Props> {
                         return niceBpCount(Number(baseNum.valueOf()), 0, chrStarts[chr])
                     }))
         
-
+        
         let yAx = (g : any, scale : any) => g
                     .classed(SCALES_CLASS_NAME, true)
                     .attr("transform", `translate(${PADDING.left}, 0)`)
                     .call(d3.axisLeft(scale).ticks((scale.range()[0] - scale.range()[1]) / 15))
-                    
+        
+        if(this.props.dataKeyToPlot === "fractional_cn") {
+            const ticks  = this.props.fractionalCNTicks;
+            const filteredTicks = this.filterFractionalCNTicks(ticks, yScale.domain())
+            yAx = (g : any, scale : any) => g
+                .classed(SCALES_CLASS_NAME, true)
+                .attr("id", "Grid")
+                .attr("transform", `translate(${PADDING.left}, 0)`)
+                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 60).tickFormat((d, i) => d3.format(".1f")(filteredTicks[i])))
+        }
+
+        // Zooming along each individual axis
         const gx = svg.append("g");
         const gy = svg.append("g");
         let z = d3.zoomIdentity;
@@ -263,7 +286,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             try {
                 const t = d3.event.transform;
                 const k = t.k / z.k;
-                const point = center(d3.event);
+                const point = (d3.event.sourceEvent) ? [d3.event.sourceEvent.layerX, d3.event.sourceEvent.layerY] : [width / 2, height / 2];
 
                 // is it on an axis?
                 const doX = point[0] > xScale.range()[0];
@@ -271,7 +294,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
                 if(displayMode === DisplayMode.zoom || !(doX && doY)) {
                     if (k === 1) {
-                    // pure translation?
+                        // pure translation?
                         doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
                         doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
                     } else {
@@ -285,8 +308,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             } catch(error) {
                 console.log("Error: ", error);
             }
-          }).on("end", () => {
-                if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
+          }).on("end", () => {  // After finishing zoom event, send information to other plots about the new scales -> Keeps plots in sync with each other
+              
+                if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD" || this.props["dataKeyToPlot"] === "fractional_cn") {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                 } else {
                     self.props.onLinearPlotZoom([self._currXScale.domain()[0], self._currXScale.domain()[1]], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
@@ -294,13 +318,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
 
         );
-
-        function center(event : any) {
-            if (event.sourceEvent) {
-                return [event.sourceEvent.layerX, event.sourceEvent.layerY];
-            }
-            return [width / 2, height / 2];
-        }
 
         if (!this._canvas) {
             return;
@@ -317,7 +334,8 @@ export class LinearPlot extends React.PureComponent<Props> {
         let colorFill = (d:any) => {
             return webglColor(chooseColor(d));
         };
-        let fillColor = fc.webglFillColor().value(colorFill).data(this.props.data);
+
+        let fillColor = fc.webglFillColor().value(colorFill).data(data);
         let pointSeries = fc
                 .seriesWebglPoint()
                 .size(3)
@@ -359,9 +377,11 @@ export class LinearPlot extends React.PureComponent<Props> {
 
 
         function redraw() {
+            
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.clearColor(255,255,255,1);
             const yr = ty().rescaleY(yScale);
+
             gy.call(yAx, yr);
             self._currYScale = yr;
             if(!chr) {
@@ -375,10 +395,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                 self._currXScale = xr;
                 pointSeries.xScale(xr).yScale(yr);
             }
-            
+        
             pointSeries(data);
+
             if(driverGenes) {
-                
                 svg.select(".Drivers").remove();
                 svg.select(".eventrect")
                         .append("g")
@@ -403,7 +423,9 @@ export class LinearPlot extends React.PureComponent<Props> {
                                 let dest = "";
                                 if(dataKeyToPlot === "reverseBAF" && self.props.applyLog) {
                                     dest = "logRD"
-                                } else if(dataKeyToPlot === "reverseBAF") {
+                                } else if(dataKeyToPlot === "reverseBAF" && self.props.showPurityPloidy) {
+                                    dest = "fractional_cn"
+                                } else if(dataKeyToPlot === "reverseBAF"){
                                     dest = "RD"
                                 } else {
                                     dest = "reverseBAF"
@@ -492,7 +514,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                         const implicitStart = xScale.invert(startEnd.start);
                         const implicitEnd = xScale.invert(startEnd.end);
                     
-                        if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD") {
+                        if(this.props["dataKeyToPlot"] === "RD" || this.props["dataKeyToPlot"] === "logRD" || this.props["dataKeyToPlot"] === "fractional_cn") {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], true);
                         } else {
                             this.props.onLinearPlotZoom([implicitStart, implicitEnd], [self._currYScale.domain()[0], self._currYScale.domain()[1]], false);
@@ -521,15 +543,17 @@ export class LinearPlot extends React.PureComponent<Props> {
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
-        return <div className="highlight" style={{
-            position: "absolute",
-            left: start,
-            width: boxWidth,
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,1)",
-            border: "1px solid rgba(0,0,0,1)",
-            zIndex: 1,
+        if(start && start > 0) {
+            return <div className="highlight" style={{
+                position: "absolute",
+                left: start,
+                width: boxWidth,
+                height: "100%",
+                backgroundColor: "rgba(0,0,0,1)",
+                border: "1px solid rgba(0,0,0,1)",
+                zIndex: 1,
         }} />
+        }
     }
 
     handleMouseMove(event: React.MouseEvent) {
@@ -576,7 +600,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             
             <svg ref={node => this._svg = node} preserveAspectRatio={'xMinYMin meet'} viewBox={'0 0 ' + (width) + ' ' + (height)}/>
             <div className="LinearPlot-tools">
-                {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD")
+                {(dataKeyToPlot === "RD" || dataKeyToPlot === "logRD" || dataKeyToPlot === "fractional_cn")
                 && <button className="custom-button linear-plot-button" onClick={() => {
                     this.props.onLinearPlotZoom(null, null, true, true);
                 }}

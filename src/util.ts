@@ -635,8 +635,10 @@ export const buildURI = ((data : any, uFEFF: any, headers: any, separator: any, 
     : URL.createObjectURL(blob);
 });
 
+export const scaleRD = (rd: number, ploidy: number | null, meanRD: number | null) => {
+    if (!ploidy || !meanRD) {
+      return rd;
+    }
 
-
-
-
-
+    return rd * ploidy / meanRD;
+}

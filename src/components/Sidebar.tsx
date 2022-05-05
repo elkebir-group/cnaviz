@@ -51,6 +51,9 @@ interface Props {
     handleDemoFileInput: (applyClustering: boolean) => void;
     handleDemoDrivers: () => void;
     setProcessingStatus: (status: ProcessingStatus) => void;
+    onTogglePurityPloidy: () => void;
+    showPurityPloidy: boolean;
+    applyLog: boolean;
 }
 
 function Sidebar(props: Props) {
@@ -161,7 +164,7 @@ function Sidebar(props: Props) {
           <div className= "row-contents" >
             <label>
               <span className="App-CheckBox-explanation">Log RDR: </span>
-              <input type="checkbox" onClick={props.onToggleLog}/>
+              <input type="checkbox" onClick={props.onToggleLog} disabled={props.showPurityPloidy}/>
             </label>
             <label>
               <span className="App-CheckBox-explanation">Centroids: </span>
@@ -178,13 +181,17 @@ function Sidebar(props: Props) {
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
           </div>
+          <div className= "row-contents" >
+            <label>
+              <span className="App-CheckBox-explanation">Purity/Ploidy: </span>
+              <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} disabled={props.applyLog} readOnly/>
+            </label>
+          </div>
 
           <div className= "row-contents" >
             <label className="custom-file-upload">
               <input type="button" id="custom-button" onClick={() => { 
-                // props.setProcessingStatus(ProcessingStatus.processing);
                 props.onTogglesilhouettes();
-                // props.setProcessingStatus(ProcessingStatus.done);
               }}/>
               Analytics (s)
             </label>

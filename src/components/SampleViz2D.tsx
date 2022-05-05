@@ -23,7 +23,6 @@ interface Props {
     invertAxis?: boolean;
     customColor: string;
     colors: string[];
-    assignCluster: boolean;
     onBrushedBinsUpdated: (brushedBins: GenomicBin[]) => void;
     brushedBins: GenomicBin[];
     updatedBins: boolean;
@@ -39,14 +38,19 @@ interface Props {
     scales: any;
     centroidPts: {cluster: number, point: [number, number]}[]
     showCentroids: boolean;
+    purity: number;
+    ploidy: number;
+    meanRD: number;
+    fractionalCNTicks: number[];
+    showPurityPloidy: boolean;
 }
 
 interface State {
     selectedSample: string;
-
 }
 
 export class SampleViz2D extends React.Component<Props, State> {
+    
     static defaultProps = {
         onLocationHovered: _.noop,
         invertAxis: false,
@@ -88,9 +92,9 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
     
     render() {
-        const {data, width, height, hoveredLocation, invertAxis, customColor, assignCluster, 
+        const {data, width, height, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                applyLog, scales, centroidPts, showCentroids} = this.props;
+                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy} = this.props;
 
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
@@ -106,7 +110,6 @@ export class SampleViz2D extends React.Component<Props, State> {
                     customColor= {customColor}
                     colors = {this.props.colors}
                     col = {this.props.colors[0]}
-                    assignCluster= {assignCluster} 
                     onBrushedBinsUpdated= {this.handleUpdatedBrushedBins}
                     brushedBins= {brushedBins}
                     updatedBins= {updatedBins}
@@ -114,11 +117,16 @@ export class SampleViz2D extends React.Component<Props, State> {
                     onZoom = {onZoom}
                     clusterTableData = {clusterTableData}
                     applyLog = {applyLog}
-                    yAxisToPlot = {applyLog ? "logRD" : "RD"}
+                    yAxisToPlot = {(applyLog) ? "logRD" : ((showPurityPloidy) ? "fractional_cn" : "RD")}
                     onClusterSelected ={this.props.onClusterSelected}
                     scales={scales}
                     centroidPts={centroidPts}
                     showCentroids={showCentroids}
+                    purity={purity}
+                    ploidy={ploidy}
+                    meanRD={meanRD}
+                    fractionalCNTicks={fractionalCNTicks}
+                    showPurityPloidy={showPurityPloidy}
                     />
             </DivWithBullseye>
         </div>;

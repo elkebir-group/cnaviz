@@ -28,24 +28,32 @@ interface Props {
     driverGenes: Gene[] | null;
     handleDriverGenesChange: (sentGene: {gene: Gene | null, destination: string | null}) => void;
     driverGeneUpdate: {gene: Gene | null, destination: string | null};
+    purity: number;
+    ploidy: number;
+    meanRD: number;
+    fractionalCNTicks: number[];
+    showPurityPloidy:boolean;
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
         brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
-        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes} = props;
+        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy} = props;
+    // console.log("RD RANGE: ", rdRange)
+    // console.log("y scale: ", yScale)
+
     return <LinearPlot
                 data={data}
-                dataKeyToPlot={applyLog ? "logRD" : "RD"}
+                dataKeyToPlot={(applyLog) ? "logRD" : ((showPurityPloidy) ? "fractional_cn" : "RD")}
                 applyLog={applyLog}
                 genome={genome}
                 chr={chr}
                 hoveredLocation={hoveredLocation}
                 onLocationHovered={onLocationHovered}
                 onBrushedBinsUpdated={onBrushedBinsUpdated}
-                yMin={yScale ? yScale[0] : (applyLog ? -2 : 0)}
+                yMin={yScale ? yScale[0] : (showPurityPloidy ? rdRange[0] : (applyLog ? -2 : 0))}
                 yMax={yScale ? yScale[1] : rdRange[1]}
-                yLabel={applyLog ? "log RDR" : "RDR"}
+                yLabel={applyLog ? "log RDR" : (showPurityPloidy ? "Copy Number" : "RDR")}
                 brushedBins={brushedBins}
                 customColor={customColor}
                 colors={colors}
@@ -59,13 +67,18 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
                 driverGenes={driverGenes}
                 driverGeneUpdate={props.driverGeneUpdate}
                 handleDriverGenesChange={props.handleDriverGenesChange}
+                purity={purity}
+                ploidy={ploidy}
+                meanRD={meanRD}
+                fractionalCNTicks={fractionalCNTicks}
+                showPurityPloidy={showPurityPloidy}
         />
 }
 
 export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
-            implicitStart, implicitEnd, onZoom, driverGenes, applyLog} = props;
+            implicitStart, implicitEnd, onZoom, driverGenes, applyLog, purity, ploidy, meanRD, showPurityPloidy, fractionalCNTicks} = props;
 
     return <LinearPlot
                 data={data}
@@ -92,5 +105,12 @@ export function BAFLinearPlot(props: Props) {
                 driverGenes={driverGenes}
                 driverGeneUpdate={props.driverGeneUpdate}
                 handleDriverGenesChange={props.handleDriverGenesChange}
+                purity={purity}
+                ploidy={ploidy}
+                meanRD={meanRD}
+                showPurityPloidy={showPurityPloidy}
+                fractionalCNTicks={fractionalCNTicks}
         />;
 }
+
+

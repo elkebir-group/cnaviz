@@ -16,6 +16,7 @@ import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import {FiX} from "react-icons/fi";
 import {AnalyticsTab} from "./components/AnalyticsTab";
+import {DEFAULT_PLOIDY, DEFAULT_PURITY} from "./constants";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -86,12 +87,23 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
             let chrNameLength: any = [];
-            
+
+            const rdMeans : { [sample: string] : number } = {};
+
+            let sampleGrouped = _.groupBy(parsed, "SAMPLE");
+            for(const sample in sampleGrouped) {
+                rdMeans[sample] = _.meanBy(sampleGrouped[sample], (d:GenomicBin) => d.RD)
+            }
+
+            // this.rdMeans[sample] = _.meanBy(currentSampleBins, "RD");
+            const mean_rd = _.meanBy(parsed, (d:GenomicBin) => d.RD)
+
             for (const bin of parsed) {
                 if(!applyClustering || bin.CLUSTER === undefined) {
                     bin.CLUSTER = -1;
                 }
 
+                bin.fractional_cn = bin.RD * DEFAULT_PLOIDY / rdMeans[bin.SAMPLE]
                 bin.logRD = Math.log2(bin.RD);
 
                 if(lastChr !==  bin["#CHR"]) {
@@ -239,6 +251,8 @@ interface State {
         cluster: number;
         avg: number;
     }[];
+
+    showPurityPloidyInputs: boolean;
 }
 
 
@@ -267,7 +281,7 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             invertAxis: false,
-            sampleAmount: 2,
+            sampleAmount: 1,
             showComponents: [true, true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
@@ -292,7 +306,8 @@ export class App extends React.Component<{}, State> {
             scales: {xScale: null, yScale: null},
             driverGenes: null,
             showSilhouettes: ProcessingStatus.none,
-            silhouettes: []
+            silhouettes: [],
+            showPurityPloidyInputs: false
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -328,6 +343,8 @@ export class App extends React.Component<{}, State> {
         this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
         this.onClearClustering = this.onClearClustering.bind(this);
         this.setProcessingStatus = this.setProcessingStatus.bind(this);
+        this.onTogglePurityPloidy = this.onTogglePurityPloidy.bind(this);
+        
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -353,7 +370,7 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key === "/" || d3.event.key === "?") {
                 self.setState({showDirections: true})
-            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && d3.event.key === "Meta") {
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && (d3.event.key === "Meta" || d3.event.key =="Control")) {
                 self.setState({displayMode: DisplayMode.select})
             } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.select) && d3.event.key === "Alt") {
                 self.setState({displayMode: DisplayMode.erase})
@@ -365,7 +382,7 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(d3.event.key === "/" || d3.event.key === "?") {
                 self.setState({showDirections: false})
-            } else if(self.state.displayMode === DisplayMode.select && d3.event.key === "Meta") {
+            } else if(self.state.displayMode === DisplayMode.select && (d3.event.key === "Meta" || d3.event.key =="Control")) {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(self.state.displayMode === DisplayMode.erase && d3.event.key === "Alt") {
                 self.setState({displayMode: DisplayMode.zoom})
@@ -561,6 +578,14 @@ export class App extends React.Component<{}, State> {
     }
 
     toggleLog() {
+        if(this.state.applyLog) {
+            this.state.indexedData.setDataKeyType("RD");
+            this.state.indexedData.recalculateCentroids("RD");
+        } else {
+            this.state.indexedData.setDataKeyType("logRD");
+            this.state.indexedData.recalculateCentroids("logRD");
+        }
+        
         this.setState({
             applyLog: !this.state.applyLog
         });
@@ -635,6 +660,18 @@ export class App extends React.Component<{}, State> {
     onClearClustering() {
         this.state.indexedData.clearClustering();
         this.setState({indexedData: this.state.indexedData});
+    }
+
+    onTogglePurityPloidy() {
+        if(this.state.showPurityPloidyInputs) {
+            this.state.indexedData.setDataKeyType("RD");
+            // this.state.indexedData.recalculateCentroids("RD");
+        } else {
+            this.state.indexedData.setDataKeyType("fractional_cn");
+            // this.state.indexedData.recalculateCentroids("fractional_cn");
+        }
+
+        this.setState({showPurityPloidyInputs: !this.state.showPurityPloidyInputs});
     }
 
     async onToggleSilhoutteBarPlot() {
@@ -719,6 +756,7 @@ export class App extends React.Component<{}, State> {
                                     syncScales={this.state.syncScales}
                                     handleZoom={this.handleZoom}
                                     scales={this.state.scales}
+                                    showPurityPloidyInputs = {this.state.showPurityPloidyInputs}
                                 ></SampleViz>)}
                     </div>
                 </div>);
@@ -768,6 +806,9 @@ export class App extends React.Component<{}, State> {
                     handleDemoFileInput={this.handleDemoFileInput}
                     handleDemoDrivers={this.handleDemoDrivers}
                     setProcessingStatus={this.setProcessingStatus}
+                    onTogglePurityPloidy={this.onTogglePurityPloidy}
+                    showPurityPloidy={this.state.showPurityPloidyInputs}
+                    applyLog={this.state.applyLog}
                 />
             </div>
             

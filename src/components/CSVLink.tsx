@@ -16,9 +16,9 @@ interface State {
 function convertToTsv(data: readonly GenomicBin[]): Promise<string> {
     return new Promise((resolve, reject) => {
         let keys = Object.keys(data[0]);
-            
+        console.log("Keys: ", keys)
         const headings = keys.slice(0, keys.length-3);
-
+        console.log("HEADINGS: ", headings)
         // iterate over the data
         const rows : string = toCSV(data, headings, "\t", " ");
         let csvContent : any = rows;

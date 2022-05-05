@@ -1,7 +1,7 @@
 import React from "react";
 import { ChromosomeInterval } from "../model/ChromosomeInterval";
 import { DivWithBullseye } from "./DivWithBullseye";
-import { RDLinearPlot, BAFLinearPlot } from "./RdrBafLinearPlots";
+import { RDLinearPlot, BAFLinearPlot} from "./RdrBafLinearPlots";
 
 import "./SampleViz.css";
 import { GenomicBin } from "../model/GenomicBin";
@@ -30,6 +30,12 @@ interface Props {
     onZoom: (newScales: any) => void;
     implicitRange: [number, number] | null;
     driverGenes: Gene[] | null;
+    purity: number;
+    ploidy: number;
+    fractional_range: [number, number];
+    meanRD: number;
+    fractionalCNTicks: number[];
+    showPurityPloidy: boolean;
 }
 
 interface State {
@@ -59,7 +65,8 @@ export class SampleViz1D extends React.Component<Props, State> {
 
     render() {
         const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
-             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes} = this.props;
+             customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes,
+            purity, ploidy, fractional_range, meanRD, fractionalCNTicks, showPurityPloidy} = this.props;
 
         let visualization: React.ReactNode = null;
             visualization = <DivWithBullseye className="SampleViz-pane">
@@ -86,10 +93,15 @@ export class SampleViz1D extends React.Component<Props, State> {
                     driverGenes={driverGenes}
                     handleDriverGenesChange={this.handleDriverGenesChange}
                     driverGeneUpdate={this.state.sentDriver}
+                    purity={purity}
+                    ploidy={ploidy}
+                    meanRD={meanRD}
+                    fractionalCNTicks={fractionalCNTicks}
+                    showPurityPloidy={showPurityPloidy}
                     />
-                    
+
                 <div className="SampleViz-separator" />
-                <BAFLinearPlot
+                    <BAFLinearPlot
                     data={data}
                     chr={chr}
                     hoveredLocation={hoveredLocation}
@@ -111,7 +123,13 @@ export class SampleViz1D extends React.Component<Props, State> {
                     driverGenes={driverGenes}
                     handleDriverGenesChange={this.handleDriverGenesChange}
                     driverGeneUpdate={this.state.sentDriver}
+                    purity={purity}
+                    ploidy={ploidy}
+                    meanRD={meanRD}
+                    fractionalCNTicks={fractionalCNTicks}
+                    showPurityPloidy={showPurityPloidy}
                 />
+
                     
             </DivWithBullseye>;
 

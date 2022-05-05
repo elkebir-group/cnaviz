@@ -8,6 +8,11 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
+import {DEFAULT_PLOIDY, DEFAULT_PURITY} from "../constants";
+import {scaleRD} from "../util"
+import _, { mean } from "lodash";
+import memoizeOne from "memoize-one";
+
 
 const UNCLUSTERED_ID = "-1";
 const DELETED_ID = "-2";
@@ -26,7 +31,6 @@ interface Props {
     invertAxis?: boolean;
     customColor: string;
     colors: string[];
-    assignCluster: boolean;
     onBrushedBinsUpdated: any;
     brushedBins: GenomicBin[];
     updatedBins: boolean;
@@ -47,6 +51,7 @@ interface Props {
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
     showCentroids: boolean;
     driverGenes: Gene[] | null;
+    showPurityPloidyInputs: boolean;
 }
 
 interface State {
@@ -54,6 +59,8 @@ interface State {
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
     selectedCluster:string;
     implicitRange: [number, number]  | null;
+    purity: number;
+    ploidy: number;
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -65,13 +72,17 @@ export class SampleViz extends React.Component<Props, State> {
             selectedSample: props.initialSelectedSample || props.data.getSampleList()[0],
             scales: {xScale: null, yScale: null},
             selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID,
-            implicitRange: null
+            implicitRange: null,
+            purity: DEFAULT_PURITY,
+            ploidy: DEFAULT_PLOIDY
         }
+
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
         this.handleSelectedSampleChange = this.handleSelectedSampleChange.bind(this);
         this.handleZoom = this.handleZoom.bind(this);
         this.handleLinearPlotZoom = this.handleLinearPlotZoom.bind(this);
-        
+        this.onUpdatePurity = this.onUpdatePurity.bind(this);
+        this.onUpdatePloidy = this.onUpdatePloidy.bind(this);
     }
 
     initializeListOfClusters() : string[] {
@@ -94,8 +105,8 @@ export class SampleViz extends React.Component<Props, State> {
     componentDidUpdate(prevProps: Props) {
         if(this.props.clusterTableData !== prevProps.clusterTableData) {
             this.initializeListOfClusters();
-        } else if(this.props.applyLog !== prevProps.applyLog) {
-            let newScale = {xScale: this.state.scales.xScale, yScale: null};
+        } else if(this.props.applyLog !== prevProps.applyLog || this.props.showPurityPloidyInputs !== prevProps.showPurityPloidyInputs) {
+            let newScale = {xScale: this.state.scales.xScale, yScale: null}; // keep x zoom but reset y
             this.setState({scales: newScale});
         }
     }
@@ -109,8 +120,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleZoom(newScales: any) {
-        const {syncScales, handleZoom} = this.props;
-        (syncScales) ?  handleZoom(newScales) : this.setState({scales: newScales})
+        this.setState({scales: newScales})
     }
 
     handleLinearPlotZoom(genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) {
@@ -125,39 +135,66 @@ export class SampleViz extends React.Component<Props, State> {
         }
     }
 
-    
+    onUpdatePurity(purity: number) {
+        this.setState({purity: purity});
+    }
+
+    onUpdatePloidy(ploidy: number) {
+        // this.props.data.updateFractionalCopyNumbers(ploidy, this.state.selectedSample);
+        this.setState({ploidy: ploidy});
+    }
+
+    getSelectedBins(syncScales : boolean, implicitRange : [number, number] | null, selectedSample:string, applyLog:boolean, showPurityPloidy: boolean, meanRD:number, data:DataWarehouse) {
+        let selectedRecords : GenomicBin[] = [];
+        let scales = (syncScales) ? this.props.scales : this.state.scales;
+        let dataKey : keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn"> = (applyLog) ? "logRD" : ((showPurityPloidy) ? "fractional_cn" : "RD");
+
+        if (implicitRange !== null || scales.xScale !== null || scales.yScale !== null) {
+            let implicitStart = (implicitRange) ? implicitRange[0] : null;
+            let implicitEnd = (implicitRange) ? implicitRange[1] : null;
+            selectedRecords = data.getRecords(selectedSample, dataKey, implicitStart, implicitEnd, scales.xScale, scales.yScale, meanRD, this.state.ploidy);
+        } else { 
+            selectedRecords = data.getRecords(selectedSample, dataKey, null, null, null, null, meanRD, this.state.ploidy);
+        }
+        return selectedRecords;
+    }
+
     render() {
         const {data, initialSelectedSample, applyLog, 
-            showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales} = this.props;
+        showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales, showPurityPloidyInputs} = this.props;
         const {implicitRange} = this.state;
         
         const selectedSample = this.state.selectedSample;
-        const rdRange = data.getRdRange(selectedSample, applyLog);
+        let rdRange = data.getRdRange(selectedSample, applyLog);
         
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName}>{sampleName}</option>
         );
 
-        let selectedRecords = [];
-        let scales = (syncScales) ? this.props.scales : this.state.scales;
-        if (implicitRange !== null || scales.xScale !== null || scales.yScale !== null) {
-            let implicitStart = (implicitRange) ? implicitRange[0] : null;
-            let implicitEnd = (implicitRange) ? implicitRange[1] : null;
-            selectedRecords = data.getRecords(selectedSample, applyLog, implicitStart, implicitEnd, scales.xScale, scales.yScale);
-        } else { 
-            selectedRecords = data.getRecords(selectedSample, applyLog, null, null, null, null);
-        }
-        
+        const meanRD = data.getMeanRD(selectedSample)
+
+        let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
+        // selectedRecords = this.scaleBins(selectedRecords, this.state.ploidy, this.state.selectedSample);
+ 
         rdRange[1] += 0.5;
-        
+        if(showPurityPloidyInputs) {
+            rdRange = data.getFractionCNRange(this.state.purity, 0, 20);
+        }
+
+        const fractional_range : [number, number] = [this.state.purity*0 + 2*(1 - this.state.purity), this.state.purity*10 + 2*(1 - this.state.purity)]
+        const fractionalCNTicks = data.getFractionalCNTicks(this.state.purity, 0, 20);
+
         let clusterOptions = this._clusters.map((clusterName) =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
         );
         
+        const scaleFactor = (showPurityPloidyInputs) ? this.state.ploidy / meanRD  :  1; // Sent into getCentroids to scale the centroids to the new yAxis for purity/ploidy
+
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
         let disableSelectOptions = (data.getBrushedBins().length === 0);
         return <div className="SampleViz-wrapper">
+            
             <div style={{verticalAlign: "middle"}}>
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
@@ -209,6 +246,17 @@ export class SampleViz extends React.Component<Props, State> {
                     disabled={disableSelectOptions} >New Cluster</button>
                     <button className="custom-button" onClick={this.props.onUndoClick}> Undo</button>
                 </div>}
+
+                {(showLinearPlot || showScatterPlot) 
+                && <div className="Inputs">
+                    <label>Ploidy:</label> <input  type="number" id="Purity-Input" name="volume"
+                        min="1" max="10" step="1" value={this.state.ploidy} onChange={event => this.onUpdatePloidy(Number(event.target.value))} onKeyDown={() => {return false}}></input>
+                    
+                    <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
+                        min="0" max="1" step="0.1" value={this.state.purity} onChange={event => this.onUpdatePurity(Number(event.target.value))} onKeyDown={() => {return false}}></input>
+                    
+                </div>}
+                
             </div>
 
             <div className="SampleViz-plots">
@@ -222,22 +270,35 @@ export class SampleViz extends React.Component<Props, State> {
                         rdRange={rdRange}
                         implicitRange={this.state.implicitRange}
                         scales={(syncScales) ? this.props.scales : this.state.scales}
-                        centroidPts={data.getCentroidPoints(selectedSample, this.props.chr)}
+                        centroidPts={data.getCentroidPoints(selectedSample, this.props.chr, scaleFactor)}
+                        purity={this.state.purity}
+                        ploidy={this.state.ploidy}
+                        meanRD={meanRD}
+                        fractionalCNTicks={fractionalCNTicks}
+                        showPurityPloidy={showPurityPloidyInputs}
                         />
                 }
                 {showLinearPlot && <SampleViz1D 
                     {...this.props}  
-                    data={selectedRecords}
+                    data={selectedRecords} // selectedRecords
                     onLinearPlotZoom={this.handleLinearPlotZoom}
                     onZoom={this.handleZoom}
-                    yScale={this.state.scales.yScale} 
+                    yScale={this.state.scales.yScale}
                     xScale={this.state.scales.xScale} 
                     selectedSample={this.state.selectedSample} 
                     initialSelectedSample={initialSelectedSample}
                     rdRange={rdRange}
                     displayMode={dispMode}
-                    width={showSidebar ? 600 : 600} 
-                    implicitRange={this.state.implicitRange}/>}
+                    width={600} 
+                    implicitRange={this.state.implicitRange}
+                    purity={this.state.purity}
+                    ploidy={this.state.ploidy}
+                    fractional_range={fractional_range}
+                    meanRD={meanRD}
+                    fractionalCNTicks={fractionalCNTicks}
+                    showPurityPloidy={showPurityPloidyInputs}
+                />}
+
             </div>
             
 
@@ -258,6 +319,7 @@ export class SampleViz extends React.Component<Props, State> {
                     colors={this.props.colors}
                 ></ClusterTable>
             </div>}
+            
             
         </div>
     }

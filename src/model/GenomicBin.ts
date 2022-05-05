@@ -10,7 +10,7 @@ export interface GenomicBin {
     readonly END: number;
     readonly SAMPLE: string;
     /** Read depth ratio */
-    readonly RD: number;
+    RD: number;
     readonly logRD: number;
     readonly "#SNPS": number;
     readonly COV: number;
@@ -32,6 +32,8 @@ export interface GenomicBin {
     
     readonly reverseBAF: number;
     readonly genomicPosition: number;
+    fractional_cn: number;
+    
 }
 
 export const GenomicBinHelpers = {
