@@ -43,6 +43,7 @@ interface Props {
     meanRD: number;
     fractionalCNTicks: number[];
     showPurityPloidy: boolean;
+    BAF_lines: number[];
 }
 
 interface State {
@@ -94,8 +95,8 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, width, height, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy} = this.props;
-
+                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = this.props;
+        
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
                 <Scatterplot
@@ -127,6 +128,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
+                    BAF_lines={BAF_lines}
                     />
             </DivWithBullseye>
         </div>;

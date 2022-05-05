@@ -33,14 +33,13 @@ interface Props {
     meanRD: number;
     fractionalCNTicks: number[];
     showPurityPloidy:boolean;
+    BAF_lines: number[];
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
     const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
         brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
-        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy} = props;
-    // console.log("RD RANGE: ", rdRange)
-    // console.log("y scale: ", yScale)
+        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = props;
 
     return <LinearPlot
                 data={data}
@@ -72,13 +71,14 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
                 meanRD={meanRD}
                 fractionalCNTicks={fractionalCNTicks}
                 showPurityPloidy={showPurityPloidy}
+                BAF_lines={BAF_lines}
         />
 }
 
 export function BAFLinearPlot(props: Props) {
     const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
-            implicitStart, implicitEnd, onZoom, driverGenes, applyLog, purity, ploidy, meanRD, showPurityPloidy, fractionalCNTicks} = props;
+            implicitStart, implicitEnd, onZoom, driverGenes, applyLog, purity, ploidy, meanRD, showPurityPloidy, fractionalCNTicks, BAF_lines} = props;
 
     return <LinearPlot
                 data={data}
@@ -89,7 +89,7 @@ export function BAFLinearPlot(props: Props) {
                 hoveredLocation={hoveredLocation}
                 onLocationHovered={onLocationHovered}
                 onBrushedBinsUpdated= {onBrushedBinsUpdated}
-                yMin={xScale ? xScale[0] : 0}
+                yMin={xScale ? xScale[0] : -.01}
                 yMax={xScale ? xScale[1] : 0.5}
                 yLabel={"0.5 - BAF"}
                 brushedBins={brushedBins}
@@ -110,6 +110,7 @@ export function BAFLinearPlot(props: Props) {
                 meanRD={meanRD}
                 showPurityPloidy={showPurityPloidy}
                 fractionalCNTicks={fractionalCNTicks}
+                BAF_lines={BAF_lines}
         />;
 }
 

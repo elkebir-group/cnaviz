@@ -32,10 +32,10 @@ interface Props {
     driverGenes: Gene[] | null;
     purity: number;
     ploidy: number;
-    fractional_range: [number, number];
     meanRD: number;
     fractionalCNTicks: number[];
     showPurityPloidy: boolean;
+    BAF_lines: number[];
 }
 
 interface State {
@@ -66,8 +66,8 @@ export class SampleViz1D extends React.Component<Props, State> {
     render() {
         const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
              customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes,
-            purity, ploidy, fractional_range, meanRD, fractionalCNTicks, showPurityPloidy} = this.props;
-
+            purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = this.props;
+    
         let visualization: React.ReactNode = null;
             visualization = <DivWithBullseye className="SampleViz-pane">
                 <RDLinearPlot
@@ -98,6 +98,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
+                    BAF_lines={BAF_lines}
                     />
 
                 <div className="SampleViz-separator" />
@@ -128,6 +129,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
+                    BAF_lines={BAF_lines}
                 />
 
                     

@@ -8,12 +8,8 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
-import {DEFAULT_PLOIDY, DEFAULT_PURITY} from "../constants";
-import _  from "lodash";
-
-
-const UNCLUSTERED_ID = "-1";
-const DELETED_ID = "-2";
+import {DEFAULT_PLOIDY, DEFAULT_PURITY, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY} from "../constants";
+import _, { mean, minBy }  from "lodash";
 
 interface Props {
     parentCallBack: any;
@@ -121,7 +117,7 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleZoom(newScales: any) {
-        this.setState({scales: newScales})
+        this.setState({scales: newScales});
     }
 
     handleLinearPlotZoom(genomicRange: [number, number] | null, yscale: [number, number] | null, key: boolean, reset?: boolean) {
@@ -167,27 +163,26 @@ export class SampleViz extends React.Component<Props, State> {
         
         const selectedSample = this.state.selectedSample;
         let rdRange = data.getRdRange(selectedSample, applyLog);
-        // console.log("Plot: ", this.props.plotId, " Displayed Samples: ", this.props.data.getDisplayedSamples());
 
         const sampleOptions = data.getSampleList().map(sampleName =>
             <option key={sampleName} value={sampleName} disabled={!(sampleName === this.state.selectedSample) && data.sampleIsDisplaying(sampleName)}>{sampleName} </option> //disabled={data.sampleIsDisplaying(sampleName)}
         );
 
-        // console.log(sampleOptions);
         const meanRD = data.getMeanRD(selectedSample)
 
         let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
-        // selectedRecords = this.scaleBins(selectedRecords, this.state.ploidy, this.state.selectedSample);
 
-        const BAFTICKS = data.getBAFLines(this.state.purity);
+        const BAF_lines = data.getBAFLines(this.state.purity);
 
+        // Derived from formula: FRACTIONAL_COPY_NUMBER = purity * (TOTAL_CN) + 2*(1 - purity)
+        const max_cn = (this.state.purity) ? (rdRange[1] * this.state.ploidy / meanRD - 2*(1-this.state.purity)) / this.state.purity : 0;
         rdRange[1] += 0.5;
-        if(showPurityPloidyInputs) {
-            rdRange = data.getFractionCNRange(this.state.purity, 0, 20);
-        }
 
-        const fractional_range : [number, number] = [this.state.purity*0 + 2*(1 - this.state.purity), this.state.purity*10 + 2*(1 - this.state.purity)]
-        const fractionalCNTicks = data.getFractionalCNTicks(this.state.purity, 0, 20);
+        const fractionalCNTicks = data.getFractionalCNTicks(this.state.purity, 0, max_cn);
+        
+        if(showPurityPloidyInputs) {
+            rdRange = [rdRange[0]* this.state.ploidy /meanRD, rdRange[1] * this.state.ploidy /meanRD];
+        }
 
         let clusterOptions = this._clusters.map((clusterName) =>
             <option key={clusterName} value={clusterName} >{clusterName}</option>
@@ -198,6 +193,7 @@ export class SampleViz extends React.Component<Props, State> {
         clusterOptions.unshift(<option key={UNCLUSTERED_ID} value={UNCLUSTERED_ID} >{UNCLUSTERED_ID}</option>);
         clusterOptions.unshift(<option key={DELETED_ID} value={DELETED_ID} >{DELETED_ID}</option>);
         let disableSelectOptions = (data.getBrushedBins().length === 0);
+        
         return <div className="SampleViz-wrapper">
             
             <div style={{verticalAlign: "middle"}}>
@@ -256,13 +252,24 @@ export class SampleViz extends React.Component<Props, State> {
                     <button className="custom-button" onClick={this.props.onUndoClick}> Undo</button>
                 </div>}
 
-                {(showLinearPlot || showScatterPlot) 
+                {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
-                    <label>Ploidy:</label> <input  type="number" id="Purity-Input" name="volume"
-                        min="1" max="10" step="1" value={this.state.ploidy} onChange={event => this.onUpdatePloidy(Number(event.target.value))} onKeyDown={() => {return false}}></input>
+                    <label>Ploidy:</label> <input placeholder={this.state.ploidy.toString()} type="number" id="Purity-Input" name="volume"
+                        min={MIN_PLOIDY} max={MAX_PLOIDY} step="any" onChange={event => {
+                            const newPloidy = Number(event.target.value);
+                            if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
+                                this.onUpdatePloidy(newPloidy);
+                            }
+                        }}></input>
                     
                     <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                        min="0" max="1" step="0.1" value={this.state.purity} onChange={event => this.onUpdatePurity(Number(event.target.value))} onKeyDown={() => {return false}}></input>
+                        min={MIN_PURITY} max={MAX_PURITY} step="any" placeholder={this.state.purity.toString()} onChange={event => {
+                            const newPurity = Number(event.target.value);
+                            if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
+                                this.onUpdatePurity(newPurity);
+                            }
+                            
+                        }}></input>
                     
                 </div>}
                 
@@ -285,6 +292,7 @@ export class SampleViz extends React.Component<Props, State> {
                         meanRD={meanRD}
                         fractionalCNTicks={fractionalCNTicks}
                         showPurityPloidy={showPurityPloidyInputs}
+                        BAF_lines={BAF_lines}
                         />
                 }
                 {showLinearPlot && <SampleViz1D 
@@ -302,10 +310,10 @@ export class SampleViz extends React.Component<Props, State> {
                     implicitRange={this.state.implicitRange}
                     purity={this.state.purity}
                     ploidy={this.state.ploidy}
-                    fractional_range={fractional_range}
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidyInputs}
+                    BAF_lines={BAF_lines}
                 />}
 
             </div>

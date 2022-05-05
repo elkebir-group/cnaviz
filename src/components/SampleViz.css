@@ -71,10 +71,8 @@ button {
 }
 
 #Purity-Input {
-    /* margin-left: 30px; */
-    /* display: flex;
-    justify-content: left; */
     height: 20px;
+    width: 100px;
 }
 .input-label {
     margin-left: 50px;

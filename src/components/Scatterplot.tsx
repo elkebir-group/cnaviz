@@ -12,7 +12,7 @@ import {DisplayMode} from "../App"
 import { quadtree } from "d3";
 
 const PADDING = { // For the SVG
-    left: 60,
+    left: 70,
     right: 20,
     top: 35,
     bottom: 60,
@@ -57,6 +57,7 @@ interface Props {
     meanRD: number;
     fractionalCNTicks: number[];
     showPurityPloidy: boolean;
+    BAF_lines: number[];
 }
 
 interface State {
@@ -116,11 +117,6 @@ export class Scatterplot extends React.Component<Props, State> {
         this._original_YScale = this._currYScale;
 
         let data : GenomicBin[] = props.data;
-        // this.quadTree = d3
-        //     .quadtree<GenomicBin>()
-        //     .x((d : GenomicBin) => d.reverseBAF)
-        //     .y((d : GenomicBin)  => d[props.yAxisToPlot])
-        //     .addAll(data)
 
         this._original_transform = d3.zoomIdentity.translate(0, 0).scale(1);
         this._current_transform = this._original_transform;
@@ -167,7 +163,6 @@ export class Scatterplot extends React.Component<Props, State> {
             && hoveredRdBaf.rd > this._currYScale.domain()[0] && hoveredRdBaf.rd < this._currYScale.domain()[1] ) {
             
             const radius = Math.abs(this._currXScale.invert(x) - this._currXScale.invert(x - 20));
-            // console.log(this.props.ploidy, " ", this.state.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius));
             this.props.onRecordsHovered(this.state.quadTree.find(hoveredRdBaf.baf, hoveredRdBaf.rd, radius) || null);
         } else {
             this.props.onRecordsHovered(null);
@@ -221,6 +216,13 @@ export class Scatterplot extends React.Component<Props, State> {
             
             let range = this._currXScale.range();
             let range2 = this._currYScale.range();
+            let yLabel = "RDR: ";
+            if (yAxisToPlot === "fractional_cn") {
+                yLabel = "Fractional CN: ";
+            } else if (yAxisToPlot === "logRD") {
+                yLabel = "Log RDR: ";
+            }
+            
             if (hoveredRecords.length === 1 && x && y && x > range[0] && x < range[1] && y < range2[0] && y > range2[1]) {
                 const record = hoveredRecords[0];
                 const recordLocation = GenomicBinHelpers.toChromosomeInterval(record);
@@ -229,7 +231,7 @@ export class Scatterplot extends React.Component<Props, State> {
                         <b>{recordLocation.toString()}</b><br/>
                         ({niceBpCount(recordLocation.getLength())})
                     </p>
-                    <div> RDR: {record[yAxisToPlot].toFixed(2)}</div>
+                    <div> {yLabel + record[yAxisToPlot].toFixed(2)}</div>
                     <div> 0.5 - BAF: {record.reverseBAF.toFixed(2)}</div>
                     <div> Cluster ID: {record.CLUSTER}</div>
                     
@@ -285,7 +287,7 @@ export class Scatterplot extends React.Component<Props, State> {
         if(!this._svg) { return; }
         this._currXScale = this._original_XScale;
         this._currYScale = this._original_YScale;
-        const newScales = {xScale: this._currXScale.domain(), yScale: this._currYScale.domain()}
+        const newScales = {xScale: null, yScale: null}
         this.props.onZoom(newScales);
         this.redraw();
     }
@@ -365,10 +367,12 @@ export class Scatterplot extends React.Component<Props, State> {
             
             let data : GenomicBin[] = this.props.data;
             const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
-            this._currYScale = rdrScale; 
+            this._currYScale = rdrScale;
+            this._original_YScale = rdrScale;
+
             // Update quadtree so that when hovering works on new points that appear 
             // (when assigning to an existing cluster - all the points in that cluster show up even if it has been filtered out)
-            // console.log("Rebuilding Quadtree2: ", this.props.ploidy)
+
             let q = d3
                 .quadtree<GenomicBin>()
                 .x((d : GenomicBin) => d.reverseBAF)
@@ -411,19 +415,15 @@ export class Scatterplot extends React.Component<Props, State> {
                         if(currentYDomain[1] <= 0) { currentYDomain[1] = 0.1; }
                         const newYDomain = [Math.log2(currentYDomain[0]), Math.log2(currentYDomain[1])];
                         this._currYScale.domain(newYDomain).range(this._currYScale.range());
-                        console.log("Switching to logRD");
                     } else if(this.props.yAxisToPlot === "fractional_cn"){ // Switched to fractional_cn from RD
                         const newYDomain = [currentYDomain[0] * this.props.ploidy / this.props.meanRD, currentYDomain[1] * this.props.ploidy / this.props.meanRD]
                         this._currYScale.domain(newYDomain).range(this._currYScale.range());
-                        console.log("Switching to fractional_cn");
                     } else if(prevProps.yAxisToPlot=== "logRD"){ // Switched to RD from logRD
                         const newYDomain = [Math.pow(2, currentYDomain[0]), Math.pow(2, currentYDomain[1])];
                         this._currYScale.domain(newYDomain).range(this._currYScale.range());
-                        console.log("Switching to RD from logRD");
                     } else if(prevProps.yAxisToPlot === "fractional_cn") {
                         const newYDomain = [currentYDomain[0] * this.props.meanRD / this.props.ploidy, currentYDomain[1] * this.props.meanRD / this.props.ploidy]
                         this._currYScale.domain(newYDomain).range(this._currYScale.range());
-                        console.log("Switching to RD from fractional_cn");
                     }
                 }
 
@@ -463,7 +463,7 @@ export class Scatterplot extends React.Component<Props, State> {
             rdLowerBound = rdRange[0];
         }
 
-        let baf = bafRange ? bafRange : [-.0001, 0.5001] // .0001 allows for points exactly on the axis to still be seen
+        let baf = bafRange ? bafRange : [-.01, 0.5001] // .0001 allows for points exactly on the axis to still be seen
         
         return {
             bafScale: d3.scaleLinear()
@@ -485,9 +485,11 @@ export class Scatterplot extends React.Component<Props, State> {
 
     filterFractionalCNTicks() {
         let currDomain = this._currYScale.domain();
-        return this.props.fractionalCNTicks.filter(value => value > currDomain[0] && value < currDomain[1]);
-        
+        const {rdRange} = this.props;
+        const epsilon = 0 // Room for error
+        return this.props.fractionalCNTicks.filter(value => value > currDomain[0] && value <= (rdRange[1] + epsilon) && value < currDomain[1]);
     }
+
 
     redraw() {
         if (!this._svg || !this._canvas || !this.scatter) {
@@ -495,7 +497,7 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy} = this.props;
+        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy, BAF_lines} = this.props;
 
         let {displayMode} = this.props;
         let xScale = this._currXScale;
@@ -504,7 +506,7 @@ export class Scatterplot extends React.Component<Props, State> {
         let yLabel = yAxisToPlot === "RD" ? "RDR" : ((yAxisToPlot === "fractional_cn") ? "Copy Number" : "log RDR");
         
         const svg = d3.select(this._svg);
-        
+
         // Remove any previous scales
         svg.selectAll("." + SCALES_CLASS_NAME).remove();
 
@@ -520,7 +522,7 @@ export class Scatterplot extends React.Component<Props, State> {
         // Y axis stuff
         svg.append("text")
             .classed(SCALES_CLASS_NAME, true)
-            .attr("y", PADDING.left-40)
+            .attr("y", 20)
             .attr("x", 0-_.mean(this._currYScale.range()))
             .attr("transform", `rotate(-90)`)
             .style("text-anchor", "middle")
@@ -530,22 +532,30 @@ export class Scatterplot extends React.Component<Props, State> {
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(d3.axisBottom(scale))
-        
-        // console.log(this.props.fractionalCNTicks);
-        // console.log("3) Scatterplot Filtered Ticks: ", this.filterFractionalCNTicks());
+
+        if(showPurityPloidy) {
+            const currXDomain = this._currXScale.domain();
+            const filteredBAFTicks = this.props.BAF_lines.filter(value => value > currXDomain[0] && value < currXDomain[1])
+            xAx = (g : any, scale : any) => g
+            .classed(SCALES_CLASS_NAME, true)
+            .attr("id", "Grid")
+            .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+            .call(d3.axisBottom(scale).tickValues(filteredBAFTicks).tickSizeInner(-height + PADDING.top + PADDING.bottom))//.tickFormat((d, i) => d3.format(".1f")(filteredBAFTicks[i]) + " (0,0)"));            
+        }
         
         let yAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("id", "Grid")
             .attr("transform", `translate(${PADDING.left}, 0)`)
-            .call(d3.axisLeft(scale))
+            .call(d3.axisLeft(scale));
+
         if(showPurityPloidy) {
             const filteredTicks = this.filterFractionalCNTicks();
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${PADDING.left}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 80).tickFormat((d, i) => d3.format(".1f")(filteredTicks[i])))
+                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 80).tickFormat((d, i) => Number(d.valueOf()).toFixed(2) + " ("+i+")"));
         }
         
         
@@ -578,13 +588,13 @@ export class Scatterplot extends React.Component<Props, State> {
                 const doY = point[1] < yScale.range()[0];
                 if(displayMode === DisplayMode.zoom || !(doX && doY)) {
                     if (k === 1) {
-                    // pure translation?
-                    doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
-                    doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
+                        // pure translation?
+                        doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);
+                        doY && zoomY && k && point && gy && gy.call(zoomY.translateBy, 0, (t.y - z.y) / ty().k);
                     } else {
-                    // if not, we're zooming on a fixed point
-                    doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
-                    doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
+                        // if not, we're zooming on a fixed point
+                        doX && zoomX && k && point && gx && gx.call(zoomX.scaleBy, k, point);
+                        doY && zoomY && k && point && gy && gy.call(zoomY.scaleBy, k, point);
                     }
                 }
             
@@ -594,8 +604,14 @@ export class Scatterplot extends React.Component<Props, State> {
                 console.log("Error: ", error);
             }
           }).on("end", () => {
-                let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
-                self.props.onZoom(newScales);
+                const xDomain = self._currXScale.domain();
+                const yDomain = self._currYScale.domain();
+                const xDomain2 = self._original_XScale.domain();
+                const yDomain2 = self._original_YScale.domain();
+                if(xDomain[0] !== xDomain2[0] || xDomain[1] !== xDomain2[1] || yDomain[0] !== yDomain2[0] || yDomain[1] !== yDomain2[1]) {
+                    let newScales = {xScale: self._currXScale.domain(), yScale: self._currYScale.domain()}
+                    self.props.onZoom(newScales);
+                }
             }
         );
         

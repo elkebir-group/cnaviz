@@ -64,6 +64,7 @@ interface Props {
     meanRD: number;
     fractionalCNTicks: number[];
     showPurityPloidy: boolean;
+    BAF_lines: number[];
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -208,7 +209,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
-        
+
         // Stores all chrs that are within the xscale bounds
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
@@ -259,6 +260,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     .attr("transform", `translate(${PADDING.left}, 0)`)
                     .call(d3.axisLeft(scale).ticks((scale.range()[0] - scale.range()[1]) / 15))
         
+        
         if(this.props.dataKeyToPlot === "fractional_cn") {
             const ticks  = this.props.fractionalCNTicks;
             const filteredTicks = this.filterFractionalCNTicks(ticks, yScale.domain())
@@ -266,8 +268,18 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${PADDING.left}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 60).tickFormat((d, i) => d3.format(".1f")(filteredTicks[i])))
+                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 60).tickFormat((d, i) =>  Number(d.valueOf()).toFixed(2)))
+        } else if(this.props.showPurityPloidy) {
+            const filteredTicks = this.props.BAF_lines;
+            const currYDomain = yScale.domain();
+            const filteredBAFTicks = this.props.BAF_lines.filter(value => value > currYDomain[0] && value < currYDomain[1])
+            yAx = (g : any, scale : any) => g
+                .classed(SCALES_CLASS_NAME, true)
+                .attr("id", "Grid")
+                .attr("transform", `translate(${PADDING.left}, 0)`)
+                .call(d3.axisLeft(scale).tickValues(filteredBAFTicks).tickSizeInner(-width + PADDING.left + PADDING.right))
         }
+
 
         // Zooming along each individual axis
         const gx = svg.append("g");

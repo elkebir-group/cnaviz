@@ -1,10 +1,10 @@
-import _, {memoize} from "lodash";
+import _, {memoize, sortBy} from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
 import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette} from "../util"
-import { DEFAULT_PLOIDY, CN_STATES } from "../constants";
+import { DEFAULT_PLOIDY, CN_STATES, MAX_PLOIDY} from "../constants";
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
     return new Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}>((resolve, reject) => {
@@ -290,7 +290,7 @@ export class DataWarehouse {
     getDisplayedSamples() {
         return this.samplesShown;
     }
-    
+
     async recalculatesilhouettes(applyLog: boolean) {
         if(this.shouldCalculatesilhouettes) {
             let contents = null;
@@ -714,14 +714,19 @@ export class DataWarehouse {
     }
 
     getBAFLines(purity: number) {
-        const BAF_Ticks = []
+        const BAF_Ticks = new Set<number>();
+
         for(const state of CN_STATES) {
             const A = state[0];
             const B = state[1];
             const BAF_Tick = (B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
-            BAF_Ticks.push(BAF_Tick);
+            BAF_Ticks.add(BAF_Tick);
         }
-        console.log(BAF_Ticks);
+
+        const sortedBafLines = _.sortBy([...BAF_Ticks])
+        console.log(sortedBafLines);
+        return sortedBafLines;
+
     }
 
     brushedTableData() {
