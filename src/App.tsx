@@ -221,8 +221,6 @@ interface State {
 
     displayMode: DisplayMode;
 
-    showComponents: boolean[];
-
     sidebar: boolean;
 
     chosenFile: string;
@@ -253,6 +251,8 @@ interface State {
     }[];
 
     showPurityPloidyInputs: boolean;
+    
+    // samplesShown: Set<string>;
 }
 
 
@@ -282,7 +282,6 @@ export class App extends React.Component<{}, State> {
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             invertAxis: false,
             sampleAmount: 1,
-            showComponents: [true, true],
             color: 'blue',
             colors:  CLUSTER_COLORS,
             assignCluster: false,
@@ -307,7 +306,8 @@ export class App extends React.Component<{}, State> {
             driverGenes: null,
             showSilhouettes: ProcessingStatus.none,
             silhouettes: [],
-            showPurityPloidyInputs: false
+            showPurityPloidyInputs: false,
+            // samplesShown: new Set<string>()
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -498,7 +498,26 @@ export class App extends React.Component<{}, State> {
         });
     }
 
-    
+    onChangeSample(newSample: string, prevSample: string) {
+        // const currentSamplesShown = this.state.samplesShown;
+        // currentSamplesShown.delete(prevSample);
+        // currentSamplesShown.add(newSample);
+        // this.setState({samplesShown: currentSamplesShown});
+
+    }
+
+    onAddSample(sample: string) {
+        // const currentSamplesShown = this.state.samplesShown;
+        // currentSamplesShown.add(sample);
+        // this.setState({samplesShown: currentSamplesShown});
+    }
+
+    onRemoveSample(sample: string) {
+        // const currentSamplesShown = this.state.samplesShown;
+        // currentSamplesShown.delete(sample);
+        // this.setState({samplesShown: currentSamplesShown});
+    }
+
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
         this.state.indexedData.setChrFilter(event.target.value);
@@ -538,15 +557,12 @@ export class App extends React.Component<{}, State> {
     }
 
     handleAddSampleClick() {
-        const newShowComponents = this.state.showComponents.concat([true]);
-        this.setState({showComponents: newShowComponents});
+        this.state.indexedData.setDisplayedSample(this.state.indexedData.getSampleList()[this.state.sampleAmount]);
         this.setState({sampleAmount: this.state.sampleAmount + 1});
     }
 
-    handleRemovePlot(plotId: number) {
-        let newShowComponents = [...this.state.showComponents];
-        newShowComponents.splice(plotId, 1);
-        this.setState({showComponents: newShowComponents});
+    handleRemovePlot() {
+        this.state.indexedData.removeDisplayedSample(this.state.indexedData.getSampleList()[this.state.sampleAmount-1]);
         this.setState({sampleAmount: this.state.sampleAmount - 1});
     }
 
@@ -701,6 +717,7 @@ export class App extends React.Component<{}, State> {
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
         let actions = indexedData.getActions();
+        
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             const scatterplotProps = {
@@ -743,7 +760,6 @@ export class App extends React.Component<{}, State> {
                     
                     <div className="sampleviz-wrapper-row">
                             {_.times(sampleAmount, i => samples.length > i 
-                            && this.state.showComponents[i] 
                             && <SampleViz 
                                     key={i}
                                     {...scatterplotProps} 

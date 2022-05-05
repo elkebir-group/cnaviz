@@ -1,11 +1,9 @@
-import _, { mean, sample, memoize, MemoizedFunction} from "lodash";
+import _, {memoize} from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
-import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette, scaleRD} from "../util"
-import { brush, cluster } from "d3";
-import { resolve } from "dns";
+import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette} from "../util"
 import { DEFAULT_PLOIDY, CN_STATES } from "../constants";
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
@@ -13,7 +11,6 @@ export function reformatBins(samples: string[], applyLog: boolean, allRecords: r
         const multiDimData = []; 
         const labels : number[] = [];
         const clusterToData = new Map<Number, Number[][]>();
-
         const rdKey = (applyLog) ? "logRD" :  "RD";
 
         // Reformat data into multidimensional format for RDRs and BAFs
@@ -138,7 +135,7 @@ export class DataWarehouse {
     private _updateFractionalCopyNumbers: any;
     private currentDataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">;
     private sampleToPloidy: SampleIndexedData<number>;
-
+    private samplesShown: Set<string>;
 
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -176,6 +173,7 @@ export class DataWarehouse {
         this.overallSilhouette = 0;
         this.currentDataKey="RD";
         this.sampleToPloidy = {};
+        this.samplesShown = new Set<string>();
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -253,6 +251,7 @@ export class DataWarehouse {
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
+        this.getBAFLines = memoizeOne(this.getBAFLines);
 
         this._updateFractionalCopyNumbers = memoize(this.updateFractionalCopyNumbers, (...args) => {
             return "" + args[0] + "_" + args[1] + "_" + args[2].length + "_" + args[3].join(".");
@@ -276,6 +275,22 @@ export class DataWarehouse {
 
     }
 
+    setDisplayedSample(sample: string) {
+        this.samplesShown.add(sample);
+    }
+
+    removeDisplayedSample(sample: string) {
+        this.samplesShown.delete(sample);
+    }
+
+    sampleIsDisplaying(sample: string) {
+        return this.samplesShown.has(sample);
+    }
+
+    getDisplayedSamples() {
+        return this.samplesShown;
+    }
+    
     async recalculatesilhouettes(applyLog: boolean) {
         if(this.shouldCalculatesilhouettes) {
             let contents = null;
@@ -655,9 +670,11 @@ export class DataWarehouse {
             let currentBin = newRecords[i];
             let locKey = GenomicBinHelpers.toChromosomeInterval(currentBin).toString();
             let cluster = currentBin.CLUSTER;
+
             if(!this._cluster_filters.includes(String(cluster))) {
                 this._cluster_filters.push(String(cluster));
             }
+
             if(this._locationGroupedData[locKey]) {
                 for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
                     this._locationGroupedData[locKey][j].CLUSTER = cluster;

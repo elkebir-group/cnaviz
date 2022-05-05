@@ -220,8 +220,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
         }
 
-        console.log(yLabel);
-
         const svg = d3.select(this._svg);
         svg.selectAll("." + SCALES_CLASS_NAME).remove(); // Remove any previous scales
         svg.append("text")       // X axis text

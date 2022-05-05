@@ -9,9 +9,7 @@ import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
 import {DEFAULT_PLOIDY, DEFAULT_PURITY} from "../constants";
-import {scaleRD} from "../util"
-import _, { mean } from "lodash";
-import memoizeOne from "memoize-one";
+import _  from "lodash";
 
 
 const UNCLUSTERED_ID = "-1";
@@ -35,8 +33,8 @@ interface Props {
     brushedBins: GenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
-    onRemovePlot: any;
-    onAddSample: any;
+    onRemovePlot: () => void;
+    onAddSample: () => void;
     plotId: number;
     clusterTableData: any;
     applyLog: boolean;
@@ -83,6 +81,7 @@ export class SampleViz extends React.Component<Props, State> {
         this.handleLinearPlotZoom = this.handleLinearPlotZoom.bind(this);
         this.onUpdatePurity = this.onUpdatePurity.bind(this);
         this.onUpdatePloidy = this.onUpdatePloidy.bind(this);
+        props.data.setDisplayedSample(props.initialSelectedSample || props.data.getSampleList()[0]);
     }
 
     initializeListOfClusters() : string[] {
@@ -116,6 +115,8 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleSelectedSampleChange(event : any) {
+        // this.props.data.removeDisplayedSample(this.state.selectedSample);
+        // this.props.data.setDisplayedSample(event.target.value);
         this.setState({selectedSample: event.target.value});
     }
 
@@ -166,16 +167,20 @@ export class SampleViz extends React.Component<Props, State> {
         
         const selectedSample = this.state.selectedSample;
         let rdRange = data.getRdRange(selectedSample, applyLog);
-        
+        // console.log("Plot: ", this.props.plotId, " Displayed Samples: ", this.props.data.getDisplayedSamples());
+
         const sampleOptions = data.getSampleList().map(sampleName =>
-            <option key={sampleName} value={sampleName}>{sampleName}</option>
+            <option key={sampleName} value={sampleName} disabled={!(sampleName === this.state.selectedSample) && data.sampleIsDisplaying(sampleName)}>{sampleName} </option> //disabled={data.sampleIsDisplaying(sampleName)}
         );
 
+        // console.log(sampleOptions);
         const meanRD = data.getMeanRD(selectedSample)
 
         let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
         // selectedRecords = this.scaleBins(selectedRecords, this.state.ploidy, this.state.selectedSample);
- 
+
+        const BAFTICKS = data.getBAFLines(this.state.purity);
+
         rdRange[1] += 0.5;
         if(showPurityPloidyInputs) {
             rdRange = data.getFractionCNRange(this.state.purity, 0, 20);
@@ -202,8 +207,12 @@ export class SampleViz extends React.Component<Props, State> {
                 <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
                     {sampleOptions}
                 </select>
-                <button className="custom-button" onClick={this.props.onAddSample} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
-                <button className="custom-button" onClick={this.props.onRemovePlot} disabled={sampleAmount <= 1}> Remove Sample </button>
+                <button className="custom-button" onClick={() => {
+                    this.props.onAddSample();
+                }} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
+                <button className="custom-button" onClick={() => {
+                    this.props.onRemovePlot();
+                }} disabled={sampleAmount <= 1}> Remove Sample </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
