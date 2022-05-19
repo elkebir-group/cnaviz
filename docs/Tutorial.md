@@ -1,4 +1,4 @@
-Click [here](https://www.youtube.com/watch?v=svOtiBadekw) to see a demo of the various features in CNAViz.
+Click [here](https://youtu.be/nU8DTJIJEZ4) to see a demo of the various features in CNAViz.
 
 ## Importing and Exporting
 
