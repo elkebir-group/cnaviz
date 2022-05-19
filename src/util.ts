@@ -180,6 +180,16 @@ export const webglColor = (color : string) => {
 export const iterateElements = (selector : any, fn : any) =>
   [].forEach.call(document.querySelectorAll(selector), fn);
 
+export const createNDCoordinate = (coordinates: [number, number][]) => {
+  const ndCoordinate = [];
+  for(const [x, y] of coordinates) {
+    ndCoordinate.push(x);
+    ndCoordinate.push(y);
+  }
+  return ndCoordinate;
+}
+
+
 /**
  * calculates the average Euclidean distance from p to every point in other_cluster
  * @param p point from which distances will be calculated

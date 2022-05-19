@@ -3,7 +3,7 @@ import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
-import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette} from "../util"
+import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette, createNDCoordinate} from "../util"
 import { DEFAULT_PLOIDY, CN_STATES, cn_pair, DEFAULT_PURITY, fractional_copy_number, START_CN, END_CN} from "../constants";
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
@@ -882,6 +882,103 @@ export class DataWarehouse {
         }
 
     }
+
+    calculateCopyNumbers2() {
+        if(this._samples.length === 0) {
+            return;
+        }
+
+        for(let i = 0; i < this.allRecords.length; i++) {
+            const sample = this.allRecords[i].SAMPLE;
+            const ploidy = this.sampleToPloidy[sample];
+            const meanRD = this.rdMeans[sample];
+            const rd = this.allRecords[i].RD;
+            this.allRecords[i].fractional_cn = rd * ploidy / meanRD; 
+        }
+
+        // Convert each bin to an ND coordinate across samples
+        const locKeyToNDCoord : LocationIndexedData<number[]> = {};
+        const firstSample = this._samples[0];
+        const firstSampleData = this._sampleGroupedData[firstSample];
+
+
+        for(const bin of firstSampleData) {
+            const locKey = GenomicBinHelpers.toChromosomeInterval(bin).toString();
+            const binAcrossSamples = this._locationGroupedData[locKey];
+            const binCoords : [number, number][] = [];
+            for(const bin2 of binAcrossSamples) {
+                const sample = bin2.SAMPLE;
+                const samplePloidy = this.sampleToPloidy[sample];
+                const meanRD = this.rdMeans[sample];
+                const cnBaf : [number, number] = [bin2.reverseBAF, bin2.RD * samplePloidy / meanRD];
+                binCoords.push(cnBaf);
+            }
+
+            locKeyToNDCoord[locKey] = createNDCoordinate(binCoords);
+        }
+
+        type NDGridCoord = {state: [number, number], coord: number[]}
+
+        const statesUsed = this.sampleToBafTicks[firstSample].map(d => d.state);
+        const gridCoords : NDGridCoord[] = [];
+
+        for(const [A, B] of statesUsed) {
+            // Get the Baf ticks corresponding to the CN state [A, B] in each sample
+            const sampleToABBaf : SampleIndexedData<number> = {};
+            for(const sample of this._samples) {
+                const bafTicks : cn_pair[] = this.sampleToBafTicks[sample];
+                const foundABBAF = bafTicks.find(d => d.state[0] === A && d.state[1] === B);
+                if(foundABBAF) {
+                    sampleToABBaf[sample] = foundABBAF.tick;
+                } else {
+                    console.log("Error: Didn't find AB BAF for A-", A, " B-", B);
+                }
+            }
+
+            // Get the fractional CN tick that makes sense with the state [A, B] (the tick corresponding to state (A+B))
+
+            const totalCN = A + B;
+            const sampleToFracCN : SampleIndexedData<number> = {};
+            for(const sample of this._samples) {
+                const fracCNTicks : number[] = this.sampleToFractionalTicks[sample];
+                const totalCNFracTick : number = fracCNTicks[totalCN];
+                sampleToFracCN[sample] = totalCNFracTick;
+            }
+
+            // Create a n-dimensional cooordinate for state [A, B]
+            const nDimGridCoordinate : number[] = []
+            for(const sample of this._samples) {
+                const x = sampleToABBaf[sample];
+                const y = sampleToFracCN[sample];
+                nDimGridCoordinate.push(x);
+                nDimGridCoordinate.push(y);
+            }
+
+            gridCoords.push({state: [A, B], coord: nDimGridCoordinate});
+        }
+
+
+        // For bin (across samples) find closest nd gridCoord
+        for(let i = 0; i < this.allRecords.length; i++) {
+            const bin = this.allRecords[i];
+            const locKey = GenomicBinHelpers.toChromosomeInterval(bin).toString();
+            const ndCoord1 = locKeyToNDCoord[locKey];
+            let minDist = Infinity;
+            let minDistState = [-1, -1];
+            for (const gridCoord of gridCoords) {
+                const ndCoord2 = gridCoord.coord;
+                const dist = calculateEuclideanDist(ndCoord1, ndCoord2);
+                if (dist < minDist) {
+                    minDist = dist;
+                    minDistState = gridCoord.state;
+                }
+            }
+
+            this.allRecords[i].CN = "("+minDistState[0]+","+minDistState[1]+")";
+        }
+        
+    }
+
     /**
      * Helper function for performing queries.
      * 

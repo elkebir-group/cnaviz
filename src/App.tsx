@@ -85,57 +85,59 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 return;
             }
 
+
             if(parsed.length > 0) {
                 for(const col of REQUIRED_COLS) {
                     if(!(col in parsed[0])) {
                         throw new Error("COLUMN: " + col + " IS MISSING FROM INPUTTED DATA");
                     }
                 }
-            }
+           
 
-            let end = 0;
-            let lastChr = parsed[0]["#CHR"];
-            let chrNameLength: Chromosome[] = [];
-
-            const rdMeans : { [sample: string] : number } = {};
-
-            let sampleGrouped = _.groupBy(parsed, "SAMPLE");
-            for(const sample in sampleGrouped) {
-                rdMeans[sample] = _.meanBy(sampleGrouped[sample], (d:GenomicBin) => d.RD)
-            }
-
-            for (const bin of parsed) {
-                if(!applyClustering || bin.CLUSTER === undefined) {
-                    bin.CLUSTER = -1;
-                }
-
-                bin.fractional_cn = bin.RD * DEFAULT_PLOIDY / rdMeans[bin.SAMPLE]
-                bin.logRD = Math.log2(bin.RD);
-
-                if(lastChr !==  bin["#CHR"]) {
-                    chrNameLength.push({name: lastChr, length: (end - 0)})
-                    lastChr = bin["#CHR"]
-                }
-
-                end = Number(bin.END);
-                bin.reverseBAF = 0.5 - bin.BAF;
-            }
-
-            chrNameLength.push({name: lastChr, length: (end - 0)})
-
-            chrNameLength.sort((a: Chromosome, b : Chromosome) => {
-                return String(a.name).localeCompare(b.name, undefined, {
-                    numeric: true,
-                    sensitivity: 'base'
-                })
-            })
-
-            genome = new Genome(chrNameLength);
-
-            for (const bin of parsed) {
-                bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
-            }
             
+                let end = 0;
+                let lastChr = parsed[0]["#CHR"];
+                let chrNameLength: Chromosome[] = [];
+
+                const rdMeans : { [sample: string] : number } = {};
+
+                let sampleGrouped = _.groupBy(parsed, "SAMPLE");
+                for(const sample in sampleGrouped) {
+                    rdMeans[sample] = _.meanBy(sampleGrouped[sample], (d:GenomicBin) => d.RD)
+                }
+
+                for (const bin of parsed) {
+                    if(!applyClustering || bin.CLUSTER === undefined) {
+                        bin.CLUSTER = -1;
+                    }
+
+                    bin.fractional_cn = bin.RD * DEFAULT_PLOIDY / rdMeans[bin.SAMPLE]
+                    bin.logRD = Math.log2(bin.RD);
+
+                    if(lastChr !==  bin["#CHR"]) {
+                        chrNameLength.push({name: lastChr, length: (end - 0)})
+                        lastChr = bin["#CHR"]
+                    }
+
+                    end = Number(bin.END);
+                    bin.reverseBAF = 0.5 - bin.BAF;
+                }
+
+                chrNameLength.push({name: lastChr, length: (end - 0)})
+
+                chrNameLength.sort((a: Chromosome, b : Chromosome) => {
+                    return String(a.name).localeCompare(b.name, undefined, {
+                        numeric: true,
+                        sensitivity: 'base'
+                    })
+                })
+
+                genome = new Genome(chrNameLength);
+
+                for (const bin of parsed) {
+                    bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
+                }
+            }
             resolve(parsed);
         });
     })
@@ -382,6 +384,8 @@ export class App extends React.Component<{}, State> {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
                 self.onToggleSilhoutteBarPlot();
+            } else if(d3.event.key === "t") {
+                self.state.indexedData.calculateCopyNumbers2();
             }
         })
 
@@ -735,7 +739,7 @@ export class App extends React.Component<{}, State> {
     }
 
     onExport() {
-        this.state.indexedData.calculateCopyNumbers();
+        this.state.indexedData.calculateCopyNumbers2();
     }
 
     onTogglePurityPloidy() {
