@@ -3,6 +3,7 @@ import parse from "csv-parse";
 import _ from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
+import {Chromosome} from "./model/Genome";
 import { DataWarehouse} from "./model/DataWarehouse";
 import {SampleViz} from "./components/SampleViz";
 import spinner from "./loading-small.gif";
@@ -16,7 +17,7 @@ import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import {FiX} from "react-icons/fi";
 import {AnalyticsTab} from "./components/AnalyticsTab";
-import {DEFAULT_PLOIDY, DEFAULT_PURITY} from "./constants";
+import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -84,9 +85,17 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
                 return;
             }
 
+            if(parsed.length > 0) {
+                for(const col of REQUIRED_COLS) {
+                    if(!(col in parsed[0])) {
+                        throw new Error("COLUMN: " + col + " IS MISSING FROM INPUTTED DATA");
+                    }
+                }
+            }
+
             let end = 0;
             let lastChr = parsed[0]["#CHR"];
-            let chrNameLength: any = [];
+            let chrNameLength: Chromosome[] = [];
 
             const rdMeans : { [sample: string] : number } = {};
 
@@ -94,9 +103,6 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
             for(const sample in sampleGrouped) {
                 rdMeans[sample] = _.meanBy(sampleGrouped[sample], (d:GenomicBin) => d.RD)
             }
-
-            // this.rdMeans[sample] = _.meanBy(currentSampleBins, "RD");
-            const mean_rd = _.meanBy(parsed, (d:GenomicBin) => d.RD)
 
             for (const bin of parsed) {
                 if(!applyClustering || bin.CLUSTER === undefined) {
@@ -117,26 +123,25 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
 
             chrNameLength.push({name: lastChr, length: (end - 0)})
 
-            chrNameLength.sort((a: any, b : any) => {
-                return a.name.localeCompare(b.name, undefined, {
+            chrNameLength.sort((a: Chromosome, b : Chromosome) => {
+                return String(a.name).localeCompare(b.name, undefined, {
                     numeric: true,
                     sensitivity: 'base'
                 })
             })
 
             genome = new Genome(chrNameLength);
-            
+
             for (const bin of parsed) {
                 bin.genomicPosition = genome.getImplicitCoordinates(new ChromosomeInterval(bin["#CHR"], bin.START, bin.END)).start;
             }
-
-
+            
             resolve(parsed);
         });
     })
 }
 
-function parseDriverGenes(data: string): Promise<Gene[]> {
+function parseDriverGenes(data: string, validChromosomes: string[]): Promise<Gene[]> { 
     return new Promise((resolve, reject) => {
         parse(data, {
             cast: true,
@@ -145,20 +150,34 @@ function parseDriverGenes(data: string): Promise<Gene[]> {
             skip_empty_lines: true,
             skip_lines_with_error: true
         }, (error, parsed) => {
-
             if (error) {
                 reject(error);
                 return;
             }
 
+            if(parsed.length > 0) {
+                for(const col of REQUIRED_DRIVER_COLS) {
+                    if(!(col in parsed[0])) {
+                        throw new Error("COLUMN: " + col + " IS MISSING FROM INPUTTED DRIVER DATA");
+                    }
+                }
+            }
+            
+            const genes = [];
+            const chrs = new Set<string>(validChromosomes);
             for(const gene of parsed) {
+                
                 const components : string[] = gene["Genome Location"].split(":");
-                const start_end = components[1].split("-");
-                let interval : ChromosomeInterval = new ChromosomeInterval(components[0], Number(start_end[0]), Number(start_end[1]));
-                gene.location = interval;
+                
+                if(chrs.has(components[0])) {
+                    const start_end = components[1].split("-");
+                    let interval : ChromosomeInterval = new ChromosomeInterval(components[0], Number(start_end[0]), Number(start_end[1]));
+                    gene.location = interval;
+                    genes.push(gene);
+                }
             }
 
-            resolve(parsed);
+            resolve(genes);
         });
     })
 }
@@ -210,8 +229,6 @@ interface State {
     applyLog: boolean;
 
     applyClustering: boolean;
-
-    inputError: boolean;
     
     value: string;
 
@@ -252,7 +269,9 @@ interface State {
 
     showPurityPloidyInputs: boolean;
     
-    // samplesShown: Set<string>;
+    samplesShown: string[];
+
+    samplesNotShown: string[];
 }
 
 
@@ -288,7 +307,6 @@ export class App extends React.Component<{}, State> {
             assigned: false,
             applyLog: false,
             applyClustering: false,
-            inputError: false,
             value: "0",
             updatedBins: false,
             selectedSample: "",
@@ -307,7 +325,8 @@ export class App extends React.Component<{}, State> {
             showSilhouettes: ProcessingStatus.none,
             silhouettes: [],
             showPurityPloidyInputs: false,
-            // samplesShown: new Set<string>()
+            samplesShown: [],
+            samplesNotShown: []
         };
 
         this.handleFileChoosen = this.handleFileChoosen.bind(this);
@@ -344,7 +363,8 @@ export class App extends React.Component<{}, State> {
         this.onClearClustering = this.onClearClustering.bind(this);
         this.setProcessingStatus = this.setProcessingStatus.bind(this);
         this.onTogglePurityPloidy = this.onTogglePurityPloidy.bind(this);
-        
+        this.changeDisplayedSamples = this.changeDisplayedSamples.bind(this);
+        this.onExport = this.onExport.bind(this);
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -370,7 +390,7 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.boxzoom})
             } else if(d3.event.key === "/" || d3.event.key === "?") {
                 self.setState({showDirections: true})
-            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && (d3.event.key === "Meta" || d3.event.key =="Control")) {
+            } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.erase) && (d3.event.key === "Meta" || d3.event.key === "Control")) {
                 self.setState({displayMode: DisplayMode.select})
             } else if((self.state.displayMode === DisplayMode.zoom ||  self.state.displayMode === DisplayMode.select) && d3.event.key === "Alt") {
                 self.setState({displayMode: DisplayMode.erase})
@@ -382,7 +402,7 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(d3.event.key === "/" || d3.event.key === "?") {
                 self.setState({showDirections: false})
-            } else if(self.state.displayMode === DisplayMode.select && (d3.event.key === "Meta" || d3.event.key =="Control")) {
+            } else if(self.state.displayMode === DisplayMode.select && (d3.event.key === "Meta" || d3.event.key === "Control")) {
                 self.setState({displayMode: DisplayMode.zoom})
             } else if(self.state.displayMode === DisplayMode.erase && d3.event.key === "Alt") {
                 self.setState({displayMode: DisplayMode.zoom})
@@ -421,10 +441,24 @@ export class App extends React.Component<{}, State> {
             return;
         }
 
+        const samples = indexedData.getSampleList();
+        const initalDisplayedSamples = [];
+        const initalNotDisplayedSamples = [];
+        for(let i = 0; i < samples.length; i++) {
+            if(i < this.state.sampleAmount) {
+                initalDisplayedSamples.push(samples[i]);
+            } else {
+                initalNotDisplayedSamples.push(samples[i]);
+            }
+        }
+
         this.setState({
             indexedData: indexedData,
-            processingStatus: ProcessingStatus.done
+            processingStatus: ProcessingStatus.done,
+            samplesShown: initalDisplayedSamples,
+            samplesNotShown: initalNotDisplayedSamples
         });
+
     }
 
     async handleDemoFileInput(applyClustering: boolean) {
@@ -434,13 +468,27 @@ export class App extends React.Component<{}, State> {
             .then(r => r.text())
             .then(text => {
                 this.setState({processingStatus: ProcessingStatus.processing});
-                let indexedData = null;
+
                 parseGenomicBins(text, this.state.applyLog, applyClustering)
                 .then(parsed => {
                     let indexedData = new DataWarehouse(parsed);
+                    const samples = indexedData.getSampleList();
+                    const initalDisplayedSamples = [];
+                    const initalNotDisplayedSamples = [];
+                    for(let i = 0; i < samples.length; i++) {
+                        if(i < this.state.sampleAmount) {
+                            initalDisplayedSamples.push(samples[i]);
+                        } else {
+                            initalNotDisplayedSamples.push(samples[i]);
+                        }
+                    }
+
+                    
                     this.setState({
                         indexedData: indexedData,
-                        processingStatus: ProcessingStatus.done
+                        processingStatus: ProcessingStatus.done,
+                        samplesShown: initalDisplayedSamples,
+                        samplesNotShown: initalNotDisplayedSamples
                     });
                 })
                 .catch(error => {
@@ -472,7 +520,7 @@ export class App extends React.Component<{}, State> {
         
         let driverGenes = null;
         try {
-            const parsed = await parseDriverGenes(contents);
+            const parsed = await parseDriverGenes(contents, this.state.indexedData.getAllChromosomes());
             driverGenes = parsed;
             
 
@@ -487,7 +535,7 @@ export class App extends React.Component<{}, State> {
         fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/drivers.tsv")
         .then(r => r.text())
         .then(text => {
-            parseDriverGenes(text)
+            parseDriverGenes(text, this.state.indexedData.getAllChromosomes())
             .then(parsed => {
                this.setState({driverGenes: parsed});
             })
@@ -496,26 +544,6 @@ export class App extends React.Component<{}, State> {
                 return;
             }) 
         });
-    }
-
-    onChangeSample(newSample: string, prevSample: string) {
-        // const currentSamplesShown = this.state.samplesShown;
-        // currentSamplesShown.delete(prevSample);
-        // currentSamplesShown.add(newSample);
-        // this.setState({samplesShown: currentSamplesShown});
-
-    }
-
-    onAddSample(sample: string) {
-        // const currentSamplesShown = this.state.samplesShown;
-        // currentSamplesShown.add(sample);
-        // this.setState({samplesShown: currentSamplesShown});
-    }
-
-    onRemoveSample(sample: string) {
-        // const currentSamplesShown = this.state.samplesShown;
-        // currentSamplesShown.delete(sample);
-        // this.setState({samplesShown: currentSamplesShown});
     }
 
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -556,13 +584,41 @@ export class App extends React.Component<{}, State> {
         this.setState({invertAxis: !this.state.invertAxis});
     }
 
-    handleAddSampleClick() {
-        this.state.indexedData.setDisplayedSample(this.state.indexedData.getSampleList()[this.state.sampleAmount]);
-        this.setState({sampleAmount: this.state.sampleAmount + 1});
+    changeDisplayedSamples(newSample: string, oldSample: string) {
+        const samplesShown = this.state.samplesShown;
+        for(let i = 0; i < samplesShown.length; i++) {
+            if(samplesShown[i] === oldSample) {
+                samplesShown[i] = newSample;
+            }
+        }
+
+        let samplesNotShown = this.state.samplesNotShown;
+        samplesNotShown = samplesNotShown.filter(sample => sample !== newSample)
+        samplesNotShown.push(oldSample);
+
+        this.setState({sampleAmount: this.state.sampleAmount, samplesShown: samplesShown, samplesNotShown: samplesNotShown});
     }
 
-    handleRemovePlot() {
-        this.state.indexedData.removeDisplayedSample(this.state.indexedData.getSampleList()[this.state.sampleAmount-1]);
+    handleAddSampleClick() {
+        const newSample = this.state.samplesNotShown[0]; //this.state.indexedData.getSampleList()[this.state.sampleAmount];
+
+        const samplesShown = this.state.samplesShown;
+        samplesShown.push(newSample);
+
+        let samplesNotShown = this.state.samplesNotShown;
+        samplesNotShown = samplesNotShown.filter(sample => sample !== newSample)
+
+        this.setState({sampleAmount: this.state.sampleAmount + 1, samplesShown: samplesShown, samplesNotShown: samplesNotShown});
+    }
+
+    handleRemovePlot(sample: string) {
+        const samplesShown = this.state.samplesShown;
+        const removedSample = samplesShown[samplesShown.length-1];
+        samplesShown.pop();
+
+        const samplesNotShown = this.state.samplesNotShown;
+        samplesNotShown.push(removedSample);
+
         this.setState({sampleAmount: this.state.sampleAmount - 1});
     }
 
@@ -678,13 +734,15 @@ export class App extends React.Component<{}, State> {
         this.setState({indexedData: this.state.indexedData});
     }
 
+    onExport() {
+        this.state.indexedData.calculateCopyNumbers();
+    }
+
     onTogglePurityPloidy() {
         if(this.state.showPurityPloidyInputs) {
             this.state.indexedData.setDataKeyType("RD");
-            // this.state.indexedData.recalculateCentroids("RD");
         } else {
             this.state.indexedData.setDataKeyType("fractional_cn");
-            // this.state.indexedData.recalculateCentroids("fractional_cn");
         }
 
         this.setState({showPurityPloidyInputs: !this.state.showPurityPloidyInputs});
@@ -710,14 +768,16 @@ export class App extends React.Component<{}, State> {
 
     render() {
         const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
-        const samples = indexedData.getSampleList();
+        const samplesDisplayed = this.state.samplesShown;
+        const samplesShown = new Set<string>(samplesDisplayed);
+
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
         let actions = indexedData.getActions();
-        
+
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
             const scatterplotProps = {
@@ -739,6 +799,7 @@ export class App extends React.Component<{}, State> {
                 dispMode: this.state.displayMode,
                 onRemovePlot: this.handleRemovePlot,
                 onAddSample: this.handleAddSampleClick,
+                onChangeSample: this.changeDisplayedSamples,
                 clusterTableData: clusterTableData,
                 applyLog: this.state.applyLog,
                 onClusterSelected: this.handleClusterSelected,
@@ -747,7 +808,9 @@ export class App extends React.Component<{}, State> {
                 driverGenes: this.state.driverGenes
             };
 
-            chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
+            const sortAlphaNum = (a : string, b:string) => a.localeCompare(b, 'en', { numeric: true })
+
+            chrOptions = indexedData.getAllChromosomes().sort(sortAlphaNum).map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
 
             const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
@@ -759,21 +822,22 @@ export class App extends React.Component<{}, State> {
                 <div id="grid-container">
                     
                     <div className="sampleviz-wrapper-row">
-                            {_.times(sampleAmount, i => samples.length > i 
+                            {_.times(sampleAmount, i => samplesDisplayed.length > i 
                             && <SampleViz 
                                     key={i}
                                     {...scatterplotProps} 
-                                    initialSelectedSample={samples[i]} 
+                                    initialSelectedSample={samplesDisplayed[i]} 
                                     plotId={i}
                                     showLinearPlot={this.state.showLinearPlot}
                                     showScatterPlot={this.state.showScatterPlot}
-                                    showSidebar={this.state.sidebar}
                                     sampleAmount={sampleAmount}
                                     syncScales={this.state.syncScales}
                                     handleZoom={this.handleZoom}
                                     scales={this.state.scales}
                                     showPurityPloidyInputs = {this.state.showPurityPloidyInputs}
+                                    samplesShown={samplesShown}
                                 ></SampleViz>)}
+                            
                     </div>
                 </div>);
         }
@@ -825,6 +889,8 @@ export class App extends React.Component<{}, State> {
                     onTogglePurityPloidy={this.onTogglePurityPloidy}
                     showPurityPloidy={this.state.showPurityPloidyInputs}
                     applyLog={this.state.applyLog}
+                    processingStatus={this.state.processingStatus}
+                    onExport={this.onExport}
                 />
             </div>
             

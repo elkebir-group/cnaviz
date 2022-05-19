@@ -6,6 +6,7 @@ import { DivWithBullseye } from "./DivWithBullseye";
 import "./SampleViz.css";
 import {DisplayMode} from "../App"
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
+import { cn_pair, fractional_copy_number } from "../constants";
 
 interface Props {
     parentCallBack: any;
@@ -41,9 +42,10 @@ interface Props {
     purity: number;
     ploidy: number;
     meanRD: number;
-    fractionalCNTicks: number[];
+    fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
-    BAF_lines: number[];
+    BAF_lines: cn_pair[];
+    max_cn: number;
 }
 
 interface State {
@@ -95,7 +97,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, width, height, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = this.props;
+                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
         
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
@@ -129,6 +131,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
                     BAF_lines={BAF_lines}
+                    max_cn={max_cn}
                     />
             </DivWithBullseye>
         </div>;

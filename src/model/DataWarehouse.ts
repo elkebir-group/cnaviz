@@ -1,10 +1,10 @@
-import _, {memoize, sortBy} from "lodash";
+import _, {memoize} from "lodash";
 import { GenomicBin, GenomicBinHelpers } from "./GenomicBin";
 import "crossfilter2";
 import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
 import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette} from "../util"
-import { DEFAULT_PLOIDY, CN_STATES, MAX_PLOIDY} from "../constants";
+import { DEFAULT_PLOIDY, CN_STATES, cn_pair, DEFAULT_PURITY, fractional_copy_number, START_CN, END_CN} from "../constants";
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
     return new Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}>((resolve, reject) => {
@@ -135,7 +135,10 @@ export class DataWarehouse {
     private _updateFractionalCopyNumbers: any;
     private currentDataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">;
     private sampleToPloidy: SampleIndexedData<number>;
-    private samplesShown: Set<string>;
+    private sampleToBafTicks: SampleIndexedData<cn_pair[]>;
+    private sampleToFractionalTicks:  SampleIndexedData<number[]>;
+
+    // private totalcnToState: CNIndexedData<number[][]>;
 
     /**
      * Indexes, pre-aggregates, and gathers metadata for a list of GenomicBin.  Note that doing this inspects the entire
@@ -173,7 +176,9 @@ export class DataWarehouse {
         this.overallSilhouette = 0;
         this.currentDataKey="RD";
         this.sampleToPloidy = {};
-        this.samplesShown = new Set<string>();
+        this.sampleToBafTicks = {};
+        this.sampleToFractionalTicks = {};
+
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -199,7 +204,7 @@ export class DataWarehouse {
             let sampleDict : {[sampleName: string] : string} = {};
             for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
                 this.sampleToPloidy[sample] = DEFAULT_PLOIDY;
-
+                
                 const centroid = this.calculateCentroid(binsForSample, this.currentDataKey);
                 let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
 
@@ -247,6 +252,12 @@ export class DataWarehouse {
             }
         }
 
+        for (const sample in groupedBySample) {
+            this.getBAFLines(DEFAULT_PURITY, sample);
+            const max_cn = ((this._rdRanges[sample][1]+1) * DEFAULT_PLOIDY / this.rdMeans[sample] - 2*(1-DEFAULT_PURITY)) / DEFAULT_PURITY;
+            this.getFractionalCNTicks(DEFAULT_PURITY, START_CN, END_CN, max_cn, sample);
+        }
+
         this.initializeCentroidDistMatrix();
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
@@ -256,7 +267,6 @@ export class DataWarehouse {
         this._updateFractionalCopyNumbers = memoize(this.updateFractionalCopyNumbers, (...args) => {
             return "" + args[0] + "_" + args[1] + "_" + args[2].length + "_" + args[3].join(".");
         });
-        
     }
 
     setShouldRecalculatesilhouettes(shouldRecalculate: boolean) {
@@ -272,23 +282,11 @@ export class DataWarehouse {
     }
 
     setSamplePloidy(sample: string, ploidy: number) {
-
+        this.sampleToPloidy[sample] = ploidy;
     }
 
-    setDisplayedSample(sample: string) {
-        this.samplesShown.add(sample);
-    }
-
-    removeDisplayedSample(sample: string) {
-        this.samplesShown.delete(sample);
-    }
-
-    sampleIsDisplaying(sample: string) {
-        return this.samplesShown.has(sample);
-    }
-
-    getDisplayedSamples() {
-        return this.samplesShown;
+    getSampleToPloidy() {
+        return this.sampleToPloidy;
     }
 
     async recalculatesilhouettes(applyLog: boolean) {
@@ -410,13 +408,29 @@ export class DataWarehouse {
         return [purity * (startCN) + 2*(1 - purity),  purity * (endCN) + 2*(1 - purity)]
     }
 
-    getFractionalCNTicks(purity: number, startCN: number, endCN: number) : number[] {
-        const fractionalCNs : number[] = [];
+    getFractionalCNTicks(purity: number, startCN: number, endCN: number, maxCN: number, sample: string) : fractional_copy_number[] {
+        const fractionalCNs : fractional_copy_number[] = [];
+        
+
         for(let i = startCN; i <= endCN; i++) {
-            fractionalCNs.push(purity * (i) + 2*(1 - purity));
+            const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
+            fractionalCNs.push(fractional_cn);
         }
         
-        return fractionalCNs;
+        
+        this.sampleToFractionalTicks[sample] = fractionalCNs.map(d => d.fractionalTick);
+        // console.log(fractionalCNs.length);
+        if(endCN === maxCN) {
+            return fractionalCNs;
+        } else if(endCN < maxCN) {
+            for(let i = endCN+1; i <= maxCN; i++) {
+                const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
+                fractionalCNs.push(fractional_cn);
+            }
+            return fractionalCNs;
+        } else {
+            return fractionalCNs.slice(0, maxCN+1);
+        }
     }
     /**
      * @return a list of sample names represented in this data set
@@ -447,7 +461,7 @@ export class DataWarehouse {
     setChrFilter(chr?: string) {
         if(chr) {
             this._chr_dim.filterAll();
-            this._chr_dim.filter(d => d === chr);
+            this._chr_dim.filter(d => String(d) === String(chr));
         } else {
             this._chr_dim.filterAll();
         }
@@ -465,7 +479,7 @@ export class DataWarehouse {
     }
 
     recalculateCentroids(key: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, data?: GenomicBin[]) {
-        // console.log("Recalculating centroids");
+        console.log("Recalculating Centroids....");
         this.centroids = [];
         this.centroidPts = {};
         const bins = (data) ? data : this.allRecords
@@ -474,7 +488,9 @@ export class DataWarehouse {
             const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
             let sampleDict : {[sampleName: string] : string} = {};
             for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
-                const centroid = this.calculateCentroid(binsForSample, key);
+                let yAx = (key === "fractional_cn") ? "RD" : key;
+                const centroid = this.calculateCentroid(binsForSample, yAx);
+                
                 let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
 
                 if(this.centroidPts[sample] && this.centroidPts[clus]) {
@@ -591,35 +607,6 @@ export class DataWarehouse {
         // 7. Push table row into list of table rows
         // 8. Move on to next cluster and repeat
 
-        // recalculate centroids because they will change when the clusters are updated
-        // const groupedByCluster = _.groupBy(flattenNestedBins, "CLUSTER");
-        // for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
-        //     const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
-        //     let sampleDict : {[sampleName: string] : string} = {};
-        //     for(const [sample, binsForSample] of Object.entries(groupedBySample)) {
-        //         const centroid = this.calculateCentroid(binsForSample, this.currentDataKey);
-        //         let centroidPt : centroidPoint = {cluster: parseInt(clus), point: centroid};
-
-        //         if(this.centroidPts[sample] && this.centroidPts[clus]) {
-        //             this.centroidPts[sample][clus].push(centroidPt);
-        //         } else if(this.centroidPts[sample]) {
-        //             this.centroidPts[sample][clus] = [centroidPt];
-        //         } else  { 
-        //             let dataKey : string = clus;
-        //             let tempMap : ClusterIndexedData<centroidPoint[]> = {};
-        //             tempMap[dataKey] = [centroidPt];
-        //             this.centroidPts[sample] = tempMap;
-        //         }
-        //         let centroidStr = "(" + centroid[0].toFixed(2) + "," + centroid[1].toFixed(2) + ")";
-        //         sampleDict[sample] = centroidStr;
-        //     }
-
-        //     let centroidTableRow : newCentroidTableRow = {
-        //         key: clus,
-        //         sample: sampleDict
-        //     };
-        //     this.centroids.push(centroidTableRow);
-        // }
         this.recalculateCentroids(this.currentDataKey, flattenNestedBins);
 
         this.initializeCentroidDistMatrix();
@@ -643,7 +630,7 @@ export class DataWarehouse {
         this.setClusterFilters(this._cluster_filters);
         this.shouldCalculatesilhouettes = true;
 
-        this._updateFractionalCopyNumbers.cache = new _.memoize.Cache
+        this._updateFractionalCopyNumbers.cache = new _.memoize.Cache()
     }
 
     clearClustering() {
@@ -709,24 +696,30 @@ export class DataWarehouse {
         const meanRD = this.rdMeans[sample];
         const scalingFactor = ploidy / meanRD;
         let sampleGroupedData = _.cloneDeep(data);
-        sampleGroupedData.forEach(d => d.fractional_cn = d.RD * scalingFactor)
+        sampleGroupedData.forEach(d => d.fractional_cn = d.RD * scalingFactor);
+        // this.recalculateCentroids("fractional_cn");
         return sampleGroupedData;
     }
 
-    getBAFLines(purity: number) {
-        const BAF_Ticks = new Set<number>();
+    getBAFLines(purity: number, sample: string) {
+        const bafSeen = new Set<number>();
+        const BAF_ticks : cn_pair[] = [];
 
         for(const state of CN_STATES) {
             const A = state[0];
             const B = state[1];
-            const BAF_Tick = (B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
-            BAF_Ticks.add(BAF_Tick);
+            const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
+            const originalLen = bafSeen.size;
+            bafSeen.add(BAF_Tick);
+            if(bafSeen.size !== originalLen) {
+                const new_val : cn_pair = {tick: BAF_Tick, state: state};
+                BAF_ticks.push(new_val);
+            }
         }
 
-        const sortedBafLines = _.sortBy([...BAF_Ticks])
-        console.log(sortedBafLines);
+        const sortedBafLines = _.sortBy(BAF_ticks, "tick");
+        this.sampleToBafTicks[sample] = sortedBafLines;
         return sortedBafLines;
-
     }
 
     brushedTableData() {
@@ -767,7 +760,6 @@ export class DataWarehouse {
      */
     getRecords(sample: string, dataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, implicitStart: number | null, implicitEnd: number | null, xScale: [number, number] | null, yScale: [number, number] | null, meanRD: number, ploidy: number): GenomicBin[] {
         if(sample in this._sampleGroupedData) {
-            // console.log(this._cluster_filters.length)
             if(dataKey === "fractional_cn") {
                 let fractionalSampleData = this._updateFractionalCopyNumbers(ploidy, sample, this._sampleGroupedData[sample], this._cluster_filters);
                 return this.filterRecordsByScales(fractionalSampleData, dataKey, implicitStart, implicitEnd, xScale, yScale, meanRD, ploidy);
@@ -851,6 +843,45 @@ export class DataWarehouse {
         return this._cluster_dim;
     }
 
+    calculateCopyNumbers() {
+        for(let i = 0; i < this.allRecords.length; i++) {
+            const sample = this.allRecords[i].SAMPLE;
+            const ploidy = this.sampleToPloidy[sample];
+            const meanRD = this.rdMeans[sample];
+            const rd = this.allRecords[i].RD;
+            this.allRecords[i].fractional_cn = rd * ploidy / meanRD; 
+        }
+
+        for(let i = 0; i < this.allRecords.length; i++) {
+            const bin = this.allRecords[i];
+            const binSample = bin.SAMPLE;
+            const fractionalTicks = this.sampleToFractionalTicks[binSample];
+            const bafTicks = this.sampleToBafTicks[binSample];
+            const x = bin.reverseBAF;
+            const y = bin.fractional_cn;
+            const valuesToCompare : [number, number][] = [];
+            let minDist : number = Infinity;
+            let minState : [number, number] = [-1, -1];
+
+            for(let j=0; j < bafTicks.length; j++) {
+                const tickPair = bafTicks[j];
+                const state = tickPair.state;
+                const bafVal = tickPair.tick;
+                const totalCN = state[0] + state[1];
+                const correspondingFractional = fractionalTicks[totalCN];
+                
+                valuesToCompare.push([bafVal, correspondingFractional]);
+                const dist = Math.pow(x - bafVal, 2) + Math.pow(y - correspondingFractional, 2);
+                if(dist < minDist) {
+                    minDist = dist;
+                    minState = state;
+                }
+            }
+
+            this.allRecords[i].CN = "("+minState[0]+","+minState[1]+")";
+        }
+
+    }
     /**
      * Helper function for performing queries.
      * 

@@ -59,7 +59,8 @@ export class ClusterTable extends React.Component<Props> {
             />
         </div>;
 
-        const conditionalRowStyles : any = [
+        type styleType  = {when: (row:any) => any, style: (row:any) => object}
+        const conditionalRowStyles : styleType[] = [
             {
               when: (row:any) => row,
               style: (row:any) => ({

@@ -2,11 +2,13 @@ import React from "react"
 import {GenomicBin} from "../model/GenomicBin";
 import {toCSV} from "../util";
 import spinner from "../loading-small.gif";
+import {TEMPORARY_COLUMNS} from "../constants";
 
 interface Props {
     data : readonly GenomicBin[];
     logData: any[];
     fileName: string;
+    onExport: () => void;
 }
 
 interface State {
@@ -16,9 +18,8 @@ interface State {
 function convertToTsv(data: readonly GenomicBin[]): Promise<string> {
     return new Promise((resolve, reject) => {
         let keys = Object.keys(data[0]);
-        console.log("Keys: ", keys)
-        const headings = keys.slice(0, keys.length-3);
-        console.log("HEADINGS: ", headings)
+        const headings = keys.filter(d => !TEMPORARY_COLUMNS.has(d));//keys.slice(0, keys.length-3);
+
         // iterate over the data
         const rows : string = toCSV(data, headings, "\t", " ");
         let csvContent : any = rows;
@@ -103,11 +104,8 @@ export class CSV extends React.Component<Props, State> {
         hiddenElement2.download = removeDateTime[0] + "-log_" + date + "_" + time;  
         hiddenElement2.click();
 
-        
         hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
         hiddenElement.click();
-        
-       
 
         this.setState({loading: false})
     }
@@ -115,7 +113,10 @@ export class CSV extends React.Component<Props, State> {
     render() {
         let csvButton = <div>
                 
-            <button type="button" onClick={this.handleFileDownload} style={{display: "none"}}>Export</button>
+            <button type="button" onClick={() => {
+                this.props.onExport();
+                this.handleFileDownload()
+            }} style={{display: "none"}}>Export</button>
             {this.state.loading && <div>Reading file... <img src={spinner} alt="Loading" /></div>}
         </div>
         return csvButton;

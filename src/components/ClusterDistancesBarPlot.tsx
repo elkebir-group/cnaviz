@@ -7,11 +7,6 @@ const margins = {top: 0, right: 0, bottom: 0, left: 0};
 const margin = { left: 10, top: 0, right: 0, bottom: 50};
 const UNCLUSTERED_COLOR = "#999999";
 
-type clusterAvg = {
-    cluster: number,
-    avg: number
-};
-
 interface Props {
     data: Map<number, number> | undefined;
     width: number;
@@ -51,7 +46,7 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
     render() {
         const {width, height} = this.props;
         const marginRatio = {
-            left: margins.left / width * 100 + "%",//getRatio('left'),
+            left: margins.left / width * 100 + "%",
             top: margins.top / width * 100 + "%",
             right: margins.right / width * 100 + "%",
             bottom: margins.bottom / width * 100 + "%"
@@ -83,12 +78,6 @@ export class ClusterDistancesBarPlot extends React.Component<Props> {
         }
         
         dataObjectArr = _.sortBy(dataObjectArr, "value");
-        const marginRatio = {
-            left: margins.left / width * 100 + "%",
-            top: margins.top / width * 100 + "%",
-            right: margins.right / width * 100 + "%",
-            bottom: margins.bottom / width * 100 + "%"
-        }
 
         var svg = d3.select(this._svg)
         svg.selectAll(".scales").remove();

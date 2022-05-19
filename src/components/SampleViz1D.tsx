@@ -7,6 +7,7 @@ import "./SampleViz.css";
 import { GenomicBin } from "../model/GenomicBin";
 import { DisplayMode } from "../App";
 import { Gene } from "../model/Gene";
+import { cn_pair, fractional_copy_number } from "../constants";
 
 interface Props {
     data: GenomicBin[];
@@ -33,9 +34,9 @@ interface Props {
     purity: number;
     ploidy: number;
     meanRD: number;
-    fractionalCNTicks: number[];
+    fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
-    BAF_lines: number[];
+    BAF_lines: cn_pair[];
 }
 
 interface State {

@@ -11,6 +11,7 @@ import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import { DisplayMode } from "../App";
 import "./LinearPlot.css";
 import { Gene } from "../model/Gene";
+import { cn_pair, fractional_copy_number } from "../constants";
 
 const SCALES_CLASS_NAME = "linearplot-scale";
 const UNCLUSTERED_COLOR = "#999999";
@@ -24,8 +25,18 @@ const PADDING = { // For the SVG
     bottom: 35,
 };
 
+function getLeftPadding(purityPloidyMode: boolean) {
+    if(!purityPloidyMode) {
+        return PADDING.left;
+    } else {
+        
+        return PADDING.left + 20;
+    }
+}
+
 function findChrNumber(chr: string) {
-    const match = chr.match(/\d+/);
+    
+    const match = String(chr).match(/\d+/);
     if (!match) {
         return chr;
     } else {
@@ -62,9 +73,9 @@ interface Props {
     purity: number;
     ploidy: number;
     meanRD: number;
-    fractionalCNTicks: number[];
+    fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
-    BAF_lines: number[];
+    BAF_lines: cn_pair[];
 }
 
 export class LinearPlot extends React.PureComponent<Props> {
@@ -94,7 +105,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
         this._clusters = this.initializeListOfClusters();
         this.brushedNodes = new Set();
-        this._currXScale = this.getXScale(props.width, props.genome, props.chr, this.props.implicitStart, this.props.implicitEnd);
+        this._currXScale = this.getXScale(props.width, props.genome, props.chr, this.props.implicitStart, this.props.implicitEnd, this.props.showPurityPloidy);
         this._currYScale = d3.scaleLinear()
             .domain([this.props.yMin, this.props.yMax])
             .range([this.props.height - PADDING.bottom, PADDING.top]);
@@ -143,7 +154,6 @@ export class LinearPlot extends React.PureComponent<Props> {
             } else {
                 this.props.onLinearPlotZoom(null, null, false);
             }
-
         } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr", "purity", "ploidy"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
@@ -153,7 +163,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
     }
 
-    getXScale(width: number, genome: Genome, chr?: string, implicitStart ?: number | null, implicitEnd ?: number | null) {
+    getXScale(width: number, genome: Genome, chr?: string, implicitStart ?: number | null, implicitEnd ?: number | null, showPurityPloidy?: boolean) {
         let domain = [0, 0];
         if(implicitStart != null && implicitEnd != null) {
             domain[0] = implicitStart;
@@ -164,10 +174,12 @@ export class LinearPlot extends React.PureComponent<Props> {
             domain[0] = genome.getChrStartMap()[chr];
             domain[1] = domain[0] + genome.getLength(chr);
         }
+        // const leftPadding = (showPurityPloidy) ? PAD
+        // ;
 
         return d3.scaleLinear()
             .domain(domain)
-            .range([PADDING.left, width - PADDING.right]);
+            .range([getLeftPadding(this.props.showPurityPloidy), width - PADDING.right]);
     }
 
     getScaledYScale(height: number, purity: number) {
@@ -178,7 +190,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const svg = d3.select(this._svg);
         const brush = d3.brush()
         .keyModifiers(true)
-        .extent([[PADDING.left, PADDING.top], 
+        .extent([[getLeftPadding(this.props.showPurityPloidy), PADDING.top], 
                 [this.props.width - PADDING.right, this.props.height - PADDING.bottom]])
                 .on("end", () => {
                     svg.selectAll(".brush").remove();
@@ -201,11 +213,12 @@ export class LinearPlot extends React.PureComponent<Props> {
         }
 
         
+
         let self = this;
         const {data, width, height, genome, chr, dataKeyToPlot, 
-            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode, driverGenes, purity, ploidy, meanRD} = this.props;
-
-        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd); // Full genome implicit scale
+            yMin, yMax, yLabel, customColor, brushedBins, colors, displayMode, driverGenes} = this.props;
+        
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd, this.props.showPurityPloidy); // Full genome implicit scale
         const yScale = d3.scaleLinear()
             .domain([yMin, yMax])
             .range([height - PADDING.bottom, PADDING.top]);
@@ -221,6 +234,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             }
         }
 
+        const yLabelShift = (this.props.showPurityPloidy) ? 10 : 0
         const svg = d3.select(this._svg);
         svg.selectAll("." + SCALES_CLASS_NAME).remove(); // Remove any previous scales
         svg.append("text")       // X axis text
@@ -232,10 +246,10 @@ export class LinearPlot extends React.PureComponent<Props> {
             .text(chr || genome.getName());
         svg.append("text")      // Y axis Text
             .classed(SCALES_CLASS_NAME, true)
-            .attr("transform", `rotate(-90, ${PADDING.left}, ${_.mean(yScale.range())})`)
+            .attr("transform", `rotate(-90, ${getLeftPadding(this.props.showPurityPloidy)}, ${_.mean(yScale.range())})`)
             .text(yLabel || dataKeyToPlot)
-            .attr("x", (height - PADDING.bottom - PADDING.top) / 2 - 1)
-            .attr("y", PADDING.left/2+5)
+            .attr("x", (height - PADDING.bottom - PADDING.top) / 2 - 1 + yLabelShift)
+            .attr("y", (this.props.showPurityPloidy) ? 10 : getLeftPadding(this.props.showPurityPloidy)/2 + 5)
             .attr("text-anchor", "middle");
 
         
@@ -257,27 +271,32 @@ export class LinearPlot extends React.PureComponent<Props> {
         
         let yAx = (g : any, scale : any) => g
                     .classed(SCALES_CLASS_NAME, true)
-                    .attr("transform", `translate(${PADDING.left}, 0)`)
+                    .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
                     .call(d3.axisLeft(scale).ticks((scale.range()[0] - scale.range()[1]) / 15))
         
         
         if(this.props.dataKeyToPlot === "fractional_cn") {
             const ticks  = this.props.fractionalCNTicks;
-            const filteredTicks = this.filterFractionalCNTicks(ticks, yScale.domain())
+            const domain = yScale.domain();
+
+            const filteredTicks = ticks.filter(d => d.fractionalTick > domain[0] && d.fractionalTick < domain[1]) // this.filterFractionalCNTicks(ticks, yScale.domain())
+            const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
+
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
-                .attr("transform", `translate(${PADDING.left}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 60).tickFormat((d, i) =>  Number(d.valueOf()).toFixed(2)))
+                .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
+                .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 60).tickFormat((d, i) => filteredTicks[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
         } else if(this.props.showPurityPloidy) {
-            const filteredTicks = this.props.BAF_lines;
             const currYDomain = yScale.domain();
-            const filteredBAFTicks = this.props.BAF_lines.filter(value => value > currYDomain[0] && value < currYDomain[1])
+            const filteredBAFTicks = this.props.BAF_lines.filter(value => value.tick > currYDomain[0] && value.tick < currYDomain[1])
+            const ticks = filteredBAFTicks.map(d => d.tick);
+
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
-                .attr("transform", `translate(${PADDING.left}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredBAFTicks).tickSizeInner(-width + PADDING.left + PADDING.right))
+                .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
+                .call(d3.axisLeft(scale).tickValues(ticks).tickSizeInner(-width + getLeftPadding(this.props.showPurityPloidy) + PADDING.right).tickFormat((d, i) =>  ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
         }
 
 
@@ -358,7 +377,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             .append("clipPath")
             .attr("id", "clip2")
             .append("rect")
-                .attr("x", PADDING.left)
+                .attr("x", getLeftPadding(this.props.showPurityPloidy))
                 .attr("y", PADDING.top)
                 .attr("width", width)
                 .attr("height", height)
@@ -369,9 +388,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             .append("g")
             .classed("eventrect", true)
             .append("rect")
-                .attr("x", PADDING.left)
+                .attr("x", getLeftPadding(this.props.showPurityPloidy))
                 .attr("y", PADDING.top)
-                .attr("width", width - PADDING.right - PADDING.left)
+                .attr("width", width - PADDING.right - getLeftPadding(this.props.showPurityPloidy))
                 .attr("height", height - PADDING.bottom - PADDING.top)
                 .style("fill", "none")
                 .style("pointer-events", "all")
@@ -467,7 +486,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         if(displayMode === DisplayMode.select || displayMode === DisplayMode.erase) {
             brush = d3.brush()
                 .keyModifiers(false)
-                .extent([[PADDING.left, PADDING.top], 
+                .extent([[getLeftPadding(this.props.showPurityPloidy), PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("start brush", () => {
                     const {selection} = d3.event;
@@ -511,7 +530,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     .call(brush);
         } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom) {
             brush = d3.brushX()
-                .extent([[PADDING.left, PADDING.top], 
+                .extent([[getLeftPadding(this.props.showPurityPloidy), PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
                 .on("end", () => {
                     svg.selectAll(".brush").remove();
@@ -549,7 +568,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             return null;
         }
 
-        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd, this.props.showPurityPloidy);
         const implicitCoords = genome.getImplicitCoordinates(hoveredLocation);
         const start = xScale(implicitCoords.start);
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
@@ -568,7 +587,7 @@ export class LinearPlot extends React.PureComponent<Props> {
 
     handleMouseMove(event: React.MouseEvent) {
         const {width, genome, chr, onLocationHovered} = this.props;
-        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd, this.props.showPurityPloidy);
         const range = xScale.range();
         const mouseX = getRelativeCoordinates(event).x;
         if (mouseX < range[0] || mouseX > range[1]) { // Count mouse events outside the range as mouseleaves
@@ -604,8 +623,8 @@ export class LinearPlot extends React.PureComponent<Props> {
                 style={{position: "absolute", 
                         top: PADDING.top, 
                         zIndex: -1, 
-                        left: PADDING.left, 
-                        width: width-PADDING.left - PADDING.right, 
+                        left: getLeftPadding(this.props.showPurityPloidy), 
+                        width: width-getLeftPadding(this.props.showPurityPloidy) - PADDING.right, 
                         height: height-PADDING.top-PADDING.bottom}} />
             
             <svg ref={node => this._svg = node} preserveAspectRatio={'xMinYMin meet'} viewBox={'0 0 ' + (width) + ' ' + (height)}/>
@@ -637,7 +656,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         return (
             drivers.map(
                 (driver, idx) => {
-                    const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+                    const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd, this.props.showPurityPloidy);
                     const implicitCoords = genome.getImplicitCoordinates(driver.location);
                     const start = xScale(implicitCoords.start) || 0;
                     const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));
@@ -661,7 +680,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                     if(shouldRenderLabel) {
                         label_divs.push(currentCoord);
                     }
-                    if(start > PADDING.left && start < width - PADDING.right) {
+                    if(start > getLeftPadding(this.props.showPurityPloidy) && start < width - PADDING.right) {
                         
                         return (
                             <div key={this.props.dataKeyToPlot + driverSymbol}>
@@ -710,7 +729,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             return null;
         }
 
-        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd);
+        const xScale = this.getXScale(width, genome, chr, this.props.implicitStart, this.props.implicitEnd, this.props.showPurityPloidy);
         const implicitCoords = genome.getImplicitCoordinates(this.previewDriver.location);
         const start = xScale(implicitCoords.start) || 0;
         const boxWidth = Math.ceil((xScale(implicitCoords.end) || 0) - (start || 0));

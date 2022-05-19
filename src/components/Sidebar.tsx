@@ -5,9 +5,6 @@ import {DisplayMode, ProcessingStatus} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
-import { ToggleButton } from "./ToggleButton";
-import spinner from "../loading-small.gif";
-import {BsQuestionCircle} from "react-icons/bs";
 import {BiEraser} from "react-icons/bi";
 
 
@@ -54,6 +51,9 @@ interface Props {
     onTogglePurityPloidy: () => void;
     showPurityPloidy: boolean;
     applyLog: boolean;
+    processingStatus: ProcessingStatus;
+    onExport: () => void;
+
 }
 
 function Sidebar(props: Props) {
@@ -120,7 +120,7 @@ function Sidebar(props: Props) {
               </label>
               
               <label className="custom-file-upload">
-                <CSV data={props.data} logData={props.logData} fileName={props.chosenFile}></CSV>
+                <CSV data={props.data} logData={props.logData} fileName={props.chosenFile} onExport={props.onExport}></CSV>
                 Export
               </label>
               <label className="custom-file-upload">
@@ -132,16 +132,15 @@ function Sidebar(props: Props) {
           </div>
           
           <div className="row-contents" >
-            <label className="custom-file-upload">
-              <input type="file" id="fileUpload" onChange={
-                (event: any) =>
-                props.onDriverFileChosen(event, true)
+            <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload"}>
+              <input type="file" id="fileUpload"  disabled={props.processingStatus !== ProcessingStatus.done} onChange={
+                (event: any) => props.onDriverFileChosen(event, true)
               }/>
               Import Driver Genes
             </label>
 
-            <label className="custom-file-upload">
-              <input type="button" id="custom-button" onClick={
+            <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload"}>
+              <input type="button" id="custom-button" disabled={props.processingStatus !== ProcessingStatus.done} onClick={
                   (event: any) => props.handleDemoDrivers()
               }/>
               CGC Drivers

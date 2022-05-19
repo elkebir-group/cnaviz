@@ -9,7 +9,6 @@ import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
 import {DEFAULT_PLOIDY, DEFAULT_PURITY, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY} from "../constants";
-import _, { mean, minBy }  from "lodash";
 
 interface Props {
     parentCallBack: any;
@@ -29,7 +28,7 @@ interface Props {
     brushedBins: GenomicBin[];
     updatedBins: boolean;
     dispMode: DisplayMode;
-    onRemovePlot: () => void;
+    onRemovePlot: (sample: string) => void;
     onAddSample: () => void;
     plotId: number;
     clusterTableData: any;
@@ -37,7 +36,6 @@ interface Props {
     onClusterSelected: any;
     showLinearPlot: boolean;
     showScatterPlot: boolean;
-    showSidebar: boolean;
     onUndoClick: () => void;
     sampleAmount: number;
     syncScales: boolean;
@@ -46,6 +44,8 @@ interface Props {
     showCentroids: boolean;
     driverGenes: Gene[] | null;
     showPurityPloidyInputs: boolean;
+    onChangeSample: (newSample: string, oldSample: string) => void;
+    samplesShown: Set<string>;
 }
 
 interface State {
@@ -77,7 +77,6 @@ export class SampleViz extends React.Component<Props, State> {
         this.handleLinearPlotZoom = this.handleLinearPlotZoom.bind(this);
         this.onUpdatePurity = this.onUpdatePurity.bind(this);
         this.onUpdatePloidy = this.onUpdatePloidy.bind(this);
-        props.data.setDisplayedSample(props.initialSelectedSample || props.data.getSampleList()[0]);
     }
 
     initializeListOfClusters() : string[] {
@@ -111,12 +110,11 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     handleSelectedSampleChange(event : any) {
-        // this.props.data.removeDisplayedSample(this.state.selectedSample);
-        // this.props.data.setDisplayedSample(event.target.value);
         this.setState({selectedSample: event.target.value});
     }
 
     handleZoom(newScales: any) {
+        // console.log("Handle zoom: ", newScales);
         this.setState({scales: newScales});
     }
 
@@ -137,8 +135,9 @@ export class SampleViz extends React.Component<Props, State> {
     }
 
     onUpdatePloidy(ploidy: number) {
-        // this.props.data.updateFractionalCopyNumbers(ploidy, this.state.selectedSample);
+        this.props.data.setSamplePloidy(this.state.selectedSample, ploidy);
         this.setState({ploidy: ploidy});
+        this.setState({scales: {xScale: null, yScale: null}});
     }
 
     getSelectedBins(syncScales : boolean, implicitRange : [number, number] | null, selectedSample:string, applyLog:boolean, showPurityPloidy: boolean, meanRD:number, data:DataWarehouse) {
@@ -158,28 +157,28 @@ export class SampleViz extends React.Component<Props, State> {
 
     render() {
         const {data, initialSelectedSample, applyLog, 
-        showLinearPlot, showScatterPlot, dispMode, showSidebar, sampleAmount, syncScales, showPurityPloidyInputs} = this.props;
+        showLinearPlot, showScatterPlot, dispMode, sampleAmount, syncScales, showPurityPloidyInputs, samplesShown} = this.props;
         const {implicitRange} = this.state;
         
         const selectedSample = this.state.selectedSample;
         let rdRange = data.getRdRange(selectedSample, applyLog);
-
         const sampleOptions = data.getSampleList().map(sampleName =>
-            <option key={sampleName} value={sampleName} disabled={!(sampleName === this.state.selectedSample) && data.sampleIsDisplaying(sampleName)}>{sampleName} </option> //disabled={data.sampleIsDisplaying(sampleName)}
+            <option key={sampleName} value={sampleName} disabled={!(sampleName === this.state.selectedSample) && samplesShown.has(sampleName)}>{sampleName} </option> //disabled={data.sampleIsDisplaying(sampleName)}
         );
 
         const meanRD = data.getMeanRD(selectedSample)
 
         let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
 
-        const BAF_lines = data.getBAFLines(this.state.purity);
+        const BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample);
 
         // Derived from formula: FRACTIONAL_COPY_NUMBER = purity * (TOTAL_CN) + 2*(1 - purity)
-        const max_cn = (this.state.purity) ? (rdRange[1] * this.state.ploidy / meanRD - 2*(1-this.state.purity)) / this.state.purity : 0;
-        rdRange[1] += 0.5;
-
-        const fractionalCNTicks = data.getFractionalCNTicks(this.state.purity, 0, max_cn);
+        const max_cn = (this.state.purity) ? ((rdRange[1]) * this.state.ploidy / meanRD - 2*(1-this.state.purity)) / this.state.purity : 0;
         
+        rdRange[1] += 0.5;
+        
+        const fractionalCNTicks = data.getFractionalCNTicks(this.state.purity, START_CN, END_CN, Math.ceil(max_cn), this.state.selectedSample);
+
         if(showPurityPloidyInputs) {
             rdRange = [rdRange[0]* this.state.ploidy /meanRD, rdRange[1] * this.state.ploidy /meanRD];
         }
@@ -200,14 +199,17 @@ export class SampleViz extends React.Component<Props, State> {
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
                 <span>Sample: </span>
-                <select value={selectedSample} onChange={this.handleSelectedSampleChange}>
+                <select value={selectedSample} onChange={(event: any) => {
+                    this.props.onChangeSample(event.target.value, this.state.selectedSample);
+                    this.handleSelectedSampleChange(event);
+                }}>
                     {sampleOptions}
                 </select>
                 <button className="custom-button" onClick={() => {
                     this.props.onAddSample();
                 }} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
                 <button className="custom-button" onClick={() => {
-                    this.props.onRemovePlot();
+                    this.props.onRemovePlot(this.state.selectedSample);
                 }} disabled={sampleAmount <= 1}> Remove Sample </button>
             </div>}
             
@@ -293,6 +295,7 @@ export class SampleViz extends React.Component<Props, State> {
                         fractionalCNTicks={fractionalCNTicks}
                         showPurityPloidy={showPurityPloidyInputs}
                         BAF_lines={BAF_lines}
+                        max_cn = {Math.ceil(max_cn)}
                         />
                 }
                 {showLinearPlot && <SampleViz1D 

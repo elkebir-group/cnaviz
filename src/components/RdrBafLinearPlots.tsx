@@ -5,6 +5,7 @@ import {DisplayMode, genome} from "../App";
 import { LinearPlot } from "./LinearPlot";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
+import { cn_pair, fractional_copy_number } from "../constants";
 
 interface Props {
     data: GenomicBin[];
@@ -31,9 +32,9 @@ interface Props {
     purity: number;
     ploidy: number;
     meanRD: number;
-    fractionalCNTicks: number[];
+    fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy:boolean;
-    BAF_lines: number[];
+    BAF_lines: cn_pair[];
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
@@ -90,7 +91,7 @@ export function BAFLinearPlot(props: Props) {
                 onLocationHovered={onLocationHovered}
                 onBrushedBinsUpdated= {onBrushedBinsUpdated}
                 yMin={xScale ? xScale[0] : -.01}
-                yMax={xScale ? xScale[1] : 0.5}
+                yMax={xScale ? xScale[1] : 0.51}
                 yLabel={"0.5 - BAF"}
                 brushedBins={brushedBins}
                 customColor={customColor}

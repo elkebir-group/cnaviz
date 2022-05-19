@@ -60,8 +60,7 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
     }
 
     renderTooltipContent(contents: JSX.Element | null) {
-        const {width, height} = this.props;
-        const {showTooltip, tooltipX, tooltipY} = this.state;
+        const {showTooltip} = this.state;
         if (!contents) {
             return null;
         }
@@ -70,10 +69,6 @@ export class SilhouetteBarPlot extends React.Component<Props, State> {
             return null;
         }
 
-        const x = tooltipX;
-        const y = tooltipY;
-        const OFFSET = 0;
-        const OFFSETY = 30;
         return <div
             className="Scatterplot-tooltip"
             style={{

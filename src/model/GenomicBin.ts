@@ -33,7 +33,7 @@ export interface GenomicBin {
     readonly reverseBAF: number;
     readonly genomicPosition: number;
     fractional_cn: number;
-    
+    CN: string;
 }
 
 export const GenomicBinHelpers = {

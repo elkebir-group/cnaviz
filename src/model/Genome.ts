@@ -115,14 +115,15 @@ export class Genome {
      * @param chrName - the name of the chromosome to query, or `undefined` to query the entire genome's length
      * @return length of the chromosome or genome.
      */
-    getLength(chrName?: string): number {
+    getLength(chrName?: string | number): number {
         if (!chrName) {
             return this._length;
         } else {
             if ( !(chrName in this._chrStarts) ) {
                 return 0; // Chr not in this genome
             }
-            return this._chromosomes.find(chr => chr.name === chrName)!.length;
+            
+            return this._chromosomes.find(chr => String(chr.name) === String(chrName))!.length;
         }
     }
 

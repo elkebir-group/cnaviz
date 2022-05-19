@@ -9,7 +9,7 @@ import {GenomicBin, GenomicBinHelpers} from "../model/GenomicBin";
 import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
-import { quadtree } from "d3";
+import { cn_pair, fractional_copy_number } from "../constants";
 
 const PADDING = { // For the SVG
     left: 70,
@@ -55,9 +55,10 @@ interface Props {
     purity: number;
     ploidy: number;
     meanRD: number;
-    fractionalCNTicks: number[];
+    fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
-    BAF_lines: number[];
+    BAF_lines: cn_pair[];
+    max_cn: number;
 }
 
 interface State {
@@ -366,7 +367,7 @@ export class Scatterplot extends React.Component<Props, State> {
         } else if (this.propsDidChange(prevProps, ["purity", "ploidy"])) {
             
             let data : GenomicBin[] = this.props.data;
-            const {bafScale, rdrScale} = this.computeScales(this.props.rdRange, this.props.width, this.props.height);
+            const rdrScale = this.computeScales(this.props.rdRange, this.props.width, this.props.height).rdrScale;
             this._currYScale = rdrScale;
             this._original_YScale = rdrScale;
 
@@ -463,7 +464,7 @@ export class Scatterplot extends React.Component<Props, State> {
             rdLowerBound = rdRange[0];
         }
 
-        let baf = bafRange ? bafRange : [-.01, 0.5001] // .0001 allows for points exactly on the axis to still be seen
+        let baf = bafRange ? bafRange : [-.01, 0.51] // .0001 allows for points exactly on the axis to still be seen
         
         return {
             bafScale: d3.scaleLinear()
@@ -483,12 +484,14 @@ export class Scatterplot extends React.Component<Props, State> {
         this.props.onZoom(newScales);
     }
 
-    filterFractionalCNTicks() {
-        let currDomain = this._currYScale.domain();
-        const {rdRange} = this.props;
-        const epsilon = 0 // Room for error
-        return this.props.fractionalCNTicks.filter(value => value > currDomain[0] && value <= (rdRange[1] + epsilon) && value < currDomain[1]);
-    }
+    // filterFractionalCNTicks() {
+    //     let currDomain = this._currYScale.domain();
+    //     const {rdRange, max_cn} = this.props;
+    //     // console.log("CurrDomain: ", currDomain);
+    //     // console.log("Original Ticks: ", this.props.fractionalCNTicks);
+    //     // console.log("Max Cn: ", max_cn);
+    //     return this.props.fractionalCNTicks.filter(value => value > currDomain[0] && value <= max_cn && value < currDomain[1]);
+    // }
 
 
     redraw() {
@@ -497,7 +500,7 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy, BAF_lines} = this.props;
+        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy} = this.props;
 
         let {displayMode} = this.props;
         let xScale = this._currXScale;
@@ -532,15 +535,28 @@ export class Scatterplot extends React.Component<Props, State> {
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(d3.axisBottom(scale))
+            .selectAll('text')
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr('transform', 'rotate(-30)')
 
         if(showPurityPloidy) {
             const currXDomain = this._currXScale.domain();
-            const filteredBAFTicks = this.props.BAF_lines.filter(value => value > currXDomain[0] && value < currXDomain[1])
+            const filteredBAFTicks = this.props.BAF_lines.filter(value => value.tick > currXDomain[0] && value.tick < currXDomain[1]);
+            const ticks = filteredBAFTicks.map(d => d.tick);
+            
             xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("id", "Grid")
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-            .call(d3.axisBottom(scale).tickValues(filteredBAFTicks).tickSizeInner(-height + PADDING.top + PADDING.bottom))//.tickFormat((d, i) => d3.format(".1f")(filteredBAFTicks[i]) + " (0,0)"));            
+            .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) =>ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
+            .selectAll('text')
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr('transform', 'rotate(-30)')
+                       
         }
         
         let yAx = (g : any, scale : any) => g
@@ -550,12 +566,18 @@ export class Scatterplot extends React.Component<Props, State> {
             .call(d3.axisLeft(scale));
 
         if(showPurityPloidy) {
-            const filteredTicks = this.filterFractionalCNTicks();
+            const originalTicks = this.props.fractionalCNTicks;
+            const dom = this._currYScale.domain();
+            const {max_cn} = this.props;
+            const upperBound = (max_cn > dom[1]) ? max_cn : dom[1]; 
+            const filteredTicks = originalTicks.filter(value => value.fractionalTick > dom[0] && value.fractionalTick < upperBound && value.fractionalTick < dom[1]);
+            const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
+
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${PADDING.left}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredTicks).tickSizeInner(-width + 80).tickFormat((d, i) => Number(d.valueOf()).toFixed(2) + " ("+i+")"));
+                .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 80).tickFormat((d, i) => filteredTicks[i].totalCN + " ("+Number(d.valueOf()).toFixed(2)+")"));
         }
         
         
@@ -703,7 +725,6 @@ export class Scatterplot extends React.Component<Props, State> {
                 pointSeries(newData);
             }
             
-
             svg.select(".Centroids").remove();
             if(self.props.showCentroids) {
                 svg.select(".eventrect")
