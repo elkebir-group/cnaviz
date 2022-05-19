@@ -1,20 +1,20 @@
 {
   "files": {
     "main.css": "/cnaviz/static/css/main.e544bc03.chunk.css",
-    "main.js": "/cnaviz/static/js/main.2e5ccdea.chunk.js",
-    "main.js.map": "/cnaviz/static/js/main.2e5ccdea.chunk.js.map",
+    "main.js": "/cnaviz/static/js/main.abb86611.chunk.js",
+    "main.js.map": "/cnaviz/static/js/main.abb86611.chunk.js.map",
     "runtime-main.js": "/cnaviz/static/js/runtime-main.586cd8e0.js",
     "runtime-main.js.map": "/cnaviz/static/js/runtime-main.586cd8e0.js.map",
-    "static/js/2.2aedeb88.chunk.js": "/cnaviz/static/js/2.2aedeb88.chunk.js",
-    "static/js/2.2aedeb88.chunk.js.map": "/cnaviz/static/js/2.2aedeb88.chunk.js.map",
+    "static/js/2.3d83a166.chunk.js": "/cnaviz/static/js/2.3d83a166.chunk.js",
+    "static/js/2.3d83a166.chunk.js.map": "/cnaviz/static/js/2.3d83a166.chunk.js.map",
     "index.html": "/cnaviz/index.html",
     "static/css/main.e544bc03.chunk.css.map": "/cnaviz/static/css/main.e544bc03.chunk.css.map",
-    "static/js/2.2aedeb88.chunk.js.LICENSE.txt": "/cnaviz/static/js/2.2aedeb88.chunk.js.LICENSE.txt"
+    "static/js/2.3d83a166.chunk.js.LICENSE.txt": "/cnaviz/static/js/2.3d83a166.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.586cd8e0.js",
-    "static/js/2.2aedeb88.chunk.js",
+    "static/js/2.3d83a166.chunk.js",
     "static/css/main.e544bc03.chunk.css",
-    "static/js/main.2e5ccdea.chunk.js"
+    "static/js/main.abb86611.chunk.js"
   ]
 }
