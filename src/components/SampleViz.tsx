@@ -257,7 +257,7 @@ export class SampleViz extends React.Component<Props, State> {
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
                     <label>Ploidy:</label> <input placeholder={this.state.ploidy.toString()} type="number" id="Purity-Input" name="volume"
-                        min={MIN_PLOIDY} max={MAX_PLOIDY} step="any" onChange={event => {
+                        min={MIN_PLOIDY} max={MAX_PLOIDY} step=".1" onChange={event => {
                             const newPloidy = Number(event.target.value);
                             if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
                                 this.onUpdatePloidy(newPloidy);
@@ -265,7 +265,7 @@ export class SampleViz extends React.Component<Props, State> {
                         }}></input>
                     
                     <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                        min={MIN_PURITY} max={MAX_PURITY} step="any" placeholder={this.state.purity.toString()} onChange={event => {
+                        min={MIN_PURITY} max={MAX_PURITY} step=".05" placeholder={this.state.purity.toString()} onChange={event => {
                             const newPurity = Number(event.target.value);
                             if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
                                 this.onUpdatePurity(newPurity);

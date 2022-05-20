@@ -77,3 +77,10 @@ button {
 .input-label {
     margin-left: 50px;
 }
+
+input[type="number"]
+{
+    font-size:13px;
+    text-align:center;
+    vertical-align: top;
+}

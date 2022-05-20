@@ -384,9 +384,10 @@ export class App extends React.Component<{}, State> {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
                 self.onToggleSilhoutteBarPlot();
-            } else if(d3.event.key === "t") {
-                self.state.indexedData.calculateCopyNumbers2();
-            }
+            } 
+            // else if(d3.event.key === "t") {
+            //     self.state.indexedData.calculateCopyNumbers();
+            // }
         })
 
         d3.select("body").on("keydown", function() {
@@ -739,7 +740,7 @@ export class App extends React.Component<{}, State> {
     }
 
     onExport() {
-        this.state.indexedData.calculateCopyNumbers2();
+        this.state.indexedData.calculateCopyNumbers();
     }
 
     onTogglePurityPloidy() {
