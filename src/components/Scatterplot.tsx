@@ -381,14 +381,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 .addAll(data)
             
             this.setState({quadTree: q});
-
             this.redraw();
-        } else if(this.props["assignCluster"]) {
-            this.onTrigger(this.state.selectedCluster);
-            this.brushedNodes = new Set();
-        } else if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
-            this.forceUnhover();
-            this.forceHover(this.props.hoveredLocation); 
         } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height", "customColor"])) { // gc added customColor, redraws scatterplot on change
             let data : GenomicBin[] = this.props.data;
             // Update quadtree so that when hovering works on new points that appear 
