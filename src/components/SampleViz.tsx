@@ -251,7 +251,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions} >New Cluster</button>
-                    <button className="custom-button" onClick={this.props.onUndoClick}> Undo</button>
+                    <button className="custom-button" onClick={this.props.onUndoClick}> Undo Cluster Assignment</button>
                 </div>}
 
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
