@@ -181,6 +181,8 @@ interface State {
 
     selectedChr: string;  // Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected.
 
+    selectedColor: string; // Name of selected cluster color. Should default to that blue.  gc
+
     selectedCluster: string; // cluster selected to be assigned to
 
     invertAxis: boolean;
@@ -266,6 +268,7 @@ export class App extends React.Component<{}, State> {
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
+            selectedColor: "blue", // gc: when set to red, this changes
             invertAxis: false,
             sampleAmount: 2,
             showComponents: [true, true],
@@ -300,6 +303,7 @@ export class App extends React.Component<{}, State> {
         this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
         this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
+        this.handleColorSelection = this.handleColorSelection.bind(this); // gc
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
@@ -487,6 +491,11 @@ export class App extends React.Component<{}, State> {
         this.state.indexedData.setChrFilter(event.target.value);
     }
 
+    handleColorSelection(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.setState({selectedColor: event.target.value});
+
+    }
+
     handleClusterSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedCluster: event.target.value});
         this.state.indexedData.setClusterFilters([event.target.value]);
@@ -656,13 +665,15 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
+        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state;
         const samples = indexedData.getSampleList();
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
+        let selectColorOptions = ["red", "blue", "yellow", "black"]; 
+        let colorOptions : JSX.Element[] = [<option value={"--Selection Color--"}>--Selection Color--</option>];  
         let actions = indexedData.getActions();
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
@@ -673,7 +684,7 @@ export class App extends React.Component<{}, State> {
                 invertAxis,
                 chr: selectedChr,
                 cluster: selectedCluster,
-                customColor: color,
+                customColor: selectedColor, // gc?
                 colors: this.state.colors,
                 assignCluster,
                 onBrushedBinsUpdated: this.updateBrushedBins,
@@ -692,6 +703,11 @@ export class App extends React.Component<{}, State> {
                 showCentroids: this.state.showCentroids,
                 driverGenes: this.state.driverGenes
             };
+
+
+            // const colorOptions = this.state.["blue", "yellow", "green"]; // [this.state.colors]; 
+            colorOptions = selectColorOptions.map(clr => <option key={clr} value={clr}>{clr}</option>);
+            colorOptions.push(<option value={"--Selection Color--"}>--Selection Color--</option>); 
 
             chrOptions = indexedData.getAllChromosomes().map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
@@ -732,6 +748,9 @@ export class App extends React.Component<{}, State> {
                     selectedChr={selectedChr} 
                     onChrSelected={this.handleChrSelected} 
                     chrOptions={chrOptions}
+                    selectedColor={selectedColor} 
+                    onColorSelected={this.handleColorSelection} 
+                    colorOptions={colorOptions}
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
                     tableData={clusterTableData}
@@ -848,7 +867,10 @@ export class App extends React.Component<{}, State> {
                             colors={CLUSTER_COLORS}
                             onToggleSilhoutteBarPlot={this.onToggleSilhoutteBarPlot}
                         ></AnalyticsTab>}
-           
+                <div className="before-loading">
+                    Load your own data, or use the demo button to load the demo data!
+                </div> 
+
             </div>
             
         </div>;

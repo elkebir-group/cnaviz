@@ -428,6 +428,7 @@ export class DataWarehouse {
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
     }
 
+
     setGenomicPositionFilter(genomeRange: [number, number]) {
         this._genomic_pos_dim.filterAll();
         this._genomic_pos_dim.filter(d => d > genomeRange[0] && d < genomeRange[1]);

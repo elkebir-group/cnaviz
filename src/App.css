@@ -4,6 +4,15 @@ body {
     padding-right: 10px;
 }
 
+.before-loading {
+    display: flex;
+    justify-content: center; 
+    padding-top: 50%;
+    top: 50%;
+    left: 50%;
+    /*transform: translateX(+50%) translateY(+50%);*/
+}
+
 .App-title-bar {
     border-bottom: 2px solid black;
 }
