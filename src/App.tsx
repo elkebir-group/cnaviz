@@ -790,7 +790,7 @@ export class App extends React.Component<{}, State> {
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
         let selectColorOptions = ["red", "blue", "yellow", "black"]; 
-        let colorOptions : JSX.Element[] = [<option value={"--Selection Color--"}>--Selection Color--</option>];  
+        let colorOptions : JSX.Element[] = [<option value={"Selection Color"}>-Select Color-</option>];  
         let actions = indexedData.getActions();
 
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -830,7 +830,7 @@ export class App extends React.Component<{}, State> {
 
             // const colorOptions = this.state.["blue", "yellow", "green"]; // [this.state.colors]; 
             colorOptions = selectColorOptions.map(clr => <option key={clr} value={clr}>{clr}</option>);
-            colorOptions.push(<option value={"--Selection Color--"}>--Selection Color--</option>); 
+            colorOptions.push(<option value={"Selection Color"}>-Select Color-</option>); 
 
             const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
