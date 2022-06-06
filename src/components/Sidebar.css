@@ -97,7 +97,7 @@ input[type="file"] {
   margin: 3px;
 }
 
-.closemenu3 {
+.closemenu {
   color: #000;
   position: absolute;
   right: -25px;
@@ -107,11 +107,11 @@ input[type="file"] {
   width: 7%;
   font-weight: bold;
   font-size: 22px;
-  top: 46%;
+  top: 40%;
   cursor: pointer;
 }
 
-.closemenu {
+.closemenu3 {
   color: #000;
   position: absolute;
   right: -25px;

@@ -85,6 +85,7 @@ function Sidebar(props: Props) {
               )
           }
       </div>
+      
       <div className="closemenu2" onClick={() => props.setDisplayMode(DisplayMode.select)}>
             <div className="arrow-container"> 
               <FiMousePointer
