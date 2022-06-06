@@ -826,12 +826,11 @@ export class App extends React.Component<{}, State> {
             const sortAlphaNum = (a : string, b:string) => a.localeCompare(b, 'en', { numeric: true })
 
             chrOptions = indexedData.getAllChromosomes().sort(sortAlphaNum).map(chr => <option key={chr} value={chr}>{chr}</option>);
+            chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
 
             // const colorOptions = this.state.["blue", "yellow", "green"]; // [this.state.colors]; 
             colorOptions = selectColorOptions.map(clr => <option key={clr} value={clr}>{clr}</option>);
             colorOptions.push(<option value={"--Selection Color--"}>--Selection Color--</option>); 
-
-            chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
 
             const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
