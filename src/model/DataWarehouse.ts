@@ -102,41 +102,41 @@ export class DataWarehouse {
     /** Indexed, pre-aggregated GenomicBin for supporting fast queries. */
     //private _indexedMergedData: IndexedBioData<MergedGenomicBin[]>;
     /** The range of read depth ratios represented in this data set.  First number is min, second is max. */
-    private readonly _rdRanges: SampleIndexedData<[number, number]>;
-    private readonly _logRdRanges: SampleIndexedData<[number, number]>;
-    private _locationGroupedData: LocationIndexedData<GenomicBin[]>;
-    private brushedBins: GenomicBin[];
-    private brushedCrossfilter: Crossfilter<GenomicBin>;
+    private readonly _rdRanges: SampleIndexedData<[number, number]>; // SampleIndexedData is a type we created (above) - map from sample to RD range
+    private readonly _logRdRanges: SampleIndexedData<[number, number]>; // same, but logRD range
+    private _locationGroupedData: LocationIndexedData<GenomicBin[]>; // with a specific location (chrm start end) - get bins across samples for this location range
+    private brushedBins: GenomicBin[]; // bins currently selected
+    private brushedCrossfilter: Crossfilter<GenomicBin>; // helpful for easily filtering across samples (external library) - set dimensions along which you want to filter 
     private brushedClusterDim: crossfilter.Dimension<GenomicBin, number>;
-    private _ndx: Crossfilter<GenomicBin>;
-    private _sample_dim: crossfilter.Dimension<GenomicBin, string>;
+    private _ndx: Crossfilter<GenomicBin>; // for all the data, n dimensions
+    private _sample_dim: crossfilter.Dimension<GenomicBin, string>; // different dimensions we want to sample across, sample, cluster, chr, genomic_pos
     private _cluster_dim: crossfilter.Dimension<GenomicBin, number>;
     private _chr_dim: crossfilter.Dimension<GenomicBin, string>;
     private _genomic_pos_dim: crossfilter.Dimension<GenomicBin, number>;
-    private _samples: string[];
-    private _clusters: string[];
+    private _samples: string[]; // list of samples
+    private _clusters: string[]; // list of clusters
     private _chrs: string[];
-    private _sampleGroupedData: SampleIndexedData<GenomicBin[]>;
-    private clusterTableInfo: clusterTableRow[]; 
-    private allRecords: readonly GenomicBin[];
-    private _cluster_filters: String[];
-    private historyStack: GenomicBin[][];
-    private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>;
-    private logOfActions: LogTableRow[];
-    private centroids: newCentroidTableRow[];
-    private centroidPts: SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
-    private chrToClusters: {[chr: string] : Set<string>}
-    private centroidDistances: SampleIndexedData<heatMapElem[]>;
+    private _sampleGroupedData: SampleIndexedData<GenomicBin[]>; // map from each sample to each bin that's relevant 
+    private clusterTableInfo: clusterTableRow[]; // info on each cluster (type defined above)
+    private allRecords: readonly GenomicBin[]; // all the bins without the crossfilter
+    private _cluster_filters: String[]; // current clusters that we're filtering by 
+    private historyStack: GenomicBin[][]; // for when we undo 
+    private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>; 
+    private logOfActions: LogTableRow[]; // log table that we export
+    private centroids: newCentroidTableRow[]; // one of these is for the centroids table we have
+    private centroidPts: SampleIndexedData<ClusterIndexedData<centroidPoint[]>>; // for the actual points we want to filter by so we can plot it 
+    private chrToClusters: {[chr: string] : Set<string>} // mapping chr to clusters
+    private centroidDistances: SampleIndexedData<heatMapElem[]>; 
     private shouldCalculatesilhouettes: boolean;
     private currentsilhouettes: {cluster: number,  avg: number}[];
     private overallSilhouette: number;
     private clusterDistanceMatrix : Map<number, Map<number, number>>;
     private rdMeans: SampleIndexedData<number>;
     private _updateFractionalCopyNumbers: any;
-    private currentDataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">;
-    private sampleToPloidy: SampleIndexedData<number>;
-    private sampleToBafTicks: SampleIndexedData<cn_pair[]>;
-    private sampleToFractionalTicks:  SampleIndexedData<number[]>;
+    private currentDataKey: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">; // not sure if still used
+    private sampleToPloidy: SampleIndexedData<number>; // for each sample, there's a specific ploidy whenever user inputs into the box, make a call to this
+    private sampleToBafTicks: SampleIndexedData<cn_pair[]>; // similar ^
+    private sampleToFractionalTicks:  SampleIndexedData<number[]>; // ^
 
     // private totalcnToState: CNIndexedData<number[][]>;
 
@@ -160,9 +160,9 @@ export class DataWarehouse {
         this._chrs = [];
         this._clusters = [];
         this.brushedBins = [];
-        this.brushedCrossfilter = crossfilter(this.brushedBins);
-        this.brushedClusterDim = this.brushedCrossfilter.dimension((d:GenomicBin) => d.CLUSTER);
-        this._cluster_filters = [];
+        this.brushedCrossfilter = crossfilter(this.brushedBins); 
+        this.brushedClusterDim = this.brushedCrossfilter.dimension((d:GenomicBin) => d.CLUSTER); // set a dimension along cluster (from left sidebar)
+        this._cluster_filters = []; 
         this.historyStack = [];
         this._ndx = crossfilter(rawData);
         this.logOfActions = [];
@@ -411,7 +411,6 @@ export class DataWarehouse {
     getFractionalCNTicks(purity: number, startCN: number, endCN: number, maxCN: number, sample: string) : fractional_copy_number[] {
         const fractionalCNs : fractional_copy_number[] = [];
         
-
         for(let i = startCN; i <= endCN; i++) {
             const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
             fractionalCNs.push(fractional_cn);
@@ -701,14 +700,14 @@ export class DataWarehouse {
         return sampleGroupedData;
     }
 
-    getBAFLines(purity: number, sample: string) {
+    getBAFLines(purity: number, sample: string) { 
         const bafSeen = new Set<number>();
         const BAF_ticks : cn_pair[] = [];
 
-        for(const state of CN_STATES) {
-            const A = state[0];
+        for(const state of CN_STATES) { // each CN state
+            const A = state[0]; 
             const B = state[1];
-            const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
+            const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity)); // gc: add offset
             const originalLen = bafSeen.size;
             bafSeen.add(BAF_Tick);
             if(bafSeen.size !== originalLen) {
@@ -881,6 +880,13 @@ export class DataWarehouse {
             this.allRecords[i].CN = "("+minState[0]+","+minState[1]+")";
         }
 
+    }
+
+    absorbUnassigned() {
+        // for loop through all records
+            // if bin is unassigned (cluster = -2)
+                // for loop through all the active centroids (variable for this), pick the one that's closest 
+                // assign bin to closest centroid  
     }
 
     // calculateCopyNumbers2() {

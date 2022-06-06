@@ -665,13 +665,13 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         
         let fillColor = fc.webglFillColor().value(languageFill).data(newData);
-        let pointSeries = fc
-            .seriesWebglPoint()
+        let pointSeries = fc // plotting points in webgl - d3fc library within js/ts for using webgl
+            .seriesWebglPoint() 
             .xScale(self._currXScale)
             .yScale(self._currYScale)
             .size(3)
-            .crossValue((d : any) => d.reverseBAF)
-            .mainValue((d : any) => d[yAxisToPlot])
+            .crossValue((d : any) => d.reverseBAF) // x 0.5 - BAF
+            .mainValue((d : any) => d[yAxisToPlot]) // y CN
             .context(gl);
         
         pointSeries.decorate((program:any) => {
