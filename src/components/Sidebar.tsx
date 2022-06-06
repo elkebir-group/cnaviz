@@ -10,8 +10,11 @@ import {BiEraser} from "react-icons/bi";
 
 interface Props {
     selectedChr : string;
+    selectedColor : string;
     onChrSelected : any;
+    onColorSelected : any;
     chrOptions: any;
+    colorOptions: any;
     onAddSample: any;
     onAssignCluster: any;
     tableData: any;
@@ -156,6 +159,19 @@ function Sidebar(props: Props) {
                   value={props.selectedChr}
                   onChange={props.onChrSelected} >
                       {props.chrOptions}
+              </select>
+            </div>
+          </div>
+
+          <div className= "row-contents" >
+            <div>
+              <label htmlFor="Select Cluster Color" style={{margin: 10}}> Selection Color: </label>
+              <select
+                  name="Select Color" 
+                  id="Select Color"
+                  value={props.selectedColor}
+                  onChange={props.onColorSelected} >
+                      {props.colorOptions}
               </select>
             </div>
           </div>
