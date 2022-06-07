@@ -8,7 +8,7 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
-import {DEFAULT_PLOIDY, DEFAULT_PURITY, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY} from "../constants";
+import {DEFAULT_PLOIDY, DEFAULT_PURITY, DEFAULT_OFFSET, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY, MIN_OFFSET, MAX_OFFSET} from "../constants";
 
 interface Props {
     parentCallBack: any;
@@ -55,6 +55,7 @@ interface State {
     implicitRange: [number, number]  | null;
     purity: number;
     ploidy: number;
+    offset: number; 
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -68,7 +69,8 @@ export class SampleViz extends React.Component<Props, State> {
             selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID,
             implicitRange: null,
             purity: DEFAULT_PURITY,
-            ploidy: DEFAULT_PLOIDY
+            ploidy: DEFAULT_PLOIDY,
+            offset: DEFAULT_OFFSET
         }
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
@@ -77,6 +79,7 @@ export class SampleViz extends React.Component<Props, State> {
         this.handleLinearPlotZoom = this.handleLinearPlotZoom.bind(this);
         this.onUpdatePurity = this.onUpdatePurity.bind(this);
         this.onUpdatePloidy = this.onUpdatePloidy.bind(this);
+        this.onUpdateOffset = this.onUpdateOffset.bind(this);
     }
 
     initializeListOfClusters() : string[] {
@@ -140,6 +143,10 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({scales: {xScale: null, yScale: null}});
     }
 
+    onUpdateOffset(offset: number) {
+        this.setState({offset: offset}); 
+    }
+
     getSelectedBins(syncScales : boolean, implicitRange : [number, number] | null, selectedSample:string, applyLog:boolean, showPurityPloidy: boolean, meanRD:number, data:DataWarehouse) {
         let selectedRecords : GenomicBin[] = [];
         let scales = (syncScales) ? this.props.scales : this.state.scales;
@@ -170,7 +177,7 @@ export class SampleViz extends React.Component<Props, State> {
 
         let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
 
-        const BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample);
+        const BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample, this.state.offset); // gc: add offset as a parameter
 
         // Derived from formula: FRACTIONAL_COPY_NUMBER = purity * (TOTAL_CN) + 2*(1 - purity)
         const max_cn = (this.state.purity) ? ((rdRange[1]) * this.state.ploidy / meanRD - 2*(1-this.state.purity)) / this.state.purity : 0;
@@ -272,6 +279,14 @@ export class SampleViz extends React.Component<Props, State> {
                             }
                             
                         }}></input>
+
+                     <label className="input-label">X-Offset:</label> <input type="number" id="Purity-Input" name="volume"
+                        min={MIN_OFFSET} max={MAX_OFFSET} step=".05" placeholder={this.state.offset.toString()} onChange={event => {
+                            const newoffset = Number(event.target.value);
+                            if(newoffset <= MAX_OFFSET && newoffset >= MIN_OFFSET) {
+                                this.onUpdateOffset(newoffset);
+                            }
+                        }}></input>
                     
                 </div>}
                 
@@ -291,6 +306,7 @@ export class SampleViz extends React.Component<Props, State> {
                         centroidPts={data.getCentroidPoints(selectedSample, this.props.chr, scaleFactor)}
                         purity={this.state.purity}
                         ploidy={this.state.ploidy}
+                        offset={this.state.offset}
                         meanRD={meanRD}
                         fractionalCNTicks={fractionalCNTicks}
                         showPurityPloidy={showPurityPloidyInputs}

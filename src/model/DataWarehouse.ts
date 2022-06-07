@@ -137,6 +137,7 @@ export class DataWarehouse {
     private sampleToPloidy: SampleIndexedData<number>; // for each sample, there's a specific ploidy whenever user inputs into the box, make a call to this
     private sampleToBafTicks: SampleIndexedData<cn_pair[]>; // similar ^
     private sampleToFractionalTicks:  SampleIndexedData<number[]>; // ^
+    private offset: number; 
 
     // private totalcnToState: CNIndexedData<number[][]>;
 
@@ -178,6 +179,7 @@ export class DataWarehouse {
         this.sampleToPloidy = {};
         this.sampleToBafTicks = {};
         this.sampleToFractionalTicks = {};
+        this.offset = 0; // gc: add offset to the BAF lines
 
 
         for(const d of rawData) {
@@ -253,7 +255,7 @@ export class DataWarehouse {
         }
 
         for (const sample in groupedBySample) {
-            this.getBAFLines(DEFAULT_PURITY, sample);
+            this.getBAFLines(DEFAULT_PURITY, sample, this.offset);
             const max_cn = ((this._rdRanges[sample][1]+1) * DEFAULT_PLOIDY / this.rdMeans[sample] - 2*(1-DEFAULT_PURITY)) / DEFAULT_PURITY;
             this.getFractionalCNTicks(DEFAULT_PURITY, START_CN, END_CN, max_cn, sample);
         }
@@ -701,14 +703,14 @@ export class DataWarehouse {
         return sampleGroupedData;
     }
 
-    getBAFLines(purity: number, sample: string) { 
+    getBAFLines(purity: number, sample: string, offset: number) {  // gc: add offset as a parameter
         const bafSeen = new Set<number>();
         const BAF_ticks : cn_pair[] = [];
 
         for(const state of CN_STATES) { // each CN state
             const A = state[0]; 
             const B = state[1];
-            const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity)); // gc: add offset
+            const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity)) + offset; // gc: add offset
             const originalLen = bafSeen.size;
             bafSeen.add(BAF_Tick);
             if(bafSeen.size !== originalLen) {

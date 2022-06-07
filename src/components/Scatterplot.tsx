@@ -54,6 +54,7 @@ interface Props {
     showCentroids: boolean;
     purity: number;
     ploidy: number;
+    offset: number; 
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
@@ -364,7 +365,7 @@ export class Scatterplot extends React.Component<Props, State> {
         } if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
             this.forceUnhover();
             this.forceHover(this.props.hoveredLocation); 
-        } else if (this.propsDidChange(prevProps, ["purity", "ploidy"])) {
+        } else if (this.propsDidChange(prevProps, ["purity", "ploidy", "offset"])) {
             
             let data : GenomicBin[] = this.props.data;
             const rdrScale = this.computeScales(this.props.rdRange, this.props.width, this.props.height).rdrScale;

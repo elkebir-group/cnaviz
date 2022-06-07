@@ -41,6 +41,7 @@ interface Props {
     showCentroids: boolean;
     purity: number;
     ploidy: number;
+    offset: number; // gc: required because Scatterplot needs to watch for prop changes.
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
@@ -97,7 +98,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, width, height, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
+                applyLog, scales, centroidPts, showCentroids, purity, ploidy, offset, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
         
         return <div className="SampleViz-scatter">
             <DivWithBullseye className="SampleViz-pane">
@@ -127,6 +128,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     showCentroids={showCentroids}
                     purity={purity}
                     ploidy={ploidy}
+                    offset={offset}
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
