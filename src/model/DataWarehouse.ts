@@ -885,11 +885,57 @@ export class DataWarehouse {
 
     }
 
-    absorbUnassigned() {
+    // applies the same across all samples
+    absorbUnassigned(thresh: number) {
         // for loop through all records
-            // if bin is unassigned (cluster = -2)
-                // for loop through all the active centroids (variable for this), pick the one that's closest 
-                // assign bin to closest centroid  
+        for(let i = 0; i < this.allRecords.length; i++) {
+            // if bin is unassigned (cluster = -1)
+            const bin = this.allRecords[i];
+            const sample = bin.SAMPLE;
+            const c = bin.CLUSTER;
+
+            let x : number = bin.reverseBAF;
+            let y : number = bin.fractional_cn; 
+
+            if (c === -1) {
+                // for loop through all the active centroids (variable for this)
+
+                // centroidPts : SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
+                const samplePts = this.centroidPts[sample]; // Get centroids for a specific sample
+                let minDistFromCentroid : number = Number.MAX_VALUE; 
+                let minCluster : number = -2;
+
+                for (const c_wrapper of [samplePts]) {
+                    let c : centroidPoint[] = c_wrapper.cluster; 
+                    for (const centroid of c) {
+                        let cluster_name : number = centroid.cluster; 
+                        let c_x : number = centroid.point[0]; //.toFixed(2);
+                        let c_y : number = centroid.point[1]; // .toFixed(2);
+
+                        // pick the centroid that's closest 
+                        const dist = Math.sqrt((c_x - x)**2 + (c_y - y)**2);
+                        if (dist < minDistFromCentroid) {
+                            minCluster = cluster_name; 
+                            minDistFromCentroid = dist; 
+                        }
+                    }
+                }
+                // assign bin to closest centroid if closer than threshold
+                if (minDistFromCentroid < thresh) {
+                    let locKey = GenomicBinHelpers.toChromosomeInterval(bin).toString(); // copied from line 575
+                    if(this._locationGroupedData[locKey]) {
+                        for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
+                            this._locationGroupedData[locKey][j].CLUSTER = minCluster;
+                        }
+                    }
+                }
+
+            }
+
+            // this.recalculateCentroids(this.currentDataKey, flattenNestedBins);
+            // this.historyStack.push()
+        }
+
     }
 
     // calculateCopyNumbers2() {

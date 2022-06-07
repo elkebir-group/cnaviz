@@ -216,6 +216,8 @@ interface State {
 
     selectedColor: string; // Name of selected cluster color. Should default to that blue.  gc
 
+    absorbThresh: number; // Threshold value to join unassigned bins into the existing. gc 
+
     selectedCluster: string; // cluster selected to be assigned to
 
     invertAxis: boolean;
@@ -304,6 +306,7 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "blue", // gc: when set to red, this changes
+            absorbThresh: 0.1, // gc
             invertAxis: false,
             sampleAmount: 1,
             color: 'blue',
@@ -340,6 +343,7 @@ export class App extends React.Component<{}, State> {
         this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleColorSelection = this.handleColorSelection.bind(this); // gc
+        this.handleAbsorbThresh = this.handleAbsorbThresh.bind(this); // gc
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
@@ -560,9 +564,19 @@ export class App extends React.Component<{}, State> {
         this.state.indexedData.setChrFilter(event.target.value);
     }
 
-    handleColorSelection(event: React.ChangeEvent<HTMLSelectElement>) {
+    handleColorSelection(event: React.ChangeEvent<HTMLSelectElement>) { // gc
         this.setState({selectedColor: event.target.value});
+    }
 
+ // const newthresh = Number(event.target.value);
+ //                    if(newthresh <= 0 && newPloidy >= 5) {
+ //                        this.onUpdateThresh(newthresh);
+ //                    }
+
+    handleAbsorbThresh(event: React.ChangeEvent<HTMLInputElement>) { // gc
+        // if event.target.value <= 0 && event.target.value >= 5 ... 
+        this.setState({absorbThresh: Number(event.target.value)}); 
+        this.state.indexedData.absorbUnassigned( Number(event.target.value) );
     }
 
     handleClusterSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -872,6 +886,7 @@ export class App extends React.Component<{}, State> {
                     selectedColor={selectedColor} 
                     onColorSelected={this.handleColorSelection} 
                     colorOptions={colorOptions}
+                    onAbsorbThresh={this.handleAbsorbThresh}
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
                     tableData={clusterTableData}

@@ -13,6 +13,7 @@ interface Props {
     selectedColor : string;
     onChrSelected : any;
     onColorSelected : any;
+    onAbsorbThresh : any; 
     chrOptions: any;
     colorOptions: any;
     onAddSample: any;
@@ -56,6 +57,7 @@ interface Props {
     applyLog: boolean;
     processingStatus: ProcessingStatus;
     onExport: () => void;
+
 
 }
 
@@ -176,6 +178,18 @@ function Sidebar(props: Props) {
               </select>
             </div>
           </div>
+
+          <div className= "row-contents" >
+            <div>
+              <label htmlFor="Absorb Thresh" style={{margin: 10}}> Absorb Thresh: </label>
+              <input
+                  name="Absorb Thresh" 
+                  id="Thresh-Input"
+                  min={0} max={5} step=".1"
+                  onChange={props.onAbsorbThresh} > 
+              </input>
+            </div>
+          </div>
         
           <div className= "row-contents" >
             <label>
@@ -203,6 +217,7 @@ function Sidebar(props: Props) {
               <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} disabled={props.applyLog} readOnly/>
             </label>
           </div>
+                    
 
           <div className= "row-contents" >
             <label className="custom-file-upload">
