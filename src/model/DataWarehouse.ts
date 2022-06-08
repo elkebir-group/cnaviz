@@ -710,12 +710,24 @@ export class DataWarehouse {
         for(const state of CN_STATES) { // each CN state
             const A = state[0]; 
             const B = state[1];
-            const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity)) + offset; // gc: add offset
-            const originalLen = bafSeen.size;
-            bafSeen.add(BAF_Tick);
-            if(bafSeen.size !== originalLen) {
-                const new_val : cn_pair = {tick: BAF_Tick, state: state};
-                BAF_ticks.push(new_val);
+            
+            if (A === 1 && B === 1) {
+                // console.log("INSIDE IF");
+                const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity)) + offset; // gc: add offset
+                const originalLen = bafSeen.size;
+                bafSeen.add(BAF_Tick);
+                if(bafSeen.size !== originalLen) {
+                    const new_val : cn_pair = {tick: BAF_Tick, state: state};
+                    BAF_ticks.push(new_val);
+                }
+            } else {
+                const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
+                const originalLen = bafSeen.size;
+                bafSeen.add(BAF_Tick);
+                if(bafSeen.size !== originalLen) {
+                    const new_val : cn_pair = {tick: BAF_Tick, state: state};
+                    BAF_ticks.push(new_val);
+                }            
             }
         }
 

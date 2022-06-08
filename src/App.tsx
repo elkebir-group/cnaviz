@@ -937,7 +937,7 @@ export class App extends React.Component<{}, State> {
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
 
-                {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
+                {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleDirections}></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header">Directions</h2>
@@ -1025,7 +1025,7 @@ export class App extends React.Component<{}, State> {
                     </div> }
 
 
-                {this.state.showLog && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
+                {this.state.showLog && <div className="black_overlay" onClick={()=> this.setState({showLog: !this.state.showLog})}></div> }
                 {this.state.showLog && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Previous Actions </h2>
@@ -1040,7 +1040,7 @@ export class App extends React.Component<{}, State> {
                         ></LogTable>
                     </div> }
 
-                {this.state.showCentroidTable && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
+                {this.state.showCentroidTable && <div className="black_overlay" onClick={()=> this.setState({showCentroidTable: !this.state.showCentroidTable})}></div> }
                 {this.state.showCentroidTable && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Centroid Table </h2>
@@ -1062,7 +1062,7 @@ export class App extends React.Component<{}, State> {
 
                     </div> }
                 
-                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
+                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay" onClick={this.onToggleSilhoutteBarPlot}></div> }
                 {this.state.showSilhouettes === ProcessingStatus.done && 
                         <AnalyticsTab
                             silhouetteData={this.state.silhouettes}
