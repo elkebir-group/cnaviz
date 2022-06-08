@@ -15,7 +15,6 @@ interface Props {
     onColorSelected : any;
     onAbsorbThresh : any; 
     chrOptions: any;
-    // colorOptions: any;
     onAddSample: any;
     onAssignCluster: any;
     tableData: any;
@@ -47,6 +46,7 @@ interface Props {
     showSilhouettes: ProcessingStatus;
     onToggleDirections: () => void;
     onToggleShowCentroidTable: () => void;
+    onToggleShowAbsorbBins: () => void;
     onTogglePreviousActionLog: () => void;
     onClearClustering: () => void;
     handleDemoFileInput: (applyClustering: boolean) => void;
@@ -174,19 +174,6 @@ function Sidebar(props: Props) {
                   id="Select Color"
                   value={props.selectedColor}
                   onChange={props.onColorSelected} >
-                      {/*{props.colorOptions}*/}
-              </input>
-            </div>
-          </div>
-
-          <div className= "row-contents" >
-            <div>
-              <label htmlFor="Absorb Thresh" style={{margin: 10}}> Absorb Thresh: </label>
-              <input 
-                  name="Absorb Thresh" 
-                  id="Thresh-Input"
-                  min={0} max={5} step=".1"
-                  onChange={props.onAbsorbThresh} > 
               </input>
             </div>
           </div>
@@ -232,9 +219,17 @@ function Sidebar(props: Props) {
             </label>
             <label className="custom-file-upload">
               <input type="button" id="custom-button" onClick={props.onToggleDirections}/>
-              Usage (?)
+              HELP (?)
             </label>
           </div>
+
+          <div className="row-contents" >
+            <label className="custom-file-upload">
+              <input type="button" id="custom-button" onClick={props.onToggleShowAbsorbBins}/>
+              Absorb Bins
+            </label>
+          </div>
+
           <div className= "row-contents" >
             <label className="custom-file-upload">
               <input type="button" id="custom-button" onClick={props.onClearClustering}/>

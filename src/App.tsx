@@ -254,6 +254,8 @@ interface State {
 
     showDirections: boolean;
 
+    showAbsorbBins: boolean; 
+
     showLog: boolean;
 
     showCentroidTable: boolean;
@@ -306,7 +308,7 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "black", // gc: when set to red, this changes
-            absorbThresh: 0.1, // gc
+            absorbThresh: 0.5, // gc
             invertAxis: false,
             sampleAmount: 1,
             color: 'blue',
@@ -324,6 +326,7 @@ export class App extends React.Component<{}, State> {
             showLinearPlot: true,
             showScatterPlot: true,
             showDirections: false,
+            showAbsorbBins: false, 
             showLog: false,
             showCentroidTable: false,
             showCentroids: false,
@@ -368,6 +371,7 @@ export class App extends React.Component<{}, State> {
         this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
         this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
         this.onToggleDirections = this.onToggleDirections.bind(this);
+        this.onToggleShowAbsorbBins = this.onToggleShowAbsorbBins.bind(this);
         this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
         this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
         this.onClearClustering = this.onClearClustering.bind(this);
@@ -677,6 +681,10 @@ export class App extends React.Component<{}, State> {
         this.setState({showDirections: !this.state.showDirections});
     }
 
+    onToggleShowAbsorbBins() {
+        this.setState({showAbsorbBins: !this.state.showAbsorbBins});
+    }
+
     toggleLog() {
         if(this.state.applyLog) {
             this.state.indexedData.setDataKeyType("RD");
@@ -802,9 +810,7 @@ export class App extends React.Component<{}, State> {
         const allData = indexedData.getAllRecords();
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
-        let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
-        // let selectColorOptions = ["red", "blue", "yellow", "black"]; 
-        // let colorOptions : JSX.Element[] = [<option value={"Selection Color"}>-Select Color-</option>];  
+        let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -841,10 +847,6 @@ export class App extends React.Component<{}, State> {
 
             chrOptions = indexedData.getAllChromosomes().sort(sortAlphaNum).map(chr => <option key={chr} value={chr}>{chr}</option>);
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
-
-            // const colorOptions = this.state.["blue", "yellow", "green"]; // [this.state.colors]; 
-            // colorOptions = selectColorOptions.map(clr => <option key={clr} value={clr}>{clr}</option>);
-            // colorOptions.push(<option value={"Selection Color"}>-Select Color-</option>); 
 
             const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
@@ -885,7 +887,6 @@ export class App extends React.Component<{}, State> {
                     chrOptions={chrOptions}
                     selectedColor={selectedColor} 
                     onColorSelected={this.handleColorSelection} 
-                    // colorOptions={colorOptions}
                     onAbsorbThresh={this.handleAbsorbThresh}
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
@@ -912,6 +913,7 @@ export class App extends React.Component<{}, State> {
                     syncScales={this.state.syncScales}
                     logData = {actions}
                     onToggleShowCentroids= {this.onToggleShowCentroids}
+                    onToggleShowAbsorbBins={this.onToggleShowAbsorbBins}
                     showCentroids= {this.state.showCentroids}
                     onDriverFileChosen={this.handleDriverFileChosen}
                     onTogglesilhouettes={this.onToggleSilhoutteBarPlot}
@@ -935,7 +937,7 @@ export class App extends React.Component<{}, State> {
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
 
-                {this.state.showDirections && <div className="black_overlay"></div> }
+                {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header">Directions</h2>
@@ -961,7 +963,69 @@ export class App extends React.Component<{}, State> {
 
                     </div> }
 
-                {this.state.showLog && <div className="black_overlay"></div> }
+                {this.state.showAbsorbBins && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
+                {this.state.showAbsorbBins && 
+                    <div className="Directions">
+                        <h2 className="pop-up-window-header">Absorb Bins</h2>
+                        <div className="Exit-Popup" onClick={this.onToggleShowAbsorbBins}> 
+                            <FiX/>
+                        </div>
+                        <div className="App-row-contents">
+                            From: 
+                            <ClusterTable 
+                                data={clusterTableData} 
+                                onClusterRowsChange={this.onClusterRowsChange}  // gc: need to edit this
+                                onClusterColorChange={this.onClusterColorChange} // gc: need to edit this
+                                currentFilters={indexedData.getFilteredClusters()}
+                                colOneName={"Cluster ID"}
+                                colTwoName={"Bin (%)"}
+                                cols={""}
+                                expandable={true}
+                                selectable={true}
+                                colors={CLUSTER_COLORS}
+                            ></ClusterTable>
+                            To: 
+                            <ClusterTable 
+                                data={clusterTableData} 
+                                onClusterRowsChange={this.onClusterRowsChange} // gc: need to edit this
+                                onClusterColorChange={this.onClusterColorChange} // gc: need to edit this
+                                currentFilters={indexedData.getFilteredClusters()}
+                                colOneName={"Cluster ID"}
+                                colTwoName={"Bin (%)"}
+                                cols={""}
+                                expandable={true}
+                                selectable={true}
+                                colors={CLUSTER_COLORS}
+                            ></ClusterTable>
+                        </div>
+                        <div className="App-row-contents">
+                            Set Absorb Threshold (RDR): 
+                            <input type="number"
+                              name="Absorb Threshold" 
+                              id="Absorb-Thresh-RDR"
+                              min={0}
+                              max={5}
+                              placeholder={"0.5"}
+                              onChange={this.handleAbsorbThresh}> 
+                            </input>
+
+                            Set Absorb Threshold (BAF): 
+                            <input type="number"
+                              name="Absorb Threshold" 
+                              id="Absorb-Thresh-BAF"
+                              min={0}
+                              max={5}
+                              placeholder={"0.5"}
+                              onChange={this.handleAbsorbThresh}> 
+                            </input>
+                        </div>
+                        <div className="App-row-contents"> 
+                            Display Current Absorb Threshold HERE  
+                        </div>
+                    </div> }
+
+
+                {this.state.showLog && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
                 {this.state.showLog && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Previous Actions </h2>
@@ -976,7 +1040,7 @@ export class App extends React.Component<{}, State> {
                         ></LogTable>
                     </div> }
 
-                {this.state.showCentroidTable && <div className="black_overlay"></div> }
+                {this.state.showCentroidTable && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
                 {this.state.showCentroidTable && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Centroid Table </h2>
@@ -998,7 +1062,7 @@ export class App extends React.Component<{}, State> {
 
                     </div> }
                 
-                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay"></div> }
+                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
                 {this.state.showSilhouettes === ProcessingStatus.done && 
                         <AnalyticsTab
                             silhouetteData={this.state.silhouettes}
