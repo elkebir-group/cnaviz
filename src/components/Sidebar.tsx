@@ -15,7 +15,7 @@ interface Props {
     onColorSelected : any;
     onAbsorbThresh : any; 
     chrOptions: any;
-    colorOptions: any;
+    // colorOptions: any;
     onAddSample: any;
     onAssignCluster: any;
     tableData: any;
@@ -169,20 +169,20 @@ function Sidebar(props: Props) {
           <div className= "row-contents" >
             <div>
               <label htmlFor="Select Cluster Color" style={{margin: 10}}> Selection Color: </label>
-              <select
+              <input type="color"
                   name="Select Color" 
                   id="Select Color"
                   value={props.selectedColor}
                   onChange={props.onColorSelected} >
-                      {props.colorOptions}
-              </select>
+                      {/*{props.colorOptions}*/}
+              </input>
             </div>
           </div>
 
           <div className= "row-contents" >
             <div>
               <label htmlFor="Absorb Thresh" style={{margin: 10}}> Absorb Thresh: </label>
-              <input
+              <input 
                   name="Absorb Thresh" 
                   id="Thresh-Input"
                   min={0} max={5} step=".1"

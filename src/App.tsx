@@ -305,7 +305,7 @@ export class App extends React.Component<{}, State> {
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
-            selectedColor: "blue", // gc: when set to red, this changes
+            selectedColor: "black", // gc: when set to red, this changes
             absorbThresh: 0.1, // gc
             invertAxis: false,
             sampleAmount: 1,
@@ -803,8 +803,8 @@ export class App extends React.Component<{}, State> {
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
-        let selectColorOptions = ["red", "blue", "yellow", "black"]; 
-        let colorOptions : JSX.Element[] = [<option value={"Selection Color"}>-Select Color-</option>];  
+        // let selectColorOptions = ["red", "blue", "yellow", "black"]; 
+        // let colorOptions : JSX.Element[] = [<option value={"Selection Color"}>-Select Color-</option>];  
         let actions = indexedData.getActions();
 
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
@@ -843,8 +843,8 @@ export class App extends React.Component<{}, State> {
             chrOptions.push(<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>);
 
             // const colorOptions = this.state.["blue", "yellow", "green"]; // [this.state.colors]; 
-            colorOptions = selectColorOptions.map(clr => <option key={clr} value={clr}>{clr}</option>);
-            colorOptions.push(<option value={"Selection Color"}>-Select Color-</option>); 
+            // colorOptions = selectColorOptions.map(clr => <option key={clr} value={clr}>{clr}</option>);
+            // colorOptions.push(<option value={"Selection Color"}>-Select Color-</option>); 
 
             const clusterOptions = indexedData.getAllClusters().map((clusterName : string) =>
                 <option key={clusterName} value={clusterName}>{clusterName}</option>
@@ -885,7 +885,7 @@ export class App extends React.Component<{}, State> {
                     chrOptions={chrOptions}
                     selectedColor={selectedColor} 
                     onColorSelected={this.handleColorSelection} 
-                    colorOptions={colorOptions}
+                    // colorOptions={colorOptions}
                     onAbsorbThresh={this.handleAbsorbThresh}
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
