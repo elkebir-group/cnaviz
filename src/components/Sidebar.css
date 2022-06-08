@@ -75,6 +75,42 @@ input[type="file"] {
   align-items: center;
   /* color: disa; */
 }
+.custom-file-upload:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.custom-file-upload2 {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.custom-file-upload2:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+
+.custom-file-upload3 {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.custom-file-upload3:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
 
 .custom-file-upload-disabled {
   /* display: inline-block; */
@@ -85,6 +121,36 @@ input[type="file"] {
   padding: 3px;
   align-items: center;
   color: gray;
+}
+
+.custom-file-export {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.custom-file-export:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.demo {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.demo:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
 }
 
 .disabled {
@@ -109,6 +175,11 @@ input[type="file"] {
   font-size: 22px;
   top: 40%;
   cursor: pointer;
+}
+
+.closemenu:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
 }
 
 .closemenu3 {
@@ -161,3 +232,132 @@ input[type="file"] {
     height: 20px;
     width: 100px;
 }
+
+
+.Select-Chrom:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.selection-color:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.logrdr:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.centroids:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.scatterplot:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.linearplot:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.purityploidy:hover {
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.analytics {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.analytics:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+
+.centroidtable {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.centroidtable:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+
+
+
+.directions_label {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.directions_label:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+
+.absorbbins {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.absorbbins:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+.clearclustering {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.clearclustering:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

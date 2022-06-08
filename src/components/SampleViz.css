@@ -59,6 +59,10 @@ button {
     padding: 3px;
     align-items: center;
 }
+.custom-button:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
 /* .Sampleviz-cluster-select {
     width: 90px;
 } */

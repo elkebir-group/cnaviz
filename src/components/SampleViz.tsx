@@ -223,10 +223,10 @@ export class SampleViz extends React.Component<Props, State> {
             {(showLinearPlot || showScatterPlot) &&
             <div className="SampleViz-select">
                     <span >Cluster: </span>
-                        
+
                     <select
                     name="Select Cluster" 
-                    title="Cluster"
+                    // title="Pick a cluster to assign your selected bins to!"
                     className="Sampleviz-cluster-select"
                     value={this.state.selectedCluster}
                     disabled={disableSelectOptions}
@@ -234,13 +234,13 @@ export class SampleViz extends React.Component<Props, State> {
                     {clusterOptions}
                     </select>
                    
-                   <button className="custom-button" onClick={() => {
+                   <button className="custom-button" title="Assigns your selected bins to the selected cluster." onClick={() => {
                         this.props.parentCallBack(this.state.selectedCluster);
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions}>Assign Cluster</button>
 
-                    <button className="custom-button" onClick={()=>{
+                    <button className="custom-button" title="Assigns your selected bins to a new cluster." onClick={()=>{
                         this.initializeListOfClusters();
                         let clusters = this._clusters;
                         clusters.sort((a: string, b:string) => (Number(a) - Number(b)))
@@ -258,7 +258,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.onBrushedBinsUpdated([]);
                     }}
                     disabled={disableSelectOptions} >New Cluster</button>
-                    <button className="custom-button" onClick={this.props.onUndoClick}> Undo Cluster Assignment</button>
+                    <button className="custom-button" title="Undo cluster assignment." onClick={this.props.onUndoClick}> Undo Cluster Assignment</button>
                 </div>}
 
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
