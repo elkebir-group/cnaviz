@@ -7,6 +7,7 @@
 .SampleViz-pane {
     display: inline-block;
     border: 1px solid lightgray;
+    cursor: grab;
 }
 
 .SampleViz-separator {

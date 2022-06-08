@@ -1,6 +1,7 @@
 .Bullseye-horizontal-line, .Bullseye-vertical-line {
     position: absolute;
     pointer-events: none;
+    /*cursor:  grab;*/
 }
 
 .Bullseye-horizontal-line {
