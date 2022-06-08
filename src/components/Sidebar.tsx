@@ -4,7 +4,8 @@ import {ClusterTable} from "./ClusterTable";
 import {DisplayMode, ProcessingStatus} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
-import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
+import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
+import {IoHandRight} from "react-icons/io5"
 import {BiEraser} from "react-icons/bi";
 
 
@@ -90,7 +91,7 @@ function Sidebar(props: Props) {
       
       <div className="closemenu2" title="Mode: Panning." onClick={() => props.setDisplayMode(DisplayMode.select)}>
             <div className="arrow-container"> 
-              <FiMousePointer
+              <IoHandRight
                 color={props.currentDisplayMode === DisplayMode.select ? "red" : "black"}
               />
             </div>
@@ -122,12 +123,12 @@ function Sidebar(props: Props) {
                   (event: any) =>
                   props.onFileChosen(event, true)
                 } />
-                Import
+                Import <FiUpload/>
               </label>
               
               <label className="custom-file-export" title="Exports your clustering.">
                 <CSV data={props.data} logData={props.logData} fileName={props.chosenFile} onExport={props.onExport}></CSV>
-                Export
+                Export <FiDownload/>
               </label>
               <label className="demo" title="Loads CNAViz with demo data.">
                 <input type="button" id="custom-button" onClick={

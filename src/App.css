@@ -21,6 +21,14 @@ body {
     display: inline;
     margin-right: 50px;
 }
+.helpbutton {
+     margin-top: 5px;
+     margin-right: 5px;
+     position:absolute;
+     top:0;
+     right:0;
+     z-index:  99 !important;
+}
 
 .App-row-contents {
     display: flex;

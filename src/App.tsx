@@ -933,9 +933,17 @@ export class App extends React.Component<{}, State> {
                 />
             </div>
             
+
             <div className={this.state.sidebar ? "marginContent" : ""}>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
+
+                <div className="helpbutton">
+                    <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
+                      <input type="button" id="custom-button" onClick={this.onToggleDirections}/>
+                      HELP (?)
+                    </label>
+                </div>
 
                 {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleDirections}></div> }
                 {this.state.showDirections && 
@@ -1077,7 +1085,6 @@ export class App extends React.Component<{}, State> {
                 </div> 
 
             </div>
-            
         </div>;
     }
 }
