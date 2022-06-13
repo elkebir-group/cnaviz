@@ -120,6 +120,8 @@ export class DataWarehouse {
     private clusterTableInfo: clusterTableRow[]; // info on each cluster (type defined above)
     private allRecords: readonly GenomicBin[]; // all the bins without the crossfilter
     private _cluster_filters: String[]; // current clusters that we're filtering by 
+    private _cluster_filters_to: String[]; // current clusters that we're filtering by 
+    private _cluster_filters_from: String[]; // current clusters that we're filtering by 
     private historyStack: GenomicBin[][]; // for when we undo 
     private _clusterAmounts: readonly crossfilter.Grouping<crossfilter.NaturallyOrderedValue, unknown>[];//ChrIndexedData<GenomicBin[]>; 
     private logOfActions: LogTableRow[]; // log table that we export
@@ -164,6 +166,8 @@ export class DataWarehouse {
         this.brushedCrossfilter = crossfilter(this.brushedBins); 
         this.brushedClusterDim = this.brushedCrossfilter.dimension((d:GenomicBin) => d.CLUSTER); // set a dimension along cluster (from left sidebar)
         this._cluster_filters = []; 
+        this._cluster_filters_to = [];
+        this._cluster_filters_from = []; 
         this.historyStack = [];
         this._ndx = crossfilter(rawData);
         this.logOfActions = [];
@@ -234,6 +238,8 @@ export class DataWarehouse {
         
 
         this._cluster_filters = this._clusters;
+        this._cluster_filters_to = this._clusters;
+        this._cluster_filters_from = this._clusters;
         this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
         this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
         this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
@@ -529,7 +535,40 @@ export class DataWarehouse {
         
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
     }
-
+    setClusterFiltersTo(clusters?: String[]) {
+        console.log("setClustersFiltersTo");            
+        if(clusters) {
+            this._cluster_filters_to = clusters;
+        }
+        // if(clusters && ((clusters.length === 1 && clusters[0] === DataWarehouse.ALL_CLUSTERS_KEY))) {
+        //     this._cluster_dim.filterAll();
+        // } else if(clusters) {
+        //     this._cluster_dim.filterAll();
+        //     this._cluster_dim.filter(d => clusters.indexOf(String(d)) === -1 ? false : true);
+        // }
+        // if(clusters) {
+        //     this._cluster_filters = clusters;
+        // }
+        
+        // this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
+    }
+    setClusterFiltersFrom(clusters?: String[]) {
+        console.log("setClustersFiltersFrom");
+        if(clusters) {
+            this._cluster_filters_from = clusters;
+        }
+        // if(clusters && ((clusters.length === 1 && clusters[0] === DataWarehouse.ALL_CLUSTERS_KEY))) {
+        //     this._cluster_dim.filterAll();
+        // } else if(clusters) {
+        //     this._cluster_dim.filterAll();
+        //     this._cluster_dim.filter(d => clusters.indexOf(String(d)) === -1 ? false : true);
+        // }
+        // if(clusters) {
+        //     this._cluster_filters = clusters;
+        // }
+        
+        // this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
+    }
 
     setGenomicPositionFilter(genomeRange: [number, number]) {
         this._genomic_pos_dim.filterAll();
@@ -628,6 +667,14 @@ export class DataWarehouse {
         if(!this._cluster_filters.includes(String(cluster))) {
             this._cluster_filters.push(String(cluster));
         }
+
+        // if(!this._cluster_filters_to.includes(String(cluster))) { // gc
+        //     this._cluster_filters_to.push(String(cluster));
+        // }
+        
+        // if(!this._cluster_filters_from.includes(String(cluster))) { // gc
+        //     this._cluster_filters_from.push(String(cluster));
+        // }
 
         this.setClusterFilters(this._cluster_filters);
         this.shouldCalculatesilhouettes = true;
@@ -839,6 +886,14 @@ export class DataWarehouse {
 
     getFilteredClusters() {
         return this._cluster_filters;
+    }
+
+    getFilteredFromClusters() {
+        return this._cluster_filters_from;
+    }
+
+    getFilteredToClusters() {
+        return this._cluster_filters_to;
     }
 
     setbrushedBins(brushedBins: GenomicBin[]) {

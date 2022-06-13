@@ -358,6 +358,10 @@ export class App extends React.Component<{}, State> {
         this.updateBrushedBins = this.updateBrushedBins.bind(this);
         this.onClusterRowsChange = this.onClusterRowsChange.bind(this);
         this.onClusterColorChange = this.onClusterColorChange.bind(this);
+        this.onClusterRowsToChange = this.onClusterRowsToChange.bind(this);
+        this.onClusterColorToChange = this.onClusterColorToChange.bind(this);
+        this.onClusterRowsFromChange = this.onClusterRowsFromChange.bind(this);
+        this.onClusterColorFromChange = this.onClusterColorFromChange.bind(this);
         this.onSelectedSample = this.onSelectedSample.bind(this);
         this.handleRemovePlot = this.handleRemovePlot.bind(this);
         this.setDisplayMode = this.setDisplayMode.bind(this);
@@ -371,6 +375,7 @@ export class App extends React.Component<{}, State> {
         this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
         this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
         this.onToggleDirections = this.onToggleDirections.bind(this);
+        this.absorbBins = this.absorbBins.bind(this);
         this.onToggleShowAbsorbBins = this.onToggleShowAbsorbBins.bind(this);
         this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
         this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
@@ -681,6 +686,12 @@ export class App extends React.Component<{}, State> {
         this.setState({showDirections: !this.state.showDirections});
     }
 
+    absorbBins() {
+        console.log("Absorb bins!");
+        let from = this.state.indexedData.getFilteredFromClusters;
+        let to = this.state.indexedData.getFilteredToClusters; 
+    }
+
     onToggleShowAbsorbBins() {
         this.setState({showAbsorbBins: !this.state.showAbsorbBins});
     }
@@ -712,7 +723,32 @@ export class App extends React.Component<{}, State> {
         this.setState({indexedData: this.state.indexedData});
     }
 
+    onClusterRowsToChange(state: any) { // gc
+        this.state.indexedData.setClusterFiltersTo( state.selectedRows.map((d:any)  => String(d.key)));
+        this.setState({indexedData: this.state.indexedData});
+    }
+
+    onClusterRowsFromChange(state: any) {// gc
+        this.state.indexedData.setClusterFiltersFrom( state.selectedRows.map((d:any)  => String(d.key)));
+        this.setState({indexedData: this.state.indexedData});
+    }
+
     onClusterColorChange(colors: string[]) {
+        let newColors = [];
+        for(const col of colors) {
+            newColors.push(col);
+        }
+        this.setState({colors: newColors});
+    }
+
+    onClusterColorToChange(colors: string[]) {// gc
+        let newColors = [];
+        for(const col of colors) {
+            newColors.push(col);
+        }
+        this.setState({colors: newColors});
+    }
+    onClusterColorFromChange(colors: string[]) {// gc
         let newColors = [];
         for(const col of colors) {
             newColors.push(col);
@@ -810,11 +846,16 @@ export class App extends React.Component<{}, State> {
         const allData = indexedData.getAllRecords();
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
+        let clusterTableData2 = indexedData.getClusterTableInfo();
+        let clusterTableData3 = indexedData.getClusterTableInfo();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
+            const clusterTableData2 = indexedData.getClusterTableInfo();
+            const clusterTableData3 = indexedData.getClusterTableInfo();
+
             const scatterplotProps = {
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
@@ -836,6 +877,8 @@ export class App extends React.Component<{}, State> {
                 onAddSample: this.handleAddSampleClick,
                 onChangeSample: this.changeDisplayedSamples,
                 clusterTableData: clusterTableData,
+                clusterTableData2: clusterTableData,
+                clusterTableData3: clusterTableData,
                 applyLog: this.state.applyLog,
                 onClusterSelected: this.handleClusterSelected,
                 onUndoClick: this.goBackToPreviousCluster,
@@ -981,10 +1024,10 @@ export class App extends React.Component<{}, State> {
                         <div className="App-row-contents">
                             From: 
                             <ClusterTable 
-                                data={clusterTableData} 
-                                onClusterRowsChange={this.onClusterRowsChange}  // gc: need to edit this
+                                data={clusterTableData2} 
+                                onClusterRowsChange={this.onClusterRowsFromChange}  // gc: need to edit this
                                 onClusterColorChange={this.onClusterColorChange} // gc: need to edit this
-                                currentFilters={indexedData.getFilteredClusters()}
+                                currentFilters={indexedData.getFilteredFromClusters()}
                                 colOneName={"Cluster ID"}
                                 colTwoName={"Bin (%)"}
                                 cols={""}
@@ -994,10 +1037,10 @@ export class App extends React.Component<{}, State> {
                             ></ClusterTable>
                             To: 
                             <ClusterTable 
-                                data={clusterTableData} 
-                                onClusterRowsChange={this.onClusterRowsChange} // gc: need to edit this
+                                data={clusterTableData3} 
+                                onClusterRowsChange={this.onClusterRowsToChange} // gc: need to edit this
                                 onClusterColorChange={this.onClusterColorChange} // gc: need to edit this
-                                currentFilters={indexedData.getFilteredClusters()}
+                                currentFilters={indexedData.getFilteredToClusters()}
                                 colOneName={"Cluster ID"}
                                 colTwoName={"Bin (%)"}
                                 cols={""}
@@ -1029,6 +1072,12 @@ export class App extends React.Component<{}, State> {
                         </div>
                         <div className="App-row-contents"> 
                             Display Current Absorb Threshold HERE  
+                        </div>
+                        <div className="App-row-contents">
+                            <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
+                                <input type="button" id="custom-button" onClick={this.absorbBins}/>
+                                Absorb Bins
+                            </label>
                         </div>
                     </div> }
 
