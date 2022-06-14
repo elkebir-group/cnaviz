@@ -118,6 +118,8 @@ export class DataWarehouse {
     private _chrs: string[];
     private _sampleGroupedData: SampleIndexedData<GenomicBin[]>; // map from each sample to each bin that's relevant 
     private clusterTableInfo: clusterTableRow[]; // info on each cluster (type defined above)
+    private clusterTableInfo2: clusterTableRow[]; // info on each cluster (type defined above)
+    private clusterTableInfo3: clusterTableRow[]; // info on each cluster (type defined above)
     private allRecords: readonly GenomicBin[]; // all the bins without the crossfilter
     private _cluster_filters: String[]; // current clusters that we're filtering by 
     private _cluster_filters_to: String[]; // current clusters that we're filtering by 
@@ -269,6 +271,9 @@ export class DataWarehouse {
         this.initializeCentroidDistMatrix();
         this.allRecords = this._ndx.all();
         this.clusterTableInfo = this.calculateClusterTableInfo();
+        this.clusterTableInfo2 = this.calculateClusterTableInfo(); // gc
+        this.clusterTableInfo3 = this.calculateClusterTableInfo(); // gc
+
         this.filterRecordsByScales = memoizeOne(this.filterRecordsByScales);
         this.getBAFLines = memoizeOne(this.getBAFLines);
 
@@ -592,6 +597,7 @@ export class DataWarehouse {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
+        console.log("Updating cluster!"); 
 
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
         let brushedTableData  = this.brushedTableData();
@@ -662,6 +668,8 @@ export class DataWarehouse {
         this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
         this.allRecords =  this._ndx.all(); 
         this.clusterTableInfo = this.calculateClusterTableInfo();
+        this.clusterTableInfo2 = this.calculateClusterTableInfo();
+        this.clusterTableInfo3 = this.calculateClusterTableInfo();
         this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
 
         if(!this._cluster_filters.includes(String(cluster))) {
@@ -884,6 +892,13 @@ export class DataWarehouse {
         return this.clusterTableInfo;
     }
 
+    getClusterTableInfo2() {
+        return this.clusterTableInfo2;
+    }
+    getClusterTableInfo3() {
+        return this.clusterTableInfo3;
+    }
+
     getFilteredClusters() {
         return this._cluster_filters;
     }
@@ -909,6 +924,7 @@ export class DataWarehouse {
     }
 
     getClusterDim() {
+        console.log("cluster dimensions:", this._cluster_dim);
         return this._cluster_dim;
     }
 
@@ -952,152 +968,107 @@ export class DataWarehouse {
 
     }
 
+
     // applies the same across all samples
-    absorbUnassigned(thresh: number) {
-        // for loop through all records
-        for(let i = 0; i < this.allRecords.length; i++) {
-            // if bin is unassigned (cluster = -1)
+    absorbBins(from_set: String[], to_set: String[], xthresh: number, ythresh: number) {
+        // for loop through all records in from_set!!
+        let clusters_from = new Set(this._cluster_filters_from);
+        let clusters_to = new Set(this._cluster_filters_to);
+        console.log("inside absorbBins()...", this.allRecords.length);
+
+        const reassign = new Map(); // <String, GenomicBin[]>(); 
+
+        for(let i = 0; i < this.allRecords.length; i++) { // gc: apply the cluster filter to only get clusters from "from_set" in a more intelligent way...
             const bin = this.allRecords[i];
-            const sample = bin.SAMPLE;
-            const c = bin.CLUSTER;
+            const c_bin = bin.CLUSTER;
+            // console.log("c_bin:", String(c_bin), "clusters_from", clusters_from); 
+            if (clusters_from.has(String(c_bin))) {
+                console.log("Looking at bins", c_bin); 
+                const sample = bin.SAMPLE;
+                const ploidy = this.sampleToPloidy[sample];
+                const meanRD = this.rdMeans[sample];
+                const rd = this.allRecords[i].RD;
 
-            let x : number = bin.reverseBAF;
-            let y : number = bin.fractional_cn; 
+                let x : number = bin.reverseBAF;
+                let y : number = bin.fractional_cn; 
 
-            if (c === -1) {
                 // for loop through all the active centroids (variable for this)
-
                 // centroidPts : SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
-                const samplePts = this.centroidPts[sample]; // Get centroids for a specific sample
+
                 let minDistFromCentroid : number = Number.MAX_VALUE; 
                 let minCluster : number = -2;
+                let min_x : number = 9999999;
+                let min_y : number = 9999999; 
 
-                for (const c_wrapper of [samplePts]) {
-                    let c : centroidPoint[] = c_wrapper.cluster; 
-                    for (const centroid of c) {
-                        let cluster_name : number = centroid.cluster; 
-                        let c_x : number = centroid.point[0]; //.toFixed(2);
-                        let c_y : number = centroid.point[1]; // .toFixed(2);
+                let needpop : boolean = false; 
+                if (String(c_bin) in clusters_to) {
+                    needpop = false; 
+                } else {
+                    needpop = true; 
+                }
+                clusters_to.add(String(c_bin)); 
 
-                        // pick the centroid that's closest 
-                        const dist = Math.sqrt((c_x - x)**2 + (c_y - y)**2);
-                        if (dist < minDistFromCentroid) {
-                            minCluster = cluster_name; 
-                            minDistFromCentroid = dist; 
-                        }
+
+                console.log("clusters_to", clusters_to);
+                for (var to_c of Array.from(clusters_to.values())) {
+                    console.log("to_c", to_c); 
+                    const samplePts = this.centroidPts[sample]; // Get centroids for a specific sample
+                    console.log("Here is samplePts", samplePts); 
+                    console.log("samplePts[c_bin]", samplePts[String(to_c)]);
+                    let centroid = samplePts[String(to_c)][0]
+                    console.log("centroid:", centroid); 
+                    
+                    let c_x : number = centroid.point[0];
+                    let c_y : number = centroid.point[1]; 
+                    console.log("c_x:", c_x, "c_y:", c_y);
+                    
+                    console.log(String(to_c), clusters_to)
+                    const dist = Math.sqrt((c_x - x)**2 + (c_y - y)**2);
+                    if (dist < minDistFromCentroid) {
+                        minCluster = Number(to_c); 
+                        minDistFromCentroid = dist;
+                        min_x = c_x;
+                        min_y = c_y;  
+                        console.log("Closest Centroid.", String(to_c)); 
                     }
                 }
-                // assign bin to closest centroid if closer than threshold
-                if (minDistFromCentroid < thresh) {
-                    let locKey = GenomicBinHelpers.toChromosomeInterval(bin).toString(); // copied from line 575
-                    if(this._locationGroupedData[locKey]) {
-                        for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
-                            this._locationGroupedData[locKey][j].CLUSTER = minCluster;
-                        }
-                    }
+                if (needpop) {
+                    clusters_to.delete(String(c_bin)); 
                 }
-
+                
+                console.log("Min_x", min_x);
+                console.log("Min_y", min_y);
+                console.log("minCluster", minCluster);
+                console.log("xthresh:", xthresh, "ythresh", ythresh); 
+                if (min_x <= xthresh && min_y <= ythresh) {
+                    if (reassign.has(String(minCluster))) {
+                        // if (reassign.get(String(minCluster))) {
+                        var arr = reassign.get(String(minCluster)); 
+                        if (arr != undefined) {
+                            arr.push(bin); 
+                            reassign.set(String(minCluster), arr);
+                        } else {
+                            console.log("Arr is undefined??"); 
+                        }
+                            // reassign.get(String(minCluster)).push(bin); 
+                        // }
+                    } else {
+                        reassign.set(String(minCluster), [bin]); 
+                    }
+                } else {
+                    console.log("Didn't reassign because not within threshold!"); 
+                }
             }
-
-            // this.recalculateCentroids(this.currentDataKey, flattenNestedBins);
-            // this.historyStack.push()
         }
-
+        // assign bin to closest centroid if closer than threshold
+        for (var clusterName of Array.from(reassign.keys())) {
+            let clusterbins : GenomicBin[] = reassign.get(clusterName); 
+            this.setbrushedBins(clusterbins);
+            this.updateCluster(Number(clusterName)); 
+            console.log("Pushing to history stack.");
+            this.historyStack.push(JSON.parse(JSON.stringify(clusterbins)));
+        } 
     }
-
-    // calculateCopyNumbers2() {
-    //     if(this._samples.length === 0) {
-    //         return;
-    //     }
-
-    //     for(let i = 0; i < this.allRecords.length; i++) {
-    //         const sample = this.allRecords[i].SAMPLE;
-    //         const ploidy = this.sampleToPloidy[sample];
-    //         const meanRD = this.rdMeans[sample];
-    //         const rd = this.allRecords[i].RD;
-    //         this.allRecords[i].fractional_cn = rd * ploidy / meanRD; 
-    //     }
-
-    //     // Convert each bin to an ND coordinate across samples
-    //     const locKeyToNDCoord : LocationIndexedData<number[]> = {};
-    //     const firstSample = this._samples[0];
-    //     const firstSampleData = this._sampleGroupedData[firstSample];
-
-
-    //     for(const bin of firstSampleData) {
-    //         const locKey = GenomicBinHelpers.toChromosomeInterval(bin).toString();
-    //         const binAcrossSamples = this._locationGroupedData[locKey];
-    //         const binCoords : [number, number][] = [];
-    //         for(const bin2 of binAcrossSamples) {
-    //             const sample = bin2.SAMPLE;
-    //             const samplePloidy = this.sampleToPloidy[sample];
-    //             const meanRD = this.rdMeans[sample];
-    //             const cnBaf : [number, number] = [bin2.reverseBAF, bin2.RD * samplePloidy / meanRD];
-    //             binCoords.push(cnBaf);
-    //         }
-
-    //         locKeyToNDCoord[locKey] = createNDCoordinate(binCoords);
-    //     }
-
-    //     type NDGridCoord = {state: [number, number], coord: number[]}
-
-    //     const statesUsed = this.sampleToBafTicks[firstSample].map(d => d.state);
-    //     const gridCoords : NDGridCoord[] = [];
-
-    //     for(const [A, B] of statesUsed) {
-    //         // Get the Baf ticks corresponding to the CN state [A, B] in each sample
-    //         const sampleToABBaf : SampleIndexedData<number> = {};
-    //         for(const sample of this._samples) {
-    //             const bafTicks : cn_pair[] = this.sampleToBafTicks[sample];
-    //             const foundABBAF = bafTicks.find(d => d.state[0] === A && d.state[1] === B);
-    //             if(foundABBAF) {
-    //                 sampleToABBaf[sample] = foundABBAF.tick;
-    //             }
-    //         }
-
-    //         // Get the fractional CN tick that makes sense with the state [A, B] (the tick corresponding to state (A+B))
-
-    //         const totalCN = A + B;
-    //         const sampleToFracCN : SampleIndexedData<number> = {};
-    //         for(const sample of this._samples) {
-    //             const fracCNTicks : number[] = this.sampleToFractionalTicks[sample];
-    //             const totalCNFracTick : number = fracCNTicks[totalCN];
-    //             sampleToFracCN[sample] = totalCNFracTick;
-    //         }
-
-    //         // Create a n-dimensional cooordinate for state [A, B]
-    //         const nDimGridCoordinate : number[] = []
-    //         for(const sample of this._samples) {
-    //             const x = sampleToABBaf[sample];
-    //             const y = sampleToFracCN[sample];
-    //             nDimGridCoordinate.push(x);
-    //             nDimGridCoordinate.push(y);
-    //         }
-
-    //         gridCoords.push({state: [A, B], coord: nDimGridCoordinate});
-    //     }
-
-
-    //     // For bin (across samples) find closest nd gridCoord
-    //     for(let i = 0; i < this.allRecords.length; i++) {
-    //         const bin = this.allRecords[i];
-    //         const locKey = GenomicBinHelpers.toChromosomeInterval(bin).toString();
-    //         const ndCoord1 = locKeyToNDCoord[locKey];
-    //         let minDist = Infinity;
-    //         let minDistState = [-1, -1];
-    //         for (const gridCoord of gridCoords) {
-    //             const ndCoord2 = gridCoord.coord;
-    //             const dist = calculateEuclideanDist(ndCoord1, ndCoord2);
-    //             if (dist < minDist) {
-    //                 minDist = dist;
-    //                 minDistState = gridCoord.state;
-    //             }
-    //         }
-
-    //         this.allRecords[i].CN = "("+minDistState[0]+","+minDistState[1]+")";
-    //     }
-        
-    // }
 
     /**
      * Helper function for performing queries.

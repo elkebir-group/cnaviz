@@ -14,7 +14,8 @@ interface Props {
     selectedColor : string;
     onChrSelected : any;
     onColorSelected : any;
-    onAbsorbThresh : any; 
+    onAbsorbThresh_rdr : any; 
+    onAbsorbThresh_baf : any; 
     chrOptions: any;
     onAddSample: any;
     onAssignCluster: any;
@@ -233,10 +234,10 @@ function Sidebar(props: Props) {
               <input type="button" id="custom-button" onClick={props.onClearClustering}/>
               Clear Clustering
             </label>
-{/*            <label className="showlog" title="Shows the cluster assignment log.">
+           {/* <label className="showlog" title="Shows the cluster assignment log.">
               <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
               Previous Actions (l)
-            </label>*/}
+            </label> */}
           </div>
 
       </div>

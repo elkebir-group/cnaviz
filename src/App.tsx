@@ -216,7 +216,9 @@ interface State {
 
     selectedColor: string; // Name of selected cluster color. Should default to that blue.  gc
 
-    absorbThresh: number; // Threshold value to join unassigned bins into the existing. gc 
+    absorbThresh_rdr: number; // Threshold value to join unassigned bins into the existing. gc 
+
+    absorbThresh_baf: number; // Threshold value to join unassigned bins into the existing. gc 
 
     selectedCluster: string; // cluster selected to be assigned to
 
@@ -308,7 +310,8 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "black", // gc: when set to red, this changes
-            absorbThresh: 0.5, // gc
+            absorbThresh_rdr: 0.5, // gc
+            absorbThresh_baf: 0.5, // gc
             invertAxis: false,
             sampleAmount: 1,
             color: 'blue',
@@ -346,7 +349,8 @@ export class App extends React.Component<{}, State> {
         this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
         this.handleColorSelection = this.handleColorSelection.bind(this); // gc
-        this.handleAbsorbThresh = this.handleAbsorbThresh.bind(this); // gc
+        this.handleAbsorbThresh_rdr = this.handleAbsorbThresh_rdr.bind(this); // gc
+        this.handleAbsorbThresh_baf = this.handleAbsorbThresh_baf.bind(this); // gc
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
@@ -582,10 +586,15 @@ export class App extends React.Component<{}, State> {
  //                        this.onUpdateThresh(newthresh);
  //                    }
 
-    handleAbsorbThresh(event: React.ChangeEvent<HTMLInputElement>) { // gc
+    handleAbsorbThresh_rdr(event: React.ChangeEvent<HTMLInputElement>) { // gc
         // if event.target.value <= 0 && event.target.value >= 5 ... 
-        this.setState({absorbThresh: Number(event.target.value)}); 
-        this.state.indexedData.absorbUnassigned( Number(event.target.value) );
+        this.setState({absorbThresh_rdr: Number(event.target.value)}); 
+        // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
+    }
+    handleAbsorbThresh_baf(event: React.ChangeEvent<HTMLInputElement>) { // gc
+        // if event.target.value <= 0 && event.target.value >= 5 ... 
+        this.setState({absorbThresh_baf: Number(event.target.value)}); 
+        // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
     }
 
     handleClusterSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -688,8 +697,14 @@ export class App extends React.Component<{}, State> {
 
     absorbBins() {
         console.log("Absorb bins!");
-        let from = this.state.indexedData.getFilteredFromClusters;
-        let to = this.state.indexedData.getFilteredToClusters; 
+        let from_set = this.state.indexedData.getFilteredFromClusters();
+        let to_set = this.state.indexedData.getFilteredToClusters(); 
+
+        let ythresh = this.state.absorbThresh_rdr;
+        let xthresh = this.state.absorbThresh_baf; 
+
+        // iterate through all bins in from
+        this.state.indexedData.absorbBins(from_set, to_set, xthresh, ythresh);
     }
 
     onToggleShowAbsorbBins() {
@@ -846,15 +861,15 @@ export class App extends React.Component<{}, State> {
         const allData = indexedData.getAllRecords();
         let mainUI = null;
         let clusterTableData = indexedData.getClusterTableInfo();
-        let clusterTableData2 = indexedData.getClusterTableInfo();
-        let clusterTableData3 = indexedData.getClusterTableInfo();
+        let clusterTableData2 = indexedData.getClusterTableInfo2();
+        let clusterTableData3 = indexedData.getClusterTableInfo3();
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
-            const clusterTableData2 = indexedData.getClusterTableInfo();
-            const clusterTableData3 = indexedData.getClusterTableInfo();
+            const clusterTableData2 = indexedData.getClusterTableInfo2();
+            const clusterTableData3 = indexedData.getClusterTableInfo3();
 
             const scatterplotProps = {
                 data: indexedData,
@@ -930,7 +945,8 @@ export class App extends React.Component<{}, State> {
                     chrOptions={chrOptions}
                     selectedColor={selectedColor} 
                     onColorSelected={this.handleColorSelection} 
-                    onAbsorbThresh={this.handleAbsorbThresh}
+                    onAbsorbThresh_rdr={this.handleAbsorbThresh_rdr}
+                    onAbsorbThresh_baf={this.handleAbsorbThresh_baf}
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
                     tableData={clusterTableData}
@@ -1057,7 +1073,7 @@ export class App extends React.Component<{}, State> {
                               min={0}
                               max={5}
                               placeholder={"0.5"}
-                              onChange={this.handleAbsorbThresh}> 
+                              onChange={this.handleAbsorbThresh_rdr}> 
                             </input>
 
                             Set Absorb Threshold (BAF): 
@@ -1067,7 +1083,7 @@ export class App extends React.Component<{}, State> {
                               min={0}
                               max={5}
                               placeholder={"0.5"}
-                              onChange={this.handleAbsorbThresh}> 
+                              onChange={this.handleAbsorbThresh_baf}> 
                             </input>
                         </div>
                         <div className="App-row-contents"> 
