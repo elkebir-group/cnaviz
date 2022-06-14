@@ -238,12 +238,14 @@ function Sidebar(props: Props) {
               <input type="button" id="custom-button" onClick={props.onClearClustering}/>
               Clear Clustering
             </label>
-           {/* <label className="showlog" title="Shows the cluster assignment log.">
-              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
-              Previous Actions (l)
-            </label> */}
           </div>
 
+          <div className="row-contents">
+            <label className="showlog" title="Shows the cluster assignment log.">
+              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
+              Previous Actions (l)
+            </label>
+          </div>
       </div>
         <div className="contents2">
           <ClusterTable 

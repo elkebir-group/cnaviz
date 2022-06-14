@@ -363,6 +363,17 @@ input[type="file"] {
   background-color: #ddd;
 }
 
+.showlog {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+
 
 
 
