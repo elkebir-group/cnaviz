@@ -310,7 +310,7 @@ export class App extends React.Component<{}, State> {
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "black", // gc: when set to red, this changes
-            absorbThresh_rdr: 0.5, // gc
+            absorbThresh_rdr: 2.5, // gc
             absorbThresh_baf: 0.5, // gc
             invertAxis: false,
             sampleAmount: 1,
@@ -697,6 +697,7 @@ export class App extends React.Component<{}, State> {
 
     absorbBins() {
         console.log("Absorb bins!");
+        this.setState({processingStatus: ProcessingStatus.processing});
         let from_set = this.state.indexedData.getFilteredFromClusters();
         let to_set = this.state.indexedData.getFilteredToClusters(); 
 
@@ -705,6 +706,7 @@ export class App extends React.Component<{}, State> {
 
         // iterate through all bins in from
         this.state.indexedData.absorbBins(from_set, to_set, xthresh, ythresh);
+        this.setState({processingStatus: ProcessingStatus.done});
     }
 
     onToggleShowAbsorbBins() {
@@ -1071,8 +1073,8 @@ export class App extends React.Component<{}, State> {
                               name="Absorb Threshold" 
                               id="Absorb-Thresh-RDR"
                               min={0}
-                              max={5}
-                              placeholder={"0.5"}
+                              max={10}
+                              placeholder={"2.5"}
                               onChange={this.handleAbsorbThresh_rdr}> 
                             </input>
 
@@ -1081,22 +1083,21 @@ export class App extends React.Component<{}, State> {
                               name="Absorb Threshold" 
                               id="Absorb-Thresh-BAF"
                               min={0}
-                              max={5}
+                              max={10}
                               placeholder={"0.5"}
                               onChange={this.handleAbsorbThresh_baf}> 
                             </input>
                         </div>
                         <div className="App-row-contents"> 
-                            Display Current Absorb Threshold HERE  
+                            Current Thresholds RDR: {this.state.absorbThresh_rdr} BAF: {this.state.absorbThresh_baf}
                         </div>
                         <div className="App-row-contents">
                             <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
-                                <input type="button" id="custom-button" onClick={this.absorbBins}/>
+                                <input type="button" id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.absorbBins}/>
                                 Absorb Bins
                             </label>
                         </div>
                     </div> }
-
 
                 {this.state.showLog && <div className="black_overlay" onClick={()=> this.setState({showLog: !this.state.showLog})}></div> }
                 {this.state.showLog && 

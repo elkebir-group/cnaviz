@@ -968,7 +968,6 @@ export class DataWarehouse {
 
     }
 
-
     // applies the same across all samples
     absorbBins(from_set: String[], to_set: String[], xthresh: number, ythresh: number) {
         // for loop through all records in from_set!!
