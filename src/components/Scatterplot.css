@@ -45,13 +45,6 @@
     z-index: -1;
 }
 
-/*.grabbable {
-    cursor: move;  fallback if grab cursor is unsupported 
-    cursor: grab;
-    cursor: -moz-grab;
-    cursor: -webkit-grab;
-}*/
-
 #Grid line {
     stroke: lightgrey;
     stroke-opacity: 0.7;

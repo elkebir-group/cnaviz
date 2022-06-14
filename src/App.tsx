@@ -856,7 +856,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state;
+        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state; // gc 
         const samplesDisplayed = this.state.samplesShown;
         const samplesShown = new Set<string>(samplesDisplayed);
         const brushedBins = indexedData.getBrushedBins();

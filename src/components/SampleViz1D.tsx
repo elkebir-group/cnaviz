@@ -9,6 +9,8 @@ import { DisplayMode } from "../App";
 import { Gene } from "../model/Gene";
 import { cn_pair, fractional_copy_number } from "../constants";
 
+import classnames from 'classnames'; 
+
 interface Props {
     data: GenomicBin[];
     chr: string;
@@ -68,9 +70,18 @@ export class SampleViz1D extends React.Component<Props, State> {
         const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
              customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes,
             purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = this.props;
+        
+            const myDisplayClasses = classnames ({
+            'is-pan' : displayMode === DisplayMode.zoom,
+            'is-zoom' : displayMode === DisplayMode.boxzoom, 
+            'is-select' : displayMode === DisplayMode.select, 
+            'is-erase' : displayMode === DisplayMode.erase
+        })
     
         let visualization: React.ReactNode = null;
-            visualization = <DivWithBullseye className="SampleViz-pane">
+            // visualization = <DivWithBullseye className="SampleViz-pane">
+            visualization = <DivWithBullseye className={myDisplayClasses}>
+            {/* <DivWithBullseye className={myDisplayClasses}>  */}
                 <RDLinearPlot
                     data={data}
                     chr={chr}

@@ -6,8 +6,7 @@ import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
 import {IoHandRight} from "react-icons/io5"
-import {BiEraser} from "react-icons/bi";
-
+import {BiEraser, BiMessageSquareAdd} from "react-icons/bi";
 
 interface Props {
     selectedChr : string;
@@ -89,24 +88,29 @@ function Sidebar(props: Props) {
               )
           }
       </div>
-      
-      <div className="closemenu2" title="Mode: Panning." onClick={() => props.setDisplayMode(DisplayMode.select)}>
+
+      <div className="closemenu2" title="Mode: Zoom." onClick={() => props.setDisplayMode(DisplayMode.boxzoom)}>
+            <div className="arrow-container"> 
+              <FiZoomIn
+                color={props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
+              />
+            </div>
+      </div>
+      <div className="closemenu3" title="Mode: Panning." onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
             <div className="arrow-container"> 
               <IoHandRight
+                color={props.currentDisplayMode === DisplayMode.zoom ? "red" : "black"}
+              />
+            </div>
+      </div>
+      <div className="closemenu4" title="Mode: Select." onClick={() => props.setDisplayMode(DisplayMode.select)}>
+            <div className="arrow-container"> 
+              <BiMessageSquareAdd
                 color={props.currentDisplayMode === DisplayMode.select ? "red" : "black"}
               />
             </div>
-      </div>
-
-      <div className="closemenu3" title="Mode: Zoom." onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
-            <div className="arrow-container"> 
-              <FiZoomIn
-                color={props.currentDisplayMode === DisplayMode.zoom || props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
-              />
-            </div>
-      </div>
-      
-      <div className="closemenu4" title="Mode: Deselect." onClick={() => props.setDisplayMode(DisplayMode.erase)}>
+      </div>      
+      <div className="closemenu5" title="Mode: Deselect." onClick={() => props.setDisplayMode(DisplayMode.erase)}>
             <div className="arrow-container"> 
               <BiEraser
                 color={props.currentDisplayMode === DisplayMode.erase ? "red" : "black"}

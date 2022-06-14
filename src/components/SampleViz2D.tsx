@@ -7,6 +7,7 @@ import "./SampleViz.css";
 import {DisplayMode} from "../App"
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { cn_pair, fractional_copy_number } from "../constants";
+import classnames from 'classnames'; 
 
 interface Props {
     parentCallBack: any;
@@ -99,9 +100,15 @@ export class SampleViz2D extends React.Component<Props, State> {
         const {data, width, height, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
                 applyLog, scales, centroidPts, showCentroids, purity, ploidy, offset, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
-        
-        return <div className="SampleViz-scatter">
-            <DivWithBullseye className="SampleViz-pane">
+        const myDisplayClasses = classnames ({
+            'is-pan' : dispMode === DisplayMode.zoom,
+            'is-zoom' : dispMode === DisplayMode.boxzoom, 
+            'is-select' : dispMode === DisplayMode.select, 
+            'is-erase' : dispMode === DisplayMode.erase
+        })
+
+        return <div className="SampleViz-scatter"> 
+            <DivWithBullseye className={myDisplayClasses}> 
                 <Scatterplot
                     parentCallBack = {this.handleCallBack}
                     data={data}

@@ -528,7 +528,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 svg.append('g')
                     .attr('class', 'brush')
                     .call(brush);
-        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom) {
+        } else if(displayMode === DisplayMode.boxzoom) { // || displayMode === DisplayMode.zoom) {
             brush = d3.brushX()
                 .extent([[getLeftPadding(this.props.showPurityPloidy), PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])
