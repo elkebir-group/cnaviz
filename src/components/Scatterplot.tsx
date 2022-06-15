@@ -546,17 +546,27 @@ export class Scatterplot extends React.Component<Props, State> {
             const filteredBAFTicks = this.props.BAF_lines.filter(value => value.tick > currXDomain[0] && value.tick < currXDomain[1]);
             const ticks = filteredBAFTicks.map(d => d.tick);
             
+            // xAx = (g : any, scale : any) => g
+            // .classed(SCALES_CLASS_NAME, true)
+            // .attr("id", "Grid")
+            // .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+            // .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) =>ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
+            // .selectAll('text')
+            // .style("text-anchor", "end")
+            // .attr("dx", "-.8em")
+            // .attr("dy", ".15em")
+            // .attr('transform', 'rotate(-30)')
             xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("id", "Grid")
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-            .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) =>ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
+            .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => (filteredBAFTicks[i].state[0] != filteredBAFTicks[i].state[1]) ? ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")" : ticks[i].toFixed(2) + "(x,x)"))
             .selectAll('text')
             .style("text-anchor", "end")
             .attr("dx", "-.8em")
             .attr("dy", ".15em")
             .attr('transform', 'rotate(-30)')
-                       
+
         }
         
         let yAx = (g : any, scale : any) => g
@@ -572,6 +582,12 @@ export class Scatterplot extends React.Component<Props, State> {
             const upperBound = (max_cn > dom[1]) ? max_cn : dom[1]; 
             const filteredTicks = originalTicks.filter(value => value.fractionalTick > dom[0] && value.fractionalTick < upperBound && value.fractionalTick < dom[1]);
             const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
+            
+            // yAx = (g : any, scale : any) => g
+            //     .classed(SCALES_CLASS_NAME, true)
+            //     .attr("id", "Grid")
+            //     .attr("transform", `translate(${PADDING.left}, 0)`)
+            //     .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 80).tickFormat((d, i) => filteredTicks[i].totalCN + "(x,x)"));
 
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)

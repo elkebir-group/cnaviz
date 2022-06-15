@@ -426,8 +426,13 @@ export class DataWarehouse {
         const fractionalCNs : fractional_copy_number[] = [];
         
         for(let i = startCN; i <= endCN; i++) {
-            const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
-            fractionalCNs.push(fractional_cn);
+            if (startCN === endCN) {
+                const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: Number("x")}
+                fractionalCNs.push(fractional_cn);
+            } else {
+                const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
+                fractionalCNs.push(fractional_cn);
+            }
         }
         
         
@@ -437,8 +442,13 @@ export class DataWarehouse {
             return fractionalCNs;
         } else if(endCN < maxCN) {
             for(let i = endCN+1; i <= maxCN; i++) {
-                const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
-                fractionalCNs.push(fractional_cn);
+                if (endCN === maxCN) {
+                    const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: Number("x")}
+                    fractionalCNs.push(fractional_cn);
+                } else {
+                    const fractional_cn = {fractionalTick: purity * (i) + 2*(1 - purity), totalCN: i}
+                    fractionalCNs.push(fractional_cn);
+                }
             }
             return fractionalCNs;
         } else {

@@ -280,7 +280,7 @@ export class SampleViz extends React.Component<Props, State> {
                             
                         }}></input>
 
-                     <label className="input-label">BAF Bias (Offset)):</label> <input type="number" id="Purity-Input" name="volume"
+                     <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume"
                         min={MIN_OFFSET} max={MAX_OFFSET} step=".05" placeholder={this.state.offset.toString()} onChange={event => {
                             const newoffset = Number(event.target.value);
                             if(newoffset <= MAX_OFFSET && newoffset >= MIN_OFFSET) {
