@@ -492,7 +492,7 @@ export class DataWarehouse {
     }
 
     recalculateCentroids(key: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, data?: GenomicBin[]) {
-        console.log("Recalculating Centroids....");
+        console.log("Recalculating Centroids...");
         this.centroids = [];
         this.centroidPts = {};
         const bins = (data) ? data : this.allRecords
@@ -598,7 +598,7 @@ export class DataWarehouse {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-        console.log("Updating cluster!"); 
+        console.log("Updating cluster to", cluster); 
 
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
         let brushedTableData  = this.brushedTableData();
@@ -981,41 +981,46 @@ export class DataWarehouse {
         for (var cluster_a of Array.from(this._clusters.values())) {            
             // console.log("samplePts[c_bin]", samplePts[String(cluster_a)]);
             // console.log("centroid:", centroid);
-            let centroid = samplePts[String(cluster_a)][0];
-            let a_x : number = centroid.point[0];
-            let a_y : number = centroid.point[1]; 
-            // console.log("c_x:", c_x, "c_y:", c_y);
+            if (String(cluster_a) in samplePts) { // this will throw error if cluster_b no longer exists
+                let centroid = samplePts[String(cluster_a)][0]; 
+                let a_x : number = centroid.point[0];
+                let a_y : number = centroid.point[1]; 
+                // console.log("c_x:", c_x, "c_y:", c_y);
 
-            let minDistFromCentroid : number = Number.MAX_VALUE; 
-            let minCluster : number = -2;
-            let min_x : number = Number.MAX_VALUE;
-            let min_y : number = Number.MAX_VALUE; 
+                let minDistFromCentroid : number = Number.MAX_VALUE; 
+                let minCluster : number = -2;
+                let min_x : number = Number.MAX_VALUE;
+                let min_y : number = Number.MAX_VALUE; 
 
-            // iterate over all clusters' centroids
-            for (var cluster_b of Array.from(this._clusters.values())) {
-                let centroid = samplePts[String(cluster_b)][0]; 
-                let b_x : number = centroid.point[0];
-                let b_y : number = centroid.point[1]; 
-
-                // calculate distance between centroids 
-                const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
-                if (dist < minDistFromCentroid) {
-                    if (Math.abs(a_x - b_x) <= xthresh && Math.abs(a_y - b_y) <= ythresh) {
-                        minCluster = Number(cluster_b); 
-                        minDistFromCentroid = dist;
-                        min_x = Math.abs(a_x-b_x);
-                        min_y = Math.abs(a_y-b_y);  
-                        console.log("Closest Centroid Updated.", String(cluster_b)); 
-                    } else {
-                        console.log("Not within threshold."); 
+                // iterate over all clusters' centroids
+                for (var cluster_b of Array.from(this._clusters.values())) {
+                    if (cluster_b != cluster_a && (String(cluster_b) in samplePts)) {
+                        console.log("samplePts", samplePts, "cluster_b", String(cluster_b)); 
+                        let centroid = samplePts[String(cluster_b)][0]; // this will throw error if cluster_b no longer exists
+                        let b_x : number = centroid.point[0];
+                        let b_y : number = centroid.point[1]; 
+        
+                        // calculate distance between centroids 
+                        const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
+                        if (dist < minDistFromCentroid) {
+                            if (Math.abs(a_x - b_x) <= xthresh && Math.abs(a_y - b_y) <= ythresh) {
+                                minCluster = Number(cluster_b); 
+                                minDistFromCentroid = dist;
+                                min_x = Math.abs(a_x-b_x);
+                                min_y = Math.abs(a_y-b_y);  
+                                console.log("Closest Centroid Updated.", String(cluster_b)); 
+                            } else {
+                                console.log("Not within threshold."); 
+                            }
+                        }
                     }
                 }
-            }
 
-            // const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
-            if (minCluster != -2) {
-                // map cluster to cluster
-                reassign.set(String(minCluster), String(cluster_a)); 
+                // const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
+                if (minCluster != -2) {
+                    // map cluster to cluster
+                    reassign.set(String(minCluster), String(cluster_a)); 
+                }
             }
         }
         const groupedByCluster = _.groupBy(bins, "CLUSTER");
@@ -1025,6 +1030,7 @@ export class DataWarehouse {
             const groupedBySample = _.groupBy(groupedByCluster[String(toCluster)], "SAMPLE");
             const binsForSample = groupedBySample[String(sample)];
             this.setbrushedBins(binsForSample);
+            console.log("Reassigning", clusterName, "to", toCluster);
             this.updateCluster(Number(clusterName)); 
             console.log("Pushing mergeBins() operantion to history stack.");
             this.historyStack.push(JSON.parse(JSON.stringify(binsForSample)));
