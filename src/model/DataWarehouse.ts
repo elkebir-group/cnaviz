@@ -5,6 +5,7 @@ import crossfilter, { Crossfilter } from "crossfilter2";
 import memoizeOne from "memoize-one";
 import {calculateEuclideanDist, calculatesilhouettescores, calculateoverallSilhouette, createNDCoordinate} from "../util"
 import { DEFAULT_PLOIDY, CN_STATES, cn_pair, DEFAULT_PURITY, fractional_copy_number, START_CN, END_CN} from "../constants";
+import { stringify } from "querystring";
 
 export function reformatBins(samples: string[], applyLog: boolean, allRecords: readonly GenomicBin[]) : Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}> {
     return new Promise<{multiDimData: number[][], clusterToData : Map<Number, Number[][]>, labels: number[]}>((resolve, reject) => {
@@ -968,17 +969,66 @@ export class DataWarehouse {
 
     }
 
-    mergeBins(sample: String, xthresh: number, ythresh: number) {
+    mergeBins(sample: string, xthresh: number, ythresh: number) {
         console.log("inside mergeBins()...")
-        // const samplePts = this.centroidPts[sample];
-        // iterate over all clusters centroids 
-        // for (var cluster_a of Array.from(this._clusters.values())) {
-            
-        //     // iterate over all clusters centroids 
-        //     for (var cluster_b of Array.from(this._clusters.values())) {
+        const reassign = new Map();
+        const bins = this.allRecords;
 
-        //     }
-        // }
+        // Get centroids for a specific sample
+        const samplePts = this.centroidPts[sample]; 
+        // iterate over all clusters centroids 
+        this.getCentroidPoints(sample);
+        for (var cluster_a of Array.from(this._clusters.values())) {            
+            // console.log("samplePts[c_bin]", samplePts[String(cluster_a)]);
+            // console.log("centroid:", centroid);
+            let centroid = samplePts[String(cluster_a)][0];
+            let a_x : number = centroid.point[0];
+            let a_y : number = centroid.point[1]; 
+            // console.log("c_x:", c_x, "c_y:", c_y);
+
+            let minDistFromCentroid : number = Number.MAX_VALUE; 
+            let minCluster : number = -2;
+            let min_x : number = Number.MAX_VALUE;
+            let min_y : number = Number.MAX_VALUE; 
+
+            // iterate over all clusters' centroids
+            for (var cluster_b of Array.from(this._clusters.values())) {
+                let centroid = samplePts[String(cluster_b)][0]; 
+                let b_x : number = centroid.point[0];
+                let b_y : number = centroid.point[1]; 
+
+                // calculate distance between centroids 
+                const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
+                if (dist < minDistFromCentroid) {
+                    if (Math.abs(a_x - b_x) <= xthresh && Math.abs(a_y - b_y) <= ythresh) {
+                        minCluster = Number(cluster_b); 
+                        minDistFromCentroid = dist;
+                        min_x = Math.abs(a_x-b_x);
+                        min_y = Math.abs(a_y-b_y);  
+                        console.log("Closest Centroid Updated.", String(cluster_b)); 
+                    } else {
+                        console.log("Not within threshold."); 
+                    }
+                }
+            }
+
+            // const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
+            if (minCluster != -2) {
+                // map cluster to cluster
+                reassign.set(String(minCluster), String(cluster_a)); 
+            }
+        }
+        const groupedByCluster = _.groupBy(bins, "CLUSTER");
+
+        for (var clusterName of Array.from(reassign.keys())) {
+            let toCluster : String = reassign.get(clusterName); 
+            const groupedBySample = _.groupBy(groupedByCluster[String(toCluster)], "SAMPLE");
+            const binsForSample = groupedBySample[String(sample)];
+            this.setbrushedBins(binsForSample);
+            this.updateCluster(Number(clusterName)); 
+            console.log("Pushing mergeBins() operantion to history stack.");
+            this.historyStack.push(JSON.parse(JSON.stringify(binsForSample)));
+        }
     }
 
     // applies the same across all samples
@@ -988,7 +1038,7 @@ export class DataWarehouse {
         let clusters_to = new Set(this._cluster_filters_to);
         console.log("inside absorbBins()...");
 
-        const reassign = new Map(); // <String, GenomicBin[]>(); 
+        const reassign = new Map(); 
 
         for(let i = 0; i < this.allRecords.length; i++) { // gc: apply the cluster filter to only get clusters from "from_set" in a more intelligent way...
             const bin = this.allRecords[i];
@@ -1009,8 +1059,8 @@ export class DataWarehouse {
 
                 let minDistFromCentroid : number = Number.MAX_VALUE; 
                 let minCluster : number = -2;
-                let min_x : number = 9999999;
-                let min_y : number = 9999999; 
+                let min_x : number = Number.MAX_VALUE;
+                let min_y : number = Number.MAX_VALUE; 
 
                 let needpop : boolean = false; 
                 if (String(c_bin) in clusters_to) {
@@ -1027,7 +1077,7 @@ export class DataWarehouse {
                     const samplePts = this.centroidPts[sample]; // Get centroids for a specific sample
                     console.log("Here is samplePts", samplePts); 
                     console.log("samplePts[c_bin]", samplePts[String(to_c)]);
-                    let centroid = samplePts[String(to_c)][0]
+                    let centroid = samplePts[String(to_c)][0];
                     console.log("centroid:", centroid); 
                     
                     let c_x : number = centroid.point[0];
@@ -1039,8 +1089,8 @@ export class DataWarehouse {
                     if (dist < minDistFromCentroid) {
                         minCluster = Number(to_c); 
                         minDistFromCentroid = dist;
-                        min_x = c_x;
-                        min_y = c_y;  
+                        min_x = Math.abs(c_x-x);
+                        min_y = Math.abs(c_y-y);  
                         console.log("Closest Centroid.", String(to_c)); 
                     }
                 }

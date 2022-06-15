@@ -107,10 +107,10 @@ body {
 
 .Directions {
     position: fixed;
-    top: 25%;
-    left: 25%;
-    width: 50%;
-    height: 50%;
+    top: 15%;
+    left: 15%;
+    width: 75%;
+    height: 75%;
     padding: 16px;
     border: 16px solid rgb(81, 47, 173);
     background-color: rgb(255, 255, 255);
