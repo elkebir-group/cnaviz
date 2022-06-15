@@ -30,6 +30,14 @@ body {
      z-index:  99 !important;
 }
 
+.App-col-contents {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    margin-bottom: 10px;
+    flex: 1 1 0;
+}
+
 .App-row-contents {
     display: flex;
     flex-direction: row;
@@ -86,7 +94,6 @@ body {
     /* grid-auto-rows: auto; */
     justify-content: center;
     flex-direction: row;
-    
 }
 
 #sampleviz-container {
@@ -158,4 +165,8 @@ body {
     -moz-opacity: 0.8;
     opacity:.80;
     filter: alpha(opacity=80);
+}
+
+div.scroll {
+    overflow-y: auto;
 }

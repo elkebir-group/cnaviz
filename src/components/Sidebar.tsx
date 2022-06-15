@@ -15,6 +15,8 @@ interface Props {
     onColorSelected : any;
     onAbsorbThresh_rdr : any; 
     onAbsorbThresh_baf : any; 
+    onMergeThresh_rdr : any; 
+    onMergeThresh_baf : any; 
     chrOptions: any;
     onAddSample: any;
     onAssignCluster: any;
@@ -246,6 +248,7 @@ function Sidebar(props: Props) {
               Previous Actions (l)
             </label>
           </div>
+
       </div>
         <div className="contents2">
           <ClusterTable 

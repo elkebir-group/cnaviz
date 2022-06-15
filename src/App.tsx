@@ -1,6 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
-import _ from "lodash";
+import _, { conformsTo, range } from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
 import {Chromosome} from "./model/Genome";
@@ -220,9 +220,15 @@ interface State {
 
     absorbThresh_baf: number; // Threshold value to join unassigned bins into the existing. gc 
 
+    mergeThresh_rdr: number[]; // Threshold value to join unassigned bins into the existing. gc 
+
+    mergeThresh_baf: number[]; // Threshold value to join unassigned bins into the existing. gc 
+
     selectedCluster: string; // cluster selected to be assigned to
 
     invertAxis: boolean;
+
+    mergeValues: number[]; 
 
     sampleAmount: number;
 
@@ -312,6 +318,9 @@ export class App extends React.Component<{}, State> {
             selectedColor: "black", // gc: when set to red, this changes
             absorbThresh_rdr: 2.5, // gc
             absorbThresh_baf: 0.5, // gc
+            mergeThresh_rdr: [], // gc
+            mergeThresh_baf: [], // gc
+            mergeValues: [], // gc
             invertAxis: false,
             sampleAmount: 1,
             color: 'blue',
@@ -351,6 +360,9 @@ export class App extends React.Component<{}, State> {
         this.handleColorSelection = this.handleColorSelection.bind(this); // gc
         this.handleAbsorbThresh_rdr = this.handleAbsorbThresh_rdr.bind(this); // gc
         this.handleAbsorbThresh_baf = this.handleAbsorbThresh_baf.bind(this); // gc
+        this.handleMergeThresh_rdr = this.handleMergeThresh_rdr.bind(this); // gc
+        this.handleMergeThresh_baf = this.handleMergeThresh_baf.bind(this); // gc
+
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
@@ -597,6 +609,20 @@ export class App extends React.Component<{}, State> {
         // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
     }
 
+    handleMergeThresh_rdr(event: React.ChangeEvent<HTMLInputElement>) { // gc
+        // if event.target.value <= 0 && event.target.value >= 5 ... 
+        let arr = new Array<number>(this.state.samplesShown.length);
+        this.setState({mergeThresh_rdr: arr}); 
+        // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
+    }
+    handleMergeThresh_baf(event: React.ChangeEvent<HTMLInputElement>) { // gc
+        // if event.target.value <= 0 && event.target.value >= 5 ... 
+        let arr = new Array<number>(this.state.samplesShown.length);
+        this.setState({mergeThresh_rdr: arr}); 
+        // this.setState({mergeThresh_baf: Number(event.target.value)}); 
+        // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
+    }
+
     handleClusterSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedCluster: event.target.value});
         this.state.indexedData.setClusterFilters([event.target.value]);
@@ -706,6 +732,19 @@ export class App extends React.Component<{}, State> {
 
         // iterate through all bins in from
         this.state.indexedData.absorbBins(from_set, to_set, xthresh, ythresh);
+        this.setState({processingStatus: ProcessingStatus.done});
+    }
+
+    mergeBins() {
+        console.log("Merge bins..."); 
+        this.setState({processingStatus: ProcessingStatus.processing});
+
+        const samplesShown = this.state.samplesShown;
+        for(let i = 0; i < samplesShown.length; i++) {
+            let ythresh = this.state.mergeThresh_rdr[i];
+            let xthresh = this.state.mergeThresh_baf[i]; 
+            this.state.indexedData.mergeBins(samplesShown[i], xthresh, ythresh);
+        }
         this.setState({processingStatus: ProcessingStatus.done});
     }
 
@@ -862,6 +901,8 @@ export class App extends React.Component<{}, State> {
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
         let mainUI = null;
+        let visualizeMerge = null; 
+        // let mergeItems = null; 
         let clusterTableData = indexedData.getClusterTableInfo();
         let clusterTableData2 = indexedData.getClusterTableInfo2();
         let clusterTableData3 = indexedData.getClusterTableInfo3();
@@ -900,7 +941,7 @@ export class App extends React.Component<{}, State> {
                 onClusterSelected: this.handleClusterSelected,
                 onUndoClick: this.goBackToPreviousCluster,
                 showCentroids: this.state.showCentroids,
-                driverGenes: this.state.driverGenes
+                driverGenes: this.state.driverGenes,
             };
 
             const sortAlphaNum = (a : string, b:string) => a.localeCompare(b, 'en', { numeric: true })
@@ -935,6 +976,51 @@ export class App extends React.Component<{}, State> {
                             
                     </div>
                 </div>);
+
+            visualizeMerge = <div className="grid-container">
+                <div className="App-row-contents">
+                    Set Merge Thresholds:
+                </div>
+                <div className="App-row-contents">
+                    {this.state.indexedData.getSampleList().map( sample => 
+                        <div id="grid-container"> 
+                                <div className="scroll">
+                                    {sample}
+                                    <div className="App-row-contents">
+                                        RDR: 
+                                        <input type="number"
+                                            name="Merge Threshold" 
+                                            id="Merge-Thresh-RDR"
+                                            min={0}
+                                            max={10}
+                                            placeholder={"2.5"}
+                                            onChange={this.handleMergeThresh_rdr}>
+                                        </input>
+                                    </div>
+                                    <div className="App-row-contents">
+                                    BAF: 
+                                        <input type="number"
+                                            name="Merge Threshold" 
+                                            id="Merge-Thresh-BAF"
+                                            min={0}
+                                            max={10}
+                                            placeholder={"0.5"}
+                                            onChange={this.handleMergeThresh_baf}> 
+                                        </input>
+                                    </div>
+                                    <div className="App-row-contents"> 
+                                        {/* Current Thresholds RDR: {this.state.mergeThresh_rdr} BAF: {this.state.mergeThresh_baf} */}
+                                        <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
+                                            <input type="button" id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.mergeBins}/>
+                                            Merge Bins
+                                        </label>
+                                    </div>
+                                </div>
+                        </div> 
+                    )} 
+                </div>
+            </div>
+            
         }
         
         const status = this.getStatusCaption();
@@ -949,6 +1035,9 @@ export class App extends React.Component<{}, State> {
                     onColorSelected={this.handleColorSelection} 
                     onAbsorbThresh_rdr={this.handleAbsorbThresh_rdr}
                     onAbsorbThresh_baf={this.handleAbsorbThresh_baf}
+                    onMergeThresh_rdr={this.handleMergeThresh_rdr}
+                    onMergeThresh_baf={this.handleMergeThresh_baf}
+
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
                     tableData={clusterTableData}
@@ -1121,6 +1210,7 @@ export class App extends React.Component<{}, State> {
                         <div className="Exit-Popup" onClick={()=> this.setState({showCentroidTable: !this.state.showCentroidTable})}> 
                             <FiX/>
                         </div>
+                        
                         <ClusterTable
                             data={indexedData.getCentroidData()}
                             onClusterColorChange={this.onClusterColorChange}
@@ -1133,7 +1223,7 @@ export class App extends React.Component<{}, State> {
                             colThreeName={"Centroid"}
                             cols={[{name: "Cluster", type: 'key'}, {name: "Sample", type: 'sample'}, {name: "Centroid", type: 'centroid'}]}
                         ></ClusterTable>
-
+                        {visualizeMerge}
                     </div> }
                 
                 {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay" onClick={this.onToggleSilhoutteBarPlot}></div> }

@@ -968,12 +968,25 @@ export class DataWarehouse {
 
     }
 
+    mergeBins(sample: String, xthresh: number, ythresh: number) {
+        console.log("inside mergeBins()...")
+        // const samplePts = this.centroidPts[sample];
+        // iterate over all clusters centroids 
+        // for (var cluster_a of Array.from(this._clusters.values())) {
+            
+        //     // iterate over all clusters centroids 
+        //     for (var cluster_b of Array.from(this._clusters.values())) {
+
+        //     }
+        // }
+    }
+
     // applies the same across all samples
     absorbBins(from_set: String[], to_set: String[], xthresh: number, ythresh: number) {
         // for loop through all records in from_set!!
         let clusters_from = new Set(this._cluster_filters_from);
         let clusters_to = new Set(this._cluster_filters_to);
-        console.log("inside absorbBins()...", this.allRecords.length);
+        console.log("inside absorbBins()...");
 
         const reassign = new Map(); // <String, GenomicBin[]>(); 
 

@@ -291,7 +291,6 @@ export class SampleViz extends React.Component<Props, State> {
                 </div>}
                 
             </div>
-
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 
