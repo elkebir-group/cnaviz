@@ -21,14 +21,6 @@ body {
     display: inline;
     margin-right: 50px;
 }
-.helpbutton {
-     margin-top: 5px;
-     margin-right: 5px;
-     position:absolute;
-     top:0;
-     right:0;
-     z-index:  99 !important;
-}
 
 .App-col-contents {
     display: flex;
@@ -169,4 +161,12 @@ body {
 
 div.scroll {
     overflow-y: auto;
+}
+
+.toolbar {
+    position: fixed;
+    top: 0;
+    display: flex;
+    flex-direction: row;
+    background-color: rgba(255, 255, 255, 0.8);
 }

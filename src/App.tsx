@@ -18,6 +18,7 @@ import { Gene } from "./model/Gene";
 import {FiX} from "react-icons/fi";
 import {AnalyticsTab} from "./components/AnalyticsTab";
 import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
+import {Toolbox} from "./components/Toolbox"; 
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -1038,7 +1039,6 @@ export class App extends React.Component<{}, State> {
                     onAbsorbThresh_baf={this.handleAbsorbThresh_baf}
                     onMergeThresh_rdr={this.handleMergeThresh_rdr}
                     onMergeThresh_baf={this.handleMergeThresh_baf}
-
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
                     tableData={clusterTableData}
@@ -1083,17 +1083,22 @@ export class App extends React.Component<{}, State> {
                     onExport={this.onExport}
                 />
             </div>
-            
 
             <div className={this.state.sidebar ? "marginContent" : ""}>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
 
-                <div className="helpbutton">
-                    <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
-                      <input type="button" id="custom-button" onClick={this.onToggleDirections}/>
-                      HELP (?)
-                    </label>
+                <div className="toolbar">
+                    <Toolbox
+                        currentDisplayMode={this.state.displayMode}
+                        setDisplayMode={this.setDisplayMode}
+                    ></Toolbox>
+                    <div>
+                        <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
+                        <input type="button" id="custom-button" onClick={this.onToggleDirections}/>
+                            HELP (?)
+                        </label>
+                    </div>
                 </div>
 
                 {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleDirections}></div> }
@@ -1119,7 +1124,6 @@ export class App extends React.Component<{}, State> {
                         <li> Hold down "?" or "/" button to open direction panel </li>
                         <li> Click "c" to toggle a table of the centroids of each cluster for each sample </li>
                         <li> Click "s" to toggle a bar plot displaying approximate average silhoutte scores for each cluster </li>
-
                     </div> }
 
                 {this.state.showAbsorbBins && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }

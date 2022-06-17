@@ -9,6 +9,7 @@ import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
 import {DEFAULT_PLOIDY, DEFAULT_PURITY, DEFAULT_OFFSET, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY, MIN_OFFSET, MAX_OFFSET} from "../constants";
+import {useRef} from 'react'; 
 
 interface Props {
     parentCallBack: any;
@@ -263,7 +264,7 @@ export class SampleViz extends React.Component<Props, State> {
 
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
-                    <label>Ploidy:</label> <input placeholder={this.state.ploidy.toString()} type="number" id="Purity-Input" name="volume"
+                    <label>Ploidy:</label> <input value={this.state.ploidy.toString()} type="number" id="Purity-Input" name="volume"
                         min={MIN_PLOIDY} max={MAX_PLOIDY} step=".1" onChange={event => {
                             const newPloidy = Number(event.target.value);
                             if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
@@ -272,7 +273,7 @@ export class SampleViz extends React.Component<Props, State> {
                         }}></input>
                     
                     <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                        min={MIN_PURITY} max={MAX_PURITY} step=".05" placeholder={this.state.purity.toString()} onChange={event => {
+                        min={MIN_PURITY} max={MAX_PURITY} step=".05" value={this.state.purity.toString()} onChange={event => {
                             const newPurity = Number(event.target.value);
                             if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
                                 this.onUpdatePurity(newPurity);
@@ -281,7 +282,7 @@ export class SampleViz extends React.Component<Props, State> {
                         }}></input>
 
                      <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume"
-                        min={MIN_OFFSET} max={MAX_OFFSET} step=".05" placeholder={this.state.offset.toString()} onChange={event => {
+                        min={MIN_OFFSET} max={MAX_OFFSET} step=".05" value={this.state.offset.toString()} onChange={event => {
                             const newoffset = Number(event.target.value);
                             if(newoffset <= MAX_OFFSET && newoffset >= MIN_OFFSET) {
                                 this.onUpdateOffset(newoffset);

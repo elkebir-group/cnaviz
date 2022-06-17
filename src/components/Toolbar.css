@@ -1,0 +1,21 @@
+.Toolbox {
+    border: 2px solid black;
+    padding: 5px 20px;
+    display: flex;
+    flex-direction: row;
+    min-width: 300px;
+    max-width: 400px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.Toolbox-Tool {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.Toolbox-Tool-label {
+    font-size: smaller;
+}

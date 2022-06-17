@@ -91,7 +91,7 @@ function Sidebar(props: Props) {
           }
       </div>
 
-      <div className="closemenu2" title="Mode: Zoom." onClick={() => props.setDisplayMode(DisplayMode.boxzoom)}>
+      {/* <div className="closemenu2" title="Mode: Zoom." onClick={() => props.setDisplayMode(DisplayMode.boxzoom)}>
             <div className="arrow-container"> 
               <FiZoomIn
                 color={props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
@@ -118,7 +118,7 @@ function Sidebar(props: Props) {
                 color={props.currentDisplayMode === DisplayMode.erase ? "red" : "black"}
               />
             </div>
-      </div>
+      </div> */}
 
       <div className="contents">
       <div className="row-contents" > <h1>CNAViz</h1> </div>
