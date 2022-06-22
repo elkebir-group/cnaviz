@@ -205,7 +205,7 @@ export class SampleViz extends React.Component<Props, State> {
             
             <div style={{verticalAlign: "middle"}}>
             {(showLinearPlot || showScatterPlot) &&
-            <div className="SampleViz-select">
+            <div className="SampleViz-select" title="Selects a sample from the loaded data.">
                 <span>Sample: </span>
                 <select value={selectedSample} onChange={(event: any) => {
                     this.props.onChangeSample(event.target.value, this.state.selectedSample);
@@ -213,16 +213,16 @@ export class SampleViz extends React.Component<Props, State> {
                 }}>
                     {sampleOptions}
                 </select>
-                <button className="custom-button" onClick={() => {
+                <button className="custom-button-add" title="Adds the selected sample in the dropdown menu." onClick={() => {
                     this.props.onAddSample();
-                }} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
-                <button className="custom-button" onClick={() => {
+                }} disabled={sampleAmount >= sampleOptions.length}> Add </button>
+                <button className="custom-button-remove" title="Removes this sample." onClick={() => {
                     this.props.onRemovePlot(this.state.selectedSample);
-                }} disabled={sampleAmount <= 1}> Remove Sample </button>
+                }} disabled={sampleAmount <= 1}> Remove </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
-            <div className="SampleViz-select">
+            <div className="SampleViz-select" title="Selects a cluster from the loaded data.">
                     <span >Cluster: </span>
 
                     <select
@@ -239,7 +239,7 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.parentCallBack(this.state.selectedCluster);
                         this.props.onBrushedBinsUpdated([]);
                     }}
-                    disabled={disableSelectOptions}>Assign Cluster</button>
+                    disabled={disableSelectOptions}>Assign</button>
 
                     <button className="custom-button" title="Assigns your selected bins to a new cluster." onClick={()=>{
                         this.initializeListOfClusters();
@@ -258,35 +258,35 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
                     }}
-                    disabled={disableSelectOptions} >New Cluster</button>
-                    <button className="custom-button" title="Undo cluster assignment." onClick={this.props.onUndoClick}> Undo Cluster Assignment</button>
+                    disabled={disableSelectOptions} >New</button>
+                    {/* <button className="custom-button" title="Undo cluster assignment." onClick={this.props.onUndoClick}> Undo Cluster Assignment</button> */}
                 </div>}
 
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
-                    <label>Ploidy:</label> <input value={this.state.ploidy.toString()} type="number" id="Purity-Input" name="volume"
-                        min={MIN_PLOIDY} max={MAX_PLOIDY} step=".1" onChange={event => {
+                    <label>Ploidy:</label> <input value={this.state.ploidy} type="number" id="Purity-Input" name="volume"
+                        step="any" onChange={event => {
                             const newPloidy = Number(event.target.value);
-                            if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
+                            // if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
                                 this.onUpdatePloidy(newPloidy);
-                            }
+                            // }
                         }}></input>
                     
                     <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                        min={MIN_PURITY} max={MAX_PURITY} step=".05" value={this.state.purity.toString()} onChange={event => {
+                        step="any" value={this.state.purity} onChange={event => {
                             const newPurity = Number(event.target.value);
-                            if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
+                            // if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
                                 this.onUpdatePurity(newPurity);
-                            }
+                            // }
                             
                         }}></input>
 
-                     <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume"
-                        min={MIN_OFFSET} max={MAX_OFFSET} step=".05" value={this.state.offset.toString()} onChange={event => {
+                     <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume" 
+                        step="any" value={this.state.offset} onChange={event => {
                             const newoffset = Number(event.target.value);
-                            if(newoffset <= MAX_OFFSET && newoffset >= MIN_OFFSET) {
+                            // if(newoffset <= MAX_OFFSET && newoffset >= MIN_OFFSET) {
                                 this.onUpdateOffset(newoffset);
-                            }
+                            // }
                         }}></input>
                     
                 </div>}

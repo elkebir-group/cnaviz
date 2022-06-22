@@ -51,6 +51,7 @@ interface Props {
     onToggleShowCentroidTable: () => void;
     onToggleShowAbsorbBins: () => void;
     onTogglePreviousActionLog: () => void;
+    onUndoClick: () => void; 
     onClearClustering: () => void;
     handleDemoFileInput: (applyClustering: boolean) => void;
     handleDemoDrivers: () => void;
@@ -214,6 +215,7 @@ function Sidebar(props: Props) {
           </div>
                     
 
+          {/* Analytics:  */}
           <div className= "row-contents" >
             <label className="analytics" title="Shows pop-up displaying cluster analytics.">
               <input type="button" id="custom-button" onClick={() => { 
@@ -225,27 +227,36 @@ function Sidebar(props: Props) {
               <input type="button" id="custom-button" onClick={props.onToggleShowCentroidTable}/>
               Centroids (c)
             </label>
-            <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
+            {/* <label className="absorbbins" title="Shows pop-up helping user automate reallocation of bins.">
+              <input type="button" id="custom-button" onClick={props.onToggleShowAbsorbBins}/>
+              Absorb Bins (a)
+            </label> */}
+            {/* <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
               <input type="button" id="custom-button" onClick={props.onToggleDirections}/>
               HELP (?)
+            </label> */}
+          </div>
+
+          <div className="row-contents">
+            <label className="absorbbins" title="Shows pop-up helping user automate reallocation of bins.">
+              <input type="button" id="custom-button" onClick={props.onToggleShowAbsorbBins}/>
+              Absorb Bins (a)
             </label>
           </div>
 
+          {/* Cluster Actions: */}
           <div className="row-contents" >
-            <label className="absorbbins" title="Shows pop-up helping user automate reallocation of bins.">
-              <input type="button" id="custom-button" onClick={props.onToggleShowAbsorbBins}/>
-              Absorb Bins
+            <label className="showlog" title="Shows the cluster assignment log.">
+              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
+              Log (l)
             </label>
             <label className="clearclustering" title="Clears the clustering.">
               <input type="button" id="custom-button" onClick={props.onClearClustering}/>
               Clear Clustering
             </label>
-          </div>
-
-          <div className="row-contents">
-            <label className="showlog" title="Shows the cluster assignment log.">
-              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
-              Previous Actions (l)
+            <label className="undocluster" title="Undo cluster assignment.">
+              <input type="button" id="custom-button" onClick={props.onUndoClick}/>
+              Undo Cluster
             </label>
           </div>
 

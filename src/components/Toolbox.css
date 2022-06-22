@@ -4,7 +4,7 @@
     display: flex;
     flex-direction: row;
     min-width: 300px;
-    max-width: 400px;
+    /* max-width: 400px; */
     align-items: center;
     justify-content: space-between;
 }
@@ -18,4 +18,9 @@
 
 .Toolbox-Tool-label {
     font-size: smaller;
+}
+
+.Toolbox-Tool:hover{
+    border: 1px solid #888;
+    background-color: #ddd;
 }

@@ -979,8 +979,8 @@ export class DataWarehouse {
 
     }
 
-    mergeBins(sample: string, xthresh: number, ythresh: number) {
-        console.log("inside mergeBins()...")
+    mergeBinsAll(sample: string, xthresharr: Map<String, number>, ythresharr: Map<String, number>) {
+        console.log("inside mergeBins()... with", xthresharr, ythresharr); 
         const reassign = new Map();
         const bins = this.allRecords;
 
@@ -1005,7 +1005,125 @@ export class DataWarehouse {
                 // iterate over all clusters' centroids
                 for (var cluster_b of Array.from(this._clusters.values())) {
                     if (cluster_b != cluster_a && (String(cluster_b) in samplePts)) {
-                        console.log("samplePts", samplePts, "cluster_b", String(cluster_b)); 
+                        // console.log("samplePts", samplePts, "cluster_b", String(cluster_b)); 
+                        let centroid = samplePts[String(cluster_b)][0]; // this will throw error if cluster_b no longer exists
+                        let b_x : number = centroid.point[0];
+                        let b_y : number = centroid.point[1]; 
+        
+                        // calculate distance between centroids 
+                        let xthresh : number = Number.MAX_VALUE;
+                        let ythresh : number = Number.MAX_VALUE; 
+                        const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
+                        if (dist < minDistFromCentroid) {
+                            // console.log("xdistance", Math.abs(a_x - b_x), "xthresh", xthresh, "ythresh", ythresh); 
+                            for (let i = 0; i < this.getSampleList().length; i++) {
+                                let sampleName = String(this.getSampleList()[i]);
+                                xthresh = Number(xthresharr.get(sampleName));
+                                ythresh = Number(ythresharr.get(sampleName)); 
+                                if (Math.abs(a_x - b_x) <= xthresh && Math.abs(a_y - b_y) <= ythresh) {
+                                    minCluster = Number(cluster_b); 
+                                    minDistFromCentroid = dist;
+                                    min_x = Math.abs(a_x-b_x);
+                                    min_y = Math.abs(a_y-b_y);  
+                                    console.log("Closest Centroid Updated.", String(cluster_b)); 
+                                } else {
+                                    console.log("Not within threshold."); 
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
+                if (minCluster != -2) {
+                    // map cluster to cluster
+                    reassign.set(String(minCluster), String(cluster_a)); // pick the larger cluster to absorb it into
+                }
+            }
+        }
+        const groupedByCluster = _.groupBy(bins, "CLUSTER");
+        console.log("Building sets of clusters", reassign); 
+
+        // build sets of clusters
+        const reassign_groups = new Map(); // maps every groupID to a set of related clusters
+        let index = 0; 
+        for (var clusterName of Array.from(reassign.keys())) {
+            const cA = clusterName;
+            const cB = reassign.get(clusterName);
+            
+            let groupID = index; 
+            // find which cluster they belong in
+            for (var c_index of Array.from(reassign_groups.keys())) {
+                if (reassign_groups.get(c_index).has(cA) || reassign_groups.get(c_index).has(cB)) {
+                    groupID = c_index; 
+                }
+            }
+            // if it's an existing group
+            if (reassign_groups.has(groupID)) {
+                reassign_groups.get(groupID).add(cA);
+                reassign_groups.get(groupID).add(cB);
+            } else {
+                // it's a new group
+                const reassign2 = new Set();
+                reassign2.add(cA);
+                reassign2.add(cB); 
+                reassign_groups.set(groupID, reassign2);
+            }
+        }
+
+        // find the largest cluster in each reassign_group
+        let new_reassign_group = new Map(); 
+        // const clusterTable = this.brushedClusterDim.group().all();
+        let clusterTableData = this.getClusterTableInfo();
+        for (var groupID of Array.from(reassign_groups.keys())) {
+            const reassign2 = reassign_groups.get(groupID); 
+            let currmaxcluster = ''; 
+            let currmaxper = Number.MIN_VALUE;
+            console.log("groupID", groupID); 
+            for (const row of clusterTableData) {
+                if (reassign2.has(String(row.key))) { 
+                    let binper = row.value; 
+                    if (binper > currmaxper) {
+                        currmaxper = binper; 
+                        currmaxcluster = String(row.key);
+                    }
+                }
+            }
+            console.log("Max Cluster", currmaxcluster, currmaxper);
+            new_reassign_group.set(currmaxcluster, reassign_groups.get(groupID)); 
+            console.log(new_reassign_group.get(currmaxcluster)); 
+        }
+
+        return new_reassign_group; 
+    }
+
+    mergeBins(sample: string, xthresh: number, ythresh: number) {
+        console.log("inside mergeBins()... with", xthresh, ythresh); 
+        const reassign = new Map();
+        const bins = this.allRecords;
+
+        // Get centroids for a specific sample
+        const samplePts = this.centroidPts[sample]; 
+        // iterate over all clusters centroids 
+        this.getCentroidPoints(sample);
+        for (var cluster_a of Array.from(this._clusters.values())) {            
+            // console.log("samplePts[c_bin]", samplePts[String(cluster_a)]);
+            // console.log("centroid:", centroid);
+            if (String(cluster_a) in samplePts) { // this will throw error if cluster_b no longer exists
+                let centroid = samplePts[String(cluster_a)][0]; 
+                let a_x : number = centroid.point[0];
+                let a_y : number = centroid.point[1]; 
+                // console.log("c_x:", c_x, "c_y:", c_y);
+
+                let minDistFromCentroid : number = Number.MAX_VALUE; 
+                let minCluster : number = -2;
+                let min_x : number = Number.MAX_VALUE;
+                let min_y : number = Number.MAX_VALUE; 
+
+                // iterate over all clusters' centroids
+                for (var cluster_b of Array.from(this._clusters.values())) {
+                    if (cluster_b != cluster_a && (String(cluster_b) in samplePts)) {
+                        // console.log("samplePts", samplePts, "cluster_b", String(cluster_b)); 
                         let centroid = samplePts[String(cluster_b)][0]; // this will throw error if cluster_b no longer exists
                         let b_x : number = centroid.point[0];
                         let b_y : number = centroid.point[1]; 
@@ -1013,6 +1131,7 @@ export class DataWarehouse {
                         // calculate distance between centroids 
                         const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
                         if (dist < minDistFromCentroid) {
+                            // console.log("xdistance", Math.abs(a_x - b_x), "xthresh", xthresh, "ythresh", ythresh); 
                             if (Math.abs(a_x - b_x) <= xthresh && Math.abs(a_y - b_y) <= ythresh) {
                                 minCluster = Number(cluster_b); 
                                 minDistFromCentroid = dist;
@@ -1029,24 +1148,81 @@ export class DataWarehouse {
                 // const dist = Math.sqrt((a_x - b_x)**2 + (a_y - b_y)**2);
                 if (minCluster != -2) {
                     // map cluster to cluster
-                    reassign.set(String(minCluster), String(cluster_a)); 
+                    reassign.set(String(minCluster), String(cluster_a)); // pick the larger cluster to absorb it into
                 }
             }
         }
         const groupedByCluster = _.groupBy(bins, "CLUSTER");
+        console.log("Building sets of clusters", reassign); 
 
+        // build sets of clusters
+        const reassign_groups = new Map(); // maps every groupID to a set of related clusters
+        let index = 0; 
         for (var clusterName of Array.from(reassign.keys())) {
-            let toCluster : String = reassign.get(clusterName); 
-            const groupedBySample = _.groupBy(groupedByCluster[String(toCluster)], "SAMPLE");
-            const binsForSample = groupedBySample[String(sample)];
-            this.setbrushedBins(binsForSample);
-            console.log("Reassigning", clusterName, "to", toCluster);
-            this.updateCluster(Number(clusterName)); 
-            console.log("Pushing mergeBins() operantion to history stack.");
-            this.historyStack.push(JSON.parse(JSON.stringify(binsForSample)));
+            const cA = clusterName;
+            const cB = reassign.get(clusterName);
+            
+            let groupID = index; 
+            // find which cluster they belong in
+            for (var c_index of Array.from(reassign_groups.keys())) {
+                if (reassign_groups.get(c_index).has(cA) || reassign_groups.get(c_index).has(cB)) {
+                    groupID = c_index; 
+                }
+            }
+            // if it's an existing group
+            if (reassign_groups.has(groupID)) {
+                reassign_groups.get(groupID).add(cA);
+                reassign_groups.get(groupID).add(cB);
+            } else {
+                // it's a new group
+                const reassign2 = new Set();
+                reassign2.add(cA);
+                reassign2.add(cB); 
+                reassign_groups.set(groupID, reassign2);
+            }
         }
+
+        // find the largest cluster in each reassign_group
+        let new_reassign_group = new Map(); 
+        // const clusterTable = this.brushedClusterDim.group().all();
+        let clusterTableData = this.getClusterTableInfo();
+        for (var groupID of Array.from(reassign_groups.keys())) {
+            const reassign2 = reassign_groups.get(groupID); 
+            let currmaxcluster = ''; 
+            let currmaxper = Number.MIN_VALUE;
+            console.log("groupID", groupID); 
+            for (const row of clusterTableData) {
+                if (reassign2.has(String(row.key))) { 
+                    let binper = row.value; 
+                    if (binper > currmaxper) {
+                        currmaxper = binper; 
+                        currmaxcluster = String(row.key);
+                    }
+                }
+            }
+            console.log("Max Cluster", currmaxcluster, currmaxper);
+            new_reassign_group.set(currmaxcluster, reassign_groups.get(groupID)); 
+            console.log(new_reassign_group.get(currmaxcluster)); 
+        }
+
+        return new_reassign_group; 
     }
 
+    assignMerge(sample: string, new_reassign_group: any) {
+        // reassign
+        const groupedByCluster = _.groupBy(this.allRecords, "CLUSTER"); // rawdata
+        for (var clusterName of Array.from(new_reassign_group.keys())) {
+            for (var toCluster of Array.from(new_reassign_group.get(clusterName))) {
+                const groupedBySample = _.groupBy(groupedByCluster[String(toCluster)], "SAMPLE");
+                const binsForSample = groupedBySample[String(sample)];
+                this.setbrushedBins(binsForSample);
+                console.log("Reassigning", clusterName, "to", toCluster);
+                this.updateCluster(Number(clusterName)); 
+                console.log("Pushing mergeBins() operation to history stack.");
+                this.historyStack.push(JSON.parse(JSON.stringify(binsForSample)));
+            }
+        }
+    }
     // applies the same across all samples
     absorbBins(from_set: String[], to_set: String[], xthresh: number, ythresh: number) {
         // for loop through all records in from_set!!

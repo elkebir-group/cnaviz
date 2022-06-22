@@ -16,6 +16,7 @@ import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import {FiX} from "react-icons/fi";
+import {AiOutlineQuestion} from "react-icons/ai";
 import {AnalyticsTab} from "./components/AnalyticsTab";
 import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
 import {Toolbox} from "./components/Toolbox"; 
@@ -418,7 +419,9 @@ export class App extends React.Component<{}, State> {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
                 self.onToggleSilhoutteBarPlot();
-            } 
+            } else if(d3.event.key === "a") {
+                self.onToggleShowAbsorbBins(); 
+            }
             // else if(d3.event.key === "t") {
             //     self.state.indexedData.calculateCopyNumbers();
             // }
@@ -617,11 +620,11 @@ export class App extends React.Component<{}, State> {
     }
 
     handleMergeThresh_rdr(sample: String, event: React.ChangeEvent<HTMLInputElement>) { // gc
-        console.log("inside handleMergeThresh_rdr() with", sample); 
+        console.log("inside handleMergeThresh_rdr() with", sample, "updated value to", Number(event.target.value)); 
         this.state.mergeThresh_rdr.set(sample, Number(event.target.value)); 
     }
     handleMergeThresh_baf(sample: String, event: React.ChangeEvent<HTMLInputElement>) { // gc
-        console.log("inside handleMergeThresh_baf() with", sample); 
+        console.log("inside handleMergeThresh_baf() with", sample, "updated value to", Number(event.target.value)); 
         this.state.mergeThresh_baf.set(sample, Number(event.target.value)); 
     }
 
@@ -737,15 +740,61 @@ export class App extends React.Component<{}, State> {
         this.setState({processingStatus: ProcessingStatus.done});
     }
 
-    mergeBins() {
+    mergeBins(sample: String) {
         console.log("Merge bins..."); 
         this.setState({processingStatus: ProcessingStatus.processing});
         for(let i = 0; i < this.state.indexedData.getSampleList().length; i++) {
-            let sample = this.state.indexedData.getSampleList()[i]; 
-            let ythresh = this.state.mergeThresh_rdr.get(sample); 
-            let xthresh = this.state.mergeThresh_baf.get(sample);
-            this.state.indexedData.mergeBins(sample, Number(xthresh), Number(ythresh));
+            let s = this.state.indexedData.getSampleList()[i]; 
+            if (sample === s) {
+                let ythresh = this.state.mergeThresh_rdr.get(sample); // mergeThresh_rdr
+                let xthresh = this.state.mergeThresh_baf.get(sample);
+                let new_reassign_group = this.state.indexedData.mergeBins(s, Number(xthresh), Number(ythresh));
+                // window.prompt('Are you sure?', 'Yes');
+                let mergestring = '\n';
+                // build mergestring
+                for (var clusterName of Array.from(new_reassign_group.keys())) {
+                    mergestring += String(clusterName) + ": ["; 
+                    for (var toCluster of Array.from(new_reassign_group.get(clusterName))) {
+                        mergestring += String(toCluster) + ",";
+                    }
+                    mergestring += "]\n"; 
+                }
+
+                let confirmAction = window.confirm("Are you sure you want to merge the following bins?" + mergestring);
+                if (confirmAction) {
+                    alert("Clusters merged.");
+                    this.state.indexedData.assignMerge(s, new_reassign_group); 
+                } else {
+                    alert("Action canceled, clusters not merged.");
+                }
+            }
         }
+        this.setState({processingStatus: ProcessingStatus.done});
+    }
+
+    mergeBinsAll() {
+        console.log("Merge bins..."); 
+        this.setState({processingStatus: ProcessingStatus.processing});
+
+        let s = this.state.indexedData.getSampleList()[0]; 
+        let new_reassign_group = this.state.indexedData.mergeBinsAll(s, this.state.mergeThresh_rdr, this.state.mergeThresh_baf);
+        let mergestring = '\n';
+        // build mergestring
+        for (var clusterName of Array.from(new_reassign_group.keys())) {
+            mergestring += String(clusterName) + ": ["; 
+            for (var toCluster of Array.from(new_reassign_group.get(clusterName))) {
+                mergestring += String(toCluster) + ",";
+            }
+            mergestring += "]\n"; 
+        }
+
+        let confirmAction = window.confirm("Are you sure you want to merge the following bins?" + mergestring);
+        if (confirmAction) {
+            alert("Clusters merged.");
+            this.state.indexedData.assignMerge(s, new_reassign_group); 
+        } else {
+            alert("Action canceled, clusters not merged.");
+        }            
         this.setState({processingStatus: ProcessingStatus.done});
     }
 
@@ -995,7 +1044,7 @@ export class App extends React.Component<{}, State> {
                                             id="Merge-Thresh-BAF"
                                             min={0}
                                             max={10}
-                                            placeholder={"0.5"}
+                                            placeholder={String(this.state.mergeThresh_baf.get(sample))}
                                             onChange={this.handleMergeThresh_rdr.bind(this, sample)}> 
                                         </input>
                                     </div>
@@ -1007,19 +1056,25 @@ export class App extends React.Component<{}, State> {
                                             id="Merge-Thresh-RDR"
                                             min={0}
                                             max={10}
-                                            placeholder={"2.5"}
+                                            placeholder={String(this.state.mergeThresh_rdr.get(sample))}
                                             onChange={this.handleMergeThresh_baf.bind(this, sample)}> 
                                         </input>
                                     </div>                                    <div className="App-row-contents"> 
                                         {/* Current Thresholds RDR: {this.state.mergeThresh_rdr} BAF: {this.state.mergeThresh_baf} */}
-                                        <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
-                                            <input type="button" key={sample} id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.mergeBins.bind(this)}/>
-                                            Merge Bins
+                                        <label className="directions_label" title="Merge the clusters with respect to this sample's BAF and RDR thresholds.">
+                                            <input type="button" key={sample} id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.mergeBins.bind(this, sample)}/>
+                                            Merge
                                         </label>
                                     </div>
                                 </div>
                         </div> 
                     )} 
+                </div>
+                <div className="App-row-contents">
+                    <label className="directions_label" title="Merge the clusters with respect to this sample's BAF and RDR thresholds.">
+                        <input type="button" id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.mergeBinsAll.bind(this)}/>
+                        Merge According to All Samples' Thresholds
+                    </label>
                 </div>
             </div>
             
@@ -1081,25 +1136,25 @@ export class App extends React.Component<{}, State> {
                     applyLog={this.state.applyLog}
                     processingStatus={this.state.processingStatus}
                     onExport={this.onExport}
+                    onUndoClick={this.goBackToPreviousCluster}
                 />
             </div>
 
             <div className={this.state.sidebar ? "marginContent" : ""}>
-                {status && <div className="App-status-pane">{status}</div>}
-                {mainUI}
-
                 <div className="toolbar">
+                    <div className="help-box" title="Shows pop-up describing instructions and shortcuts.">
+                        <label style={{cursor: "pointer"}}>
+                        <input style={{cursor: "pointer"}} type="button" id="custom-button" onClick={this.onToggleDirections}/>
+                            <AiOutlineQuestion/>
+                        </label>
+                    </div>
                     <Toolbox
                         currentDisplayMode={this.state.displayMode}
                         setDisplayMode={this.setDisplayMode}
                     ></Toolbox>
-                    <div>
-                        <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
-                        <input type="button" id="custom-button" onClick={this.onToggleDirections}/>
-                            HELP (?)
-                        </label>
-                    </div>
                 </div>
+                {status && <div className="App-status-pane">{status}</div>}
+                {mainUI}
 
                 {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleDirections}></div> }
                 {this.state.showDirections && 

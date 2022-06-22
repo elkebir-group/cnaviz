@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@reach/dialog": "^0.17.0",
     "@types/node": "11.13.9",
     "@types/react": "16.8.15",
     "@types/react-dom": "16.8.4",

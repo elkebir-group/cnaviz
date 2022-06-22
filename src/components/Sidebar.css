@@ -63,6 +63,7 @@ input[type="file"] {
 
 #custom-button {
   display: none;
+  cursor: pointer;
 }
 
 .custom-file-upload {
@@ -373,7 +374,25 @@ input[type="file"] {
   align-items: center;
   /* color: disa; */
 }
+.showlog:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
 
+.undocluster {
+  /* display: inline-block; */
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, #e4e4e4, #f7f7f7);
+  border: 2px solid #4d4949;
+  height: 30px;
+  padding: 3px;
+  align-items: center;
+  /* color: disa; */
+}
+.undocluster:hover{
+  border: 1px solid #888;
+  background-color: #ddd;
+}
 
 
 

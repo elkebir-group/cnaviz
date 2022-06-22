@@ -1,4 +1,4 @@
-import "./Toolbar.css";
+import "./Toolbox.css";
 import React from "react";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
 import {IoHandRight} from "react-icons/io5"
@@ -15,7 +15,7 @@ export class Toolbox extends React.Component<Props> {
 
     render () {
         return <div className="Toolbox">
-            <div>Tools</div>
+            <div>Modes:</div>
             <Tool 
                 iconElement={<FiZoomIn color={this.props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"} />}
                 label="Zoom"
@@ -49,7 +49,7 @@ interface ToolProps {
 
 class Tool extends React.Component<ToolProps> {
     render() {
-        return <div className="Toolbox-Tool" onClick={this.props.onClick}>
+        return <div className="Toolbox-Tool" title={this.props.label} onClick={this.props.onClick}>
             {this.props.iconElement}
             <div className="Toolbox-Tool-label">{this.props.label}</div>
         </div>
