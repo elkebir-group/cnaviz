@@ -11,8 +11,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 Click [here](docs/Tutorial.md) to view a CNAViz tutorial.
 
 In order to prepare data to load into CNAViz, we present one example of how to get a clustering with HATCHet.
-To get the clustering results with locality clustering, use the current HATCHet.ini file ([here](docs/hatchet.ini)). 
-To perform copy number calling after using CNAViz, users should set the last three steps under the [run] section to True, and set all others to False.
+To get the clustering results with locality clustering, use the current [hatchet_pre.ini file](docs/hatchet_pre.ini). 
+To perform copy number calling after using CNAViz, users should set the last three steps under the [run] section to True, and set all others to False. We provide the user with this post [hatchet_post.ini script](docs/hatchet_post.ini)). 
 For further details, we refer the user to the [HATCHet demo](https://github.com/raphael-group/hatchet/blob/master/examples/demo-complete/demo-complete.sh#configuring-the-hatchets-execution).
 
 ### Screencasts and Data Analysis
