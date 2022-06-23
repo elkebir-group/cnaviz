@@ -85,8 +85,8 @@ button {
     align-items: center;
 }
 .custom-button:hover{
-  border: 1px solid #888;
-  background-color: #ddd;
+    border: 2px solid #888;
+    background-color: #ddd;
 }
 
 .custom-button-add {
@@ -98,8 +98,8 @@ button {
     align-items: center;
 }
 .custom-button-add:hover{
-  border: 1px solid #888;
-  background-color: #ddd;
+    border: 2px solid #888;
+    background-color: #ddd;
 }
 
 .custom-button-remove {
@@ -111,8 +111,8 @@ button {
     align-items: center;
 }
 .custom-button-remove:hover{
-  border: 1px solid #888;
-  background-color: #ddd;
+    border: 2px solid #888;
+    background-color: #ddd;
 }
 /* .Sampleviz-cluster-select {
     width: 90px;
@@ -125,9 +125,11 @@ button {
     margin-left: 7px;
 }
 .SampleViz-selecte:hover{
-    border: 1px solid #888;
+    border: 2px solid #888;
     background-color: #ddd;
   }
+
+
 #Purity-Input {
     height: 20px;
     width: 100px;
