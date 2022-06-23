@@ -77,7 +77,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .custom-file-upload:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -92,7 +92,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .custom-file-upload2:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -108,7 +108,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .custom-file-upload3:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -135,7 +135,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .custom-file-export:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -150,7 +150,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .demo:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -179,7 +179,7 @@ input[type="file"] {
 }
 
 .closemenu:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -250,37 +250,37 @@ input[type="file"] {
 
 
 .Select-Chrom:hover {
-  border: 1px solid #888;
+  /* border: 2px solid #888; */
   background-color: #ddd;
 }
 
 .selection-color:hover {
-  border: 1px solid #888;
+  /* border: 2px solid #888; */
   background-color: #ddd;
 }
 
 .logrdr:hover {
-  border: 1px solid #888;
+  /* border: 2px solid #888; */
   background-color: #ddd;
 }
 
 .centroids:hover {
-  border: 1px solid #888;
+  /* border: 1px solid #888; */
   background-color: #ddd;
 }
 
 .scatterplot:hover {
-  border: 1px solid #888;
+  /* border: 2px solid #888; */
   background-color: #ddd;
 }
 
 .linearplot:hover {
-  border: 1px solid #888;
+  /* border: 2px solid #888; */
   background-color: #ddd;
 }
 
 .purityploidy:hover {
-  border: 1px solid #888;
+  /* border: 2px solid #888; */
   background-color: #ddd;
 }
 
@@ -295,7 +295,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .analytics:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -311,7 +311,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .centroidtable:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -329,7 +329,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .directions_label:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -345,7 +345,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .absorbbins:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -360,7 +360,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .clearclustering:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -375,7 +375,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .showlog:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
@@ -390,7 +390,7 @@ input[type="file"] {
   /* color: disa; */
 }
 .undocluster:hover{
-  border: 1px solid #888;
+  border: 2px solid #888;
   background-color: #ddd;
 }
 
