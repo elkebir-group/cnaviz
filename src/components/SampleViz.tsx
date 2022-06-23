@@ -265,7 +265,7 @@ export class SampleViz extends React.Component<Props, State> {
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
                     <label>Ploidy:</label> <input value={this.state.ploidy} type="number" id="Purity-Input" name="volume"
-                        step="0.05" title="Set ploidy gridlines." onChange={event => {
+                        step="0.01" title="Set ploidy gridlines." onChange={event => {
                             const newPloidy = Number(event.target.value);
                             // if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
                                 this.onUpdatePloidy(newPloidy);
@@ -273,7 +273,7 @@ export class SampleViz extends React.Component<Props, State> {
                         }}></input>
                     {/* <div className="input-class" title="Set purity gridlines. Max purity is 1.">   */}
                         <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                            step="0.1" value={this.state.purity} title="Set purity gridlines. Max purity is 1." onChange={event => {
+                            step="0.01" value={this.state.purity} title="Set purity gridlines. Max purity is 1." onChange={event => {
                                 const newPurity = Number(event.target.value);
                                 if(newPurity <= MAX_PURITY) { // && newPurity >= MIN_PURITY) {
                                     this.onUpdatePurity(newPurity);

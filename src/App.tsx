@@ -1037,7 +1037,7 @@ export class App extends React.Component<{}, State> {
                                             id="Merge-Thresh-BAF"
                                             min={0}
                                             max={10}
-                                            step="0.05"
+                                            step="0.01"
                                             placeholder={(this.state.mergeThresh_baf.has(sample)) ? String(this.state.mergeThresh_baf.get(sample)) : "0"}
                                             onChange={this.handleMergeThresh_baf.bind(this, sample)}> 
                                         </input>
@@ -1050,7 +1050,7 @@ export class App extends React.Component<{}, State> {
                                             id="Merge-Thresh-RDR"
                                             min={0}
                                             max={10}
-                                            step="0.05"
+                                            step="0.01"
                                             placeholder={(this.state.mergeThresh_rdr.has(sample)) ? String(this.state.mergeThresh_rdr.get(sample)) : "0"}
                                             onChange={this.handleMergeThresh_rdr.bind(this, sample)}> 
                                         </input>
@@ -1220,7 +1220,8 @@ export class App extends React.Component<{}, State> {
                               id="Absorb-Thresh-RDR"
                               min={0}
                               max={10}
-                              placeholder={"2.5"}
+                              step="0.01"
+                              placeholder={"0"}
                               onChange={this.handleAbsorbThresh_rdr}> 
                             </input>
 
@@ -1230,7 +1231,8 @@ export class App extends React.Component<{}, State> {
                               id="Absorb-Thresh-BAF"
                               min={0}
                               max={10}
-                              placeholder={"0.5"}
+                              step="0.01"
+                              placeholder={"0"}
                               onChange={this.handleAbsorbThresh_baf}> 
                             </input>
                         </div>
