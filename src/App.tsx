@@ -16,7 +16,8 @@ import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import {FiX} from "react-icons/fi";
-import {AiOutlineQuestion} from "react-icons/ai";
+import {AiOutlineQuestionCircle} from "react-icons/ai";
+import {IconContext} from "react-icons"; 
 import {AnalyticsTab} from "./components/AnalyticsTab";
 import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
 import {Toolbox} from "./components/Toolbox"; 
@@ -310,7 +311,6 @@ export class App extends React.Component<{}, State> {
     
     constructor(props: {}) {
         super(props);
-        
         this.state = {
             processingStatus: ProcessingStatus.none,
             indexedData: new DataWarehouse([]),
@@ -450,13 +450,6 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             }
         });
-
-        this.state.indexedData.getSampleList().map(sample => self.state.mergeThresh_baf.set(sample, 0)); 
-        this.state.indexedData.getSampleList().map(sample => self.state.mergeThresh_rdr.set(sample, 0)); 
-
-        // this.setState({ mergeThresh_baf: new Array(this.state.indexedData.getSampleList().length)});
-        // this.setState({ mergeThresh_rdr: new Array(this.state.indexedData.getSampleList().length)});
-        
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>, applyClustering: boolean) {
@@ -1037,27 +1030,29 @@ export class App extends React.Component<{}, State> {
                                 <div className="scroll">
                                     {sample}
                                     <div className="App-row-contents">
-                                    X (BAF): 
+                                    BAF: 
                                         <input type="number"
                                             name="Merge Threshold" 
                                             key={sample}
                                             id="Merge-Thresh-BAF"
                                             min={0}
                                             max={10}
-                                            placeholder={String(this.state.mergeThresh_baf.get(sample))}
-                                            onChange={this.handleMergeThresh_rdr.bind(this, sample)}> 
+                                            step="0.05"
+                                            placeholder={(this.state.mergeThresh_baf.has(sample)) ? String(this.state.mergeThresh_baf.get(sample)) : "0"}
+                                            onChange={this.handleMergeThresh_baf.bind(this, sample)}> 
                                         </input>
                                     </div>
                                     <div className="App-row-contents">
-                                    Y (RDR): 
+                                    RDR: 
                                         <input type="number"
                                             name="Merge Threshold" 
                                             key={sample}
                                             id="Merge-Thresh-RDR"
                                             min={0}
                                             max={10}
-                                            placeholder={String(this.state.mergeThresh_rdr.get(sample))}
-                                            onChange={this.handleMergeThresh_baf.bind(this, sample)}> 
+                                            step="0.05"
+                                            placeholder={(this.state.mergeThresh_rdr.has(sample)) ? String(this.state.mergeThresh_rdr.get(sample)) : "0"}
+                                            onChange={this.handleMergeThresh_rdr.bind(this, sample)}> 
                                         </input>
                                     </div>                                    <div className="App-row-contents"> 
                                         {/* Current Thresholds RDR: {this.state.mergeThresh_rdr} BAF: {this.state.mergeThresh_baf} */}
@@ -1145,7 +1140,9 @@ export class App extends React.Component<{}, State> {
                     <div className="help-box" title="Shows pop-up describing instructions and shortcuts.">
                         <label style={{cursor: "pointer"}}>
                         <input style={{cursor: "pointer"}} type="button" id="custom-button" onClick={this.onToggleDirections}/>
-                            <AiOutlineQuestion/>
+                            <IconContext.Provider value={{className: "shared-class", size: "40"}}>
+                                <AiOutlineQuestionCircle/>
+                            </IconContext.Provider>
                         </label>
                     </div>
                     <Toolbox

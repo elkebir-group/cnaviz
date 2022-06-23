@@ -265,30 +265,31 @@ export class SampleViz extends React.Component<Props, State> {
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
                     <label>Ploidy:</label> <input value={this.state.ploidy} type="number" id="Purity-Input" name="volume"
-                        step="any" onChange={event => {
+                        step="0.05" title="Set ploidy gridlines." onChange={event => {
                             const newPloidy = Number(event.target.value);
                             // if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
                                 this.onUpdatePloidy(newPloidy);
                             // }
                         }}></input>
-                    
-                    <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                        step="any" value={this.state.purity} onChange={event => {
-                            const newPurity = Number(event.target.value);
-                            // if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
-                                this.onUpdatePurity(newPurity);
-                            // }
-                            
-                        }}></input>
-
-                     <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume" 
-                        step="any" value={this.state.offset} onChange={event => {
-                            const newoffset = Number(event.target.value);
-                            // if(newoffset <= MAX_OFFSET && newoffset >= MIN_OFFSET) {
-                                this.onUpdateOffset(newoffset);
-                            // }
-                        }}></input>
-                    
+                    {/* <div className="input-class" title="Set purity gridlines. Max purity is 1.">   */}
+                        <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
+                            step="0.1" value={this.state.purity} title="Set purity gridlines. Max purity is 1." onChange={event => {
+                                const newPurity = Number(event.target.value);
+                                if(newPurity <= MAX_PURITY) { // && newPurity >= MIN_PURITY) {
+                                    this.onUpdatePurity(newPurity);
+                                }
+                                
+                            }}></input>
+                    {/* </div> */}
+                    {/* <div className="input-class" title="Set offset for first vertical gridline. Max offset is 1.">   */}
+                        <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume" 
+                            step="0.01" value={this.state.offset} title="Set offset for first vertical gridline. Max offset is 1." onChange={event => {
+                                const newoffset = Number(event.target.value);
+                                if(newoffset <= MAX_OFFSET) { // } && newoffset >= MIN_OFFSET) {
+                                    this.onUpdateOffset(newoffset);
+                                // }
+                            }}}></input>
+                    {/* </div> */}
                 </div>}
                 
             </div>
