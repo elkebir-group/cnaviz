@@ -131,7 +131,7 @@ function Sidebar(props: Props) {
       </div> */}
 
       <div className="contents">
-      <div className="row-contents" > <h1>CNAViz</h1> </div>
+      <div className="row-contents" > <h1>CNAViz v2.0</h1> </div>
         <div className="title-bar"></div>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
