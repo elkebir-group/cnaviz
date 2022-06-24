@@ -117,6 +117,7 @@ export class SampleViz1D extends React.Component<Props, State> {
 
                 <div className="SampleViz-separator" />
                     <BAFLinearPlot
+                    pointsize={pointsize}
                     data={data}
                     chr={chr}
                     hoveredLocation={hoveredLocation}
