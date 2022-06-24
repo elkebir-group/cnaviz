@@ -12,6 +12,7 @@ import { cn_pair, fractional_copy_number } from "../constants";
 import classnames from 'classnames'; 
 
 interface Props {
+    pointsize: number; 
     data: GenomicBin[];
     chr: string;
     hoveredLocation?: ChromosomeInterval;
@@ -67,7 +68,7 @@ export class SampleViz1D extends React.Component<Props, State> {
     }
 
     render() {
-        const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins,
+        const {data, chr, hoveredLocation, pointsize, onLocationHovered, onBrushedBinsUpdated, brushedBins,
              customColor, yScale, xScale, rdRange, clusterTableData, applyLog, displayMode, width, onLinearPlotZoom, implicitRange, onZoom, driverGenes,
             purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = this.props;
         
@@ -83,6 +84,7 @@ export class SampleViz1D extends React.Component<Props, State> {
             visualization = <DivWithBullseye className={myDisplayClasses}>
             {/* <DivWithBullseye className={myDisplayClasses}>  */}
                 <RDLinearPlot
+                    pointsize={pointsize}
                     data={data}
                     chr={chr}
                     rdRange={rdRange}

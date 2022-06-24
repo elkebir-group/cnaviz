@@ -45,6 +45,7 @@ function findChrNumber(chr: string) {
 }
 
 interface Props {
+    pointsize: number; 
     data: GenomicBin[];
     chr: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF" | "fractional_cn">;
@@ -154,7 +155,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             } else {
                 this.props.onLinearPlotZoom(null, null, false);
             }
-        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr", "purity", "ploidy"])) {
+        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr", "purity", "ploidy", "pointsize"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
@@ -367,10 +368,11 @@ export class LinearPlot extends React.PureComponent<Props> {
         let fillColor = fc.webglFillColor().value(colorFill).data(data);
         let pointSeries = fc
                 .seriesWebglPoint()
-                .size(3)
+                // .size(3)
                 .crossValue((d : any) => genome.getImplicitCoordinates(GenomicBinHelpers.toChromosomeInterval(d)).getCenter())
                 .mainValue((d : any) => d[dataKeyToPlot])
-                .context(gl);
+                .context(gl)
+                .size(this.props.pointsize);
         pointSeries.decorate((program:any) => fillColor(program));
 
         svg

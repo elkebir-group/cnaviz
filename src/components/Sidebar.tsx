@@ -7,8 +7,12 @@ import { GenomicBin} from "../model/GenomicBin";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
 import {IoHandRight} from "react-icons/io5"
 import {BiEraser, BiMessageSquareAdd} from "react-icons/bi";
+import { Slider } from '@mui/material';
+import Box from "@mui/material/Box";
+import { isPropertySignature } from "typescript";
 
 interface Props {
+    // pointsize : number; 
     selectedChr : string;
     selectedColor : string;
     onChrSelected : any;
@@ -61,8 +65,8 @@ interface Props {
     applyLog: boolean;
     processingStatus: ProcessingStatus;
     onExport: () => void;
-
-
+    handleslider: (event: any, val: number) => void; 
+    // pointslider: (value: number) => void; 
 }
 
 function Sidebar(props: Props) {
@@ -74,6 +78,11 @@ function Sidebar(props: Props) {
   if(chosenFile.length > 35) {
     chosenFile = chosenFile.substring(0, 34) + "...";
   }
+
+  // let pointslider(value: number) {
+  //   this.setState({pointsize: value}); 
+  //   // return `${value}°C`;
+  // }
 
   return (
 
@@ -186,7 +195,26 @@ function Sidebar(props: Props) {
               </input>
             </div>
           </div>
-        
+
+          <div className="row-contents">
+          {/* <label className="point-slider" title="Changes the size of the points in the scatterplot and linear plot."> */}
+          <Box sx={{ width: 300 }}>  
+              Point Size 
+              <Slider
+                aria-label="Point Size"
+                defaultValue={3}
+                onChangeCommitted={props.handleslider}
+                // getAriaValueText={this.pointslider}
+                valueLabelDisplay="auto"
+                step={1}
+                marks={true}
+                min={1}
+                max={10}
+              />
+            {/* </label> */}
+            </Box>
+          </div>
+
           <div className= "row-contents" >
             <label className="logrdr" title="Shows read-depth ratio (RDR) in log form.">
               <span className="App-CheckBox-explanation">Log RDR: </span>
@@ -213,7 +241,7 @@ function Sidebar(props: Props) {
               <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} disabled={props.applyLog} readOnly/>
             </label>
           </div>
-                    
+         
 
           {/* Analytics:  */}
           <div className= "row-contents" >

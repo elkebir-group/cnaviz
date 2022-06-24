@@ -8,6 +8,7 @@
     /* display: flex;
     flex-direction: column;
     width: 100%; */
+    overflow-y: auto;
 }
 
 .Overall-Average {
@@ -29,4 +30,8 @@
 
 .ClusterDistances-Select2 {
     display: none;
+}
+
+div.scroll {
+    overflow-y: auto;
 }

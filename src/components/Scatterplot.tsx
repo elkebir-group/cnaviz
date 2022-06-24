@@ -29,6 +29,7 @@ const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
+    pointsize: number; 
     parentCallBack: any;
     data: GenomicBin[];
     rdRange: [number, number];
@@ -366,7 +367,6 @@ export class Scatterplot extends React.Component<Props, State> {
             this.forceUnhover();
             this.forceHover(this.props.hoveredLocation); 
         } else if (this.propsDidChange(prevProps, ["purity", "ploidy", "offset"])) {
-            
             let data : GenomicBin[] = this.props.data;
             const rdrScale = this.computeScales(this.props.rdRange, this.props.width, this.props.height).rdrScale;
             this._currYScale = rdrScale;
@@ -383,7 +383,9 @@ export class Scatterplot extends React.Component<Props, State> {
             
             this.setState({quadTree: q});
             this.redraw();
-        } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height", "customColor"])) { // gc added customColor, redraws scatterplot on change
+        } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height", "customColor", "pointsize"])) { // gc added customColor, redraws scatterplot on change
+            console.log("propsDidChange: calling this.redraw()");
+
             let data : GenomicBin[] = this.props.data;
             // Update quadtree so that when hovering works on new points that appear 
             // (when assigning to an existing cluster - all the points in that cluster show up even if it has been filtered out)
@@ -495,12 +497,13 @@ export class Scatterplot extends React.Component<Props, State> {
 
 
     redraw() {
+        console.log("Beginning redraw().");
         if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
         
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy} = this.props;
+        const {width, height, customColor, pointsize, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy} = this.props;
 
         let {displayMode} = this.props;
         let xScale = this._currXScale;
@@ -681,14 +684,18 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         
         let fillColor = fc.webglFillColor().value(languageFill).data(newData);
+        // console.log("Scatterplot.tsx", this.props.pointsize);
         let pointSeries = fc // plotting points in webgl - d3fc library within js/ts for using webgl
-            .seriesWebglPoint() 
+            .seriesWebglPoint()
             .xScale(self._currXScale)
             .yScale(self._currYScale)
-            .size(3)
+            // .size(3)
             .crossValue((d : any) => d.reverseBAF) // x 0.5 - BAF
             .mainValue((d : any) => d[yAxisToPlot]) // y CN
-            .context(gl);
+            .context(gl)
+            .size(this.props.pointsize);
+            // .sizes((new Float32Array(data.length)).fill(this.props.pointsize)); 
+            // .attr("r", this.props.pointsize); // gc
         
         pointSeries.decorate((program:any) => {
                 fillColor(program)
@@ -853,8 +860,8 @@ export class Scatterplot extends React.Component<Props, State> {
                 return colors[col_index];
             }
         }
-    
-     }
+        console.log("Done redrawing.");
+    }
 
      updatePoints(event : any) {
         if(!this._svg) {return;}

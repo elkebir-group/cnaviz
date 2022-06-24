@@ -12,6 +12,7 @@ import {DEFAULT_PLOIDY, DEFAULT_PURITY, DEFAULT_OFFSET, START_CN, END_CN, UNCLUS
 import {useRef} from 'react'; 
 
 interface Props {
+    pointsize: number; 
     parentCallBack: any;
     data: DataWarehouse;
     chr: string;
@@ -213,7 +214,7 @@ export class SampleViz extends React.Component<Props, State> {
                 }}>
                     {sampleOptions}
                 </select>
-                <button className="custom-button-add" title="Adds the selected sample in the dropdown menu." onClick={() => {
+                <button className="custom-button-add" title="Add the next sequential sample in the dropdown menu." onClick={() => {
                     this.props.onAddSample();
                 }} disabled={sampleAmount >= sampleOptions.length}> Add </button>
                 <button className="custom-button-remove" title="Removes this sample." onClick={() => {

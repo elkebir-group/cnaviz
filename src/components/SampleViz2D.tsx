@@ -10,6 +10,7 @@ import { cn_pair, fractional_copy_number } from "../constants";
 import classnames from 'classnames'; 
 
 interface Props {
+    pointsize: number; 
     parentCallBack: any;
     data: GenomicBin[];
     chr: string;
@@ -97,7 +98,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
     
     render() {
-        const {data, width, height, hoveredLocation, invertAxis, customColor,
+        const {data, width, height, pointsize, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
                 applyLog, scales, centroidPts, showCentroids, purity, ploidy, offset, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
         const myDisplayClasses = classnames ({
@@ -110,6 +111,7 @@ export class SampleViz2D extends React.Component<Props, State> {
         return <div className="SampleViz-scatter"> 
             <DivWithBullseye className={myDisplayClasses}> 
                 <Scatterplot
+                    pointsize={pointsize}
                     parentCallBack = {this.handleCallBack}
                     data={data}
                     rdRange={rdRange}

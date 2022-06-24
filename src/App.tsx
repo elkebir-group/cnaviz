@@ -215,6 +215,8 @@ interface State {
 
     hoveredLocation: ChromosomeInterval | null; // Current genomic location that the user has selected.  Null if no such location.
 
+    pointsize: number; // size of the points on linear and scatter plots
+
     selectedChr: string;  // Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected.
 
     selectedColor: string; // Name of selected cluster color. Should default to that blue.  gc
@@ -316,6 +318,7 @@ export class App extends React.Component<{}, State> {
             indexedData: new DataWarehouse([]),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
+            pointsize: 3, // gc 
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "black", // gc: when set to red, this changes
             absorbThresh_rdr: 2.5, // gc
@@ -359,6 +362,8 @@ export class App extends React.Component<{}, State> {
         this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
         this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
+        this.handleslider = this.handleslider.bind(this); 
+        // this.pointslider = this.pointslider.bind(this);
         this.handleColorSelection = this.handleColorSelection.bind(this); // gc
         this.handleAbsorbThresh_rdr = this.handleAbsorbThresh_rdr.bind(this); // gc
         this.handleAbsorbThresh_baf = this.handleAbsorbThresh_baf.bind(this); // gc
@@ -587,9 +592,19 @@ export class App extends React.Component<{}, State> {
         });
     }
 
+    // pointslider(value: number) {
+    //     this.setState({pointsize: value}); 
+    //     // return `${value}°C`;
+    //   }
+
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
         this.state.indexedData.setChrFilter(event.target.value);
+    }
+
+    handleslider(event: any, val: number) {
+        console.log("Pointsize updated to", val);
+        this.setState({pointsize: val});
     }
 
     handleColorSelection(event: React.ChangeEvent<HTMLSelectElement>) { // gc
@@ -810,7 +825,6 @@ export class App extends React.Component<{}, State> {
         this.state.indexedData.setShouldRecalculatesilhouettes(true);
         
     }
-
     toggleClustering() {
         this.setState({
             applyClustering: !this.state.applyClustering
@@ -957,7 +971,9 @@ export class App extends React.Component<{}, State> {
             const clusterTableData2 = indexedData.getClusterTableInfo2();
             const clusterTableData3 = indexedData.getClusterTableInfo3();
 
+            // console.log("Before passing to scatterplotProps", this.state.pointsize);
             const scatterplotProps = {
+                pointsize: this.state.pointsize, 
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
                 onLocationHovered: this.handleLocationHovered,
@@ -1080,6 +1096,9 @@ export class App extends React.Component<{}, State> {
         return <div className="container-fluid">
             <div>
                 <Sidebar 
+                    // pointsize={this.state.pointsize}
+                    // pointslider={this.pointslider}
+                    handleslider={this.handleslider}
                     selectedChr={selectedChr} 
                     onChrSelected={this.handleChrSelected} 
                     chrOptions={chrOptions}

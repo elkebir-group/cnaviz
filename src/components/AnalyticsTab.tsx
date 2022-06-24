@@ -68,7 +68,8 @@ export class AnalyticsTab extends React.Component<Props, State> {
             <div className="Exit-Popup" onClick={this.props.onToggleSilhoutteBarPlot}> 
                 <FiX/>
             </div>
-            <div className="Bar-Select">
+            {/* <div className="Bar-Select"> */}
+            <div className="scroll">
                 <div className="ClusterDistances-Select">
                     <div className="Overall-Average"> Average Cluster Silhouette Score: <b>{this.props.avgClusterSilhouette || 0}</b> </div>
                     <label className="cluster-select"> Cluster:
