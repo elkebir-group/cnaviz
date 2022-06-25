@@ -8,8 +8,9 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
-import {DEFAULT_PLOIDY, DEFAULT_PURITY, DEFAULT_OFFSET, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY, MIN_OFFSET, MAX_OFFSET} from "../constants";
+import {DEFAULT_PLOIDY, DEFAULT_PURITY, DEFAULT_OFFSET, CN_STATES, cn_pair, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY, MIN_OFFSET, MAX_OFFSET} from "../constants";
 import {useRef} from 'react'; 
+
 
 interface Props {
     pointsize: number; 
@@ -46,6 +47,7 @@ interface Props {
     showCentroids: boolean;
     driverGenes: Gene[] | null;
     showPurityPloidyInputs: boolean;
+    showTetraploid: boolean; 
     onChangeSample: (newSample: string, oldSample: string) => void;
     samplesShown: Set<string>;
 }
@@ -58,6 +60,7 @@ interface State {
     purity: number;
     ploidy: number;
     offset: number; 
+    // showTetraploid: boolean; 
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -72,7 +75,8 @@ export class SampleViz extends React.Component<Props, State> {
             implicitRange: null,
             purity: DEFAULT_PURITY,
             ploidy: DEFAULT_PLOIDY,
-            offset: DEFAULT_OFFSET
+            offset: DEFAULT_OFFSET, 
+            // showTetraploid: true, 
         }
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
@@ -104,10 +108,12 @@ export class SampleViz extends React.Component<Props, State> {
     componentDidUpdate(prevProps: Props) {
         if(this.props.clusterTableData !== prevProps.clusterTableData) {
             this.initializeListOfClusters();
-        } else if(this.props.applyLog !== prevProps.applyLog || this.props.showPurityPloidyInputs !== prevProps.showPurityPloidyInputs) {
+        } else if(this.props.applyLog !== prevProps.applyLog || this.props.showPurityPloidyInputs !== prevProps.showPurityPloidyInputs || (this.props.showTetraploid !== prevProps.showTetraploid)) {
             let newScale = {xScale: this.state.scales.xScale, yScale: null}; // keep x zoom but reset y
             this.setState({scales: newScale});
-        }
+        } //else if(this.props.showTetraploid !== prevProps.showTetraploid) {
+          //  this.setState({showTetraploid: showTetraploid}); 
+       // }
     }
 
     handleSelectedSampleChanged(selected : string) {
@@ -166,7 +172,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     render() {
         const {data, initialSelectedSample, applyLog, 
-        showLinearPlot, showScatterPlot, dispMode, sampleAmount, syncScales, showPurityPloidyInputs, samplesShown} = this.props;
+        showLinearPlot, showScatterPlot, dispMode, sampleAmount, syncScales, showPurityPloidyInputs, showTetraploid, samplesShown} = this.props;
         const {implicitRange} = this.state;
         
         const selectedSample = this.state.selectedSample;
@@ -178,8 +184,7 @@ export class SampleViz extends React.Component<Props, State> {
         const meanRD = data.getMeanRD(selectedSample)
 
         let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
-
-        const BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample, this.state.offset); // gc: add offset as a parameter
+        let BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample, this.state.offset); //, showTetraploid); // gc: add offset as a parameter
 
         // Derived from formula: FRACTIONAL_COPY_NUMBER = purity * (TOTAL_CN) + 2*(1 - purity)
         const max_cn = (this.state.purity) ? ((rdRange[1]) * this.state.ploidy / meanRD - 2*(1-this.state.purity)) / this.state.purity : 0;
@@ -312,6 +317,7 @@ export class SampleViz extends React.Component<Props, State> {
                         meanRD={meanRD}
                         fractionalCNTicks={fractionalCNTicks}
                         showPurityPloidy={showPurityPloidyInputs}
+                        showTetraploid={showTetraploid}
                         BAF_lines={BAF_lines}
                         max_cn = {Math.ceil(max_cn)}
                         />
@@ -334,6 +340,7 @@ export class SampleViz extends React.Component<Props, State> {
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidyInputs}
+                    showTetraploid={showTetraploid}
                     BAF_lines={BAF_lines}
                 />}
 

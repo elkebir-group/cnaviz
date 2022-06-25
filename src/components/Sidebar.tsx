@@ -61,6 +61,8 @@ interface Props {
     handleDemoDrivers: () => void;
     setProcessingStatus: (status: ProcessingStatus) => void;
     onTogglePurityPloidy: () => void;
+    onShowTetraploid: () => void; 
+    showTetraploid: boolean; 
     showPurityPloidy: boolean;
     applyLog: boolean;
     processingStatus: ProcessingStatus;
@@ -199,7 +201,7 @@ function Sidebar(props: Props) {
           <div className="row-contents">
           {/* <label className="point-slider" title="Changes the size of the points in the scatterplot and linear plot."> */}
           <Box sx={{ width: 300 }}>  
-              Point Size 
+              Point Size:
               <Slider
                 aria-label="Point Size"
                 defaultValue={3}
@@ -238,9 +240,14 @@ function Sidebar(props: Props) {
           <div className= "row-contents" >
             <label className="purityploidy" title="Shows lines for purity and ploidy on the scatterplots.">
               <span className="App-CheckBox-explanation">Purity/Ploidy: </span>
-              <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} disabled={props.applyLog} readOnly/>
+              <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} readOnly/>
+            </label>
+            <label className="tetraploid" title="Shows tetraploid gridlines for purity and ploidy.">
+              <span className="App-CheckBox-explanation">Tetraploid: </span>
+              <input type="checkbox" onClick={props.onShowTetraploid} checked={props.showTetraploid}readOnly/>
             </label>
           </div>
+         
          
 
           {/* Analytics:  */}

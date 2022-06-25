@@ -47,6 +47,7 @@ interface Props {
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
+    showTetraploid: boolean; 
     BAF_lines: cn_pair[];
     max_cn: number;
 }
@@ -100,7 +101,7 @@ export class SampleViz2D extends React.Component<Props, State> {
     render() {
         const {data, width, height, pointsize, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                applyLog, scales, centroidPts, showCentroids, purity, ploidy, offset, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
+                applyLog, scales, centroidPts, showCentroids, purity, ploidy, offset, meanRD, fractionalCNTicks, showPurityPloidy, showTetraploid, BAF_lines, max_cn} = this.props;
         const myDisplayClasses = classnames ({
             'is-pan' : dispMode === DisplayMode.zoom,
             'is-zoom' : dispMode === DisplayMode.boxzoom, 
@@ -141,6 +142,7 @@ export class SampleViz2D extends React.Component<Props, State> {
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
+                    showTetraploid={showTetraploid}
                     BAF_lines={BAF_lines}
                     max_cn={max_cn}
                     />

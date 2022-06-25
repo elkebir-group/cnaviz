@@ -143,6 +143,7 @@ export class DataWarehouse {
     private sampleToBafTicks: SampleIndexedData<cn_pair[]>; // similar ^
     private sampleToFractionalTicks:  SampleIndexedData<number[]>; // ^
     private offset: number; 
+    // private showtetraploid: boolean; 
 
     // private totalcnToState: CNIndexedData<number[][]>;
 
@@ -187,7 +188,7 @@ export class DataWarehouse {
         this.sampleToBafTicks = {};
         this.sampleToFractionalTicks = {};
         this.offset = 0; // gc: add offset to the BAF lines
-
+        // this.showtetraploid = true; 
 
         for(const d of rawData) {
             if(this.chrToClusters[d["#CHR"]])
@@ -769,7 +770,7 @@ export class DataWarehouse {
         return sampleGroupedData;
     }
 
-    getBAFLines(purity: number, sample: string, offset: number) {  // gc: add offset as a parameter
+    getBAFLines(purity: number, sample: string, offset: number) { //}, showtetraploid: boolean) {  // gc: add offset as a parameter
         const bafSeen = new Set<number>();
         const BAF_ticks : cn_pair[] = [];
 
@@ -788,12 +789,15 @@ export class DataWarehouse {
                 }
             } else {
                 const BAF_Tick = 0.5-(B * purity + 1 * (1 - purity)) / ((A + B) * purity + 2 * (1 - purity));
-                const originalLen = bafSeen.size;
-                bafSeen.add(BAF_Tick);
-                if(bafSeen.size !== originalLen) {
-                    const new_val : cn_pair = {tick: BAF_Tick, state: state};
-                    BAF_ticks.push(new_val);
-                }            
+                // console.log("BAF_Tick", BAF_Tick, "state", state); 
+                //if (B != 2 && showtetraploid) {
+                    const originalLen = bafSeen.size;
+                    bafSeen.add(BAF_Tick);
+                    if(bafSeen.size !== originalLen) {
+                        const new_val : cn_pair = {tick: BAF_Tick, state: state};
+                        BAF_ticks.push(new_val);
+                    }          
+                //}  
             }
         }
 

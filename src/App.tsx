@@ -229,6 +229,8 @@ interface State {
 
     mergeThresh_baf: Map<String, number>; // Threshold value to join unassigned bins into the existing. gc 
 
+    showTetraploid: boolean; // show gridlines for purity and plodiy corresponding to tetraploid? gc
+
     selectedCluster: string; // cluster selected to be assigned to
 
     invertAxis: boolean;
@@ -353,6 +355,7 @@ export class App extends React.Component<{}, State> {
             showSilhouettes: ProcessingStatus.none,
             silhouettes: [],
             showPurityPloidyInputs: false,
+            showTetraploid: true, // gc
             samplesShown: [],
             samplesNotShown: []
         };
@@ -407,6 +410,9 @@ export class App extends React.Component<{}, State> {
         this.onTogglePurityPloidy = this.onTogglePurityPloidy.bind(this);
         this.changeDisplayedSamples = this.changeDisplayedSamples.bind(this);
         this.onExport = this.onExport.bind(this);
+
+        this.onShowTetraploid = this.onShowTetraploid.bind(this);
+
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -810,6 +816,11 @@ export class App extends React.Component<{}, State> {
         this.setState({showAbsorbBins: !this.state.showAbsorbBins});
     }
 
+    onShowTetraploid() {
+        console.log("ShowTetraplod", this.state.showTetraploid); 
+        this.setState({showTetraploid: !this.state.showTetraploid});
+    }
+
     toggleLog() {
         if(this.state.applyLog) {
             this.state.indexedData.setDataKeyType("RD");
@@ -952,7 +963,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state; // gc 
+        const {indexedData, selectedChr, selectedCluster, showTetraploid, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state; // gc 
         const samplesDisplayed = this.state.samplesShown;
         const samplesShown = new Set<string>(samplesDisplayed);
         const brushedBins = indexedData.getBrushedBins();
@@ -981,6 +992,7 @@ export class App extends React.Component<{}, State> {
                 chr: selectedChr,
                 cluster: selectedCluster,
                 customColor: selectedColor, // gc?
+                showTetraploid: showTetraploid, // gc
                 colors: this.state.colors,
                 assignCluster,
                 onBrushedBinsUpdated: this.updateBrushedBins,
@@ -1097,7 +1109,7 @@ export class App extends React.Component<{}, State> {
             <div>
                 <Sidebar 
                     // pointsize={this.state.pointsize}
-                    // pointslider={this.pointslider}
+                    // pointslider={this.pointslider}                    
                     handleslider={this.handleslider}
                     selectedChr={selectedChr} 
                     onChrSelected={this.handleChrSelected} 
@@ -1134,6 +1146,8 @@ export class App extends React.Component<{}, State> {
                     logData = {actions}
                     onToggleShowCentroids= {this.onToggleShowCentroids}
                     onToggleShowAbsorbBins={this.onToggleShowAbsorbBins}
+                    onShowTetraploid={this.onShowTetraploid}
+                    showTetraploid={this.state.showTetraploid}
                     showCentroids= {this.state.showCentroids}
                     onDriverFileChosen={this.handleDriverFileChosen}
                     onTogglesilhouettes={this.onToggleSilhoutteBarPlot}
