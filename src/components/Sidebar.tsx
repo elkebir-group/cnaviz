@@ -71,6 +71,8 @@ interface Props {
     // pointslider: (value: number) => void; 
 }
 
+export const SIDEBAR_WIDTH = "320px";
+
 function Sidebar(props: Props) {
   const showSidebar = () => {
     props.onSidebarChange(!props.show)
@@ -88,7 +90,13 @@ function Sidebar(props: Props) {
 
   return (
 
-    <div className={props.show ? "sidebar active" : "sidebar"}>
+    <div
+      className="sidebar"
+      style={{
+        width: SIDEBAR_WIDTH,
+        left: props.show ? 0 : "-" + SIDEBAR_WIDTH
+      }}
+    >
       <div className="closemenu" onClick={showSidebar} title="Close/open the sidebar.">
           <div> </div>
           {props.show ? (

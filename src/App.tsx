@@ -11,7 +11,7 @@ import "./App.css";
 import {LogTable} from "./components/LogTable";
 import * as d3 from "d3";
 import {Genome} from "./model/Genome";
-import Sidebar from "./components/Sidebar";
+import Sidebar, {SIDEBAR_WIDTH} from "./components/Sidebar";
 import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
@@ -20,7 +20,7 @@ import {AiOutlineQuestionCircle} from "react-icons/ai";
 import {IconContext} from "react-icons"; 
 import {AnalyticsTab} from "./components/AnalyticsTab";
 import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
-import {Toolbox} from "./components/Toolbox"; 
+import {Toolbox} from "./components/Toolbox";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -1168,9 +1168,26 @@ export class App extends React.Component<{}, State> {
                 />
             </div>
 
-            <div className={this.state.sidebar ? "marginContent" : ""}>
-                <div className="toolbar">
-                    <div className="help-box" title="Shows pop-up describing instructions and shortcuts.">
+            {/* position: relative is important for this div because the child toolbar is position: fixed*/}
+            {/* position: fixed positions self relative to the nearest relatively positioned ancestor. */}
+            <div
+                style={{
+                    position: "relative",
+                    marginLeft: this.state.sidebar ? SIDEBAR_WIDTH : 0,
+                    overflowX: "hidden"
+                }}
+            >
+                <div
+                    className="toolbar"
+                    style={{width: this.state.sidebar ?
+                        `calc(100% - ${SIDEBAR_WIDTH} - 20px)` : "calc(100% - 20px)"
+                    }}
+                >
+                    <Toolbox
+                        currentDisplayMode={this.state.displayMode}
+                        setDisplayMode={this.setDisplayMode}
+                    ></Toolbox>
+                    <div className="help-box" title="Show a modal describing instructions and shortcuts.">
                         <label style={{cursor: "pointer"}}>
                         <input style={{cursor: "pointer"}} type="button" id="custom-button" onClick={this.onToggleDirections}/>
                             <IconContext.Provider value={{className: "shared-class", size: "40"}}>
@@ -1178,10 +1195,6 @@ export class App extends React.Component<{}, State> {
                             </IconContext.Provider>
                         </label>
                     </div>
-                    <Toolbox
-                        currentDisplayMode={this.state.displayMode}
-                        setDisplayMode={this.setDisplayMode}
-                    ></Toolbox>
                 </div>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
