@@ -29,6 +29,7 @@ const TOOLTIP_OFFSET = 10; // Pixels
 let nextCircleIdPrefix = 0;
 
 interface Props {
+    pointsize: number; 
     parentCallBack: any;
     data: GenomicBin[];
     rdRange: [number, number];
@@ -54,9 +55,11 @@ interface Props {
     showCentroids: boolean;
     purity: number;
     ploidy: number;
+    offset: number; 
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
+    showTetraploid: boolean; 
     BAF_lines: cn_pair[];
     max_cn: number;
 }
@@ -364,8 +367,7 @@ export class Scatterplot extends React.Component<Props, State> {
         } if (this.props.hoveredLocation !== prevProps.hoveredLocation) {
             this.forceUnhover();
             this.forceHover(this.props.hoveredLocation); 
-        } else if (this.propsDidChange(prevProps, ["purity", "ploidy"])) {
-            
+        } else if (this.propsDidChange(prevProps, ["purity", "ploidy", "offset"])) {
             let data : GenomicBin[] = this.props.data;
             const rdrScale = this.computeScales(this.props.rdRange, this.props.width, this.props.height).rdrScale;
             this._currYScale = rdrScale;
@@ -381,9 +383,11 @@ export class Scatterplot extends React.Component<Props, State> {
                 .addAll(data)
             
             this.setState({quadTree: q});
-
             this.redraw();
-        } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height"])) {
+        } else if (this.propsDidChange(prevProps, ["showCentroids", "displayMode", "colors", "brushedBins", "width", "height", "customColor", "pointsize", "showTetraploid"])) { // gc added customColor, redraws scatterplot on change
+            // console.log("propsDidChange: calling this.redraw()");
+            // console.log("recognizing showTetraploid change", this.props.showTetraploid); 
+
             let data : GenomicBin[] = this.props.data;
             // Update quadtree so that when hovering works on new points that appear 
             // (when assigning to an existing cluster - all the points in that cluster show up even if it has been filtered out)
@@ -495,12 +499,13 @@ export class Scatterplot extends React.Component<Props, State> {
 
 
     redraw() {
+        // console.log("Beginning redraw().");
         if (!this._svg || !this._canvas || !this.scatter) {
             return;
         }
         
         let self = this;
-        const {width, height, customColor, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy} = this.props;
+        const {width, height, customColor, pointsize, brushedBins, data, colors, yAxisToPlot, centroidPts, showPurityPloidy, showTetraploid} = this.props;
 
         let {displayMode} = this.props;
         let xScale = this._currXScale;
@@ -541,22 +546,52 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("dy", ".15em")
             .attr('transform', 'rotate(-30)')
 
+        let new_BAF_lines : cn_pair[] = []; 
         if(showPurityPloidy) {
             const currXDomain = this._currXScale.domain();
-            const filteredBAFTicks = this.props.BAF_lines.filter(value => value.tick > currXDomain[0] && value.tick < currXDomain[1]);
+            // console.log("[Scatterplot render() -> showTetraploid", showTetraploid);
+            if (!showTetraploid) {
+                const new_BAF_ticks : cn_pair[] = [];
+                // filter BAF lines
+                // console.log("BAF_lines", this.props.BAF_lines); 
+                for(const cn_pair_i of this.props.BAF_lines) {
+                    // console.log(cn_pair_i); 
+                    // if (cn_pair_i.state[1] != 2) {
+                    if ((cn_pair_i.state[0] + cn_pair_i.state[1]) < 4) {
+                        new_BAF_ticks.push(cn_pair_i); 
+                    }
+                }
+                new_BAF_lines = new_BAF_ticks; 
+            } else {
+                new_BAF_lines = this.props.BAF_lines; 
+            }
+            // console.log("this.props.BAF_lines", this.props.BAF_lines); 
+            const filteredBAFTicks = new_BAF_lines.filter(value => value.tick > currXDomain[0] && value.tick < currXDomain[1]);
             const ticks = filteredBAFTicks.map(d => d.tick);
             
+            // console.log("filteredBAFTicks[i]", filteredBAFTicks); 
+            // xAx = (g : any, scale : any) => g
+            // .classed(SCALES_CLASS_NAME, true)
+            // .attr("id", "Grid")
+            // .attr("transform", `translate(0, ${height - PADDING.bottom})`)
+            // .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) =>ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
+            // .selectAll('text')
+            // .style("text-anchor", "end")
+            // .attr("dx", "-.8em")
+            // .attr("dy", ".15em")
+            // .attr('transform', 'rotate(-30)')
             xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("id", "Grid")
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
-            .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) =>ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
+            // .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => ((filteredBAFTicks[i].state[0] != filteredBAFTicks[i].state[1]) || (filteredBAFTicks[i].state[1] != 2)) ? ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")" : ((filteredBAFTicks[i].state[1] != 2) ? ticks[i].toFixed(2) + "(x,x)" : "")))
+            .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => (filteredBAFTicks[i].state[0] != filteredBAFTicks[i].state[1]) ? ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")" : ticks[i].toFixed(2) + "(x,x)"))
             .selectAll('text')
             .style("text-anchor", "end")
             .attr("dx", "-.8em")
             .attr("dy", ".15em")
             .attr('transform', 'rotate(-30)')
-                       
+
         }
         
         let yAx = (g : any, scale : any) => g
@@ -572,6 +607,12 @@ export class Scatterplot extends React.Component<Props, State> {
             const upperBound = (max_cn > dom[1]) ? max_cn : dom[1]; 
             const filteredTicks = originalTicks.filter(value => value.fractionalTick > dom[0] && value.fractionalTick < upperBound && value.fractionalTick < dom[1]);
             const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
+            
+            // yAx = (g : any, scale : any) => g
+            //     .classed(SCALES_CLASS_NAME, true)
+            //     .attr("id", "Grid")
+            //     .attr("transform", `translate(${PADDING.left}, 0)`)
+            //     .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 80).tickFormat((d, i) => filteredTicks[i].totalCN + "(x,x)"));
 
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
@@ -665,14 +706,18 @@ export class Scatterplot extends React.Component<Props, State> {
         }
         
         let fillColor = fc.webglFillColor().value(languageFill).data(newData);
-        let pointSeries = fc
+        // console.log("Scatterplot.tsx", this.props.pointsize);
+        let pointSeries = fc // plotting points in webgl - d3fc library within js/ts for using webgl
             .seriesWebglPoint()
             .xScale(self._currXScale)
             .yScale(self._currYScale)
-            .size(3)
-            .crossValue((d : any) => d.reverseBAF)
-            .mainValue((d : any) => d[yAxisToPlot])
-            .context(gl);
+            // .size(3)
+            .crossValue((d : any) => d.reverseBAF) // x 0.5 - BAF
+            .mainValue((d : any) => d[yAxisToPlot]) // y CN
+            .context(gl)
+            .size(this.props.pointsize);
+            // .sizes((new Float32Array(data.length)).fill(this.props.pointsize)); 
+            // .attr("r", this.props.pointsize); // gc
         
         pointSeries.decorate((program:any) => {
                 fillColor(program)
@@ -837,8 +882,8 @@ export class Scatterplot extends React.Component<Props, State> {
                 return colors[col_index];
             }
         }
-    
-     }
+        // console.log("Done redrawing.");
+    }
 
      updatePoints(event : any) {
         if(!this._svg) {return;}

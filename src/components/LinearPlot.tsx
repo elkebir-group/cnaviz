@@ -45,6 +45,7 @@ function findChrNumber(chr: string) {
 }
 
 interface Props {
+    pointsize: number; 
     data: GenomicBin[];
     chr: string;
     dataKeyToPlot: keyof Pick<GenomicBin, "RD" | "logRD" | "reverseBAF" | "BAF" | "fractional_cn">;
@@ -75,6 +76,7 @@ interface Props {
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
+    showTetraploid: boolean; 
     BAF_lines: cn_pair[];
 }
 
@@ -154,7 +156,7 @@ export class LinearPlot extends React.PureComponent<Props> {
             } else {
                 this.props.onLinearPlotZoom(null, null, false);
             }
-        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr", "purity", "ploidy"])) {
+        } else if (this.propsDidChange(prevProps, ["driverGenes", "displayMode", "implicitEnd", "implicitStart", "yMin", "yMax", "colors", "brushedBins", "width", "height", "chr", "purity", "ploidy", "pointsize", "showTetraploid"])) {
             if(this.props["brushedBins"].length === 0)
                 this._clusters = this.initializeListOfClusters();
             this.redraw();
@@ -289,7 +291,29 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 60).tickFormat((d, i) => filteredTicks[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
         } else if(this.props.showPurityPloidy) {
             const currYDomain = yScale.domain();
-            const filteredBAFTicks = this.props.BAF_lines.filter(value => value.tick > currYDomain[0] && value.tick < currYDomain[1])
+
+            let new_BAF_lines : cn_pair[] = [];  // gc
+            const currXDomain = this._currXScale.domain();
+            // console.log("[Scatterplot render() -> showTetraploid", this.props.showTetraploid);
+            if (!this.props.showTetraploid) {
+                // console.log("LinearPlot!"); 
+                const new_BAF_ticks : cn_pair[] = [];
+                // filter BAF lines
+                // console.log("BAF_lines", this.props.BAF_lines); 
+                for(const cn_pair_i of this.props.BAF_lines) {
+                    // console.log(cn_pair_i); 
+                    // if (cn_pair_i.state[1] != 2) {
+                    if ((cn_pair_i.state[0] + cn_pair_i.state[1]) < 4) {
+                        new_BAF_ticks.push(cn_pair_i); 
+                    }
+                }
+                new_BAF_lines = new_BAF_ticks; 
+            } else {
+                new_BAF_lines = this.props.BAF_lines; 
+            }
+            // console.log("this.props.BAF_lines", this.props.BAF_lines); 
+
+            const filteredBAFTicks = new_BAF_lines.filter(value => value.tick > currYDomain[0] && value.tick < currYDomain[1])
             const ticks = filteredBAFTicks.map(d => d.tick);
 
             yAx = (g : any, scale : any) => g
@@ -367,10 +391,11 @@ export class LinearPlot extends React.PureComponent<Props> {
         let fillColor = fc.webglFillColor().value(colorFill).data(data);
         let pointSeries = fc
                 .seriesWebglPoint()
-                .size(3)
+                // .size(3)
                 .crossValue((d : any) => genome.getImplicitCoordinates(GenomicBinHelpers.toChromosomeInterval(d)).getCenter())
                 .mainValue((d : any) => d[dataKeyToPlot])
-                .context(gl);
+                .context(gl)
+                .size(this.props.pointsize);
         pointSeries.decorate((program:any) => fillColor(program));
 
         svg
@@ -528,7 +553,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 svg.append('g')
                     .attr('class', 'brush')
                     .call(brush);
-        } else if(displayMode === DisplayMode.boxzoom || displayMode === DisplayMode.zoom) {
+        } else if(displayMode === DisplayMode.boxzoom) { // || displayMode === DisplayMode.zoom) {
             brush = d3.brushX()
                 .extent([[getLeftPadding(this.props.showPurityPloidy), PADDING.top], 
                         [this.props.width, this.props.height - PADDING.bottom]])

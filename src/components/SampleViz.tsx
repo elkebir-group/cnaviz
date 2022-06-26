@@ -8,9 +8,12 @@ import {DisplayMode} from "../App"
 import {ClusterTable} from "./ClusterTable";
 import { GenomicBin } from "../model/GenomicBin";
 import { Gene } from "../model/Gene";
-import {DEFAULT_PLOIDY, DEFAULT_PURITY, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY} from "../constants";
+import {DEFAULT_PLOIDY, DEFAULT_PURITY, DEFAULT_OFFSET, CN_STATES, cn_pair, START_CN, END_CN, UNCLUSTERED_ID, DELETED_ID, MAX_PLOIDY, MIN_PLOIDY, MAX_PURITY, MIN_PURITY, MIN_OFFSET, MAX_OFFSET} from "../constants";
+import {useRef} from 'react'; 
+
 
 interface Props {
+    pointsize: number; 
     parentCallBack: any;
     data: DataWarehouse;
     chr: string;
@@ -44,6 +47,7 @@ interface Props {
     showCentroids: boolean;
     driverGenes: Gene[] | null;
     showPurityPloidyInputs: boolean;
+    showTetraploid: boolean; 
     onChangeSample: (newSample: string, oldSample: string) => void;
     samplesShown: Set<string>;
 }
@@ -55,6 +59,8 @@ interface State {
     implicitRange: [number, number]  | null;
     purity: number;
     ploidy: number;
+    offset: number; 
+    // showTetraploid: boolean; 
 }
 
 export class SampleViz extends React.Component<Props, State> {
@@ -68,7 +74,9 @@ export class SampleViz extends React.Component<Props, State> {
             selectedCluster: (this._clusters.length > 0) ? this._clusters[0] : UNCLUSTERED_ID,
             implicitRange: null,
             purity: DEFAULT_PURITY,
-            ploidy: DEFAULT_PLOIDY
+            ploidy: DEFAULT_PLOIDY,
+            offset: DEFAULT_OFFSET, 
+            // showTetraploid: true, 
         }
 
         this.handleSelectedSampleChanged = this.handleSelectedSampleChanged.bind(this);
@@ -77,6 +85,7 @@ export class SampleViz extends React.Component<Props, State> {
         this.handleLinearPlotZoom = this.handleLinearPlotZoom.bind(this);
         this.onUpdatePurity = this.onUpdatePurity.bind(this);
         this.onUpdatePloidy = this.onUpdatePloidy.bind(this);
+        this.onUpdateOffset = this.onUpdateOffset.bind(this);
     }
 
     initializeListOfClusters() : string[] {
@@ -99,10 +108,12 @@ export class SampleViz extends React.Component<Props, State> {
     componentDidUpdate(prevProps: Props) {
         if(this.props.clusterTableData !== prevProps.clusterTableData) {
             this.initializeListOfClusters();
-        } else if(this.props.applyLog !== prevProps.applyLog || this.props.showPurityPloidyInputs !== prevProps.showPurityPloidyInputs) {
+        } else if(this.props.applyLog !== prevProps.applyLog || this.props.showPurityPloidyInputs !== prevProps.showPurityPloidyInputs || (this.props.showTetraploid !== prevProps.showTetraploid)) {
             let newScale = {xScale: this.state.scales.xScale, yScale: null}; // keep x zoom but reset y
             this.setState({scales: newScale});
-        }
+        } //else if(this.props.showTetraploid !== prevProps.showTetraploid) {
+          //  this.setState({showTetraploid: showTetraploid}); 
+       // }
     }
 
     handleSelectedSampleChanged(selected : string) {
@@ -140,6 +151,10 @@ export class SampleViz extends React.Component<Props, State> {
         this.setState({scales: {xScale: null, yScale: null}});
     }
 
+    onUpdateOffset(offset: number) {
+        this.setState({offset: offset}); 
+    }
+
     getSelectedBins(syncScales : boolean, implicitRange : [number, number] | null, selectedSample:string, applyLog:boolean, showPurityPloidy: boolean, meanRD:number, data:DataWarehouse) {
         let selectedRecords : GenomicBin[] = [];
         let scales = (syncScales) ? this.props.scales : this.state.scales;
@@ -157,7 +172,7 @@ export class SampleViz extends React.Component<Props, State> {
 
     render() {
         const {data, initialSelectedSample, applyLog, 
-        showLinearPlot, showScatterPlot, dispMode, sampleAmount, syncScales, showPurityPloidyInputs, samplesShown} = this.props;
+        showLinearPlot, showScatterPlot, dispMode, sampleAmount, syncScales, showPurityPloidyInputs, showTetraploid, samplesShown} = this.props;
         const {implicitRange} = this.state;
         
         const selectedSample = this.state.selectedSample;
@@ -169,8 +184,7 @@ export class SampleViz extends React.Component<Props, State> {
         const meanRD = data.getMeanRD(selectedSample)
 
         let selectedRecords : GenomicBin[] = this.getSelectedBins(syncScales, implicitRange, selectedSample, applyLog, showPurityPloidyInputs, meanRD, data);
-
-        const BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample);
+        let BAF_lines = data.getBAFLines(this.state.purity, this.state.selectedSample, this.state.offset); //, showTetraploid); // gc: add offset as a parameter
 
         // Derived from formula: FRACTIONAL_COPY_NUMBER = purity * (TOTAL_CN) + 2*(1 - purity)
         const max_cn = (this.state.purity) ? ((rdRange[1]) * this.state.ploidy / meanRD - 2*(1-this.state.purity)) / this.state.purity : 0;
@@ -197,7 +211,7 @@ export class SampleViz extends React.Component<Props, State> {
             
             <div style={{verticalAlign: "middle"}}>
             {(showLinearPlot || showScatterPlot) &&
-            <div className="SampleViz-select">
+            <div className="SampleViz-select" title="Selects a sample from the loaded data.">
                 <span>Sample: </span>
                 <select value={selectedSample} onChange={(event: any) => {
                     this.props.onChangeSample(event.target.value, this.state.selectedSample);
@@ -205,21 +219,21 @@ export class SampleViz extends React.Component<Props, State> {
                 }}>
                     {sampleOptions}
                 </select>
-                <button className="custom-button" onClick={() => {
+                <button className="custom-button-add" title="Add the next sequential sample in the dropdown menu." onClick={() => {
                     this.props.onAddSample();
-                }} disabled={sampleAmount >= sampleOptions.length}> Add Sample </button>
-                <button className="custom-button" onClick={() => {
+                }} disabled={sampleAmount >= sampleOptions.length}> Add </button>
+                <button className="custom-button-remove" title="Removes this sample." onClick={() => {
                     this.props.onRemovePlot(this.state.selectedSample);
-                }} disabled={sampleAmount <= 1}> Remove Sample </button>
+                }} disabled={sampleAmount <= 1}> Remove </button>
             </div>}
             
             {(showLinearPlot || showScatterPlot) &&
-            <div className="SampleViz-select">
+            <div className="SampleViz-select" title="Selects a cluster from the loaded data.">
                     <span >Cluster: </span>
-                        
+
                     <select
                     name="Select Cluster" 
-                    title="Cluster"
+                    // title="Pick a cluster to assign your selected bins to!"
                     className="Sampleviz-cluster-select"
                     value={this.state.selectedCluster}
                     disabled={disableSelectOptions}
@@ -227,13 +241,13 @@ export class SampleViz extends React.Component<Props, State> {
                     {clusterOptions}
                     </select>
                    
-                   <button className="custom-button" onClick={() => {
+                   <button className="custom-button" title="Assigns your selected bins to the selected cluster." onClick={() => {
                         this.props.parentCallBack(this.state.selectedCluster);
                         this.props.onBrushedBinsUpdated([]);
                     }}
-                    disabled={disableSelectOptions}>Assign Cluster</button>
+                    disabled={disableSelectOptions}>Assign</button>
 
-                    <button className="custom-button" onClick={()=>{
+                    <button className="custom-button" title="Assigns your selected bins to a new cluster." onClick={()=>{
                         this.initializeListOfClusters();
                         let clusters = this._clusters;
                         clusters.sort((a: string, b:string) => (Number(a) - Number(b)))
@@ -250,33 +264,41 @@ export class SampleViz extends React.Component<Props, State> {
                         this.props.parentCallBack(nextAvailable);
                         this.props.onBrushedBinsUpdated([]);
                     }}
-                    disabled={disableSelectOptions} >New Cluster</button>
-                    <button className="custom-button" onClick={this.props.onUndoClick}> Undo</button>
+                    disabled={disableSelectOptions} >New</button>
+                    {/* <button className="custom-button" title="Undo cluster assignment." onClick={this.props.onUndoClick}> Undo Cluster Assignment</button> */}
                 </div>}
 
                 {(showLinearPlot || showScatterPlot) && showPurityPloidyInputs
                 && <div className="Inputs">
-                    <label>Ploidy:</label> <input placeholder={this.state.ploidy.toString()} type="number" id="Purity-Input" name="volume"
-                        min={MIN_PLOIDY} max={MAX_PLOIDY} step=".1" onChange={event => {
+                    <label>Ploidy:</label> <input value={this.state.ploidy} type="number" id="Purity-Input" name="volume"
+                        step="0.01" title="Set ploidy gridlines." onChange={event => {
                             const newPloidy = Number(event.target.value);
-                            if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
+                            // if(newPloidy <= MAX_PLOIDY && newPloidy >= MIN_PLOIDY) {
                                 this.onUpdatePloidy(newPloidy);
-                            }
+                            // }
                         }}></input>
-                    
-                    <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
-                        min={MIN_PURITY} max={MAX_PURITY} step=".05" placeholder={this.state.purity.toString()} onChange={event => {
-                            const newPurity = Number(event.target.value);
-                            if(newPurity <= MAX_PURITY && newPurity >= MIN_PURITY) {
-                                this.onUpdatePurity(newPurity);
-                            }
-                            
-                        }}></input>
-                    
+                    {/* <div className="input-class" title="Set purity gridlines. Max purity is 1.">   */}
+                        <label className="input-label">Purity:</label> <input type="number" id="Purity-Input" name="volume"
+                            step="0.01" value={this.state.purity} title="Set purity gridlines. Max purity is 1." onChange={event => {
+                                const newPurity = Number(event.target.value);
+                                if(newPurity <= MAX_PURITY) { // && newPurity >= MIN_PURITY) {
+                                    this.onUpdatePurity(newPurity);
+                                }
+                                
+                            }}></input>
+                    {/* </div> */}
+                    {/* <div className="input-class" title="Set offset for first vertical gridline. Max offset is 1.">   */}
+                        <label className="input-label">BAF Balance: Offset for (x,x):</label> <input type="number" id="Purity-Input" name="volume" 
+                            step="0.01" value={this.state.offset} title="Set offset for first vertical gridline. Max offset is 1." onChange={event => {
+                                const newoffset = Number(event.target.value);
+                                if(newoffset <= MAX_OFFSET) { // } && newoffset >= MIN_OFFSET) {
+                                    this.onUpdateOffset(newoffset);
+                                // }
+                            }}}></input>
+                    {/* </div> */}
                 </div>}
                 
             </div>
-
             <div className="SampleViz-plots">
                 {showScatterPlot && <SampleViz2D 
                         {...this.props} 
@@ -291,9 +313,11 @@ export class SampleViz extends React.Component<Props, State> {
                         centroidPts={data.getCentroidPoints(selectedSample, this.props.chr, scaleFactor)}
                         purity={this.state.purity}
                         ploidy={this.state.ploidy}
+                        offset={this.state.offset}
                         meanRD={meanRD}
                         fractionalCNTicks={fractionalCNTicks}
                         showPurityPloidy={showPurityPloidyInputs}
+                        showTetraploid={showTetraploid}
                         BAF_lines={BAF_lines}
                         max_cn = {Math.ceil(max_cn)}
                         />
@@ -316,6 +340,7 @@ export class SampleViz extends React.Component<Props, State> {
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidyInputs}
+                    showTetraploid={showTetraploid}
                     BAF_lines={BAF_lines}
                 />}
 

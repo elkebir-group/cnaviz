@@ -1,6 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
-import _ from "lodash";
+import _, { conformsTo, Dictionary, range } from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
 import {Chromosome} from "./model/Genome";
@@ -11,13 +11,16 @@ import "./App.css";
 import {LogTable} from "./components/LogTable";
 import * as d3 from "d3";
 import {Genome} from "./model/Genome";
-import Sidebar from "./components/Sidebar";
+import Sidebar, {SIDEBAR_WIDTH} from "./components/Sidebar";
 import "./App.css";
 import { ClusterTable } from "./components/ClusterTable";
 import { Gene } from "./model/Gene";
 import {FiX} from "react-icons/fi";
+import {AiOutlineQuestionCircle} from "react-icons/ai";
+import {IconContext} from "react-icons"; 
 import {AnalyticsTab} from "./components/AnalyticsTab";
 import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
+import {Toolbox} from "./components/Toolbox";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -212,11 +215,27 @@ interface State {
 
     hoveredLocation: ChromosomeInterval | null; // Current genomic location that the user has selected.  Null if no such location.
 
+    pointsize: number; // size of the points on linear and scatter plots
+
     selectedChr: string;  // Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected.
+
+    selectedColor: string; // Name of selected cluster color. Should default to that blue.  gc
+
+    absorbThresh_rdr: number; // Threshold value to join unassigned bins into the existing. gc 
+
+    absorbThresh_baf: number; // Threshold value to join unassigned bins into the existing. gc 
+
+    mergeThresh_rdr: Map<String, number>; // Threshold value to join unassigned bins into the existing. gc 
+
+    mergeThresh_baf: Map<String, number>; // Threshold value to join unassigned bins into the existing. gc 
+
+    showTetraploid: boolean; // show gridlines for purity and plodiy corresponding to tetraploid? gc
 
     selectedCluster: string; // cluster selected to be assigned to
 
     invertAxis: boolean;
+
+    mergeValues: number[]; 
 
     sampleAmount: number;
 
@@ -249,6 +268,8 @@ interface State {
     showScatterPlot: boolean;
 
     showDirections: boolean;
+
+    showAbsorbBins: boolean; 
 
     showLog: boolean;
 
@@ -294,13 +315,19 @@ export class App extends React.Component<{}, State> {
     
     constructor(props: {}) {
         super(props);
-        
         this.state = {
             processingStatus: ProcessingStatus.none,
             indexedData: new DataWarehouse([]),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
+            pointsize: 3, // gc 
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
+            selectedColor: "black", // gc: when set to red, this changes
+            absorbThresh_rdr: 2.5, // gc
+            absorbThresh_baf: 0.5, // gc
+            mergeThresh_rdr: new Map(), // gc
+            mergeThresh_baf: new Map(), // gc
+            mergeValues: [], // gc
             invertAxis: false,
             sampleAmount: 1,
             color: 'blue',
@@ -318,6 +345,7 @@ export class App extends React.Component<{}, State> {
             showLinearPlot: true,
             showScatterPlot: true,
             showDirections: false,
+            showAbsorbBins: false, 
             showLog: false,
             showCentroidTable: false,
             showCentroids: false,
@@ -327,6 +355,7 @@ export class App extends React.Component<{}, State> {
             showSilhouettes: ProcessingStatus.none,
             silhouettes: [],
             showPurityPloidyInputs: false,
+            showTetraploid: true, // gc
             samplesShown: [],
             samplesNotShown: []
         };
@@ -336,6 +365,14 @@ export class App extends React.Component<{}, State> {
         this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
         this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
+        this.handleslider = this.handleslider.bind(this); 
+        // this.pointslider = this.pointslider.bind(this);
+        this.handleColorSelection = this.handleColorSelection.bind(this); // gc
+        this.handleAbsorbThresh_rdr = this.handleAbsorbThresh_rdr.bind(this); // gc
+        this.handleAbsorbThresh_baf = this.handleAbsorbThresh_baf.bind(this); // gc
+        // this.handleMergeThresh_rdr = this.handleMergeThresh_rdr.bind(this); // gc
+        // this.handleMergeThresh_baf = this.handleMergeThresh_baf.bind(this); // gc
+
         this.handleClusterSelected = this.handleClusterSelected.bind(this);
         this.handleLocationHovered = _.throttle(this.handleLocationHovered.bind(this), 50);
         this.handleAxisInvert = this.handleAxisInvert.bind(this);
@@ -347,6 +384,10 @@ export class App extends React.Component<{}, State> {
         this.updateBrushedBins = this.updateBrushedBins.bind(this);
         this.onClusterRowsChange = this.onClusterRowsChange.bind(this);
         this.onClusterColorChange = this.onClusterColorChange.bind(this);
+        this.onClusterRowsToChange = this.onClusterRowsToChange.bind(this);
+        this.onClusterColorToChange = this.onClusterColorToChange.bind(this);
+        this.onClusterRowsFromChange = this.onClusterRowsFromChange.bind(this);
+        this.onClusterColorFromChange = this.onClusterColorFromChange.bind(this);
         this.onSelectedSample = this.onSelectedSample.bind(this);
         this.handleRemovePlot = this.handleRemovePlot.bind(this);
         this.setDisplayMode = this.setDisplayMode.bind(this);
@@ -360,6 +401,8 @@ export class App extends React.Component<{}, State> {
         this.onToggleShowCentroids = this.onToggleShowCentroids.bind(this);
         this.onToggleSilhoutteBarPlot = this.onToggleSilhoutteBarPlot.bind(this);
         this.onToggleDirections = this.onToggleDirections.bind(this);
+        this.absorbBins = this.absorbBins.bind(this);
+        this.onToggleShowAbsorbBins = this.onToggleShowAbsorbBins.bind(this);
         this.onToggleShowCentroidTable = this.onToggleShowCentroidTable.bind(this);
         this.onTogglePreviousActionLog = this.onTogglePreviousActionLog.bind(this);
         this.onClearClustering = this.onClearClustering.bind(this);
@@ -367,6 +410,9 @@ export class App extends React.Component<{}, State> {
         this.onTogglePurityPloidy = this.onTogglePurityPloidy.bind(this);
         this.changeDisplayedSamples = this.changeDisplayedSamples.bind(this);
         this.onExport = this.onExport.bind(this);
+
+        this.onShowTetraploid = this.onShowTetraploid.bind(this);
+
 
         let self = this;
         d3.select("body").on("keypress", function(){
@@ -384,7 +430,9 @@ export class App extends React.Component<{}, State> {
                 self.setState({showCentroidTable: !self.state.showCentroidTable});
             } else if(d3.event.key === "s") {
                 self.onToggleSilhoutteBarPlot();
-            } 
+            } else if(d3.event.key === "a") {
+                self.onToggleShowAbsorbBins(); 
+            }
             // else if(d3.event.key === "t") {
             //     self.state.indexedData.calculateCopyNumbers();
             // }
@@ -413,7 +461,6 @@ export class App extends React.Component<{}, State> {
                 self.setState({displayMode: DisplayMode.zoom})
             }
         });
-        
     }
 
     async handleFileChoosen(event: React.ChangeEvent<HTMLInputElement>, applyClustering: boolean) {
@@ -551,9 +598,48 @@ export class App extends React.Component<{}, State> {
         });
     }
 
+    // pointslider(value: number) {
+    //     this.setState({pointsize: value}); 
+    //     // return `${value}°C`;
+    //   }
+
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
         this.state.indexedData.setChrFilter(event.target.value);
+    }
+
+    handleslider(event: any, val: number) {
+        console.log("Pointsize updated to", val);
+        this.setState({pointsize: val});
+    }
+
+    handleColorSelection(event: React.ChangeEvent<HTMLSelectElement>) { // gc
+        this.setState({selectedColor: event.target.value});
+    }
+
+ // const newthresh = Number(event.target.value);
+ //                    if(newthresh <= 0 && newPloidy >= 5) {
+ //                        this.onUpdateThresh(newthresh);
+ //                    }
+
+    handleAbsorbThresh_rdr(event: React.ChangeEvent<HTMLInputElement>) { // gc
+        // if event.target.value <= 0 && event.target.value >= 5 ... 
+        this.setState({absorbThresh_rdr: Number(event.target.value)}); 
+        // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
+    }
+    handleAbsorbThresh_baf(event: React.ChangeEvent<HTMLInputElement>) { // gc
+        // if event.target.value <= 0 && event.target.value >= 5 ... 
+        this.setState({absorbThresh_baf: Number(event.target.value)}); 
+        // this.state.indexedData.absorbUnassigned( Number(event.target.value) );
+    }
+
+    handleMergeThresh_rdr(sample: String, event: React.ChangeEvent<HTMLInputElement>) { // gc
+        console.log("inside handleMergeThresh_rdr() with", sample, "updated value to", Number(event.target.value)); 
+        this.state.mergeThresh_rdr.set(sample, Number(event.target.value)); 
+    }
+    handleMergeThresh_baf(sample: String, event: React.ChangeEvent<HTMLInputElement>) { // gc
+        console.log("inside handleMergeThresh_baf() with", sample, "updated value to", Number(event.target.value)); 
+        this.state.mergeThresh_baf.set(sample, Number(event.target.value)); 
     }
 
     handleClusterSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -654,6 +740,87 @@ export class App extends React.Component<{}, State> {
         this.setState({showDirections: !this.state.showDirections});
     }
 
+    absorbBins() {
+        console.log("Absorb bins!");
+        this.setState({processingStatus: ProcessingStatus.processing});
+        let from_set = this.state.indexedData.getFilteredFromClusters();
+        let to_set = this.state.indexedData.getFilteredToClusters(); 
+
+        let ythresh = this.state.absorbThresh_rdr;
+        let xthresh = this.state.absorbThresh_baf; 
+
+        // iterate through all bins in from
+        this.state.indexedData.absorbBins(from_set, to_set, xthresh, ythresh);
+        this.setState({processingStatus: ProcessingStatus.done});
+    }
+
+    mergeBins(sample: String) {
+        console.log("Merge bins..."); 
+        this.setState({processingStatus: ProcessingStatus.processing});
+        for(let i = 0; i < this.state.indexedData.getSampleList().length; i++) {
+            let s = this.state.indexedData.getSampleList()[i]; 
+            if (sample === s) {
+                let ythresh = this.state.mergeThresh_rdr.get(sample); // mergeThresh_rdr
+                let xthresh = this.state.mergeThresh_baf.get(sample);
+                let new_reassign_group = this.state.indexedData.mergeBins(s, Number(xthresh), Number(ythresh));
+                // window.prompt('Are you sure?', 'Yes');
+                let mergestring = '\n';
+                // build mergestring
+                for (var clusterName of Array.from(new_reassign_group.keys())) {
+                    mergestring += String(clusterName) + ": ["; 
+                    for (var toCluster of Array.from(new_reassign_group.get(clusterName))) {
+                        mergestring += String(toCluster) + ",";
+                    }
+                    mergestring += "]\n"; 
+                }
+
+                let confirmAction = window.confirm("Are you sure you want to merge the following bins?" + mergestring);
+                if (confirmAction) {
+                    alert("Clusters merged.");
+                    this.state.indexedData.assignMerge(s, new_reassign_group); 
+                } else {
+                    alert("Action canceled, clusters not merged.");
+                }
+            }
+        }
+        this.setState({processingStatus: ProcessingStatus.done});
+    }
+
+    mergeBinsAll() {
+        console.log("Merge bins..."); 
+        this.setState({processingStatus: ProcessingStatus.processing});
+
+        let s = this.state.indexedData.getSampleList()[0]; 
+        let new_reassign_group = this.state.indexedData.mergeBinsAll(s, this.state.mergeThresh_rdr, this.state.mergeThresh_baf);
+        let mergestring = '\n';
+        // build mergestring
+        for (var clusterName of Array.from(new_reassign_group.keys())) {
+            mergestring += String(clusterName) + ": ["; 
+            for (var toCluster of Array.from(new_reassign_group.get(clusterName))) {
+                mergestring += String(toCluster) + ",";
+            }
+            mergestring += "]\n"; 
+        }
+
+        let confirmAction = window.confirm("Are you sure you want to merge the following bins?" + mergestring);
+        if (confirmAction) {
+            alert("Clusters merged.");
+            this.state.indexedData.assignMerge(s, new_reassign_group); 
+        } else {
+            alert("Action canceled, clusters not merged.");
+        }            
+        this.setState({processingStatus: ProcessingStatus.done});
+    }
+
+    onToggleShowAbsorbBins() {
+        this.setState({showAbsorbBins: !this.state.showAbsorbBins});
+    }
+
+    onShowTetraploid() {
+        console.log("ShowTetraplod", this.state.showTetraploid); 
+        this.setState({showTetraploid: !this.state.showTetraploid});
+    }
+
     toggleLog() {
         if(this.state.applyLog) {
             this.state.indexedData.setDataKeyType("RD");
@@ -669,7 +836,6 @@ export class App extends React.Component<{}, State> {
         this.state.indexedData.setShouldRecalculatesilhouettes(true);
         
     }
-
     toggleClustering() {
         this.setState({
             applyClustering: !this.state.applyClustering
@@ -681,7 +847,32 @@ export class App extends React.Component<{}, State> {
         this.setState({indexedData: this.state.indexedData});
     }
 
+    onClusterRowsToChange(state: any) { // gc
+        this.state.indexedData.setClusterFiltersTo( state.selectedRows.map((d:any)  => String(d.key)));
+        this.setState({indexedData: this.state.indexedData});
+    }
+
+    onClusterRowsFromChange(state: any) {// gc
+        this.state.indexedData.setClusterFiltersFrom( state.selectedRows.map((d:any)  => String(d.key)));
+        this.setState({indexedData: this.state.indexedData});
+    }
+
     onClusterColorChange(colors: string[]) {
+        let newColors = [];
+        for(const col of colors) {
+            newColors.push(col);
+        }
+        this.setState({colors: newColors});
+    }
+
+    onClusterColorToChange(colors: string[]) {// gc
+        let newColors = [];
+        for(const col of colors) {
+            newColors.push(col);
+        }
+        this.setState({colors: newColors});
+    }
+    onClusterColorFromChange(colors: string[]) {// gc
         let newColors = [];
         for(const col of colors) {
             newColors.push(col);
@@ -772,27 +963,36 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, selectedCluster, hoveredLocation, invertAxis, color, assignCluster, updatedBins, value, sampleAmount} = this.state;
+        const {indexedData, selectedChr, selectedCluster, showTetraploid, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state; // gc 
         const samplesDisplayed = this.state.samplesShown;
         const samplesShown = new Set<string>(samplesDisplayed);
-
         const brushedBins = indexedData.getBrushedBins();
         const allData = indexedData.getAllRecords();
         let mainUI = null;
+        let visualizeMerge = null; 
+        // let mergeItems = null; 
         let clusterTableData = indexedData.getClusterTableInfo();
-        let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>];
+        let clusterTableData2 = indexedData.getClusterTableInfo2();
+        let clusterTableData3 = indexedData.getClusterTableInfo3();
+        let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
         if (this.state.processingStatus === ProcessingStatus.done && !indexedData.isEmpty()) {
             const clusterTableData = indexedData.getClusterTableInfo();
+            const clusterTableData2 = indexedData.getClusterTableInfo2();
+            const clusterTableData3 = indexedData.getClusterTableInfo3();
+
+            // console.log("Before passing to scatterplotProps", this.state.pointsize);
             const scatterplotProps = {
+                pointsize: this.state.pointsize, 
                 data: indexedData,
                 hoveredLocation: hoveredLocation || undefined,
                 onLocationHovered: this.handleLocationHovered,
                 invertAxis,
                 chr: selectedChr,
                 cluster: selectedCluster,
-                customColor: color,
+                customColor: selectedColor, // gc?
+                showTetraploid: showTetraploid, // gc
                 colors: this.state.colors,
                 assignCluster,
                 onBrushedBinsUpdated: this.updateBrushedBins,
@@ -806,11 +1006,13 @@ export class App extends React.Component<{}, State> {
                 onAddSample: this.handleAddSampleClick,
                 onChangeSample: this.changeDisplayedSamples,
                 clusterTableData: clusterTableData,
+                clusterTableData2: clusterTableData,
+                clusterTableData3: clusterTableData,
                 applyLog: this.state.applyLog,
                 onClusterSelected: this.handleClusterSelected,
                 onUndoClick: this.goBackToPreviousCluster,
                 showCentroids: this.state.showCentroids,
-                driverGenes: this.state.driverGenes
+                driverGenes: this.state.driverGenes,
             };
 
             const sortAlphaNum = (a : string, b:string) => a.localeCompare(b, 'en', { numeric: true })
@@ -845,16 +1047,79 @@ export class App extends React.Component<{}, State> {
                             
                     </div>
                 </div>);
+
+            visualizeMerge = <div className="grid-container">
+                <div className="App-row-contents">
+                    Set Merge Thresholds:
+                </div>
+                <div className="App-row-contents">
+                    {this.state.indexedData.getSampleList().map( sample => 
+                        <div id="grid-container" key={sample}> 
+                                <div className="scroll">
+                                    {sample}
+                                    <div className="App-row-contents">
+                                    BAF: 
+                                        <input type="number"
+                                            name="Merge Threshold" 
+                                            key={sample}
+                                            id="Merge-Thresh-BAF"
+                                            min={0}
+                                            max={10}
+                                            step="0.01"
+                                            placeholder={(this.state.mergeThresh_baf.has(sample)) ? String(this.state.mergeThresh_baf.get(sample)) : "0"}
+                                            onChange={this.handleMergeThresh_baf.bind(this, sample)}> 
+                                        </input>
+                                    </div>
+                                    <div className="App-row-contents">
+                                    RDR: 
+                                        <input type="number"
+                                            name="Merge Threshold" 
+                                            key={sample}
+                                            id="Merge-Thresh-RDR"
+                                            min={0}
+                                            max={10}
+                                            step="0.01"
+                                            placeholder={(this.state.mergeThresh_rdr.has(sample)) ? String(this.state.mergeThresh_rdr.get(sample)) : "0"}
+                                            onChange={this.handleMergeThresh_rdr.bind(this, sample)}> 
+                                        </input>
+                                    </div>                                    <div className="App-row-contents"> 
+                                        {/* Current Thresholds RDR: {this.state.mergeThresh_rdr} BAF: {this.state.mergeThresh_baf} */}
+                                        <label className="directions_label" title="Merge the clusters with respect to this sample's BAF and RDR thresholds.">
+                                            <input type="button" key={sample} id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.mergeBins.bind(this, sample)}/>
+                                            Merge
+                                        </label>
+                                    </div>
+                                </div>
+                        </div> 
+                    )} 
+                </div>
+                <div className="App-row-contents">
+                    <label className="directions_label" title="Merge the clusters with respect to this sample's BAF and RDR thresholds.">
+                        <input type="button" id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.mergeBinsAll.bind(this)}/>
+                        Merge According to All Samples' Thresholds
+                    </label>
+                </div>
+            </div>
+            
         }
-        
+        // onChange={function(e : any){console.log("onChange BAF", sample, e); this.handleMergeThresh_rdr(sample, e)}}> 
         const status = this.getStatusCaption();
 
         return <div className="container-fluid">
             <div>
                 <Sidebar 
+                    // pointsize={this.state.pointsize}
+                    // pointslider={this.pointslider}                    
+                    handleslider={this.handleslider}
                     selectedChr={selectedChr} 
                     onChrSelected={this.handleChrSelected} 
                     chrOptions={chrOptions}
+                    selectedColor={selectedColor} 
+                    onColorSelected={this.handleColorSelection} 
+                    onAbsorbThresh_rdr={this.handleAbsorbThresh_rdr}
+                    onAbsorbThresh_baf={this.handleAbsorbThresh_baf}
+                    onMergeThresh_rdr={this.handleMergeThresh_rdr}
+                    onMergeThresh_baf={this.handleMergeThresh_baf}
                     onAddSample={this.handleAddSampleClick}
                     onAssignCluster={this.handleAssignCluster}
                     tableData={clusterTableData}
@@ -880,6 +1145,9 @@ export class App extends React.Component<{}, State> {
                     syncScales={this.state.syncScales}
                     logData = {actions}
                     onToggleShowCentroids= {this.onToggleShowCentroids}
+                    onToggleShowAbsorbBins={this.onToggleShowAbsorbBins}
+                    onShowTetraploid={this.onShowTetraploid}
+                    showTetraploid={this.state.showTetraploid}
                     showCentroids= {this.state.showCentroids}
                     onDriverFileChosen={this.handleDriverFileChosen}
                     onTogglesilhouettes={this.onToggleSilhoutteBarPlot}
@@ -896,14 +1164,42 @@ export class App extends React.Component<{}, State> {
                     applyLog={this.state.applyLog}
                     processingStatus={this.state.processingStatus}
                     onExport={this.onExport}
+                    onUndoClick={this.goBackToPreviousCluster}
                 />
             </div>
-            
-            <div className={this.state.sidebar ? "marginContent" : ""}>
+
+            {/* position: relative is important for this div because the child toolbar is position: fixed*/}
+            {/* position: fixed positions self relative to the nearest relatively positioned ancestor. */}
+            <div
+                style={{
+                    position: "relative",
+                    marginLeft: this.state.sidebar ? SIDEBAR_WIDTH : 0,
+                    overflowX: "hidden"
+                }}
+            >
+                <div
+                    className="toolbar"
+                    style={{width: this.state.sidebar ?
+                        `calc(100% - ${SIDEBAR_WIDTH} - 20px)` : "calc(100% - 20px)"
+                    }}
+                >
+                    <Toolbox
+                        currentDisplayMode={this.state.displayMode}
+                        setDisplayMode={this.setDisplayMode}
+                    ></Toolbox>
+                    <div className="help-box" title="Show a modal describing instructions and shortcuts.">
+                        <label style={{cursor: "pointer"}}>
+                        <input style={{cursor: "pointer"}} type="button" id="custom-button" onClick={this.onToggleDirections}/>
+                            <IconContext.Provider value={{className: "shared-class", size: "40"}}>
+                                <AiOutlineQuestionCircle/>
+                            </IconContext.Provider>
+                        </label>
+                    </div>
+                </div>
                 {status && <div className="App-status-pane">{status}</div>}
                 {mainUI}
 
-                {this.state.showDirections && <div className="black_overlay"></div> }
+                {this.state.showDirections && <div className="black_overlay" onClick={this.onToggleDirections}></div> }
                 {this.state.showDirections && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header">Directions</h2>
@@ -926,10 +1222,78 @@ export class App extends React.Component<{}, State> {
                         <li> Hold down "?" or "/" button to open direction panel </li>
                         <li> Click "c" to toggle a table of the centroids of each cluster for each sample </li>
                         <li> Click "s" to toggle a bar plot displaying approximate average silhoutte scores for each cluster </li>
-
                     </div> }
 
-                {this.state.showLog && <div className="black_overlay"></div> }
+                {this.state.showAbsorbBins && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }
+                {this.state.showAbsorbBins && 
+                    <div className="Directions">
+                        <h2 className="pop-up-window-header">Absorb Bins</h2>
+                        <div className="Exit-Popup" onClick={this.onToggleShowAbsorbBins}> 
+                            <FiX/>
+                        </div>
+                        <div className="App-row-contents">
+                            From: 
+                            <ClusterTable 
+                                data={clusterTableData2} 
+                                onClusterRowsChange={this.onClusterRowsFromChange}  // gc: need to edit this
+                                onClusterColorChange={this.onClusterColorChange} // gc: need to edit this
+                                currentFilters={indexedData.getFilteredFromClusters()}
+                                colOneName={"Cluster ID"}
+                                colTwoName={"Bin (%)"}
+                                cols={""}
+                                expandable={true}
+                                selectable={true}
+                                colors={CLUSTER_COLORS}
+                            ></ClusterTable>
+                            To: 
+                            <ClusterTable 
+                                data={clusterTableData3} 
+                                onClusterRowsChange={this.onClusterRowsToChange} // gc: need to edit this
+                                onClusterColorChange={this.onClusterColorChange} // gc: need to edit this
+                                currentFilters={indexedData.getFilteredToClusters()}
+                                colOneName={"Cluster ID"}
+                                colTwoName={"Bin (%)"}
+                                cols={""}
+                                expandable={true}
+                                selectable={true}
+                                colors={CLUSTER_COLORS}
+                            ></ClusterTable>
+                        </div>
+                        <div className="App-row-contents">
+                            Set Absorb Threshold (RDR): 
+                            <input type="number"
+                              name="Absorb Threshold" 
+                              id="Absorb-Thresh-RDR"
+                              min={0}
+                              max={10}
+                              step="0.01"
+                              placeholder={"0"}
+                              onChange={this.handleAbsorbThresh_rdr}> 
+                            </input>
+
+                            Set Absorb Threshold (BAF): 
+                            <input type="number"
+                              name="Absorb Threshold" 
+                              id="Absorb-Thresh-BAF"
+                              min={0}
+                              max={10}
+                              step="0.01"
+                              placeholder={"0"}
+                              onChange={this.handleAbsorbThresh_baf}> 
+                            </input>
+                        </div>
+                        <div className="App-row-contents"> 
+                            Current Thresholds RDR: {this.state.absorbThresh_rdr} BAF: {this.state.absorbThresh_baf}
+                        </div>
+                        <div className="App-row-contents">
+                            <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
+                                <input type="button" id="custom-button" disabled={this.state.processingStatus !== ProcessingStatus.done} onClick={this.absorbBins}/>
+                                Absorb Bins
+                            </label>
+                        </div>
+                    </div> }
+
+                {this.state.showLog && <div className="black_overlay" onClick={()=> this.setState({showLog: !this.state.showLog})}></div> }
                 {this.state.showLog && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Previous Actions </h2>
@@ -944,13 +1308,14 @@ export class App extends React.Component<{}, State> {
                         ></LogTable>
                     </div> }
 
-                {this.state.showCentroidTable && <div className="black_overlay"></div> }
+                {this.state.showCentroidTable && <div className="black_overlay" onClick={()=> this.setState({showCentroidTable: !this.state.showCentroidTable})}></div> }
                 {this.state.showCentroidTable && 
                     <div className="Directions">
                         <h2 className="pop-up-window-header"> Centroid Table </h2>
                         <div className="Exit-Popup" onClick={()=> this.setState({showCentroidTable: !this.state.showCentroidTable})}> 
                             <FiX/>
                         </div>
+                        
                         <ClusterTable
                             data={indexedData.getCentroidData()}
                             onClusterColorChange={this.onClusterColorChange}
@@ -963,10 +1328,10 @@ export class App extends React.Component<{}, State> {
                             colThreeName={"Centroid"}
                             cols={[{name: "Cluster", type: 'key'}, {name: "Sample", type: 'sample'}, {name: "Centroid", type: 'centroid'}]}
                         ></ClusterTable>
-
+                        {visualizeMerge}
                     </div> }
                 
-                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay"></div> }
+                {this.state.showSilhouettes === ProcessingStatus.done && <div className="black_overlay" onClick={this.onToggleSilhoutteBarPlot}></div> }
                 {this.state.showSilhouettes === ProcessingStatus.done && 
                         <AnalyticsTab
                             silhouetteData={this.state.silhouettes}
@@ -976,9 +1341,11 @@ export class App extends React.Component<{}, State> {
                             colors={CLUSTER_COLORS}
                             onToggleSilhoutteBarPlot={this.onToggleSilhoutteBarPlot}
                         ></AnalyticsTab>}
-           
+                <div className="before-loading">
+                    Load your own data, or use the demo button to load the demo data!
+                </div> 
+
             </div>
-            
         </div>;
     }
 }

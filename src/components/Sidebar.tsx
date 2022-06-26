@@ -4,13 +4,23 @@ import {ClusterTable} from "./ClusterTable";
 import {DisplayMode, ProcessingStatus} from "../App";
 import {CSV} from "./CSVLink"
 import { GenomicBin} from "../model/GenomicBin";
-import {FiArrowLeftCircle, FiArrowRightCircle, FiMousePointer, FiZoomIn } from "react-icons/fi";
-import {BiEraser} from "react-icons/bi";
-
+import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
+import {IoHandRight} from "react-icons/io5"
+import {BiEraser, BiMessageSquareAdd} from "react-icons/bi";
+import { Slider } from '@mui/material';
+import Box from "@mui/material/Box";
+import { isPropertySignature } from "typescript";
 
 interface Props {
+    // pointsize : number; 
     selectedChr : string;
+    selectedColor : string;
     onChrSelected : any;
+    onColorSelected : any;
+    onAbsorbThresh_rdr : any; 
+    onAbsorbThresh_baf : any; 
+    onMergeThresh_rdr : any; 
+    onMergeThresh_baf : any; 
     chrOptions: any;
     onAddSample: any;
     onAssignCluster: any;
@@ -43,18 +53,25 @@ interface Props {
     showSilhouettes: ProcessingStatus;
     onToggleDirections: () => void;
     onToggleShowCentroidTable: () => void;
+    onToggleShowAbsorbBins: () => void;
     onTogglePreviousActionLog: () => void;
+    onUndoClick: () => void; 
     onClearClustering: () => void;
     handleDemoFileInput: (applyClustering: boolean) => void;
     handleDemoDrivers: () => void;
     setProcessingStatus: (status: ProcessingStatus) => void;
     onTogglePurityPloidy: () => void;
+    onShowTetraploid: () => void; 
+    showTetraploid: boolean; 
     showPurityPloidy: boolean;
     applyLog: boolean;
     processingStatus: ProcessingStatus;
     onExport: () => void;
-
+    handleslider: (event: any, val: number) => void; 
+    // pointslider: (value: number) => void; 
 }
+
+export const SIDEBAR_WIDTH = "320px";
 
 function Sidebar(props: Props) {
   const showSidebar = () => {
@@ -66,10 +83,21 @@ function Sidebar(props: Props) {
     chosenFile = chosenFile.substring(0, 34) + "...";
   }
 
+  // let pointslider(value: number) {
+  //   this.setState({pointsize: value}); 
+  //   // return `${value}°C`;
+  // }
+
   return (
 
-    <div className={props.show ? "sidebar active" : "sidebar"}>
-      <div className="closemenu" onClick={showSidebar}>
+    <div
+      className="sidebar"
+      style={{
+        width: SIDEBAR_WIDTH,
+        left: props.show ? 0 : "-" + SIDEBAR_WIDTH
+      }}
+    >
+      <div className="closemenu" onClick={showSidebar} title="Close/open the sidebar.">
           <div> </div>
           {props.show ? (
                 <div className="arrow-container"> 
@@ -82,48 +110,54 @@ function Sidebar(props: Props) {
               )
           }
       </div>
-      <div className="closemenu2" onClick={() => props.setDisplayMode(DisplayMode.select)}>
+
+      {/* <div className="closemenu2" title="Mode: Zoom." onClick={() => props.setDisplayMode(DisplayMode.boxzoom)}>
             <div className="arrow-container"> 
-              <FiMousePointer
+              <FiZoomIn
+                color={props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
+              />
+            </div>
+      </div>
+      <div className="closemenu3" title="Mode: Panning." onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
+            <div className="arrow-container"> 
+              <IoHandRight
+                color={props.currentDisplayMode === DisplayMode.zoom ? "red" : "black"}
+              />
+            </div>
+      </div>
+      <div className="closemenu4" title="Mode: Select." onClick={() => props.setDisplayMode(DisplayMode.select)}>
+            <div className="arrow-container"> 
+              <BiMessageSquareAdd
                 color={props.currentDisplayMode === DisplayMode.select ? "red" : "black"}
               />
             </div>
-      </div>
-
-      <div className="closemenu3" onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
-            <div className="arrow-container"> 
-              <FiZoomIn
-                color={props.currentDisplayMode === DisplayMode.zoom || props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
-              />
-            </div>
-      </div>
-      
-      <div className="closemenu4" onClick={() => props.setDisplayMode(DisplayMode.erase)}>
+      </div>      
+      <div className="closemenu5" title="Mode: Deselect." onClick={() => props.setDisplayMode(DisplayMode.erase)}>
             <div className="arrow-container"> 
               <BiEraser
                 color={props.currentDisplayMode === DisplayMode.erase ? "red" : "black"}
               />
             </div>
-      </div>
+      </div> */}
 
       <div className="contents">
-      <div className="row-contents" > <h1>CNAViz</h1> </div>
+      <div className="row-contents" > <h1>CNAViz v2.0</h1> </div>
         <div className="title-bar"></div>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
-              <label className="custom-file-upload">
+              <label className="custom-file-upload" title="Uploads a file.">
                 <input type="file" id="fileUpload" onChange={
                   (event: any) =>
                   props.onFileChosen(event, true)
                 } />
-                Import
+                Import <FiUpload/>
               </label>
               
-              <label className="custom-file-upload">
+              <label className="custom-file-export" title="Exports your clustering.">
                 <CSV data={props.data} logData={props.logData} fileName={props.chosenFile} onExport={props.onExport}></CSV>
-                Export
+                Export <FiDownload/>
               </label>
-              <label className="custom-file-upload">
+              <label className="demo" title="Loads CNAViz with demo data.">
                 <input type="button" id="custom-button" onClick={
                     (event: any) => props.handleDemoFileInput(true)
                 }/>
@@ -132,14 +166,14 @@ function Sidebar(props: Props) {
           </div>
           
           <div className="row-contents" >
-            <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload"}>
+            <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload2"} title="Uploads your driver genes.">
               <input type="file" id="fileUpload"  disabled={props.processingStatus !== ProcessingStatus.done} onChange={
                 (event: any) => props.onDriverFileChosen(event, true)
               }/>
               Import Driver Genes
             </label>
 
-            <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload"}>
+            <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload3"} title="Uploads Cancer Gene Census driver genes.">
               <input type="button" id="custom-button" disabled={props.processingStatus !== ProcessingStatus.done} onClick={
                   (event: any) => props.handleDemoDrivers()
               }/>
@@ -148,7 +182,7 @@ function Sidebar(props: Props) {
           </div>
   
           <div className= "row-contents" >
-            <div>
+            <div className="Select-Chrom" title="Select a chromosome to visualize in the linear and scatter plots.">
               <label htmlFor="Select Chromosome" style={{margin: 10}}> Chromosome: </label>
               <select
                   name="Select Chromosome" 
@@ -159,58 +193,113 @@ function Sidebar(props: Props) {
               </select>
             </div>
           </div>
-        
+
           <div className= "row-contents" >
-            <label>
+            <div className="selection-color" title="Pick a color to represent your selected bins.">
+              <label htmlFor="Select Cluster Color" style={{margin: 10}}> Selection Color: </label>
+              <input type="color"
+                  name="Select Color" 
+                  id="Select Color"
+                  value={props.selectedColor}
+                  onChange={props.onColorSelected} >
+              </input>
+            </div>
+          </div>
+
+          <div className="row-contents">
+          {/* <label className="point-slider" title="Changes the size of the points in the scatterplot and linear plot."> */}
+          <Box sx={{ width: 300 }}>  
+              Point Size:
+              <Slider
+                aria-label="Point Size"
+                defaultValue={3}
+                onChangeCommitted={props.handleslider}
+                // getAriaValueText={this.pointslider}
+                valueLabelDisplay="auto"
+                step={1}
+                marks={true}
+                min={1}
+                max={10}
+              />
+            {/* </label> */}
+            </Box>
+          </div>
+
+          <div className= "row-contents" >
+            <label className="logrdr" title="Shows read-depth ratio (RDR) in log form.">
               <span className="App-CheckBox-explanation">Log RDR: </span>
               <input type="checkbox" onClick={props.onToggleLog} disabled={props.showPurityPloidy}/>
             </label>
-            <label>
+            <label className="centroids" title="Shows centroids for each visualized cluster on the scatterplot."> 
               <span className="App-CheckBox-explanation">Centroids: </span>
               <input type="checkbox" onClick={props.onToggleShowCentroids} checked={props.showCentroids} readOnly/>
             </label>
           </div>
           <div className= "row-contents" >
-            <label>
+            <label className="scatterplot" title="Shows the scatterplots.">
               <span className="App-CheckBox-explanation">Scatterplots: </span>
               <input type="checkbox" onClick={props.onToggleScatter} checked={props.showScatter} readOnly/>
             </label>
-            <label>
+            <label className="linearplot" title="Shows the linear plots.">
               <span className="App-CheckBox-explanation">Linear Plots: </span>
               <input type="checkbox" onClick={props.onToggleLinear} checked={props.showLinear} readOnly/>
             </label>
           </div>
           <div className= "row-contents" >
-            <label>
+            <label className="purityploidy" title="Shows lines for purity and ploidy on the scatterplots.">
               <span className="App-CheckBox-explanation">Purity/Ploidy: </span>
-              <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} disabled={props.applyLog} readOnly/>
+              <input type="checkbox" onClick={props.onTogglePurityPloidy} checked={props.showPurityPloidy} readOnly/>
+            </label>
+            <label className="tetraploid" title="Shows tetraploid gridlines for purity and ploidy.">
+              <span className="App-CheckBox-explanation">Tetraploid: </span>
+              <input type="checkbox" onClick={props.onShowTetraploid} checked={props.showTetraploid}readOnly/>
             </label>
           </div>
+         
+         
 
+          {/* Analytics:  */}
           <div className= "row-contents" >
-            <label className="custom-file-upload">
+            <label className="analytics" title="Shows pop-up displaying cluster analytics.">
               <input type="button" id="custom-button" onClick={() => { 
                 props.onTogglesilhouettes();
               }}/>
               Analytics (s)
             </label>
-            <label className="custom-file-upload">
+            <label className="centroidtable" title="Shows pop-up displaying centroid table.">
               <input type="button" id="custom-button" onClick={props.onToggleShowCentroidTable}/>
               Centroids (c)
             </label>
-            <label className="custom-file-upload">
+            {/* <label className="absorbbins" title="Shows pop-up helping user automate reallocation of bins.">
+              <input type="button" id="custom-button" onClick={props.onToggleShowAbsorbBins}/>
+              Absorb Bins (a)
+            </label> */}
+            {/* <label className="directions_label" title="Shows pop-up describing instructions and shortcuts.">
               <input type="button" id="custom-button" onClick={props.onToggleDirections}/>
-              Usage (?)
+              HELP (?)
+            </label> */}
+          </div>
+
+          <div className="row-contents">
+            <label className="absorbbins" title="Shows pop-up helping user automate reallocation of bins.">
+              <input type="button" id="custom-button" onClick={props.onToggleShowAbsorbBins}/>
+              Absorb Bins (a)
             </label>
           </div>
-          <div className= "row-contents" >
-            <label className="custom-file-upload">
+
+          {/* Cluster Actions: */}
+          <div className="row-contents" >
+            <label className="showlog" title="Shows the cluster assignment log.">
+              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
+              Log (l)
+            </label>
+            <label className="clearclustering" title="Clears the clustering.">
               <input type="button" id="custom-button" onClick={props.onClearClustering}/>
               Clear Clustering
             </label>
-            <label className="custom-file-upload">
-              <input type="button" id="custom-button" onClick={props.onTogglePreviousActionLog}/>
-              Previous Actions (l)
+            <label className="undocluster" title="Undo cluster assignment.">
+              <input type="button" id="custom-button" onClick={props.onUndoClick}/>
+              Undo Cluster
             </label>
           </div>
 

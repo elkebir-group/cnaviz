@@ -8,6 +8,7 @@ import { Gene } from "../model/Gene";
 import { cn_pair, fractional_copy_number } from "../constants";
 
 interface Props {
+    pointsize: number; 
     data: GenomicBin[];
     chr: string;
     hoveredLocation?: ChromosomeInterval;
@@ -33,16 +34,18 @@ interface Props {
     ploidy: number;
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
-    showPurityPloidy:boolean;
+    showPurityPloidy: boolean;
+    showTetraploid: boolean;
     BAF_lines: cn_pair[];
 }
 
 export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
-    const {data, chr, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
+    const {data, chr, pointsize, rdRange, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, 
         brushedBins, customColor, colors, yScale, clusterTableData, applyLog, 
-        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines} = props;
+        displayMode, width, onLinearPlotZoom, implicitStart, implicitEnd, onZoom, driverGenes, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, showTetraploid, BAF_lines} = props;
 
     return <LinearPlot
+                pointsize={pointsize}
                 data={data}
                 dataKeyToPlot={(applyLog) ? "logRD" : ((showPurityPloidy) ? "fractional_cn" : "RD")}
                 applyLog={applyLog}
@@ -72,16 +75,18 @@ export function RDLinearPlot(props: Props & {rdRange: [number, number]}) {
                 meanRD={meanRD}
                 fractionalCNTicks={fractionalCNTicks}
                 showPurityPloidy={showPurityPloidy}
+                showTetraploid={showTetraploid}
                 BAF_lines={BAF_lines}
         />
 }
 
 export function BAFLinearPlot(props: Props) {
-    const {data, chr, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
+    const {data, chr, pointsize, hoveredLocation, onLocationHovered, onBrushedBinsUpdated, brushedBins, 
             customColor, colors, xScale, clusterTableData, displayMode, width, onLinearPlotZoom, 
-            implicitStart, implicitEnd, onZoom, driverGenes, applyLog, purity, ploidy, meanRD, showPurityPloidy, fractionalCNTicks, BAF_lines} = props;
+            implicitStart, implicitEnd, onZoom, driverGenes, applyLog, purity, ploidy, meanRD, showPurityPloidy, showTetraploid, fractionalCNTicks, BAF_lines} = props;
 
     return <LinearPlot
+                pointsize={pointsize}
                 data={data}
                 chr={chr}
                 dataKeyToPlot="reverseBAF"
@@ -110,6 +115,7 @@ export function BAFLinearPlot(props: Props) {
                 ploidy={ploidy}
                 meanRD={meanRD}
                 showPurityPloidy={showPurityPloidy}
+                showTetraploid={showTetraploid}
                 fractionalCNTicks={fractionalCNTicks}
                 BAF_lines={BAF_lines}
         />;

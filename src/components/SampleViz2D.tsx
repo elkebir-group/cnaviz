@@ -7,8 +7,10 @@ import "./SampleViz.css";
 import {DisplayMode} from "../App"
 import { GenomicBin, GenomicBinHelpers } from "../model/GenomicBin";
 import { cn_pair, fractional_copy_number } from "../constants";
+import classnames from 'classnames'; 
 
 interface Props {
+    pointsize: number; 
     parentCallBack: any;
     data: GenomicBin[];
     chr: string;
@@ -41,9 +43,11 @@ interface Props {
     showCentroids: boolean;
     purity: number;
     ploidy: number;
+    offset: number; // gc: required because Scatterplot needs to watch for prop changes.
     meanRD: number;
     fractionalCNTicks: fractional_copy_number[];
     showPurityPloidy: boolean;
+    showTetraploid: boolean; 
     BAF_lines: cn_pair[];
     max_cn: number;
 }
@@ -95,13 +99,20 @@ export class SampleViz2D extends React.Component<Props, State> {
     }
     
     render() {
-        const {data, width, height, hoveredLocation, invertAxis, customColor,
+        const {data, width, height, pointsize, hoveredLocation, invertAxis, customColor,
                 brushedBins, updatedBins, dispMode, onZoom, rdRange, clusterTableData, 
-                applyLog, scales, centroidPts, showCentroids, purity, ploidy, meanRD, fractionalCNTicks, showPurityPloidy, BAF_lines, max_cn} = this.props;
-        
-        return <div className="SampleViz-scatter">
-            <DivWithBullseye className="SampleViz-pane">
+                applyLog, scales, centroidPts, showCentroids, purity, ploidy, offset, meanRD, fractionalCNTicks, showPurityPloidy, showTetraploid, BAF_lines, max_cn} = this.props;
+        const myDisplayClasses = classnames ({
+            'is-pan' : dispMode === DisplayMode.zoom,
+            'is-zoom' : dispMode === DisplayMode.boxzoom, 
+            'is-select' : dispMode === DisplayMode.select, 
+            'is-erase' : dispMode === DisplayMode.erase
+        })
+
+        return <div className="SampleViz-scatter"> 
+            <DivWithBullseye className={myDisplayClasses}> 
                 <Scatterplot
+                    pointsize={pointsize}
                     parentCallBack = {this.handleCallBack}
                     data={data}
                     rdRange={rdRange}
@@ -127,9 +138,11 @@ export class SampleViz2D extends React.Component<Props, State> {
                     showCentroids={showCentroids}
                     purity={purity}
                     ploidy={ploidy}
+                    offset={offset}
                     meanRD={meanRD}
                     fractionalCNTicks={fractionalCNTicks}
                     showPurityPloidy={showPurityPloidy}
+                    showTetraploid={showTetraploid}
                     BAF_lines={BAF_lines}
                     max_cn={max_cn}
                     />
