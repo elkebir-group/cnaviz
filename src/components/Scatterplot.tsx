@@ -901,13 +901,27 @@ export class Scatterplot extends React.Component<Props, State> {
                            rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
                 }
 
+                function currContains(currNode: any, toEraseSet: any) {
+                    let existingNode = (currNode["#CHR"], currNode["START"], currNode["END"], currNode["genomicPosition"]);
+                    if (toEraseSet.has(existingNode)) { // if existing node is one to delete
+                        return false; // filter out the existing node
+                    } else { // if existing node is not one to delete
+                        return true; // keep this existing node 
+                    }
+                }
+
                 let brushNodes = data.filter(d => rectContains(selection, [this._currXScale(d.reverseBAF), this._currYScale(d[yAxisToPlot])]));
                 
                 if (brushNodes) {
+                    console.log(brushNodes); 
                     if(displayMode === DisplayMode.select) {
                         brushNodes = _.uniqBy(_.union(brushNodes, brushedBins), element => element["#CHR"] + "_" + element.START);
                     } else if(displayMode === DisplayMode.erase) {
-                        brushNodes = _.difference(brushedBins, brushNodes);
+                        let toEraseSet = new Set(); 
+                        for(let i = 0; i < brushNodes.length; i++) {
+                            toEraseSet.add((brushNodes[i]["#CHR"], brushNodes[i]["START"], brushNodes[i]["END"], brushNodes[i]["genomicPosition"]));
+                        }
+                        brushNodes = brushedBins.filter(d => currContains(d, toEraseSet)); 
                     }
 
                     this.brushedNodes = new Set(brushNodes);                  

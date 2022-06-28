@@ -531,11 +531,25 @@ export class LinearPlot extends React.PureComponent<Props> {
                             return rectContains(selection, [xScale(range.getCenter()), yScale(d[dataKeyToPlot])])
                         });
 
+                        function currContains(currNode: any, toEraseSet: any) {
+                            let existingNode = (currNode["#CHR"], currNode["START"], currNode["END"], currNode["genomicPosition"]);
+                            if (toEraseSet.has(existingNode)) { // if existing node is one to delete
+                                return false; // filter out
+                            } else { // if existing node is not one to delete
+                                return true; // keep in 
+                            }
+                        }
+
                         if (brushed) {
                             if(displayMode === DisplayMode.select) {
                                 brushed = _.uniqBy(_.union(brushed, brushedBins), element => element["#CHR"] + "_" + element.START);  
                             } else if(displayMode === DisplayMode.erase) {
-                                brushed = _.difference(brushedBins, brushed);
+                                let toEraseSet = new Set(); 
+                                for(let i = 0; i < brushed.length; i++) {
+                                    toEraseSet.add((brushed[i]["#CHR"], brushed[i]["START"], brushed[i]["END"], brushed[i]["genomicPosition"]));
+                                }
+                                brushed = brushedBins.filter(d => currContains(d, toEraseSet)); 
+                                // brushed = _.difference(existingSet, newBrushSet); 
                             }
         
                             this.brushedNodes = new Set(brushed);                  

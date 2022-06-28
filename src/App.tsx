@@ -1342,7 +1342,7 @@ export class App extends React.Component<{}, State> {
                             onToggleSilhoutteBarPlot={this.onToggleSilhoutteBarPlot}
                         ></AnalyticsTab>}
                 <div className="before-loading">
-                    Load your own data, or use the demo button to load the demo data!
+                    {/* Load your own data, or use the demo button to load the demo data! */}
                 </div> 
 
             </div>
