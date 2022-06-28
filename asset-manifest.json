@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/cnaviz/static/css/main.3f075e26.chunk.css",
+    "main.css": "/cnaviz/static/css/main.cd55f7cf.chunk.css",
     "main.js": "/cnaviz/static/js/main.bdbc046d.chunk.js",
     "main.js.map": "/cnaviz/static/js/main.bdbc046d.chunk.js.map",
     "runtime-main.js": "/cnaviz/static/js/runtime-main.586cd8e0.js",
@@ -8,13 +8,13 @@
     "static/js/2.75687c36.chunk.js": "/cnaviz/static/js/2.75687c36.chunk.js",
     "static/js/2.75687c36.chunk.js.map": "/cnaviz/static/js/2.75687c36.chunk.js.map",
     "index.html": "/cnaviz/index.html",
-    "static/css/main.3f075e26.chunk.css.map": "/cnaviz/static/css/main.3f075e26.chunk.css.map",
+    "static/css/main.cd55f7cf.chunk.css.map": "/cnaviz/static/css/main.cd55f7cf.chunk.css.map",
     "static/js/2.75687c36.chunk.js.LICENSE.txt": "/cnaviz/static/js/2.75687c36.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.586cd8e0.js",
     "static/js/2.75687c36.chunk.js",
-    "static/css/main.3f075e26.chunk.css",
+    "static/css/main.cd55f7cf.chunk.css",
     "static/js/main.bdbc046d.chunk.js"
   ]
 }
