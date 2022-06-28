@@ -418,8 +418,10 @@ export class App extends React.Component<{}, State> {
 
         let self = this;
         d3.select("body").on("keypress", function(){
-            if (d3.event.key === "z") {
+            if (d3.event.key === "p") {
                 self.setState({displayMode: DisplayMode.zoom});
+            } else if (d3.event.key === "z") {
+                self.setState({displayMode: DisplayMode.boxzoom}); 
             } else if (d3.event.key === "b") {
                 self.setState({displayMode: DisplayMode.select});
             } else if(d3.event.key === "e") {
@@ -1209,21 +1211,21 @@ export class App extends React.Component<{}, State> {
                             <FiX/>
                         </div>
                         <h5> Selection </h5>
-                        <li> Hold down "Command/Control" in Zoom mode to temporarily enter add-to-selection mode </li>
-                        <li> Hold down "Alt" in Zoom mode to temporarily enter remove-from-selection mode </li>
-                        <li> To completely clear your selection, click anywhere in the plot while in add-to-selection or remove-from-selection modes </li>
-                        <li> To stay in add-to-select mode without holding a button, you can click b or click the mouse pointer button next to the sidebar</li>
-                        <li> To stay in remove-from-select mode without holding a button, you can click e or click the eraser icon next to the sidebar </li>
+                        <li> Hold down "Command/Control" in Zoom mode to temporarily enter add-to-selection mode. </li>
+                        <li> Hold down "Alt" in Zoom mode to temporarily enter remove-from-selection mode. </li>
+                        <li> To completely clear your selection, click anywhere in the plot while in add-to-selection or remove-from-selection modes. </li>
+                        <li> To stay in add-to-select mode, you can press (b) or click the + icon in the toolbar.</li>
+                        <li> To stay in remove-from-select mode, you can press (e) or click the eraser icon in the toolbar. </li>
                         <h5> Zoom/Pan Mode </h5>
-                        <li> To enter zoom/pan mode, click the magnifying glass icon next to the sidebar </li>
-                        <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom </li>
-                        <li> To pan, just click and drag on the scatter plot or axes </li>
-                        <h5> Other Key Modifiers </h5>
-                        <li> Click "l" to toggle a log of previous actions </li>
-                        <li> Click space to toggle the sidebar </li>
-                        <li> Hold down "?" or "/" button to open direction panel </li>
-                        <li> Click "c" to toggle a table of the centroids of each cluster for each sample </li>
-                        <li> Click "s" to toggle a bar plot displaying approximate average silhoutte scores for each cluster </li>
+                        <li> To enter zoom mode, click the magnifying glass icon in the toolbar, or press (z) on the keyboard. If you hold down shift, it will act as a bounding box zoom. </li>
+                        {/* <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom </li> */}
+                        <li> To pan, click the grab icon in the toolbar, click and drag on the scatter plot or axes, or press (p) on the keyboard. </li>
+                        <h5> Other Key Modifiers: </h5>
+                        <li> Click "l" to toggle a log of previous actions. </li>
+                        <li> Click space to toggle the sidebar. </li>
+                        <li> Hold down "?" or "/" button to open direction panel. </li>
+                        <li> Click "c" to toggle a table of the centroids of each cluster for each sample. </li>
+                        <li> Click "s" to toggle a bar plot displaying approximate average silhoutte scores for each cluster. </li>
                     </div> }
 
                 {this.state.showAbsorbBins && <div className="black_overlay" onClick={this.onToggleShowAbsorbBins}></div> }

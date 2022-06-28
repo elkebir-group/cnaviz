@@ -20,7 +20,14 @@
     font-size: smaller;
 }
 
+.Toolbox-Tool-label2 {
+    font-size: x-small;
+}
+
 .Toolbox-Tool:hover{
     /* border: 1px solid #888; */
     background-color: #ddd;
 }
+
+
+

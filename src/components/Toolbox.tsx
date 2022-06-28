@@ -19,21 +19,25 @@ export class Toolbox extends React.Component<Props> {
             <Tool 
                 iconElement={<FiZoomIn color={this.props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"} />}
                 label="Zoom"
+		        label2="(z)"
                 onClick={() => this.props.setDisplayMode(DisplayMode.boxzoom)}
             />
             <Tool 
                 iconElement={<IoHandRight color={this.props.currentDisplayMode === DisplayMode.zoom ? "red" : "black"} />}
                 label="Pan"
+		        label2="(p)"
                 onClick={() => this.props.setDisplayMode(DisplayMode.zoom)}
             />
             <Tool 
                 iconElement={<BiMessageSquareAdd color={this.props.currentDisplayMode === DisplayMode.select ? "red" : "black"} />}
                 label="Select"
-                onClick={() => this.props.setDisplayMode(DisplayMode.select)}
+                label2="(b)"
+		onClick={() => this.props.setDisplayMode(DisplayMode.select)}
             />
             <Tool 
                 iconElement={<BiEraser color={this.props.currentDisplayMode === DisplayMode.erase ? "red" : "black"} />}
                 label="Erase"
+		label2="(e)"
                 onClick={() => this.props.setDisplayMode(DisplayMode.erase)}
             />
         </div>
@@ -44,6 +48,7 @@ export class Toolbox extends React.Component<Props> {
 interface ToolProps {
     iconElement: JSX.Element,
     label: string,
+    label2: string,
     onClick: () => void
 }
 
@@ -52,6 +57,7 @@ class Tool extends React.Component<ToolProps> {
         return <div className="Toolbox-Tool" title={this.props.label} onClick={this.props.onClick}>
             {this.props.iconElement}
             <div className="Toolbox-Tool-label">{this.props.label}</div>
+	    <div className="Toolbox-Tool-label2">{this.props.label2}</div>
         </div>
     }
 }
