@@ -136,6 +136,7 @@ button {
 }
 .input-label {
     margin-left: 50px;
+    margin-bottom: 30px;
 }
 
 input[type="number"]
