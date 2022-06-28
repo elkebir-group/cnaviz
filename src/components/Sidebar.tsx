@@ -2,7 +2,7 @@ import React from "react";
 import "./Sidebar.css";
 import {ClusterTable} from "./ClusterTable";
 import {DisplayMode, ProcessingStatus} from "../App";
-import {CSV} from "./CSVLink"
+import {CSV} from "./CSVLink";
 import { GenomicBin} from "../model/GenomicBin";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
 import {IoHandRight} from "react-icons/io5"
@@ -111,35 +111,6 @@ function Sidebar(props: Props) {
           }
       </div>
 
-      {/* <div className="closemenu2" title="Mode: Zoom." onClick={() => props.setDisplayMode(DisplayMode.boxzoom)}>
-            <div className="arrow-container"> 
-              <FiZoomIn
-                color={props.currentDisplayMode === DisplayMode.boxzoom ? "red" : "black"}
-              />
-            </div>
-      </div>
-      <div className="closemenu3" title="Mode: Panning." onClick={() => props.setDisplayMode(DisplayMode.zoom)}>
-            <div className="arrow-container"> 
-              <IoHandRight
-                color={props.currentDisplayMode === DisplayMode.zoom ? "red" : "black"}
-              />
-            </div>
-      </div>
-      <div className="closemenu4" title="Mode: Select." onClick={() => props.setDisplayMode(DisplayMode.select)}>
-            <div className="arrow-container"> 
-              <BiMessageSquareAdd
-                color={props.currentDisplayMode === DisplayMode.select ? "red" : "black"}
-              />
-            </div>
-      </div>      
-      <div className="closemenu5" title="Mode: Deselect." onClick={() => props.setDisplayMode(DisplayMode.erase)}>
-            <div className="arrow-container"> 
-              <BiEraser
-                color={props.currentDisplayMode === DisplayMode.erase ? "red" : "black"}
-              />
-            </div>
-      </div> */}
-
       <div className="contents">
       <div className="row-contents" > <h1>CNAViz v2.0</h1> </div>
         <div className="title-bar"></div>
@@ -154,7 +125,8 @@ function Sidebar(props: Props) {
               </label>
               
               <label className="custom-file-export" title="Exports your clustering.">
-                <CSV data={props.data} logData={props.logData} fileName={props.chosenFile} onExport={props.onExport}></CSV>
+                {/* <CSV data={props.data} logData={props.logData} fileName={props.chosenFile} onExport={props.onExport}></CSV> */}
+                <CSV data={props.data} fileName={props.chosenFile} onExport={props.onExport}></CSV>
                 Export <FiDownload/>
               </label>
               <label className="demo" title="Loads CNAViz with demo data.">

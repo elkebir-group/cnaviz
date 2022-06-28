@@ -21,6 +21,8 @@ import {IconContext} from "react-icons";
 import {AnalyticsTab} from "./components/AnalyticsTab";
 import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
 import {Toolbox} from "./components/Toolbox";
+import {Log} from "./components/LogLink";
+import {FiDownload} from "react-icons/fi";
 
 function getFileContentsAsString(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -1306,7 +1308,11 @@ export class App extends React.Component<{}, State> {
                             onClusterRowsChange={this.onClusterRowsChange}
                             colName={"Actions (Starting from most recent)"}
                         ></LogTable>
-                    </div> }
+                        <label className="custom-file-export" title="Exports your clustering.">
+                            <Log logData={actions} fileName={this.state.chosenFile} onExport={this.onExport}></Log>
+                            Export <FiDownload/>
+                        </label>
+                    </div>}
 
                 {this.state.showCentroidTable && <div className="black_overlay" onClick={()=> this.setState({showCentroidTable: !this.state.showCentroidTable})}></div> }
                 {this.state.showCentroidTable && 

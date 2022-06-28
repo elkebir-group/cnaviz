@@ -5,8 +5,8 @@ import spinner from "../loading-small.gif";
 import {TEMPORARY_COLUMNS} from "../constants";
 
 interface Props {
-    data : readonly GenomicBin[];
-    // logData: any[];
+    // data : readonly GenomicBin[];
+    logData: any[];
     fileName: string;
     onExport: () => void;
 }
@@ -27,7 +27,7 @@ function convertToTsv(data: readonly GenomicBin[]): Promise<string> {
     })  
 }
 
-export class CSV extends React.Component<Props, State> {
+export class Log extends React.Component<Props, State> {
     private csvLink: any;
     constructor(props: Props) {
         super(props);
@@ -41,16 +41,15 @@ export class CSV extends React.Component<Props, State> {
     async handleFileDownload() {
         this.setState({loading: true});
 
-        let csvContent = "";
-        try {
-            csvContent = await convertToTsv(this.props.data);
-        } catch(error) {
-            console.error(error);
-            return;
-        }
-        
-        var hiddenElement = document.createElement('a');  
-        hiddenElement.href = 'data:text/tab-separated-values,' + encodeURIComponent(csvContent);  
+        // let csvContent = "";
+        // try {
+        //     csvContent = await convertToTsv(this.props.data);
+        // } catch(error) {
+        //     console.error(error);
+        //     return;
+        // }
+        // var hiddenElement = document.createElement('a');  
+        // hiddenElement.href = 'data:text/tab-separated-values,' + encodeURIComponent(csvContent);  
         
         // provide the name for the CSV file to be downloaded
         // Assume that underscore is not in actual filename (only used to separate datetime)
@@ -93,19 +92,19 @@ export class CSV extends React.Component<Props, State> {
 
         let time = hrs + min + sec;
         
-        // let actions = [];
-        // for(let action of this.props.logData) {
-        //     actions.push(action.action);
-        // }
-        // let logFileContent = "";
-        // logFileContent = actions.join("\n");
-        // var hiddenElement2 = document.createElement('a');  
-        // hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);
-        // hiddenElement2.download = removeDateTime[0] + "-log_" + date + "_" + time;  
-        // hiddenElement2.click();
+        let actions = [];
+        for(let action of this.props.logData) {
+            actions.push(action.action);
+        }
+        let logFileContent = "";
+        logFileContent = actions.join("\n");
+        var hiddenElement2 = document.createElement('a');  
+        hiddenElement2.href = 'data:text/plain,' + encodeURIComponent(logFileContent);
+        hiddenElement2.download = removeDateTime[0] + "-log_" + date + "_" + time;  
+        hiddenElement2.click();
 
-        hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
-        hiddenElement.click();
+        // hiddenElement.download = removeDateTime[0] + "_" + date + time + ".tsv";
+        // hiddenElement.click();
 
         this.setState({loading: false})
     }
@@ -117,7 +116,7 @@ export class CSV extends React.Component<Props, State> {
                 this.props.onExport();
                 this.handleFileDownload()
             }} style={{display: "none"}}>Export</button>
-            {this.state.loading && <div>Reading file... <img src={spinner} alt="Loading" /></div>}
+            {this.state.loading && <div>Downloading...<img src={spinner} alt="Loading" /></div>}
         </div>
         return csvButton;
     }
