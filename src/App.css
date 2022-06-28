@@ -86,6 +86,7 @@ body {
     /* grid-auto-rows: auto; */
     justify-content: center;
     flex-direction: row;
+    margin-top: 20px;
 }
 
 #sampleviz-container {
