@@ -11,7 +11,7 @@ Click [here](https://elkebir-group.github.io/cnaviz/) to run the latest version 
 3) Open https://localhost:3000 in the browser
 
 ## Data Prepartion
-Click [here](docs/DataPreparation.md) for the full tutorial on preparing data for CNAViz, obtaining a HATCHet, ASCAT or GMMHMM clustering, or performing downstream copy-number calling with HATCHet. . 
+Click [here](docs/DataPreparation.md) for the full tutorial on preparing data for CNAViz, obtaining a HATCHet, ASCAT or GMMHMM clustering, or performing downstream copy-number calling with HATCHet. 
 
 <!-- ### De novo clustering
 
