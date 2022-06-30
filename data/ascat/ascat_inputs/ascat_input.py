@@ -1,5 +1,6 @@
 import numpy as np
 
+# input file should be some file with bins. can also run ASCAT the recommended way.
 bbc = "/Users/gillianchu/mek/cnaviz/data/Casasent2018/P6/results/best.bbc.ucn"
 output_baf = "P6_ascat_baf.txt"
 output_logr = "P6_ascat_logr.txt"
