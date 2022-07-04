@@ -503,7 +503,7 @@ export class DataWarehouse {
     }
 
     recalculateCentroids(key: keyof Pick<GenomicBin, "RD" | "logRD" | "fractional_cn">, data?: GenomicBin[]) {
-        console.log("Recalculating Centroids...");
+        // console.log("Recalculating Centroids...");
         this.centroids = [];
         this.centroidPts = {};
         const bins = (data) ? data : this.allRecords
@@ -553,7 +553,7 @@ export class DataWarehouse {
         this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
     }
     setClusterFiltersTo(clusters?: String[]) {
-        console.log("setClustersFiltersTo");            
+        // console.log("setClustersFiltersTo", clusters);            
         if(clusters) {
             this._cluster_filters_to = clusters;
         }
@@ -570,7 +570,7 @@ export class DataWarehouse {
         // this._sampleGroupedData = _.groupBy(this._ndx.allFiltered(), "SAMPLE");
     }
     setClusterFiltersFrom(clusters?: String[]) {
-        console.log("setClustersFiltersFrom");
+        // console.log("setClustersFiltersFrom", clusters);
         if(clusters) {
             this._cluster_filters_from = clusters;
         }
@@ -609,9 +609,105 @@ export class DataWarehouse {
         if(!this.brushedBins || this.brushedBins.length === 0) {
             return;
         }
-        console.log("Updating cluster to", cluster); 
+        // console.log("Updating cluster to", cluster); 
 
         this.historyStack.push(JSON.parse(JSON.stringify(this.brushedBins)));
+        let brushedTableData  = this.brushedTableData();
+        
+        // Create a description of the cluster update and store it
+        let action = "Assigned to cluster " + cluster + " | ";
+        action += "Clusters selected: ";
+        for(const row of brushedTableData) {
+            action += String(row.key) + " (" + String(row.value) + "%), ";
+        }
+        action += " | "
+        let currentRdRange : [number, number] = [_.minBy(this.brushedBins, this.currentDataKey)![this.currentDataKey], _.maxBy(this.brushedBins, this.currentDataKey)![this.currentDataKey]];
+        let currentBAFRange : [number, number] = [_.minBy(this.brushedBins, "reverseBAF")!.reverseBAF, _.maxBy(this.brushedBins, "reverseBAF")!.reverseBAF];
+        
+        action += this.currentDataKey + " Range of Selected: [" + currentRdRange[0].toFixed(2) + ", "+currentRdRange[1].toFixed(2) + "] | ";
+        action += "Allelic Imbalance Range of Selected: [" + currentBAFRange[0].toFixed(2) + ", "+currentBAFRange[1].toFixed(2) + "]";
+        this.logOfActions.unshift({action: action});
+        
+        // For each bin that was selected, update the cluster of that bin in every sample
+        for(let i = 0; i < this.brushedBins.length; i++) {
+            let locKey = GenomicBinHelpers.toChromosomeInterval(this.brushedBins[i]).toString();
+            if(this._locationGroupedData[locKey]) {
+                for(let j = 0; j < this._locationGroupedData[locKey].length; j++) {
+                    this._locationGroupedData[locKey][j].CLUSTER = cluster;
+                }
+            }
+        }
+
+        const allBins : GenomicBin[][] = Object.values(this._locationGroupedData);
+        let flattenNestedBins : GenomicBin[] = GenomicBinHelpers.flattenNestedBins(allBins);
+
+        this.centroids = [];
+        this.centroidPts = {};
+
+        // Update the clusters that correspond to each chromosome
+        this.chrToClusters = {};
+        for(const d of flattenNestedBins) {
+            if(this.chrToClusters[d["#CHR"]]) {
+                this.chrToClusters[d["#CHR"]].add(String(d.CLUSTER));
+                
+            } else {
+                this.chrToClusters[d["#CHR"]] = new Set([String(d.CLUSTER)]); 
+            }   
+        }
+
+        
+        // Steps to find centroids (in a format that can be displayed in the table properly)
+        // 1. group by cluster
+        // 2. Get each group of points with all matching cluster
+        // 3. Group by sample
+        // 4. Find centroid for that group of points
+        // 5. Create a Sample dictionary with each sample name mapped to centroid
+        // 6. Add dictionary to table row
+        // 7. Push table row into list of table rows
+        // 8. Move on to next cluster and repeat
+
+        this.recalculateCentroids(this.currentDataKey, flattenNestedBins);
+
+        this.initializeCentroidDistMatrix();
+
+        this._ndx.remove();
+        this._ndx = crossfilter(flattenNestedBins);
+        this._sample_dim = this._ndx.dimension((d:GenomicBin) => d.SAMPLE);
+        this._cluster_dim = this._ndx.dimension((d:GenomicBin) => d.CLUSTER);
+        this._chr_dim = this._ndx.dimension((d:GenomicBin) => d["#CHR"]);
+        this.brushedBins = [];
+        this.brushedCrossfilter.remove();
+        this._clusterAmounts = _.cloneDeep(this._cluster_dim.group().all());
+        this.allRecords =  this._ndx.all(); 
+        this.clusterTableInfo = this.calculateClusterTableInfo();
+        this.clusterTableInfo2 = this.calculateClusterTableInfo();
+        this.clusterTableInfo3 = this.calculateClusterTableInfo();
+        this.allRecords = this.allRecords.filter((d: GenomicBin) => d.CLUSTER !== -2);
+
+        if(!this._cluster_filters.includes(String(cluster))) {
+            this._cluster_filters.push(String(cluster));
+        }
+
+        // if(!this._cluster_filters_to.includes(String(cluster))) { // gc
+        //     this._cluster_filters_to.push(String(cluster));
+        // }
+        
+        // if(!this._cluster_filters_from.includes(String(cluster))) { // gc
+        //     this._cluster_filters_from.push(String(cluster));
+        // }
+
+        this.setClusterFilters(this._cluster_filters);
+        this.shouldCalculatesilhouettes = true;
+
+        this._updateFractionalCopyNumbers.cache = new _.memoize.Cache()
+    }
+
+    updateCluster_nolog(cluster: number) {
+        if(!this.brushedBins || this.brushedBins.length === 0) {
+            return;
+        }
+        // console.log("Updating cluster to", cluster); 
+
         let brushedTableData  = this.brushedTableData();
         
         // Create a description of the cluster update and store it
@@ -1227,106 +1323,133 @@ export class DataWarehouse {
             }
         }
     }
-    // applies the same across all samples
-    absorbBins(from_set: String[], to_set: String[], xthresh: number, ythresh: number) {
+
+
+    absorbBins(from_set: String[], to_set: String[], xthresh: Map<String, number>, ythresh: Map<String, number>) {
+
         // for loop through all records in from_set!!
         let clusters_from = new Set(this._cluster_filters_from);
         let clusters_to = new Set(this._cluster_filters_to);
         console.log("inside absorbBins()...");
+        console.log("_cluster_filters_from", this._cluster_filters_from);
+        console.log("_cluster_filters_to", this._cluster_filters_to); 
 
+        let print_once = true; 
         const reassign = new Map(); 
+        // for each from cluster 
+        for (let c_from of Array.from(this._cluster_filters_from)) {
+            // pull up all bins from this cluster
+            const bins = this.allRecords; 
+            const groupedByCluster = _.groupBy(bins, "CLUSTER");
+            for (const [clus, binsForCluster] of Object.entries(groupedByCluster)) {
+                const groupedBySample = _.groupBy(binsForCluster, "SAMPLE");
+                // console.log("clus", clus, "binsForCluster", binsForCluster); 
+                const groupedByBin = _.groupBy(binsForCluster, "genomicPosition"); 
+                // for every bin identified by genomic position
+                if (clus === c_from) {
+                    // console.log("clus from:", clus); 
+                    for (const [genomicPos, binsAcrossSamples] of Object.entries(groupedByBin)) {
+                        // calculate minimum centroid
+                        let minDistFromCentroid : number = Number.MAX_VALUE; 
+                        let minCluster : number = -2; 
+                        let min_x : number = Number.MAX_VALUE; 
+                        let min_y : number = Number.MAX_VALUE; 
 
-        for(let i = 0; i < this.allRecords.length; i++) { // gc: apply the cluster filter to only get clusters from "from_set" in a more intelligent way...
-            const bin = this.allRecords[i];
-            const c_bin = bin.CLUSTER;
-            // console.log("c_bin:", String(c_bin), "clusters_from", clusters_from); 
-            if (clusters_from.has(String(c_bin))) {
-                console.log("Looking at bins", c_bin); 
-                const sample = bin.SAMPLE;
-                const ploidy = this.sampleToPloidy[sample];
-                const meanRD = this.rdMeans[sample];
-                const rd = this.allRecords[i].RD;
-
-                let x : number = bin.reverseBAF;
-                let y : number = bin.fractional_cn; 
-
-                // for loop through all the active centroids (variable for this)
-                // centroidPts : SampleIndexedData<ClusterIndexedData<centroidPoint[]>>;
-
-                let minDistFromCentroid : number = Number.MAX_VALUE; 
-                let minCluster : number = -2;
-                let min_x : number = Number.MAX_VALUE;
-                let min_y : number = Number.MAX_VALUE; 
-
-                let needpop : boolean = false; 
-                if (String(c_bin) in clusters_to) {
-                    needpop = false; 
-                } else {
-                    needpop = true; 
-                }
-                clusters_to.add(String(c_bin)); 
-
-
-                console.log("clusters_to", clusters_to);
-                for (var to_c of Array.from(clusters_to.values())) {
-                    console.log("to_c", to_c); 
-                    const samplePts = this.centroidPts[sample]; // Get centroids for a specific sample
-                    console.log("Here is samplePts", samplePts); 
-                    console.log("samplePts[c_bin]", samplePts[String(to_c)]);
-                    let centroid = samplePts[String(to_c)][0];
-                    console.log("centroid:", centroid); 
-                    
-                    let c_x : number = centroid.point[0];
-                    let c_y : number = centroid.point[1]; 
-                    console.log("c_x:", c_x, "c_y:", c_y);
-                    
-                    console.log(String(to_c), clusters_to)
-                    const dist = Math.sqrt((c_x - x)**2 + (c_y - y)**2);
-                    if (dist < minDistFromCentroid) {
-                        minCluster = Number(to_c); 
-                        minDistFromCentroid = dist;
-                        min_x = Math.abs(c_x-x);
-                        min_y = Math.abs(c_y-y);  
-                        console.log("Closest Centroid.", String(to_c)); 
-                    }
-                }
-                if (needpop) {
-                    clusters_to.delete(String(c_bin)); 
-                }
-                
-                console.log("Min_x", min_x);
-                console.log("Min_y", min_y);
-                console.log("minCluster", minCluster);
-                console.log("xthresh:", xthresh, "ythresh", ythresh); 
-                if (min_x <= xthresh && min_y <= ythresh) {
-                    if (reassign.has(String(minCluster))) {
-                        // if (reassign.get(String(minCluster))) {
-                        var arr = reassign.get(String(minCluster)); 
-                        if (arr != undefined) {
-                            arr.push(bin); 
-                            reassign.set(String(minCluster), arr);
-                        } else {
-                            console.log("Arr is undefined??"); 
+                        // console.log("binsAcrossSamples", binsAcrossSamples);
+                        const groupedBySample = _.groupBy(binsAcrossSamples, "SAMPLE"); 
+                        // console.log("groupedBySample", groupedBySample);
+                        for (const [sample, bin] of Object.entries(groupedBySample)) {
+                            // if (print_once) {
+                            // console.log("sample", sample); 
+                            // console.log("bin", bin[0]); 
+                            let x : number = bin[0]["reverseBAF"];
+                            let y : number = bin[0]["fractional_cn"]; 
+                            const samplePts = this.centroidPts[sample];
+                            // console.log("samplePts", samplePts); 
+                            // console.log("centroids to", clusters_to); 
+                            for (var to_c of Array.from(clusters_to.values())) {
+                                let centroid = samplePts[String(to_c)][0];
+                                    // console.log("centroid", centroid);
+                                    let c_x : number = centroid.point[0];
+                                    let c_y : number = centroid.point[1]; 
+                                    // console.log("c_x", c_x, "c_y", c_y);
+                                    // console.log("x", x, "y", y); 
+                                    print_once = false;  
+                                    const dist = Math.sqrt((c_x - x)**2 + (c_y - y)**2);
+                                    // console.log("dist", dist);  
+                                    if (dist < minDistFromCentroid) {
+                                        minCluster = Number(to_c); 
+                                        minDistFromCentroid = dist;
+                                        min_x = Math.abs(c_x-x);
+                                        min_y = Math.abs(c_y-y);  
+                                    } 
+                            // }
+                            }
                         }
-                            // reassign.get(String(minCluster)).push(bin); 
-                        // }
-                    } else {
-                        reassign.set(String(minCluster), [bin]); 
+                        // with minimum centroid across all clusters and across all samples
+                        // check whether it falls below the threshold in each sample
+                        let underThresh : boolean = true; 
+                        for (const [sample, bin] of Object.entries(groupedBySample)) {
+                            let x_thr : number = xthresh[sample]; 
+                            let y_thr : number = ythresh[sample];
+                            if (min_x > x_thr || min_y > y_thr) {
+                                underThresh = underThresh && false; 
+                            } 
+                        }
+                        // let s, b = Object.entries(groupedBySample)[0];
+                        if (minCluster != -2 && underThresh) {
+                            // console.log("minCluster", minCluster); 
+                            for (const [sample, bin] of Object.entries(groupedBySample)) {
+                                if (reassign.has(String(minCluster))) {
+                                    var arr = reassign.get(String(minCluster)); 
+                                    if (arr != undefined) {
+                                        // arr.push(b["genomicPosition"]);
+                                        arr.push(bin[0]);
+                                        reassign.set(String(minCluster), arr);
+                                    } else {
+                                        console.log("Arr is undefined??"); 
+                                    }
+                                } else {
+                                    // reassign.set(String(minCluster), [b["genomicPosition"]]); 
+                                    let binarr : GenomicBin[] = [bin[0]]; 
+                                    reassign.set(String(minCluster), binarr); 
+                                }
+                            }   
+                        }
                     }
-                } else {
-                    console.log("Didn't reassign because not within threshold!"); 
                 }
             }
+
         }
+        // console.log(reassign); 
+        return reassign; 
+    }
+
+
+    // const groupedByCluster = _.groupBy(this.allRecords, "CLUSTER"); // rawdata
+    // for (var clusterName of Array.from(new_reassign_group.keys())) {
+    //     for (var toCluster of Array.from(new_reassign_group.get(clusterName))) {
+    //         const groupedBySample = _.groupBy(groupedByCluster[String(toCluster)], "SAMPLE");
+    //         const binsForSample = groupedBySample[String(sample)];
+    //         this.setbrushedBins(binsForSample);
+
+    assignAbsorb(reassign: any) {       
+        // console.log("reassign", reassign);      
+        const bins = this.allRecords; 
+        //const groupedByPos = _.groupBy(bins, "genomicPosition"); 
         // assign bin to closest centroid if closer than threshold
         for (var clusterName of Array.from(reassign.keys())) {
-            let clusterbins : GenomicBin[] = reassign.get(clusterName); 
-            this.setbrushedBins(clusterbins);
-            this.updateCluster(Number(clusterName)); 
-            console.log("Pushing to history stack.");
-            this.historyStack.push(JSON.parse(JSON.stringify(clusterbins)));
+            let binarr = reassign.get(clusterName); 
+            this.setbrushedBins(binarr);
+            this.updateCluster_nolog(Number(clusterName)); 
+            // console.log("binarr", binarr[0]); 
+            // for (let i=0; i < binarr.length; i++) {
+            //     this.setbrushedBins(binarr[i]);
+            //     this.updateCluster_nolog(Number(clusterName)); 
+            // }
         } 
     }
+
 
     /**
      * Helper function for performing queries.
