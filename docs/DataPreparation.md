@@ -30,15 +30,22 @@ Below we detail how the pipeline we provide takes sequencing data and produces t
 We provide the user with scripts to run the necessary modular steps from the HATCHet package, which you can install with bioconda. As input, we need to set the following within the [input parameter file](docs/hatchet_rdrbaf.ini):
 
 > reference = "/path/to/reference.fa" // reference genome
+
 > normal = "/path/to/normal.bam" // BAM files containing normal sample
+
 > bams = "/path/to/tumor1.bam /path/to/tumor2.bam" // space delimited list of BAM files containing tumor samples
+
 > samples = "A32A A32C" // sample names
+
 > output = "/path/to/output" // output path directory
 
 Additionally, in order to select the list of known germline SNPs, we must provide reference panels. If none is specified, then all positions will be genotyped with bcftools. 
 > ref_panel = "1000GP_Phase3"
+
 > ref_panel_dir = "/path/to/refpanel"
+
 > reference_version = "hg19"
+
 > chr_notation = False // whether the reference names chromosomes with the 'chr' prefix
 
 Then, the following steps take place: 
