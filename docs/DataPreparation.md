@@ -4,23 +4,23 @@ CNAViz can be run in *de novo* mode, i.e. starting from an empty clustering, or 
 To get hte initial CNAViz inputs, we use HATCHet to get RDR and BAF values (example .ini file [here](docs/hatchet_rdrbaf.ini)). We summarize the details of what is happening in this script in the next section.
 
 *de novo* mode:
-1 (b). Use CNAViz.
-1 (c). Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
+1. Use CNAViz.
+2. Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
 
 Refinement mode (HATCHet): 
-2 (a). HATCHet clustering (example.ini file [here](docs/hatchet_pre.ini)).
-2 (b). Use CNAViz to refine the existing clustering.
-2 (c). Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
+1. HATCHet clustering (example.ini file [here](docs/hatchet_pre.ini)).
+2. Use CNAViz to refine the existing clustering.
+3. Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
 
 Refinement mode (ASCAT): 
-3 (a). ASCAT clustering.
-3 (b). Use CNAViz to refine the existing clustering.
-3 (c). Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
+1. ASCAT clustering.
+2. Use CNAViz to refine the existing clustering.
+3. Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
 
 *de novo* mode:
-1 (b). Run GMMHMM.py to get an initial clustering (use [model.py](initial_clustering/model.py)).
-1 (c). Use CNAViz.
-1 (d). Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
+1. Run GMMHMM.py to get an initial clustering (use [model.py](initial_clustering/model.py)).
+2. Use CNAViz.
+3. Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
 
 ***
 
