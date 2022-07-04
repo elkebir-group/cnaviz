@@ -1,7 +1,7 @@
 ## Data Pipelines
 CNAViz can be run in *de novo* mode, i.e. starting from an empty clustering, or in refinement mode, i.e. starting with a given initial clustering. Following user-guided refinement using CNAViz, the resulting clustering file can be provided to any method of the user's choice for CNA calling. We provide details on how to provide the CNAViz output clustering to HATCHet for CNA calling.
 
-To get hte initial CNAViz inputs, we use HATCHet to get RDR and BAF values (example .ini file [here](docs/hatchet_rdrbaf.ini)). We summarize the details of what is happening in this script in the next section.
+To get the initial CNAViz inputs, we use HATCHet to get RDR and BAF values (example .ini file [here](docs/hatchet_rdrbaf.ini)). We summarize the details of what is happening in this script in the next section.
 
 *de novo* mode:
 1. Use CNAViz.
