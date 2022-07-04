@@ -18,6 +18,7 @@ Refinement mode (ASCAT):
 3. Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
 
 Initial clustering mode:
+Refinement mode (GMMHMM):
 1. Run GMMHMM.py to get an initial clustering (use [model.py](initial_clustering/model.py)).
 2. Use CNAViz.
 3. Perform CNA calling using HATCHet (example .ini file [here](docs/hatchet_post.ini)).
