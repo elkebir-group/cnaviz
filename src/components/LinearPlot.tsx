@@ -255,21 +255,21 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr("y", (this.props.showPurityPloidy) ? 10 : getLeftPadding(this.props.showPurityPloidy)/2 + 5)
             .attr("text-anchor", "middle");
         
-        const chr_ticks = genome.getChromosomeStarts2(chrs)
-        const x_axis_ticks_no_overlap : number[] = []
-        const filtered_chrs : Chromosome[] = []
+        const chrTicks = genome.getChromosomeStarts2(chrs)
+        const xAxisTicksNoOverlap : number[] = []
+        const filteredChrs : Chromosome[] = []
 
-        x_axis_ticks_no_overlap.push(chr_ticks[0])
-        filtered_chrs.push(chrs[0])
+        xAxisTicksNoOverlap.push(chrTicks[0])
+        filteredChrs.push(chrs[0])
 
-        for(let i = 1; i < chr_ticks.length; i++) {
-            let first = xScale(x_axis_ticks_no_overlap[x_axis_ticks_no_overlap.length-1]) || 0;
-            let second = xScale(chr_ticks[i]) || 0;
-            let dist_test = second - first;
+        for(let i = 1; i < chrTicks.length; i++) {
+            let first = xScale(xAxisTicksNoOverlap[xAxisTicksNoOverlap.length-1]) || 0;
+            let second = xScale(chrTicks[i]) || 0;
+            let pixelDist = second - first;
 
-            if(dist_test > 8) {
-                x_axis_ticks_no_overlap.push(chr_ticks[i]);
-                filtered_chrs.push(chrs[i]);
+            if(pixelDist > 8) {
+                xAxisTicksNoOverlap.push(chrTicks[i]);
+                filteredChrs.push(chrs[i]);
             }
         }
 
@@ -277,8 +277,8 @@ export class LinearPlot extends React.PureComponent<Props> {
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(d3.axisBottom(scale)
-                    .tickValues(x_axis_ticks_no_overlap)
-                    .tickFormat((unused, i) => findChrNumber(filtered_chrs[i].name)))
+                    .tickValues(xAxisTicksNoOverlap)
+                    .tickFormat((unused, i) => findChrNumber(filteredChrs[i].name)))
         
         let xAx2 = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
@@ -302,22 +302,22 @@ export class LinearPlot extends React.PureComponent<Props> {
             const filteredTicks = ticks.filter(d => d.fractionalTick > domain[0] && d.fractionalTick < domain[1]) // this.filterFractionalCNTicks(ticks, yScale.domain())
             const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
             
-            const ticks_without_overlap : number[] = []
-            const filterFractionalTicks_no_overlap : fractional_copy_number[] = []
+            const ticksWithoutOverlap : number[] = []
+            const filterFractionalTicksNoOverlap : fractional_copy_number[] = []
 
             if(filteredTicks.length > 0) {
-                ticks_without_overlap.push(filteredTicksVals[0])
-                filterFractionalTicks_no_overlap.push(filteredTicks[0])
+                ticksWithoutOverlap.push(filteredTicksVals[0])
+                filterFractionalTicksNoOverlap.push(filteredTicks[0])
             }
 
             for(let i = 1; i < filteredTicks.length; i++) {
-                let first = yScale(ticks_without_overlap[ticks_without_overlap.length-1]) || 0;
+                let first = yScale(ticksWithoutOverlap[ticksWithoutOverlap.length-1]) || 0;
                 let second = yScale(filteredTicksVals[i]) || 0;
-                let dist_test = first - second;
+                let pixelDist = first - second;
 
-                if(dist_test > 8) {
-                    ticks_without_overlap.push(filteredTicksVals[i]);
-                    filterFractionalTicks_no_overlap.push(filteredTicks[i])
+                if(pixelDist > 8) {
+                    ticksWithoutOverlap.push(filteredTicksVals[i]);
+                    filterFractionalTicksNoOverlap.push(filteredTicks[i])
                 }
             }
             
@@ -325,7 +325,7 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(ticks_without_overlap).tickSizeInner(-width + 60).tickFormat((d, i) => filterFractionalTicks_no_overlap[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
+                .call(d3.axisLeft(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-width + 60).tickFormat((d, i) => filterFractionalTicksNoOverlap[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
         } else if(this.props.showPurityPloidy) {
             const currYDomain = yScale.domain();
 
