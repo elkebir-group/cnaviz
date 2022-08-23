@@ -100,7 +100,7 @@ export class Genome {
         return this._chrStarts;
     }
 
-    getChromosomeStarts2(chrs: Chromosome[], implicitStart: number, implicitEnd: number): number[] {
+    getChromosomeStarts2(chrs: Chromosome[]): number[] {
         
         // return chrStarts;
         return chrs.map(chr => {

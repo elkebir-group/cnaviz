@@ -10,6 +10,7 @@ import {webglColor, getRelativeCoordinates, niceBpCount } from "../util";
 import "./Scatterplot.css";
 import {DisplayMode} from "../App"
 import { cn_pair, fractional_copy_number } from "../constants";
+import { scaleBand } from "d3";
 
 const PADDING = { // For the SVG
     left: 70,
@@ -565,10 +566,33 @@ export class Scatterplot extends React.Component<Props, State> {
             } else {
                 new_BAF_lines = this.props.BAF_lines; 
             }
-            // console.log("this.props.BAF_lines", this.props.BAF_lines); 
+            
             const filteredBAFTicks = new_BAF_lines.filter(value => value.tick > currXDomain[0] && value.tick < currXDomain[1]);
             const ticks = filteredBAFTicks.map(d => d.tick);
+            const ticks_without_overlap : number[] = []
+            const filterBAFTicks_no_overlap : cn_pair[] = []
+
+            if(ticks.length > 0) {
+                ticks_without_overlap.push(ticks[0])
+                filterBAFTicks_no_overlap.push(filteredBAFTicks[0])
+            }
+
+            for(let i = 1; i < ticks.length; i++) {
+                // console.log(ticks[i])
+                let first = xScale(ticks_without_overlap[ticks_without_overlap.length-1]) || 0;
+                let second = xScale(ticks[i]) || 0;
+                let dist_test = second - first;
+
+                if(dist_test > 12) {
+                    ticks_without_overlap.push(ticks[i]);
+                    filterBAFTicks_no_overlap.push(filteredBAFTicks[i])
+                }
+            }
             
+
+            // console.log("Test: ", dist_test)
+
+
             // console.log("filteredBAFTicks[i]", filteredBAFTicks); 
             // xAx = (g : any, scale : any) => g
             // .classed(SCALES_CLASS_NAME, true)
@@ -585,7 +609,7 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("id", "Grid")
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             // .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => ((filteredBAFTicks[i].state[0] != filteredBAFTicks[i].state[1]) || (filteredBAFTicks[i].state[1] != 2)) ? ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")" : ((filteredBAFTicks[i].state[1] != 2) ? ticks[i].toFixed(2) + "(x,x)" : "")))
-            .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => (filteredBAFTicks[i].state[0] != filteredBAFTicks[i].state[1]) ? ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")" : ticks[i].toFixed(2) + "(x,x)"))
+            .call(d3.axisBottom(scale).tickValues(ticks_without_overlap).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => (filterBAFTicks_no_overlap[i].state[0] != filterBAFTicks_no_overlap[i].state[1]) ? ticks_without_overlap[i].toFixed(2) + " ("+filterBAFTicks_no_overlap[i].state[0]+","+filterBAFTicks_no_overlap[i].state[1]+")" : ticks_without_overlap[i].toFixed(2) + "(x,x)"))
             .selectAll('text')
             .style("text-anchor", "end")
             .attr("dx", "-.8em")
@@ -608,17 +632,36 @@ export class Scatterplot extends React.Component<Props, State> {
             const filteredTicks = originalTicks.filter(value => value.fractionalTick > dom[0] && value.fractionalTick < upperBound && value.fractionalTick < dom[1]);
             const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
             
+            const ticks_without_overlap : number[] = []
+            const filterYAxisTicks_no_overlap : fractional_copy_number[] = []
+
             // yAx = (g : any, scale : any) => g
             //     .classed(SCALES_CLASS_NAME, true)
             //     .attr("id", "Grid")
             //     .attr("transform", `translate(${PADDING.left}, 0)`)
             //     .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 80).tickFormat((d, i) => filteredTicks[i].totalCN + "(x,x)"));
+            if(filteredTicks.length > 0) {
+                ticks_without_overlap.push(filteredTicksVals[0])
+                filterYAxisTicks_no_overlap.push(filteredTicks[0])
+            }
+
+            for(let i = 1; i < filteredTicksVals.length; i++) {
+                console.log(filteredTicksVals[i])
+                let first = yScale(ticks_without_overlap[ticks_without_overlap.length-1]) || 0;
+                let second = yScale(filteredTicksVals[i]) || 0;
+                let dist_test = first - second;
+                console.log("Dist Test: ", dist_test)
+                if(dist_test > 10) {
+                    ticks_without_overlap.push(filteredTicksVals[i]);
+                    filterYAxisTicks_no_overlap.push(filteredTicks[i])
+                }
+            }
 
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${PADDING.left}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 80).tickFormat((d, i) => filteredTicks[i].totalCN + " ("+Number(d.valueOf()).toFixed(2)+")"));
+                .call(d3.axisLeft(scale).tickValues(ticks_without_overlap).tickSizeInner(-width + 80).tickFormat((d, i) => filterYAxisTicks_no_overlap[i].totalCN + " ("+Number(d.valueOf()).toFixed(2)+")"));
         }
         
         
