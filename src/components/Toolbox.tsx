@@ -2,7 +2,7 @@ import "./Toolbox.css";
 import React from "react";
 import {FiArrowLeftCircle, FiArrowRightCircle, FiZoomIn, FiUpload, FiDownload} from "react-icons/fi";
 import {IoHandRight} from "react-icons/io5"
-import {BiEraser, BiMessageSquareAdd} from "react-icons/bi";
+import {BiEraser, BiMessageSquareAdd, BiMessageSquareMinus} from "react-icons/bi";
 import _ from "lodash";
 import { DisplayMode } from "../App";
 
@@ -35,7 +35,7 @@ export class Toolbox extends React.Component<Props> {
 		onClick={() => this.props.setDisplayMode(DisplayMode.select)}
             />
             <Tool 
-                iconElement={<BiEraser color={this.props.currentDisplayMode === DisplayMode.erase ? "red" : "black"} />}
+                iconElement={<BiMessageSquareMinus color={this.props.currentDisplayMode === DisplayMode.erase ? "red" : "black"} />}
                 label="Deselect"
 		label2="(d)"
                 onClick={() => this.props.setDisplayMode(DisplayMode.erase)}

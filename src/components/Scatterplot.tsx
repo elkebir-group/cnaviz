@@ -609,7 +609,7 @@ export class Scatterplot extends React.Component<Props, State> {
             .attr("id", "Grid")
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             // .call(d3.axisBottom(scale).tickValues(ticks).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => ((filteredBAFTicks[i].state[0] != filteredBAFTicks[i].state[1]) || (filteredBAFTicks[i].state[1] != 2)) ? ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")" : ((filteredBAFTicks[i].state[1] != 2) ? ticks[i].toFixed(2) + "(x,x)" : "")))
-            .call(d3.axisBottom(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => (filterBAFTicksNoOverlap[i].state[0] != filterBAFTicksNoOverlap[i].state[1]) ? ticksWithoutOverlap[i].toFixed(2) + " ("+filterBAFTicksNoOverlap[i].state[0]+","+filterBAFTicksNoOverlap[i].state[1]+")" : ticksWithoutOverlap[i].toFixed(2) + "(x,x)"))
+            .call(d3.axisBottom(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-height + PADDING.top + PADDING.bottom).tickFormat((d, i) => (filterBAFTicksNoOverlap[i].state[0] != filterBAFTicksNoOverlap[i].state[1]) ? ticksWithoutOverlap[i].toFixed(2) + " ("+filterBAFTicksNoOverlap[i].state[0]+","+filterBAFTicksNoOverlap[i].state[1]+")" : ticksWithoutOverlap[i].toFixed(2) + " (x,x)"))
             .selectAll('text')
             .style("text-anchor", "end")
             .attr("dx", "-.8em")
@@ -691,7 +691,7 @@ export class Scatterplot extends React.Component<Props, State> {
                 // is it on an axis?
                 const doX = point[0] > xScale.range()[0];
                 const doY = point[1] < yScale.range()[0];
-                if(displayMode === DisplayMode.zoom || !(doX && doY)) {
+                if(displayMode === DisplayMode.zoom || !(doX && doY) || displayMode === DisplayMode.boxzoom) {
                     if (k === 1) {
                         // pure translation?
                         doX && zoomX && k && point && gx && gx.call(zoomX.translateBy, (t.x - z.x) / tx().k, 0);

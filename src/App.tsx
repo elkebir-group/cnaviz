@@ -978,8 +978,14 @@ export class App extends React.Component<{}, State> {
     }
 
     onClearClustering() {
-        this.state.indexedData.clearClustering();
-        this.setState({indexedData: this.state.indexedData});
+        let confirmAction = window.confirm("Are you sure you want to clear all clusters?");
+        if (confirmAction) {
+            alert("All clusters cleared.");
+            this.state.indexedData.clearClustering();
+            this.setState({indexedData: this.state.indexedData});
+        } else {
+            alert("Action canceled, clustering not cleared.");
+        }  
     }
 
     onExport() {
@@ -1306,7 +1312,7 @@ export class App extends React.Component<{}, State> {
                         <li> Hold down "Alt" in Zoom mode to temporarily enter remove-from-selection mode. </li>
                         <li> To completely clear your selection, click anywhere in the plot while in add-to-selection or remove-from-selection modes. </li>
                         <li> To stay in add-to-select mode, you can press (b) or click the + icon in the toolbar.</li>
-                        <li> To stay in remove-from-select mode, you can press (d) or click the eraser icon in the toolbar. </li>
+                        <li> To stay in remove-from-select mode, you can press (d) or click the - icon in the toolbar. </li>
                         <h5> Zoom/Pan Mode </h5>
                         <li> To enter zoom mode, click the magnifying glass icon in the toolbar, or press (z) on the keyboard. If you hold down shift, it will act as a bounding box zoom. </li>
                         {/* <li> In zoom mode, if you hold down shift, it will act as a bounding box zoom </li> */}

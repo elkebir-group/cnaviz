@@ -112,7 +112,7 @@ function Sidebar(props: Props) {
       </div>
 
       <div className="contents">
-      <div className="row-contents" > <h1>CNAViz v2.0</h1> </div>
+      <div className="row-contents" > <h1>CNAViz v3.0</h1> </div>
         <div className="title-bar"></div>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
@@ -269,7 +269,7 @@ function Sidebar(props: Props) {
               <input type="button" id="custom-button" onClick={props.onClearClustering}/>
               Clear Clustering
             </label>
-            <label className="undocluster" title="Undo cluster assignment.">
+            <label className="undocluster" title="Undo the last cluster assignment action, including the ''Clear Clustering'' action.">
               <input type="button" id="custom-button" onClick={props.onUndoClick}/>
               Undo Cluster
             </label>
