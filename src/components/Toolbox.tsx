@@ -36,8 +36,8 @@ export class Toolbox extends React.Component<Props> {
             />
             <Tool 
                 iconElement={<BiEraser color={this.props.currentDisplayMode === DisplayMode.erase ? "red" : "black"} />}
-                label="Erase"
-		label2="(e)"
+                label="Deselect"
+		label2="(d)"
                 onClick={() => this.props.setDisplayMode(DisplayMode.erase)}
             />
         </div>
