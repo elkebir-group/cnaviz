@@ -229,6 +229,7 @@ export class LinearPlot extends React.PureComponent<Props> {
         const chromosomes = genome.getChromosomeList();
         let chrs: Chromosome[]= [];
         let chrStarts = genome.getChrStartMap();
+
         for(let chr of chromosomes) {
             let start = chrStarts[chr.name];
             if(start >= xScale.domain()[0] && start <= xScale.domain()[1]) {
@@ -253,14 +254,31 @@ export class LinearPlot extends React.PureComponent<Props> {
             .attr("x", (height - PADDING.bottom - PADDING.top) / 2 - 1 + yLabelShift)
             .attr("y", (this.props.showPurityPloidy) ? 10 : getLeftPadding(this.props.showPurityPloidy)/2 + 5)
             .attr("text-anchor", "middle");
-
         
+        const chrTicks = genome.getChromosomeStarts2(chrs)
+        const xAxisTicksNoOverlap : number[] = []
+        const filteredChrs : Chromosome[] = []
+
+        xAxisTicksNoOverlap.push(chrTicks[0])
+        filteredChrs.push(chrs[0])
+
+        for(let i = 1; i < chrTicks.length; i++) {
+            let first = xScale(xAxisTicksNoOverlap[xAxisTicksNoOverlap.length-1]) || 0;
+            let second = xScale(chrTicks[i]) || 0;
+            let pixelDist = second - first;
+
+            if(pixelDist > 8) {
+                xAxisTicksNoOverlap.push(chrTicks[i]);
+                filteredChrs.push(chrs[i]);
+            }
+        }
+
         let xAx = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
             .attr("transform", `translate(0, ${height - PADDING.bottom})`)
             .call(d3.axisBottom(scale)
-                    .tickValues(genome.getChromosomeStarts2(chrs, scale.domain()[0], scale.domain()[1]))
-                    .tickFormat((unused, i) => findChrNumber(chrs[i].name)))
+                    .tickValues(xAxisTicksNoOverlap)
+                    .tickFormat((unused, i) => findChrNumber(filteredChrs[i].name)))
         
         let xAx2 = (g : any, scale : any) => g
             .classed(SCALES_CLASS_NAME, true)
@@ -283,12 +301,31 @@ export class LinearPlot extends React.PureComponent<Props> {
 
             const filteredTicks = ticks.filter(d => d.fractionalTick > domain[0] && d.fractionalTick < domain[1]) // this.filterFractionalCNTicks(ticks, yScale.domain())
             const filteredTicksVals = filteredTicks.map(d => d.fractionalTick);
+            
+            const ticksWithoutOverlap : number[] = []
+            const filterFractionalTicksNoOverlap : fractional_copy_number[] = []
 
+            if(filteredTicks.length > 0) {
+                ticksWithoutOverlap.push(filteredTicksVals[0])
+                filterFractionalTicksNoOverlap.push(filteredTicks[0])
+            }
+
+            for(let i = 1; i < filteredTicks.length; i++) {
+                let first = yScale(ticksWithoutOverlap[ticksWithoutOverlap.length-1]) || 0;
+                let second = yScale(filteredTicksVals[i]) || 0;
+                let pixelDist = first - second;
+
+                if(pixelDist > 8) {
+                    ticksWithoutOverlap.push(filteredTicksVals[i]);
+                    filterFractionalTicksNoOverlap.push(filteredTicks[i])
+                }
+            }
+            
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(filteredTicksVals).tickSizeInner(-width + 60).tickFormat((d, i) => filteredTicks[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
+                .call(d3.axisLeft(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-width + 60).tickFormat((d, i) => filterFractionalTicksNoOverlap[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
         } else if(this.props.showPurityPloidy) {
             const currYDomain = yScale.domain();
 
@@ -296,13 +333,9 @@ export class LinearPlot extends React.PureComponent<Props> {
             const currXDomain = this._currXScale.domain();
             // console.log("[Scatterplot render() -> showTetraploid", this.props.showTetraploid);
             if (!this.props.showTetraploid) {
-                // console.log("LinearPlot!"); 
                 const new_BAF_ticks : cn_pair[] = [];
                 // filter BAF lines
-                // console.log("BAF_lines", this.props.BAF_lines); 
                 for(const cn_pair_i of this.props.BAF_lines) {
-                    // console.log(cn_pair_i); 
-                    // if (cn_pair_i.state[1] != 2) {
                     if ((cn_pair_i.state[0] + cn_pair_i.state[1]) < 4) {
                         new_BAF_ticks.push(cn_pair_i); 
                     }
@@ -311,16 +344,34 @@ export class LinearPlot extends React.PureComponent<Props> {
             } else {
                 new_BAF_lines = this.props.BAF_lines; 
             }
-            // console.log("this.props.BAF_lines", this.props.BAF_lines); 
 
             const filteredBAFTicks = new_BAF_lines.filter(value => value.tick > currYDomain[0] && value.tick < currYDomain[1])
             const ticks = filteredBAFTicks.map(d => d.tick);
+            const ticks_without_overlap : number[] = []
+            const filterBAFTicks_no_overlap : cn_pair[] = []
+
+            if(ticks.length > 0) {
+                ticks_without_overlap.push(ticks[0])
+                filterBAFTicks_no_overlap.push(filteredBAFTicks[0])
+            }
+
+            for(let i = 1; i < ticks.length; i++) {
+                // console.log(ticks[i])
+                let first = yScale(ticks_without_overlap[ticks_without_overlap.length-1]) || 0;
+                let second = yScale(ticks[i]) || 0;
+                let dist_test = first - second;
+
+                if(dist_test > 8) {
+                    ticks_without_overlap.push(ticks[i]);
+                    filterBAFTicks_no_overlap.push(filteredBAFTicks[i])
+                }
+            }
 
             yAx = (g : any, scale : any) => g
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(ticks).tickSizeInner(-width + getLeftPadding(this.props.showPurityPloidy) + PADDING.right).tickFormat((d, i) =>  ticks[i].toFixed(2) + " ("+filteredBAFTicks[i].state[0]+","+filteredBAFTicks[i].state[1]+")"))
+                .call(d3.axisLeft(scale).tickValues(ticks_without_overlap).tickSizeInner(-width + getLeftPadding(this.props.showPurityPloidy) + PADDING.right).tickFormat((d, i) =>  ticks_without_overlap[i].toFixed(2) + " ("+filterBAFTicks_no_overlap[i].state[0]+","+filterBAFTicks_no_overlap[i].state[1]+")"))
         }
 
 
