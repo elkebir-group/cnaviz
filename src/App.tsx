@@ -989,7 +989,13 @@ export class App extends React.Component<{}, State> {
     }
 
     onExport() {
-        this.state.indexedData.calculateCopyNumbers();
+        // only export copy number columns (6) if purity ploidy is toggled on.
+        if (this.state.showPurityPloidyInputs) {
+            this.state.indexedData.calculateCopyNumbers();
+            this.state.indexedData.calculateCopyNumbers_Cluster();
+        } else {
+            console.log("onExport does nothing because purity ploidy is not toggled on.")
+        }
     }
 
     onTogglePurityPloidy() {
@@ -1376,7 +1382,7 @@ export class App extends React.Component<{}, State> {
                             onClusterRowsChange={this.onClusterRowsChange}
                             colName={"Actions (Starting from most recent)"}
                         ></LogTable>
-                        <label className="custom-file-export" title="Exports your clustering.">
+                        <label className="custom-file-export" title="Exports your clustering. Includes columns for copy number estimates if purity/ploidy is toggled on at export time.">
                             <Log logData={actions} fileName={this.state.chosenFile} onExport={this.onExport}></Log>
                             Export <FiDownload/>
                         </label>

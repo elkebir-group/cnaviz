@@ -111,9 +111,7 @@ export class SampleViz extends React.Component<Props, State> {
         } else if(this.props.applyLog !== prevProps.applyLog || this.props.showPurityPloidyInputs !== prevProps.showPurityPloidyInputs || (this.props.showTetraploid !== prevProps.showTetraploid)) {
             let newScale = {xScale: this.state.scales.xScale, yScale: null}; // keep x zoom but reset y
             this.setState({scales: newScale});
-        } //else if(this.props.showTetraploid !== prevProps.showTetraploid) {
-          //  this.setState({showTetraploid: showTetraploid}); 
-       // }
+        } 
     }
 
     handleSelectedSampleChanged(selected : string) {
@@ -148,7 +146,7 @@ export class SampleViz extends React.Component<Props, State> {
     onUpdatePloidy(ploidy: number) {
         this.props.data.setSamplePloidy(this.state.selectedSample, ploidy);
         this.setState({ploidy: ploidy});
-        this.setState({scales: {xScale: null, yScale: null}});
+        // this.setState({scales: {xScale: null, yScale: null}});
     }
 
     onUpdateOffset(offset: number) {

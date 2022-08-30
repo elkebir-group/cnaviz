@@ -112,7 +112,7 @@ function Sidebar(props: Props) {
       </div>
 
       <div className="contents">
-      <div className="row-contents" > <h1>CNAViz v3.0</h1> </div>
+      <div className="row-contents" > <h1>CNAViz v2.1</h1> </div>
         <div className="title-bar"></div>
           <div className="row-contents" > Chosen File: {chosenFile}</div>
           <div className="row-contents">
@@ -191,7 +191,7 @@ function Sidebar(props: Props) {
                 step={1}
                 marks={true}
                 min={1}
-                max={10}
+                max={20}
               />
             {/* </label> */}
             </Box>

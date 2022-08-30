@@ -1040,12 +1040,12 @@ export class DataWarehouse {
     }
 
     calculateCopyNumbers() {
-        for(let i = 0; i < this.allRecords.length; i++) {
-            const sample = this.allRecords[i].SAMPLE;
-            const ploidy = this.sampleToPloidy[sample];
-            const meanRD = this.rdMeans[sample];
-            const rd = this.allRecords[i].RD;
-            this.allRecords[i].fractional_cn = rd * ploidy / meanRD; 
+        for(let i = 0; i < this.allRecords.length; i++) { // loop over all bins
+            const sample = this.allRecords[i].SAMPLE; 
+            const ploidy = this.sampleToPloidy[sample]; // sample ploidy
+            const meanRD = this.rdMeans[sample]; // average sample read depth
+            const rd = this.allRecords[i].RD; // cluster centroid read depth
+            this.allRecords[i].fractional_cn = rd * ploidy / meanRD; // fractional CN per bin
         }
 
         for(let i = 0; i < this.allRecords.length; i++) {
@@ -1053,30 +1053,96 @@ export class DataWarehouse {
             const binSample = bin.SAMPLE;
             const fractionalTicks = this.sampleToFractionalTicks[binSample];
             const bafTicks = this.sampleToBafTicks[binSample];
-            const x = bin.reverseBAF;
-            const y = bin.fractional_cn;
+            const x = bin.reverseBAF; // want this from cluster centroid
+            const y = bin.fractional_cn; // cluster's fractional CN
             const valuesToCompare : [number, number][] = [];
             let minDist : number = Infinity;
             let minState : [number, number] = [-1, -1];
 
+            let min_bin_rdr : number = Number.MAX_VALUE; 
+            let min_bin_baf : number = Number.MAX_VALUE;
+
             for(let j=0; j < bafTicks.length; j++) {
                 const tickPair = bafTicks[j];
                 const state = tickPair.state;
-                const bafVal = tickPair.tick;
+                const bafVal = tickPair.tick; // output the baf value 
                 const totalCN = state[0] + state[1];
-                const correspondingFractional = fractionalTicks[totalCN];
+                const correspondingFractional = fractionalTicks[totalCN]; // back calculate the cn
+                // * meanRD / ploidy
                 
                 valuesToCompare.push([bafVal, correspondingFractional]);
                 const dist = Math.pow(x - bafVal, 2) + Math.pow(y - correspondingFractional, 2);
                 if(dist < minDist) {
                     minDist = dist;
-                    minState = state;
+                    minState = state; // take the minimum, report the min BAF and min CN state RDR values
+                    min_bin_baf = bafVal; 
+                    min_bin_rdr = correspondingFractional;  // is this correct?
                 }
             }
-
-            this.allRecords[i].CN = "("+minState[0]+","+minState[1]+")";
+            // add two columns for BAF and RDR
+            this.allRecords[i].CN_bin = "("+minState[0]+","+minState[1]+")";
+            this.allRecords[i].CN_bin_rdr = min_bin_rdr; 
+            this.allRecords[i].CN_bin_baf = min_bin_baf; 
         }
 
+    }
+
+    calculateCopyNumbers_Cluster() {
+        console.log("calculateCopyNumbers_Cluster()");
+
+        let centroids = this.getCentroidData(); 
+        // console.log(centroids); 
+        for (var centroid of Array.from(centroids)) {
+            let key = centroid['key'];
+            let sampledict = centroid['sample']; 
+            
+            for (var s of this._samples) {
+                let coord = sampledict[s].substring(1); 
+                coord = coord.slice(0, -1); 
+
+                let centroid_baf, centroid_cn = coord.split(',')
+                console.log(s, centroid_baf, centroid_cn); 
+
+                const fractionalTicks = this.sampleToFractionalTicks[s];
+                const bafTicks = this.sampleToBafTicks[s];
+                const x = centroid_baf;
+                const y = centroid_cn; 
+                const valuesToCompare : [number, number][] = [];
+
+                let minDist : number = Infinity;
+                let minState : [number, number] = [-1, -1];
+                let min_cluster_rdr : number = Number.MAX_VALUE; 
+                let min_cluster_baf : number = Number.MAX_VALUE;
+
+                for(let j=0; j < bafTicks.length; j++) {
+                    const tickPair = bafTicks[j];
+                    const state = tickPair.state;
+                    const bafVal = tickPair.tick; // output the baf value 
+                    const totalCN = state[0] + state[1];
+                    const correspondingFractional = fractionalTicks[totalCN]; // back calculate the cn
+                    // * meanRD / ploidy
+                    
+                    valuesToCompare.push([bafVal, correspondingFractional]);
+                    const dist = Math.pow(x - bafVal, 2) + Math.pow(y - correspondingFractional, 2);
+                    if(dist < minDist) {
+                        minDist = dist;
+                        minState = state; // take the minimum, report the min BAF and min CN state RDR values
+                        min_cluster_baf = bafVal; 
+                        min_cluster_rdr = correspondingFractional;  // is this correct?
+                    }
+
+                }
+
+                for(let i = 0; i < this.allRecords.length; i++) {
+                    if ((this.allRecords[i].SAMPLE == s) && (this.allRecords[i].CLUSTER == Number(key))) {
+                        this.allRecords[i].CN_cluster = "("+minState[0] +","+minState[1]+")";
+                        this.allRecords[i].CN_cluster_rdr = min_cluster_rdr;
+                        this.allRecords[i].CN_cluster_baf = min_cluster_baf; 
+                    } 
+                }
+
+            }
+        }
     }
 
     mergeBinsAll(sample: string, xthresharr: Map<String, number>, ythresharr: Map<String, number>) {
