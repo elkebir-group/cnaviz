@@ -93,7 +93,10 @@ function parseGenomicBins(data: string, applyLog: boolean, applyClustering: bool
 
             if(parsed.length > 0) {
                 for(const col of REQUIRED_COLS) {
-                    if(!(col in parsed[0])) {
+                    if(!("CLUSTER" in parsed[0])) {
+                        console.log("Missing CLUSTER, but continuing with -1...")
+                        applyClustering = false; 
+                    } else if(!(col in parsed[0])) {
                         throw new Error("COLUMN: " + col + " IS MISSING FROM INPUTTED DATA");
                     }
                 }

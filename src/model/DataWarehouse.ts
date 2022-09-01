@@ -1046,7 +1046,7 @@ export class DataWarehouse {
             const meanRD = this.rdMeans[sample]; // average sample read depth
             const rd = this.allRecords[i].RD; // cluster centroid read depth
             this.allRecords[i].fractional_cn = rd * ploidy / meanRD; // fractional CN per bin
-        }
+        }   
 
         for(let i = 0; i < this.allRecords.length; i++) {
             const bin = this.allRecords[i];
@@ -1076,12 +1076,15 @@ export class DataWarehouse {
                     minDist = dist;
                     minState = state; // take the minimum, report the min BAF and min CN state RDR values
                     min_bin_baf = bafVal; 
-                    min_bin_rdr = correspondingFractional;  // is this correct?
+
+                    const meanRD = this.rdMeans[bin.SAMPLE];
+                    const ploidy = this.sampleToPloidy[bin.SAMPLE];
+                    min_bin_rdr = correspondingFractional * meanRD / ploidy;  // is this correct?
                 }
             }
             // add two columns for BAF and RDR
             this.allRecords[i].CN_bin = "("+minState[0]+","+minState[1]+")";
-            this.allRecords[i].CN_bin_rdr = min_bin_rdr; 
+            this.allRecords[i].CN_bin_rdr = min_bin_rdr ; 
             this.allRecords[i].CN_bin_baf = min_bin_baf; 
         }
 
@@ -1091,17 +1094,18 @@ export class DataWarehouse {
         console.log("calculateCopyNumbers_Cluster()");
 
         let centroids = this.getCentroidData(); 
-        // console.log(centroids); 
-        for (var centroid of Array.from(centroids)) {
-            let key = centroid['key'];
-            let sampledict = centroid['sample']; 
-            
-            for (var s of this._samples) {
-                let coord = sampledict[s].substring(1); 
-                coord = coord.slice(0, -1); 
 
+        for (var s of this._samples) {
+            console.log("sample", s); 
+
+            for (var centroid of Array.from(centroids)) {
+                
+                let key = centroid['key'];
+                let sampledict = centroid['sample'];
+
+                let coord = sampledict[s].substring(1).slice(0, -1); 
                 let centroid_baf, centroid_cn = coord.split(',')
-                console.log(s, centroid_baf, centroid_cn); 
+                console.log("centroid", coord); 
 
                 const fractionalTicks = this.sampleToFractionalTicks[s];
                 const bafTicks = this.sampleToBafTicks[s];
@@ -1114,6 +1118,7 @@ export class DataWarehouse {
                 let min_cluster_rdr : number = Number.MAX_VALUE; 
                 let min_cluster_baf : number = Number.MAX_VALUE;
 
+                // iterating over all bafTicks, calculate the minimum distance copy number for this centroid
                 for(let j=0; j < bafTicks.length; j++) {
                     const tickPair = bafTicks[j];
                     const state = tickPair.state;
@@ -1124,15 +1129,20 @@ export class DataWarehouse {
                     
                     valuesToCompare.push([bafVal, correspondingFractional]);
                     const dist = Math.pow(x - bafVal, 2) + Math.pow(y - correspondingFractional, 2);
+
                     if(dist < minDist) {
                         minDist = dist;
                         minState = state; // take the minimum, report the min BAF and min CN state RDR values
                         min_cluster_baf = bafVal; 
-                        min_cluster_rdr = correspondingFractional;  // is this correct?
-                    }
 
+                        const meanRD = this.rdMeans[s];
+                        const ploidy = this.sampleToPloidy[s];
+                        min_cluster_rdr = correspondingFractional * meanRD / ploidy;  
+                        
+                    }
                 }
 
+                // set the min_cluster_baf for this cluster
                 for(let i = 0; i < this.allRecords.length; i++) {
                     if ((this.allRecords[i].SAMPLE == s) && (this.allRecords[i].CLUSTER == Number(key))) {
                         this.allRecords[i].CN_cluster = "("+minState[0] +","+minState[1]+")";
@@ -1140,6 +1150,7 @@ export class DataWarehouse {
                         this.allRecords[i].CN_cluster_baf = min_cluster_baf; 
                     } 
                 }
+                console.log("(" + minState[0] + "," + minState[1]+")", min_cluster_rdr, min_cluster_baf); 
 
             }
         }

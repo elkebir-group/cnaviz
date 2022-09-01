@@ -325,7 +325,6 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
-                //.call(d3.axisLeft(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-width + 60).tickFormat((d, i) => (Number(d.valueOf()).toFixed(2) != Number(d.valueOf()).toFixed(2)) ? filterFractionalTicksNoOverlap[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")" : filterFractionalTicksNoOverlap[i].totalCN + " (x,x)"));
                 .call(d3.axisLeft(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-width + 60).tickFormat((d, i) => filterFractionalTicksNoOverlap[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")"))
 
         } else if(this.props.showPurityPloidy) {
@@ -373,7 +372,10 @@ export class LinearPlot extends React.PureComponent<Props> {
                 .classed(SCALES_CLASS_NAME, true)
                 .attr("id", "Grid")
                 .attr("transform", `translate(${getLeftPadding(this.props.showPurityPloidy)}, 0)`)
-                .call(d3.axisLeft(scale).tickValues(ticks_without_overlap).tickSizeInner(-width + getLeftPadding(this.props.showPurityPloidy) + PADDING.right).tickFormat((d, i) =>  ticks_without_overlap[i].toFixed(2) + " ("+filterBAFTicks_no_overlap[i].state[0]+","+filterBAFTicks_no_overlap[i].state[1]+")"))
+                .call(d3.axisLeft(scale).tickValues(ticks_without_overlap).tickSizeInner(-width + getLeftPadding(this.props.showPurityPloidy) + PADDING.right).tickFormat((d, i) =>  (filterBAFTicks_no_overlap[i].state[0] == filterBAFTicks_no_overlap[i].state[1]) ? ticks_without_overlap[i].toFixed(2) + " (x,x)" : ticks_without_overlap[i].toFixed(2) + " ("+filterBAFTicks_no_overlap[i].state[0]+","+filterBAFTicks_no_overlap[i].state[1]+")"))
+                //.call(d3.axisLeft(scale).tickValues(ticks_without_overlap).tickSizeInner(-width + getLeftPadding(this.props.showPurityPloidy) + PADDING.right).tickFormat((d, i) =>  ticks_without_overlap[i].toFixed(2) + " ("+filterBAFTicks_no_overlap[i].state[0]+","+filterBAFTicks_no_overlap[i].state[1]+")"))
+                //.call(d3.axisLeft(scale).tickValues(ticksWithoutOverlap).tickSizeInner(-width + 60).tickFormat((d, i) => (Number(d.valueOf()).toFixed(2) != Number(d.valueOf()).toFixed(2)) ? filterFractionalTicksNoOverlap[i].totalCN + " ("+  Number(d.valueOf()).toFixed(2)+")" : filterFractionalTicksNoOverlap[i].totalCN + " (x,x)"));
+
         }
 
 
