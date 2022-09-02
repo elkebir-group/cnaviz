@@ -23,8 +23,33 @@ import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
 import {Toolbox} from "./components/Toolbox";
 import {Log} from "./components/LogLink";
 import {FiDownload} from "react-icons/fi";
+import { zip, unzip, unzipAssets, subscribe } from 'react-native-zip-archive';
+
+
+const fs = require('fs');
+const zlib = require('zlib');
+
+function getExtension(filename) {
+    const tokens = filename.split('.');
+    const ext = tokens.pop();
+    return ext; 
+  }
 
 function getFileContentsAsString(file: File) {
+    const ext = getExtension(file.name);
+    console.log("ext is " + ext); 
+    if (ext === ".zip") {
+        console.log("Is a .zip file."); 
+
+    } else if (ext == ".gz") {
+        console.log("Is a .gz file."); 
+
+        const fileContents = fs.createReadStream(file.name);
+        const writeStream = fs.createWriteStream(file.name + ".txt");
+        const unzip = zlib.createGunzip();
+
+        fileContents.pipe(unzip).pipe(writeStream);
+    }
     return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsText(file);
@@ -224,6 +249,8 @@ interface State {
 
     selectedChr: string;  // Name of the chromosome selected for detailed viewing.  Empty string if no chromosome is selected.
 
+    selectedDemo: string; // Name of demo file selected.
+
     selectedColor: string; // Name of selected cluster color. Should default to that blue.  gc
 
     absorbThresh_rdr: Map<String, number>; // Threshold value to join unassigned bins into the existing. gc 
@@ -325,6 +352,7 @@ export class App extends React.Component<{}, State> {
             indexedData: new DataWarehouse([]),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
+            selectedDemo: 'a12', 
             pointsize: 3, // gc 
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "black", // gc: when set to red, this changes
@@ -372,6 +400,7 @@ export class App extends React.Component<{}, State> {
         this.handleDriverFileChosen = this.handleDriverFileChosen.bind(this);
         this.handleDemoDrivers = this.handleDemoDrivers.bind(this);
         this.handleChrSelected = this.handleChrSelected.bind(this);
+        this.handleDemoSelected = this.handleDemoSelected.bind(this);
         this.handleslider = this.handleslider.bind(this); 
         // this.pointslider = this.pointslider.bind(this);
         this.handleColorSelection = this.handleColorSelection.bind(this); // gc
@@ -521,10 +550,19 @@ export class App extends React.Component<{}, State> {
 
     }
 
-    async handleDemoFileInput(applyClustering: boolean) {
+    async handleDemoFileInput(applyClustering: boolean, c: string) {
         this.setState({chosenFile: "a12.tsv"})
         this.setState({processingStatus: ProcessingStatus.readingFile});
-        fetch("https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/a12.tsv")
+        
+        let url = "";
+        if (c === "a12") {
+            url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/a12.tsv";
+        } else if (c === "kim") {
+            url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/cnaviz_kim.tsv";
+        } else if (c === "10x") {
+            url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/cnaviz_10x.tsv";
+        }
+        fetch(url)
             .then(r => r.text())
             .then(text => {
                 this.setState({processingStatus: ProcessingStatus.processing});
@@ -571,7 +609,6 @@ export class App extends React.Component<{}, State> {
 
         let contents = "";
         try {
-            
             contents = await getFileContentsAsString(files[0]);
         } catch (error) {
             console.error(error);
@@ -610,6 +647,13 @@ export class App extends React.Component<{}, State> {
     //     this.setState({pointsize: value}); 
     //     // return `${value}°C`;
     //   }
+
+    handleDemoSelected(event: React.ChangeEvent<HTMLSelectElement>) {
+        console.log("inside handleDemoSelected...");
+        this.setState({selectedDemo: event.target.value});
+        console.log(this.state.selectedDemo); 
+        this.handleDemoFileInput(true, this.state.selectedDemo);
+    }
 
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         this.setState({selectedChr: event.target.value});
@@ -1042,6 +1086,7 @@ export class App extends React.Component<{}, State> {
         let clusterTableData = indexedData.getClusterTableInfo();
         let clusterTableData2 = indexedData.getClusterTableInfo2();
         let clusterTableData3 = indexedData.getClusterTableInfo3();
+        let demoOptions : JSX.Element[] = [<option key={'A12'} value={'a12'}>A12</option>, <option key={'Kim'} value={'kim'}>Kim</option>, <option key={'10x'} value={'10x'}>10x</option>];
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
@@ -1093,9 +1138,12 @@ export class App extends React.Component<{}, State> {
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
 
+            demoOptions = [<option key={'A12'} value={'a12'}>A12</option>, 
+                           <option key={'Kim'} value={'kim'}>Kim</option>,
+                           <option key={'10x'} value={'10x'}>10x</option>];
+
             mainUI = (
                 <div id="grid-container">
-                    
                     <div className="sampleviz-wrapper-row">
                             {_.times(sampleAmount, i => samplesDisplayed.length > i 
                             && <SampleViz 
@@ -1221,6 +1269,9 @@ export class App extends React.Component<{}, State> {
                     // pointslider={this.pointslider}                    
                     handleslider={this.handleslider}
                     selectedChr={selectedChr} 
+                    selectedDemo={this.state.selectedDemo}
+                    onDemoSelected={this.handleDemoSelected}
+                    demoOptions={demoOptions}
                     onChrSelected={this.handleChrSelected} 
                     chrOptions={chrOptions}
                     selectedColor={selectedColor} 

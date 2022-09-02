@@ -21,6 +21,9 @@ interface Props {
     onAbsorbThresh_baf : any; 
     onMergeThresh_rdr : any; 
     onMergeThresh_baf : any; 
+    demoOptions: any;
+    onDemoSelected: any;
+    selectedDemo: string; 
     chrOptions: any;
     onAddSample: any;
     onAssignCluster: any;
@@ -129,14 +132,14 @@ function Sidebar(props: Props) {
                 <CSV data={props.data} fileName={props.chosenFile} onExport={props.onExport}></CSV>
                 Export <FiDownload/>
               </label>
-              <label className="demo" title="Loads CNAViz with demo data.">
+              {/* <label className="demo" title="Loads CNAViz with demo data.">
                 <input type="button" id="custom-button" onClick={
                     (event: any) => props.handleDemoFileInput(true)
                 }/>
                 Demo
-              </label>
+              </label> */}
           </div>
-          
+
           <div className="row-contents" >
             <label className={props.processingStatus !== ProcessingStatus.done ? "custom-file-upload-disabled" : "custom-file-upload2"} title="Uploads your driver genes.">
               <input type="file" id="fileUpload"  disabled={props.processingStatus !== ProcessingStatus.done} onChange={
@@ -152,7 +155,20 @@ function Sidebar(props: Props) {
               CGC Drivers
             </label> 
           </div>
-  
+
+          <div className="row-contents" >
+            <div className="Select-Chrom" title="Select a chromosome to visualize in the linear and scatter plots.">
+              <label htmlFor="Select Demo" style={{margin: 10}}> Demo: </label>
+              <select
+                  name="Select Demo" 
+                  id="Select Demo"
+                  value={props.selectedChr}
+                  onChange={props.onDemoSelected} >
+                      {props.demoOptions}
+              </select>
+            </div>
+          </div>
+          
           <div className= "row-contents" >
             <div className="Select-Chrom" title="Select a chromosome to visualize in the linear and scatter plots.">
               <label htmlFor="Select Chromosome" style={{margin: 10}}> Chromosome: </label>
