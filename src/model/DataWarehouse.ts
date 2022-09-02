@@ -1103,14 +1103,17 @@ export class DataWarehouse {
                 let key = centroid['key'];
                 let sampledict = centroid['sample'];
 
-                let coord = sampledict[s].substring(1).slice(0, -1); 
-                let centroid_baf, centroid_cn = coord.split(',')
-                console.log("centroid", coord); 
+                let coord = String(sampledict[s].substring(1).slice(0, -1)); 
+                let tokens = coord.split(','); 
+                let centroid_cn = tokens.pop();
+                let centroid_baf = tokens.pop(); 
+                // console.log("centroid", coord); 
+                // console.log("x: " + String(centroid_baf) + " y: " + String(centroid_cn)); 
 
-                const fractionalTicks = this.sampleToFractionalTicks[s];
-                const bafTicks = this.sampleToBafTicks[s];
-                const x = centroid_baf;
-                const y = centroid_cn; 
+                const fractionalTicks = this.sampleToFractionalTicks[s]; 
+                const bafTicks = this.sampleToBafTicks[s]; 
+                const x = Number(centroid_baf); 
+                const y = Number(centroid_cn);  
                 const valuesToCompare : [number, number][] = [];
 
                 let minDist : number = Infinity;
@@ -1122,14 +1125,18 @@ export class DataWarehouse {
                 for(let j=0; j < bafTicks.length; j++) {
                     const tickPair = bafTicks[j];
                     const state = tickPair.state;
-                    const bafVal = tickPair.tick; // output the baf value 
+                    const bafVal = Number(tickPair.tick); // output the baf value 
                     const totalCN = state[0] + state[1];
-                    const correspondingFractional = fractionalTicks[totalCN]; // back calculate the cn
+                    const correspondingFractional = Number(fractionalTicks[totalCN]); // back calculate the cn
                     // * meanRD / ploidy
+                    // console.log("state: " + String(state) + " bafVal: " + bafVal + " corrFrac: " + correspondingFractional);
                     
                     valuesToCompare.push([bafVal, correspondingFractional]);
+                    // console.log("x - bafVal " + String(x - bafVal)); 
+                    // console.log("y - correspondingFractional" + String(y - correspondingFractional)); 
                     const dist = Math.pow(x - bafVal, 2) + Math.pow(y - correspondingFractional, 2);
-
+                    // console.log("dist" + String(dist)); 
+                    
                     if(dist < minDist) {
                         minDist = dist;
                         minState = state; // take the minimum, report the min BAF and min CN state RDR values
@@ -1141,8 +1148,7 @@ export class DataWarehouse {
                         
                     }
                 }
-
-                // set the min_cluster_baf for this cluster
+                
                 for(let i = 0; i < this.allRecords.length; i++) {
                     if ((this.allRecords[i].SAMPLE == s) && (this.allRecords[i].CLUSTER == Number(key))) {
                         this.allRecords[i].CN_cluster = "("+minState[0] +","+minState[1]+")";
