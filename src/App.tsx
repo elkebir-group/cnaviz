@@ -1117,7 +1117,7 @@ export class App extends React.Component<{}, State> {
         let clusterTableData = indexedData.getClusterTableInfo();
         let clusterTableData2 = indexedData.getClusterTableInfo2();
         let clusterTableData3 = indexedData.getClusterTableInfo3();
-        let demoOptions : JSX.Element[] = [<option key={'None'} value={'None'}>None</option>, <option key={'A12'} value={'a12'}>A12</option>, <option key={'Kim'} value={'kim'}>Kim</option>, <option key={'10x'} value={'10x'}>10x</option>];
+        let demoOptions : JSX.Element[] = [<option key={'None'} value={'None'}>None</option>, <option key={'A12'} value={'a12'}>A12 (bulk)</option>, <option key={'Kim'} value={'kim'}>Kim et al. (SCS)</option>, <option key={'10x'} value={'10x'}>10X (SCS)</option>];
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
@@ -1170,9 +1170,9 @@ export class App extends React.Component<{}, State> {
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
 
             demoOptions = [<option key={'None'} value={'None'}>None</option>,
-                           <option key={'A12'} value={'a12'}>A12</option>, 
-                           <option key={'Kim'} value={'kim'}>Kim</option>,
-                           <option key={'10x'} value={'10x'}>10x</option>];
+                           <option key={'A12'} value={'a12'}>A12 (bulk)</option>, 
+                           <option key={'Kim'} value={'kim'}>Kim et al. (SCS)</option>,
+                           <option key={'10x'} value={'10x'}>10X (SCS)</option>];
 
             mainUI = (
                 <div id="grid-container">
