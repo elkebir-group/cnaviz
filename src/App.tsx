@@ -560,10 +560,13 @@ export class App extends React.Component<{}, State> {
         let url = "";
         if (c === "a12") {
             url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/a12.tsv";
+            this.setState({chosenFile: "a12.tsv"});
         } else if (c === "kim") {
             url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/cnaviz_kim.tsv";
+            this.setState({chosenFile: "cnaviz_kim.tsv"});
         } else if (c === "10x") {
             url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/cnaviz_10x.tsv";
+            this.setState({chosenFile: "cnaviz_10x.tsv"});
         } else {
             this.setState({samplesNotShown: [],
                            processingStatus: ProcessingStatus.done
