@@ -24,6 +24,7 @@
     "react-data-table-component": "^6.11.7",
     "react-dom": "^16.8.6",
     "react-icons": "^4.2.0",
+    "react-native-zip-archive": "^6.0.8",
     "react-scripts": "4.0.3",
     "react-slider": "^2.0.1",
     "stream-browserify": "^3.0.0",

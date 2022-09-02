@@ -352,7 +352,7 @@ export class App extends React.Component<{}, State> {
             indexedData: new DataWarehouse([]),
             hoveredLocation: null,
             selectedChr: DataWarehouse.ALL_CHRS_KEY,
-            selectedDemo: 'a12', 
+            selectedDemo: 'none', 
             pointsize: 3, // gc 
             selectedCluster: DataWarehouse.ALL_CLUSTERS_KEY,
             selectedColor: "black", // gc: when set to red, this changes
@@ -550,8 +550,11 @@ export class App extends React.Component<{}, State> {
 
     }
 
-    async handleDemoFileInput(applyClustering: boolean, c: string) {
-        this.setState({chosenFile: "a12.tsv"})
+    // async handleDemoFileInput(applyClustering: boolean) {
+    handleDemoFileInput(applyClustering: boolean, c: string) {
+
+        // this.setState({chosenFile: "a12.tsv"})
+        // let c = this.state.selectedDemo; 
         this.setState({processingStatus: ProcessingStatus.readingFile});
         
         let url = "";
@@ -561,6 +564,12 @@ export class App extends React.Component<{}, State> {
             url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/cnaviz_kim.tsv";
         } else if (c === "10x") {
             url = "https://raw.githubusercontent.com/elkebir-group/cnaviz/master/data/demo/cnaviz_10x.tsv";
+        } else {
+            this.setState({samplesNotShown: [],
+                           processingStatus: ProcessingStatus.done
+            })
+            window.location.reload(false);
+            return; 
         }
         fetch(url)
             .then(r => r.text())
@@ -651,8 +660,10 @@ export class App extends React.Component<{}, State> {
     handleDemoSelected(event: React.ChangeEvent<HTMLSelectElement>) {
         console.log("inside handleDemoSelected...");
         this.setState({selectedDemo: event.target.value});
-        console.log(this.state.selectedDemo); 
-        this.handleDemoFileInput(true, this.state.selectedDemo);
+        // console.log(event.target.value, this.state.selectedDemo); 
+        console.log(event.target.value);
+        this.handleDemoFileInput(true, event.target.value);
+        console.log("Done w handleDemoSelected.");
     }
 
     handleChrSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -1074,7 +1085,7 @@ export class App extends React.Component<{}, State> {
     }
 
     render() {
-        const {indexedData, selectedChr, selectedCluster, showTetraploid, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state; // gc 
+        const {indexedData, selectedChr, selectedDemo, selectedCluster, showTetraploid, hoveredLocation, invertAxis, selectedColor, assignCluster, updatedBins, value, sampleAmount} = this.state; // gc 
         const samplesDisplayed = this.state.samplesShown;
         const samplesShown = new Set<string>(samplesDisplayed);
         const brushedBins = indexedData.getBrushedBins();
@@ -1086,7 +1097,7 @@ export class App extends React.Component<{}, State> {
         let clusterTableData = indexedData.getClusterTableInfo();
         let clusterTableData2 = indexedData.getClusterTableInfo2();
         let clusterTableData3 = indexedData.getClusterTableInfo3();
-        let demoOptions : JSX.Element[] = [<option key={'A12'} value={'a12'}>A12</option>, <option key={'Kim'} value={'kim'}>Kim</option>, <option key={'10x'} value={'10x'}>10x</option>];
+        let demoOptions : JSX.Element[] = [<option key={'None'} value={'None'}>None</option>, <option key={'A12'} value={'a12'}>A12</option>, <option key={'Kim'} value={'kim'}>Kim</option>, <option key={'10x'} value={'10x'}>10x</option>];
         let chrOptions : JSX.Element[] = [<option key={DataWarehouse.ALL_CHRS_KEY} value={DataWarehouse.ALL_CHRS_KEY}>ALL</option>]; 
         let actions = indexedData.getActions();
 
@@ -1138,7 +1149,8 @@ export class App extends React.Component<{}, State> {
             );
             clusterOptions.push(<option key={DataWarehouse.ALL_CLUSTERS_KEY} value={DataWarehouse.ALL_CLUSTERS_KEY}>ALL</option>);
 
-            demoOptions = [<option key={'A12'} value={'a12'}>A12</option>, 
+            demoOptions = [<option key={'None'} value={'None'}>None</option>,
+                           <option key={'A12'} value={'a12'}>A12</option>, 
                            <option key={'Kim'} value={'kim'}>Kim</option>,
                            <option key={'10x'} value={'10x'}>10x</option>];
 
@@ -1269,7 +1281,7 @@ export class App extends React.Component<{}, State> {
                     // pointslider={this.pointslider}                    
                     handleslider={this.handleslider}
                     selectedChr={selectedChr} 
-                    selectedDemo={this.state.selectedDemo}
+                    selectedDemo={selectedDemo}
                     onDemoSelected={this.handleDemoSelected}
                     demoOptions={demoOptions}
                     onChrSelected={this.handleChrSelected} 
@@ -1317,7 +1329,7 @@ export class App extends React.Component<{}, State> {
                     onToggleShowCentroidTable={this.onToggleShowCentroidTable}
                     onTogglePreviousActionLog={this.onTogglePreviousActionLog}
                     onClearClustering={this.onClearClustering}
-                    handleDemoFileInput={this.handleDemoFileInput}
+                    // handleDemoFileInput={this.handleDemoFileInput}
                     handleDemoDrivers={this.handleDemoDrivers}
                     setProcessingStatus={this.setProcessingStatus}
                     onTogglePurityPloidy={this.onTogglePurityPloidy}

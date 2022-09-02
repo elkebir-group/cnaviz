@@ -162,7 +162,7 @@ function Sidebar(props: Props) {
               <select
                   name="Select Demo" 
                   id="Select Demo"
-                  value={props.selectedChr}
+                  value={props.selectedDemo}
                   onChange={props.onDemoSelected} >
                       {props.demoOptions}
               </select>
