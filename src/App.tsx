@@ -1,6 +1,6 @@
 import React from "react";
 import parse from "csv-parse";
-import _, { conformsTo, Dictionary, range } from "lodash";
+import _, { conformsTo, Dictionary, range, zip } from "lodash";
 import { ChromosomeInterval } from "./model/ChromosomeInterval";
 import { GenomicBin } from "./model/GenomicBin";
 import {Chromosome} from "./model/Genome";
@@ -23,7 +23,9 @@ import {DEFAULT_PLOIDY, REQUIRED_COLS, REQUIRED_DRIVER_COLS} from "./constants";
 import {Toolbox} from "./components/Toolbox";
 import {Log} from "./components/LogLink";
 import {FiDownload} from "react-icons/fi";
-import { zip, unzip, unzipAssets, subscribe } from 'react-native-zip-archive';
+// import { zip, unzip, unzipAssets, subscribe } from 'react-native-zip-archive';
+// import {JSZip} from "jszip"; 
+// import React, { useState } from 'react';
 
 
 const fs = require('fs');
@@ -35,21 +37,35 @@ function getExtension(filename) {
     return ext; 
   }
 
+// const [files, setFiles] = useState<File[]>(undefined);
+// const [fileInfo, setFileInfo] = useState<IFileInfo>(undefined);
+
+    // const ext = getExtension(file.name);
+    // console.log("ext is " + ext); 
+    // if (ext === "zip") {
+    //     console.log("Is a .zip file."); 
+    //     var zip = new JSZip(); 
+    //     zip.loadAsync(file)
+    //         .then((zip) => {
+    //             const contents = [];
+    //         }, (e) => {
+    //         setFileInfo({
+    //             contents: [],
+    //             error: "Error reading " + file.name + ": " + e.message
+    //         });
+    //         });
+    // }
+    // } else if (ext == "gz") {
+    //     console.log("Is a .gz file."); 
+
+    //     const fileContents = fs.createReadStream(file.name);
+    //     const writeStream = fs.createWriteStream(file.name + ".txt");
+    //     const unzip = zlib.createGunzip();
+
+    //     fileContents.pipe(unzip).pipe(writeStream);
+    // }
+
 function getFileContentsAsString(file: File) {
-    const ext = getExtension(file.name);
-    console.log("ext is " + ext); 
-    if (ext === ".zip") {
-        console.log("Is a .zip file."); 
-
-    } else if (ext == ".gz") {
-        console.log("Is a .gz file."); 
-
-        const fileContents = fs.createReadStream(file.name);
-        const writeStream = fs.createWriteStream(file.name + ".txt");
-        const unzip = zlib.createGunzip();
-
-        fileContents.pipe(unzip).pipe(writeStream);
-    }
     return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsText(file);
@@ -839,6 +855,7 @@ export class App extends React.Component<{}, State> {
                 is_continue = false; 
             }
         }
+
         if (is_continue) {
             // iterate through all bins in from
             let new_reassign_group = this.state.indexedData.absorbBins(from_set, to_set, xthresh, ythresh);
