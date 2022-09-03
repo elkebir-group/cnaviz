@@ -258,9 +258,10 @@ export class LinearPlot extends React.PureComponent<Props> {
         const chrTicks = genome.getChromosomeStarts2(chrs)
         const xAxisTicksNoOverlap : number[] = []
         const filteredChrs : Chromosome[] = []
-
-        xAxisTicksNoOverlap.push(chrTicks[0])
-        filteredChrs.push(chrs[0])
+        if (chrTicks.length > 0) {
+            xAxisTicksNoOverlap.push(chrTicks[0])
+            filteredChrs.push(chrs[0])
+        }
 
         for(let i = 1; i < chrTicks.length; i++) {
             let first = xScale(xAxisTicksNoOverlap[xAxisTicksNoOverlap.length-1]) || 0;
