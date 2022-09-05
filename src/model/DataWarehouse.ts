@@ -1053,7 +1053,7 @@ export class DataWarehouse {
             const binSample = bin.SAMPLE;
             const fractionalTicks = this.sampleToFractionalTicks[binSample];
             const bafTicks = this.sampleToBafTicks[binSample];
-            const x = bin.reverseBAF; // want this from cluster centroid
+            const x = Number(bin.reverseBAF) + this.offset; // want this from cluster centroid
             const y = bin.fractional_cn; // cluster's fractional CN
             const valuesToCompare : [number, number][] = [];
             let minDist : number = Infinity;
@@ -1106,7 +1106,7 @@ export class DataWarehouse {
                 let coord = String(sampledict[s].substring(1).slice(0, -1)); 
                 let tokens = coord.split(','); 
                 let centroid_cn = tokens.pop();
-                let centroid_baf = tokens.pop(); 
+                let centroid_baf = Number(tokens.pop()) + this.offset; 
                 // console.log("centroid", coord); 
                 // console.log("x: " + String(centroid_baf) + " y: " + String(centroid_cn)); 
 
