@@ -1,7 +1,17 @@
 import pandas as pd
-from hatchet.utils.cluster_bins import *
+from packaging import version
+import hatchet
+if version.parse(hatchet.__version__) >= version.parse('1.0.1'):
+    from hatchet.utils.cluster_bins_gmm import *
+else:
+    from hatchet.utils.cluster_bins import *
+import argparse
 
-data = pd.read_csv('output_a_P6_v1/bbc/P6_cnavizin.txt', sep='\t')
+parser = argparse.ArgumentParser(description='Segmentation')
+parser.add_argument('bbc', type=str, help='bbc file')
+args = parser.parse_args()
+
+data = pd.read_csv(args.bbc, sep='\t')
 
 keys = {(rec['#CHR'], rec['START'], rec['END']) for rec in data.to_dict('records')}
 combo = {key : [] for key in keys}
