@@ -85,7 +85,7 @@ We provide an example script for how the user can run HATCHet to generate an ini
 
 ## Running ASCAT
 
-We provide an example script on how to perform the ASCAT clustering in R [here](data/ascat/ASCAT_casasent.R). After running ASCAT, to save the relevant files to produce an input file for CNAViz, we use the following R commands on the `ascat.output` object:
+We provide an example script on how to perform the ASCAT clustering in R [here](data/ascat/ascat_outputs/ASCAT_casasent.R). After running ASCAT, to save the relevant files to produce an input file for CNAViz, we use the following R commands on the `ascat.output` object:
 ```
 write.csv(ascat.output$segments)
 write.csv(ascat.bc$SNPpos)
