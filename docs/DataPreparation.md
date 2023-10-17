@@ -75,6 +75,15 @@ After running these steps with the input file provided [here](https://github.com
 
 This file will be named `bulk.bbc` and can be found in the `bbc/` folder of the user-specified output directory. 
 
+Notes:
+1. The ploidy value in CNAViz is the average ploidy of the combined tumor and normal fractions.
+2. "chr" notation is not required in the input file, but is required to load the CGC drivers.
+3. Tumor sample names are required to load a file with CLUSTER column values. 
+
+To prepare data without HATCHet (e.g. given existing ASCAT segments), we can suggest the following pipeline that has worked for others:
+1. assign a cluster number to each ASCAT integer allele-specific copy number state
+2. split each ASCAT segment into fixed width windows, mapping mean RD and BAF to each window
+
 ***
 
 ## Running HATCHet
