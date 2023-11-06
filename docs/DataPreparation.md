@@ -84,6 +84,8 @@ To prepare data without HATCHet (e.g. given existing ASCAT segments), we can sug
 1. assign a cluster number to each ASCAT integer allele-specific copy number state
 2. split each ASCAT segment into fixed width windows, mapping mean RD and BAF to each window
 
+Thank you to Dr. Alan R. Penheiter at the Mayo Clinic for providing two helpful scripts ([here](https://github.com/elkebir-group/cnaviz/blob/master/scripts/helpful_scripts)) to convert the ASCAT output into a CNAViz input file, with different assumptions. 
+
 ***
 
 ## Running HATCHet
