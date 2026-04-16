@@ -17,6 +17,7 @@ interface Props {
     colTwoName: string;
     colThreeName?: string;
     colFourName?: string;
+    colFiveName?: string;
     cols: any;
     centroidTable?: boolean;
     colors : string[];
@@ -49,7 +50,7 @@ export class ClusterTable extends React.Component<Props> {
     }
 
     render() {
-        const {colOneName, colTwoName, colThreeName, colFourName, data, expandable, selectable, colors, centroidTable} = this.props;
+        const {colOneName, colTwoName, colThreeName, colFourName, colFiveName, data, expandable, selectable, colors, centroidTable} = this.props;
         const ExpandedComponent =(data:any) => 
         <div> 
             <BlockPicker 
@@ -98,6 +99,18 @@ export class ClusterTable extends React.Component<Props> {
               width: "50",
               center: true
             },
+            {
+              name: colFiveName,
+              selector: 'genomePerc',
+              sortable: true,
+              right: true,
+              compact: true,
+              wrap: true,
+              innerWidth: 40,
+              outerWidth: 40,
+              width: "50",
+              center: true
+            },
         ];
 
         const columns3 = [
@@ -133,6 +146,15 @@ export class ClusterTable extends React.Component<Props> {
             {
                 name: colFourName,
                 selector: 'binPerc',
+                sortable: true,
+                right: true,
+                compact: true,
+                wrap: true,
+                center: true
+            },
+            {
+                name: colFiveName,
+                selector: 'genomePerc',
                 sortable: true,
                 right: true,
                 compact: true,

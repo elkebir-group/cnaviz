@@ -70,7 +70,7 @@ interface Props {
     applyLog: boolean;
     processingStatus: ProcessingStatus;
     onExport: () => void;
-    handleslider: (event: any, val: number) => void; 
+    handleslider: (event: any, val: number | number[]) => void; 
     // pointslider: (value: number) => void; 
 }
 
@@ -300,6 +300,7 @@ function Sidebar(props: Props) {
                 currentFilters={props.currentClusterFilters}
                 colOneName={"Cluster ID"}
                 colTwoName={"Bin (%)"}
+                colFiveName={"Genome (%)"}
                 cols={""}
                 expandable={true}
                 selectable={true}

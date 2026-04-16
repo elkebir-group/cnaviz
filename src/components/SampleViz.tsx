@@ -41,6 +41,7 @@ interface Props {
     showScatterPlot: boolean;
     onUndoClick: () => void;
     sampleAmount: number;
+    canAddSample: boolean;
     syncScales: boolean;
     handleZoom: (newScales: any) => void;
     scales: {xScale: [number, number] | null, yScale: [number, number] | null};
@@ -219,7 +220,7 @@ export class SampleViz extends React.Component<Props, State> {
                 </select>
                 <button className="custom-button-add" title="Add the next sequential sample in the dropdown menu." onClick={() => {
                     this.props.onAddSample();
-                }} disabled={sampleAmount >= sampleOptions.length}> Add </button>
+                }} disabled={sampleAmount >= sampleOptions.length || !this.props.canAddSample}> Add </button>
                 <button className="custom-button-remove" title="Removes this sample." onClick={() => {
                     this.props.onRemovePlot(this.state.selectedSample);
                 }} disabled={sampleAmount <= 1}> Remove </button>

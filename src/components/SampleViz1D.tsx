@@ -89,6 +89,7 @@ export class SampleViz1D extends React.Component<Props, State> {
                     data={data}
                     chr={chr}
                     rdRange={rdRange}
+                    showTetraploid={this.props.showTetraploid}
                     hoveredLocation={hoveredLocation}
                     onLocationHovered={onLocationHovered} 
                     onBrushedBinsUpdated={onBrushedBinsUpdated}

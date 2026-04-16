@@ -27,11 +27,10 @@ import {FiDownload} from "react-icons/fi";
 // import {JSZip} from "jszip"; 
 // import React, { useState } from 'react';
 
-
 const fs = require('fs');
 const zlib = require('zlib');
 
-function getExtension(filename) {
+function getExtension(filename: string) {
     const tokens = filename.split('.');
     const ext = tokens.pop();
     return ext; 
@@ -76,6 +75,9 @@ function getFileContentsAsString(file: File) {
         reader.onabort = reject;
     });
 }
+
+// hard cap on number of samples displayed at a given time
+const MAX_VISIBLE_SAMPLES = 5
 
 // Colors picked using the following tool: http://jnnnnn.github.io/category-colors-constrained.html
 const CLUSTER_COLORS = [
@@ -587,7 +589,7 @@ export class App extends React.Component<{}, State> {
             this.setState({samplesNotShown: [],
                            processingStatus: ProcessingStatus.done
             })
-            window.location.reload(false);
+            window.location.reload();
             return; 
         }
         fetch(url)
@@ -690,9 +692,10 @@ export class App extends React.Component<{}, State> {
         this.state.indexedData.setChrFilter(event.target.value);
     }
 
-    handleslider(event: any, val: number) {
-        console.log("Pointsize updated to", val);
-        this.setState({pointsize: val});
+    handleslider(event: any, val: number | number[]) {
+        const pointsize = Array.isArray(val) ? val[0] : val;
+        console.log("Pointsize updated to", pointsize);
+        this.setState({ pointsize });
     }
 
     handleColorSelection(event: React.ChangeEvent<HTMLSelectElement>) { // gc
@@ -781,6 +784,10 @@ export class App extends React.Component<{}, State> {
     }
 
     handleAddSampleClick() {
+
+        // hard cap for number of samples shown
+        if (this.state.samplesShown.length >= MAX_VISIBLE_SAMPLES) return;
+
         const newSample = this.state.samplesNotShown[0]; //this.state.indexedData.getSampleList()[this.state.sampleAmount];
 
         const samplesShown = this.state.samplesShown;
@@ -1186,6 +1193,7 @@ export class App extends React.Component<{}, State> {
                                     showLinearPlot={this.state.showLinearPlot}
                                     showScatterPlot={this.state.showScatterPlot}
                                     sampleAmount={sampleAmount}
+                                    canAddSample={sampleAmount < MAX_VISIBLE_SAMPLES}
                                     syncScales={this.state.syncScales}
                                     handleZoom={this.handleZoom}
                                     scales={this.state.scales}
@@ -1300,6 +1308,7 @@ export class App extends React.Component<{}, State> {
                     // pointsize={this.state.pointsize}
                     // pointslider={this.pointslider}                    
                     handleslider={this.handleslider}
+                    handleDemoFileInput={(applyClustering: boolean) => this.handleDemoFileInput(applyClustering, this.state.selectedChr)}
                     selectedChr={selectedChr} 
                     selectedDemo={selectedDemo}
                     onDemoSelected={this.handleDemoSelected}
@@ -1433,6 +1442,7 @@ export class App extends React.Component<{}, State> {
                                 currentFilters={indexedData.getFilteredFromClusters()}
                                 colOneName={"Cluster ID"}
                                 colTwoName={"Bin (%)"}
+                                colFiveName={"Genome (%)"}
                                 cols={""}
                                 expandable={true}
                                 selectable={true}
@@ -1446,6 +1456,7 @@ export class App extends React.Component<{}, State> {
                                 currentFilters={indexedData.getFilteredToClusters()}
                                 colOneName={"Cluster ID"}
                                 colTwoName={"Bin (%)"}
+                                colFiveName={"Genome (%)"}
                                 cols={""}
                                 expandable={true}
                                 selectable={true}

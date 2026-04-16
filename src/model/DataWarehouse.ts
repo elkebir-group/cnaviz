@@ -80,7 +80,7 @@ type LogTableRow = {
 }
 
 type clusterIdMap = {[id: string] : number}
-type clusterTableRow =  {key: number, value: number}
+type clusterTableRow =  {key: number, value: number, genomePerc: number}
 type selectionTableRow =  {key: number, value: number, selectPerc: number, binPerc: number}
 type centroidPoint = {cluster: number, point: [number, number]}
 type newCentroidTableRow = {key: string, sample: {[sampleName: string] : string}}
@@ -377,12 +377,31 @@ export class DataWarehouse {
     calculateClusterTableInfo() : clusterTableRow[] {
         const clusterInfo = this._cluster_dim.group().all();
         const clusterTable : clusterTableRow[] = [];
+
+        const allBins = this._ndx.all()
+        if (!allBins || allBins.length === 0) {
+            return clusterTable;
+        }
+
+        const oneSample = allBins[0]["SAMPLE"];
+
+        // calculate total genome length from all bins
+        const totalGenomeLength = allBins
+            .filter(bin => bin.SAMPLE === oneSample)
+            .reduce((sum, bin) => sum + (Number(bin.END) - Number(bin.START)), 0);
+
         for(const row of clusterInfo) {
             let value = Number(((Number(row.value)/this.allRecords.length) * 100).toFixed(2));
+
+            const clusterGenomeLength = allBins
+                .filter(bin => bin.SAMPLE === oneSample && Number(bin.CLUSTER) === Number(row.key))
+                .reduce((sum, bin) => sum + (Number(bin.END) - Number(bin.START)), 0);
+
             clusterTable.push(
             {
                 key: Number(row.key), 
-                value: value
+                value: value,
+                genomePerc: Number((clusterGenomeLength / totalGenomeLength * 100).toFixed(2))
             });
         }
         return clusterTable;
@@ -915,6 +934,7 @@ export class DataWarehouse {
 
         const clusterTable2 : selectionTableRow[] = [];
         const totalBins = this._ndx.all().length;
+        
         for(const row of clusterTable) {
             clusterTable2.push(
             {
@@ -923,9 +943,9 @@ export class DataWarehouse {
                 selectPerc: Number((Number(row.value)/Number(amountInSelection) * 100).toFixed(2)),
                 binPerc: Number((Number(row.value)/Number(totalBins / sampleAmount) * 100).toFixed(2))
             });
+
         }
 
-        
         return clusterTable2;
     }
 
@@ -1473,8 +1493,12 @@ export class DataWarehouse {
                         // check whether it falls below the threshold in each sample
                         let underThresh : boolean = true; 
                         for (const [sample, bin] of Object.entries(groupedBySample)) {
-                            let x_thr : number = xthresh[sample]; 
-                            let y_thr : number = ythresh[sample];
+                            const x_thr = xthresh.get(sample as string);
+                            const y_thr = ythresh.get(sample as string);
+
+                            if (x_thr === undefined || y_thr === undefined) {
+                                continue;
+                            }
                             if (min_x > x_thr || min_y > y_thr) {
                                 underThresh = underThresh && false; 
                             } 
